@@ -39,6 +39,8 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// Evita depender de alias de zona horaria del equipo al conectar con PostgreSQL.
+	systemProperty 'user.timezone', 'UTC'
 	finalizedBy tasks.named('jacocoTestReport')
 }
 
