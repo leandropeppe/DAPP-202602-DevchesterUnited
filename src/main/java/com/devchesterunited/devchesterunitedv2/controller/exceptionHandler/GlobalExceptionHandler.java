@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.controller.exceptionHandler;
 
 import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -24,12 +26,39 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Object> unauthorized(AuthenticationException exception) {
-        return response(HttpStatus.UNAUTHORIZED);
+        String mensaje = exception instanceof BadCredentialsException
+                && "Nombre de usuario o contraseña incorrectos".equals(exception.getMessage())
+                ? exception.getMessage() : "No autorizado.";
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO(mensaje));
     }
 
     @ExceptionHandler({DataIntegrityViolationException.class, ConcurrencyFailureException.class})
     public ResponseEntity<Object> conflict(DataAccessException exception) {
-        return response(HttpStatus.CONFLICT);
+        String mensaje = exception.getMessage() != null && exception.getMessage().contains("ya está registrado")
+                ? "El nombre de usuario o el correo electrónico ya está registrado."
+                : "La solicitud entra en conflicto con el estado actual del recurso.";
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponseDTO(mensaje));
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException exception,
+            HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        if (!request.getDescription(false).contains("/api/v1/auth/")) {
+            return response(HttpStatus.BAD_REQUEST);
+        }
+        var detalles = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> new ErrorResponseDTO.DetalleErrorDTO(nombreJson(error.getField()), error.getDefaultMessage()))
+                .toList();
+        return ResponseEntity.badRequest().body(new ErrorResponseDTO("Error de validación", detalles));
+    }
+
+    private static String nombreJson(String campo) {
+        return switch (campo) {
+            case "nombreUsuario" -> "username";
+            case "correo" -> "email";
+            case "contrasena" -> "password";
+            default -> campo;
+        };
     }
 
     @ExceptionHandler(DataAccessException.class)

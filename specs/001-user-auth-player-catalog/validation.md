@@ -179,3 +179,85 @@ Todos los archivos de tests preexistentes conservaron los hashes capturados ante
 | `service/config/ServiceConfigTest.java` | `82B53592A673433CF41EEE84032C0EFB490E53CA5428DE43932D8779E7326186` |
 
 **Control de cierre T010: PASSED.** No hay fallo del build base que bloquee US1 en este estado. Esto no ejecuta ni autoriza trabajo adicional: T011 permanece pendiente. El DoD global (historias, arranque local, Postman y controles externos) sigue abierto. Un fallo posterior del build base debe bloquear US1 hasta resolverse dentro de su alcance.
+
+## Actualización T023 — 2026-09-06
+
+Se ejecutó la validación completa de US1 después de T021–T022, sin implementar T024 ni tareas posteriores. Docker/Testcontainers estuvo disponible y las suites de integración utilizaron PostgreSQL real.
+
+### Comandos reproducibles
+
+```powershell
+.\gradlew.bat test --tests '*UsuarioTest' --tests '*UsuarioRepositoryIntegrationTest' --tests '*AutenticacionIntegrationTest' --tests '*AuthE2ETest' --tests '*JwtConfigTest' --no-daemon --console=plain
+.\gradlew.bat test --no-daemon --console=plain
+Get-ChildItem build/test-results/test/TEST-*.xml | ForEach-Object {
+    [xml]$report = Get-Content $_.FullName -Raw
+    $report.testsuite | Select-Object name,tests,failures,errors,skipped
+}
+$pat = 'Segura123!|password_hash|NO_FILTRAR|RklVElDSU8|token-ficticio|JWT_SECRET'
+Get-ChildItem build/test-results,build/reports/tests -Recurse -File |
+    Select-String -Pattern $pat -SimpleMatch
+```
+
+### Resultados
+
+La ejecución dirigida terminó con **BUILD SUCCESSFUL**: 86 tests, 0 fallos, 0 errores y 0 omitidos.
+
+| Suite | Tests | Fallos / errores / omitidos |
+| --- | ---: | ---: |
+| `JwtConfigTest` | 31 | 0 / 0 / 0 |
+| `AuthE2ETest` | 37 | 0 / 0 / 0 |
+| `UsuarioTest` | 6 | 0 / 0 / 0 |
+| `UsuarioRepositoryIntegrationTest` | 8 | 0 / 0 / 0 |
+| `AutenticacionIntegrationTest` | 4 | 0 / 0 / 0 |
+
+La suite completa terminó con **BUILD SUCCESSFUL**: **139 tests, 0 fallos, 0 errores y 0 omitidos**. Incluyó `contextLoads`, Testcontainers/PostgreSQL, seguridad base, OpenAPI, respuestas comunes, DTOs y configuración de servicio.
+
+### Controles funcionales y de exposición
+
+- Registro válido: HTTP 201, respuesta `success`, usuario normalizado y esquema `Usuario`.
+- Login válido: HTTP 200, JWT Bearer y `expires_in=3600`.
+- Username/email duplicados, incluidos duplicados normalizados y carreras concurrentes: HTTP 409, una sola inserción.
+- Entradas inválidas, JSON desconocido y tipos JSON incorrectos: HTTP 400 con detalles en español.
+- Credenciales incorrectas o usuario inexistente: HTTP 401 con mensaje genérico.
+- Login: header `Cache-Control: no-store`.
+- JWT: firma HS256, `iss`, `aud`, `sub`, `iat`, `exp`, duración exacta de 3600 segundos y reloj controlable sin tolerancia.
+- BCrypt validado en persistencia; la contraseña en claro no se almacena.
+- Las aserciones de `AuthE2ETest`, `CommonResponsesE2ETest` y `AutenticacionDTOTest` verifican que respuestas y errores no contienen contraseñas, hashes, secretos JWT, SQL ni `NO_FILTRAR`; los XML/HTML no contienen `system-out` ni `system-err` de la aplicación. Los únicos textos de `Segura123!` en los reportes son nombres de casos parametrizados que prueban espacios inválidos, no logs ni respuestas.
+
+**Control de cierre T023: PASSED.** US1 queda validada con pruebas unitarias, integración y E2E, y la suite completa permanece en verde. T024 y las tareas posteriores siguen pendientes.
+
+## Actualización T037 — cierre de User Story 2 (2026-09-06)
+
+Se ejecutaron las validaciones con Java 21, PostgreSQL real mediante Testcontainers y Docker disponible. No se modificaron tests para esta validación.
+
+### Comandos reproducibles
+
+```powershell
+.\gradlew.bat test --tests '*ApiKeyE2ETest' --tests '*ApiKeyIntegrationTest' --tests '*ApiKeyConcurrencyIntegrationTest' --tests '*ApiKeyTest' --tests '*ApiKeyRepositoryIntegrationTest' --tests '*UsuarioTest' --tests '*UsuarioRepositoryIntegrationTest' --tests '*AutenticacionIntegrationTest' --tests '*AuthE2ETest' --tests '*JwtConfigTest' --no-daemon --console=plain
+.\gradlew.bat test --tests '*SecurityBaseE2ETest' --no-daemon --console=plain
+.\gradlew.bat test --no-daemon --console=plain
+```
+
+### Resultados
+
+La validación dirigida US1/US2 terminó en `BUILD SUCCESSFUL`: **103 tests, 0 fallos, 0 errores y 0 omitidos**. `SecurityBaseE2ETest` terminó en `BUILD SUCCESSFUL`: **8 tests, 0 fallos, 0 errores y 0 omitidos**. La suite completa terminó en `BUILD SUCCESSFUL`: **156 tests, 0 fallos, 0 errores y 0 omitidos**.
+
+| Suite US2 | Tests | Fallos / errores / omitidos |
+| --- | ---: | --- |
+| `ApiKeyE2ETest` | 4 | 0 / 0 / 0 |
+| `ApiKeyTest` | 4 | 0 / 0 / 0 |
+| `ApiKeyIntegrationTest` | 3 | 0 / 0 / 0 |
+| `ApiKeyRepositoryIntegrationTest` | 4 | 0 / 0 / 0 |
+| `ApiKeyConcurrencyIntegrationTest` | 2 | 0 / 0 / 0 |
+
+### Controles de US2
+
+- La generación inicial devuelve una clave válida; la rotación revoca la anterior y mantiene exactamente una activa por usuario.
+- La prueba de inserción fallida confirma rollback: la clave anterior continúa activa y sin `revoked_at`.
+- La prueba concurrente de controller confirma un resultado HTTP `200` y otro `409`; la prueba de Service usa barrera y PostgreSQL real, sin `sleep` ni reintentos, y confirma una sola clave activa tras el commit.
+- La generación requiere JWT válido. Una API Key sola no autoriza `/api/v1/auth/apikey`; `/players` exige autoridad `API_KEY` y no acepta JWT como sustituto.
+- Las aserciones E2E verifican `Cache-Control: no-store` y que respuestas/errores no contienen la clave completa, contraseñas, hashes, secretos JWT, SQL ni credenciales sensibles.
+- Las consultas de persistencia confirman que solo se almacenan `key_hash`, `key_prefix`, `is_active`, `created_at` y `revoked_at`; el secreto completo no tiene columna ni se persiste.
+- Los errores se traducen al esquema común en español: `401` para credenciales inválidas, `409` para competencia y `503` para fallas de acceso a BD durante validación.
+
+**Control de cierre T037: PASSED.** US2 queda validada. T038 y las tareas posteriores permanecen pendientes.
