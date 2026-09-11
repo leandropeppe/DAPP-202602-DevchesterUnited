@@ -261,3 +261,34 @@ La validación dirigida US1/US2 terminó en `BUILD SUCCESSFUL`: **103 tests, 0 f
 - Los errores se traducen al esquema común en español: `401` para credenciales inválidas, `409` para competencia y `503` para fallas de acceso a BD durante validación.
 
 **Control de cierre T037: PASSED.** US2 queda validada. T038 y las tareas posteriores permanecen pendientes.
+
+## Actualización T049 — cierre de User Story 3
+
+Se ejecutaron las suites de US3 y la suite completa del proyecto con PostgreSQL real mediante Testcontainers. La ejecución utilizó temporalmente:
+
+```powershell
+$env:JAVA_TOOL_OPTIONS='-Duser.timezone=UTC -Dapi.version=1.44'
+```
+
+### Resultados de US3
+
+| Suite | Tests | Fallos / errores / omitidos |
+| --- | ---: | --- |
+| `JugadorTest` | 54 | 0 / 0 / 0 |
+| `JugadorRepositoryIntegrationTest` | 28 | 0 / 0 / 0 |
+| `JugadorServiceIntegrationTest` | 59 | 0 / 0 / 0 |
+| `JugadorE2ETest` | 64 | 0 / 0 / 0 |
+| `RevocacionEnCursoE2ETest` | 2 | 0 / 0 / 0 |
+| **Total suites US3** | **207** | **0 / 0 / 0** |
+
+La suite completa del proyecto terminó con **BUILD SUCCESSFUL in 4m 17s**: **363 tests, 0 fallos, 0 errores y 0 omitidos**.
+
+### Controles funcionales de US3
+
+- `JugadorTest` validó las invariantes del dominio, posiciones permitidas, campos obligatorios y dorsal 1–99.
+- `JugadorRepositoryIntegrationTest` validó filtros literales, parámetros enlazados, acentos, combinación AND, orden UUID y paginación.
+- `JugadorServiceIntegrationTest` validó filtros, trimming, metadatos, mapeo público e identificadores `ply_<uuid>`.
+- `JugadorE2ETest` validó Madrid case-insensitive devolviendo jugadores de Real Madrid y Atlético de Madrid; contenido y totales; contrato MockMvc; autenticación API Key; errores 400/401; paginación; y ausencia de filtraciones.
+- `RevocacionEnCursoE2ETest` validó la consulta autorizada durante una revocación y la respuesta 503 ante una base de datos inaccesible.
+
+**Control de cierre T049: PASSED.** US3 queda validada con pruebas de dominio, Repository, Service y E2E. La suite completa permanece en verde.
