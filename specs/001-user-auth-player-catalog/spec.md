@@ -5,7 +5,7 @@
 
 **Fecha de Creación**: 2026-09-02
 
-**Estado**: Draft (Borrador)
+**Estado**: Implementación funcional de T001–T049 validada; T050–T061 pendientes (DoD global abierto)
 
 **Entrada**: Descripción del usuario: "Crear los requerimientos y contratos API para la Entrega Nro 1: módulo de gestión de usuarios (registro y generación de API Key con autenticación JWT) y módulo de catálogo de jugadores (endpoint GET /players con filtros por liga, equipo y posición)."
 
@@ -86,6 +86,10 @@ Como consumidor de la API utilizando una API Key válida, quiero buscar y filtra
 
 ## Requerimientos *(obligatorio)*
 
+### Semántica normativa de concurrencia para la rotación de API Keys
+
+Para un mismo usuario, la rotación debe adquirir la fila del usuario mediante `FOR UPDATE NOWAIT`. Se considera solicitud concurrente o competidora la que intenta entrar en la sección crítica de rotación mientras otra transacción del mismo usuario mantiene ese bloqueo. De las solicitudes que compiten simultáneamente por el bloqueo, una puede adquirirlo y continuar; las demás que encuentren el bloqueo ocupado deben responder `409 Conflict`, sin reintentos, revocaciones ni otras mutaciones. Una solicitud que adquiere el bloqueo después del `commit` de la transacción anterior ya no es concurrente con ella y puede realizar una nueva rotación válida con `200 OK`. En todo momento debe existir como máximo una API Key activa por usuario. Las rotaciones de usuarios distintos no deben bloquearse mutuamente.
+
 ### Requerimientos Funcionales
 
 - **FR-001**: El sistema DEBE permitir a los usuarios registrarse con un nombre de usuario único, un correo electrónico válido y una contraseña segura.
@@ -123,6 +127,51 @@ Como consumidor de la API utilizando una API Key válida, quiero buscar y filtra
 ## Criterios de Éxito *(obligatorio)*
 
 ### Resultados Medibles
+
+### Fuente normativa de exactitud para SC-005
+
+SC-005 se valida contra fixtures deterministas y versionados, no contra cantidades aproximadas ni contra un catálogo externo. El fixture funcional canónico contiene los siguientes seis jugadores, identificados por el número estable de fixture que se transforma en el identificador público `ply_<uuid>` durante la respuesta:
+
+| Fixture | Nombre | Liga | Equipo | Posición | Dorsal | Nacionalidad |
+|---:|---|---|---|---|---:|---|
+| 1 | Julián Álvarez | LaLiga | Atlético de Madrid | Forward | 9 | Argentina |
+| 2 | Jude Bellingham | LaLiga | Real Madrid | Midfielder | 5 | Inglaterra |
+| 3 | Phil Foden | Premier League | Manchester City | Forward | 47 | Inglaterra |
+| 4 | Dani Carvajal | LaLiga | Real Madrid | Defender | 2 | España |
+| 5 | Jan Oblak | LaLiga | Atlético de Madrid | Goalkeeper | 13 | Eslovenia |
+| 6 | Manuel Neuer | Bundesliga | Bayern | Goalkeeper | 1 | Alemania |
+
+Este fixture contiene Real Madrid, Atlético de Madrid, LaLiga y todas las posiciones permitidas por el modelo: `Forward`, `Midfielder`, `Defender` y `Goalkeeper`. Sus seis registros permiten comprobar paginación con más de una página usando `limit=3`. Las pruebas de Repository utilizan además un fixture determinista de borde que conserva registros con `%`, `_`, `!`, comillas y variantes con/sin tilde para verificar el escape literal y la significancia de tildes.
+
+### Oráculo normativo de SC-005
+
+Los filtros `league`, `team` y `position` buscan subcadenas sin distinguir mayúsculas/minúsculas; los filtros presentes se combinan mediante AND y los ausentes no restringen. Por tanto, `team=Madrid`, `team=madrid` y `team=MADRID` deben devolver exactamente los mismos cuatro registros del fixture canónico: 1, 2, 4 y 5, incluyendo ambos equipos de Madrid. Los caracteres `%`, `_` y `!` se comparan literalmente mediante la estrategia de escape definida; las tildes son significativas y no se eliminan ni normalizan para hacerlas equivalentes.
+
+El resultado esperado se calcula antes de paginar: primero se determina el conjunto completo de coincidencias, luego `total_records`, `total_pages=ceil(total_records/limit)` y finalmente la página ordenada por UUID ascendente. Una página fuera de rango debe responder `200`, devolver `players=[]` y conservar `current_page`, `page_size`, `total_records` y `total_pages` correspondientes al conjunto completo. Una consulta sin coincidencias debe devolver `200`, `players=[]`, `total_records=0` y `total_pages=0`.
+
+La validación de SC-005 debe comparar exactamente el contenido de cada jugador y todos los metadatos de paginación contra el oráculo derivado del fixture: identificador público, nombre, apellido, liga, equipo, posición, dorsal, nacionalidad, orden y totales. Comparar únicamente el número de resultados no acredita SC-005.
+
+### Matriz normativa de seguridad para SC-004
+
+La siguiente matriz define de forma normativa la credencial admitida por cada endpoint. “Permitido” significa que la solicitud puede continuar con las validaciones funcionales propias del endpoint. La presencia de una credencial no requerida no cambia el mecanismo de autenticación del endpoint público. Toda solicitud rechazada por autenticación debe detenerse antes de ejecutar la operación protegida.
+
+| Endpoint / situación | Credencial presentada | Resultado normativo |
+|---|---|---|
+| `POST /api/v1/auth/register` | Ninguna | Permitido; endpoint público. |
+| `POST /api/v1/auth/register` | JWT, API Key o ambas | Permitido; ninguna es necesaria ni se utiliza para autorizar el registro. |
+| `POST /api/v1/auth/login` | Ninguna | Permitido; endpoint público. |
+| `POST /api/v1/auth/login` | JWT, API Key o ambas | Permitido; ninguna es necesaria ni se utiliza para autorizar el login. |
+| `POST /api/v1/auth/apikey` | JWT válido de un usuario existente | Permitido; se autentica exclusivamente mediante JWT. |
+| `POST /api/v1/auth/apikey` | JWT ausente, alterado o expirado | `401 Unauthorized`; no se genera ni revoca ninguna API Key. |
+| `POST /api/v1/auth/apikey` | JWT válido de un usuario inexistente | `401 Unauthorized`; no se genera ni revoca ninguna API Key. |
+| `POST /api/v1/auth/apikey` | Solo API Key, o API Key sin JWT válido | `401 Unauthorized`; una API Key no autoriza esta operación. |
+| `POST /api/v1/auth/apikey` | JWT válido + API Key | Permitido si el JWT es válido; la API Key no participa en la autorización. |
+| `GET /api/v1/players` | API Key válida y activa | Permitido; se autentica exclusivamente mediante API Key. |
+| `GET /api/v1/players` | API Key ausente, inválida o revocada | `401 Unauthorized`; no se consulta el catálogo. |
+| `GET /api/v1/players` | Solo JWT, sin API Key | `401 Unauthorized`; un JWT no autoriza esta operación. |
+| `GET /api/v1/players` | JWT + API Key válida y activa | Permitido; el JWT no participa en la autorización. |
+| `GET /api/v1/players` | Error real de BD al validar la API Key | `503 Service Unavailable`; acceso denegado y no se transforma el fallo en `401`. |
+| `GET /api/v1/players` | Solicitud ya autorizada y revocación posterior durante su ejecución | Puede finalizar normalmente. Las nuevas solicitudes que validen la clave después de la revocación reciben `401 Unauthorized`. |
 
 - **SC-001**: El percentil 95 del tiempo total del flujo secuencial de registro más login, hasta recibir el JWT, DEBE ser inferior a 2 segundos.
 - **SC-002**: El percentil 95 del tiempo de respuesta de generación de una nueva API Key DEBE ser inferior a 500 milisegundos.

@@ -9,12 +9,14 @@ description: "Tareas de implementación de autenticación y catálogo de jugador
 
 ## Formato y reglas
 
+**Criterio operativo para T028, T033 y T037**: una solicitud es concurrente o competidora únicamente si intenta adquirir el `FOR UPDATE NOWAIT` del mismo usuario mientras otra transacción mantiene el lock. La ganadora continúa; las solicitudes que encuentran el lock ocupado reciben `409 Conflict` sin reintentos ni mutaciones. Una solicitud que adquiere el lock después del `commit` anterior puede rotar válidamente y recibir `200 OK`. El lock es específico por usuario y debe mantenerse como máximo una API Key activa.
+
 - Cada tarea tiene checkbox, ID secuencial, etiqueta de historia cuando corresponde y rutas relativas a la raíz.
 - `[P]` permite trabajar en archivos distintos únicamente cuando los prerrequisitos de su grupo estén completos. No habilita paralelismo entre historias dependientes.
 - Las pruebas son obligatorias por la Constitución y por la corrección C1 ya autorizada. Escribir pruebas antes de implementar la historia, observar fallo esperado y ejecutarlas nuevamente al cerrar. Fallos de compilación por componentes aún ausentes no acreditan la validación funcional final.
 - No modificar ni borrar tests existentes sin un «SÍ» explícito. Agregar archivos nuevos y soporte de configuración para preservar `src/test/java/com/devchesterunited/devchesterunitedv2/DevchesterUnitedV2ApplicationTests.java`.
 - Mantener Java 21, JUnit 5, PostgreSQL real/Testcontainers, unitarias sin Spring, E2E MockMvc solo en controller, casos felices y borde y documentación/errores en español.
-- Esta regeneración reemplaza los IDs del borrador anterior; todos estaban pendientes. No representa ejecución de implementación ni de gates.
+- Nota histórica de regeneración: esta versión reemplazó los IDs del borrador anterior, cuyo estado inicial era pendiente. El estado vigente es T001–T049 completadas y validadas; T050–T061 permanecen pendientes.
 
 ## Fase 1: Preparación compartida
 
@@ -89,7 +91,7 @@ description: "Tareas de implementación de autenticación y catálogo de jugador
 
 - [x] T038 [P] [US3] Escribir primero contrato MockMvc GET /api/v1/players: éxito y esquema, API Key ausente/inválida/revocada o solo JWT 401; 400 por filtros vacíos, controles, parámetros repetidos/desconocidos, page/limit inválidos y overflow; página vacía 200 (SC-004) en `src/test/java/com/devchesterunited/devchesterunitedv2/controller/JugadorE2ETest.java`.
 - [x] T039 [P] [US3] Escribir primero unitarias puras Jugador con campos obligatorios, posición válida y dorsal 1–99, casos felices/borde y excepciones de dominio en `src/test/java/com/devchesterunited/devchesterunitedv2/modelo/JugadorTest.java`.
-- [x] T040 [P] [US3] Escribir primero integración Service para filtros parciales case-insensitive, AND, sin filtros, vacíos, orden UUID y paginación; comparar contenido/totales con fixtures independientes (SC-005) en `src/test/java/com/devchesterunited/devchesterunitedv2/service/JugadorIntegrationTest.java`.
+- [x] T040 [P] [US3] Escribir primero integración Service para filtros parciales case-insensitive, AND, sin filtros, vacíos, orden UUID y paginación; comparar contenido/totales con fixtures independientes (SC-005) en `src/test/java/com/devchesterunited/devchesterunitedv2/service/JugadorServiceIntegrationTest.java`.
 - [x] T041 [P] [US3] Escribir primero integración Repository con %/_/! y comillas literales, tildes significativas, parámetros vinculados y conteo antes de paginar; no concatenar SQL de entrada en `src/test/java/com/devchesterunited/devchesterunitedv2/persistence/JugadorRepositoryIntegrationTest.java`.
 - [x] T042 [P] [US3] Escribir prueba MockMvc con sincronización determinista: autorizar consulta y pausarla, rotar clave, permitir fin exitoso y exigir 401 a nuevas validaciones; BD inaccesible debe producir 503 sin acceso (FR-009, SC-004) en `src/test/java/com/devchesterunited/devchesterunitedv2/controller/RevocacionEnCursoE2ETest.java`.
 - [x] T043 [US3] Implementar Jugador puro con invariantes y excepciones propias según data-model.md en `src/main/java/com/devchesterunited/devchesterunitedv2/modelo/Jugador.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/modelo/exception/JugadorException.java`.
@@ -106,7 +108,7 @@ description: "Tareas de implementación de autenticación y catálogo de jugador
 
 **Prueba independiente y control de cierre**: Todas las historias PASSED más mediciones, arranque, Postman, CI y SonarCloud con evidencia real.
 
-- [ ] T050 Revisar separación de capas, DTOs/errores españoles y ausencia de secretos en logs; corregir producción si corresponde y repetir suites afectadas antes de medir en `src/main/java/com/devchesterunited/devchesterunitedv2/controller/AuthController.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/controller/JugadorController.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/AutenticacionServiceImpl.java`, `specs/001-user-auth-player-catalog/validation.md`.
+- [x] T050 Revisar separación de capas, DTOs/errores españoles y ausencia de secretos en logs; corregir producción si corresponde y repetir suites afectadas antes de medir en `src/main/java/com/devchesterunited/devchesterunitedv2/controller/AuthController.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/controller/JugadorController.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/AutenticacionServiceImpl.java`, `specs/001-user-auth-player-catalog/validation.md`.
 - [ ] T051 Preparar fixture y entorno descartable de rendimiento: 10.000 jugadores (20 ligas×20 equipos×25), cuatro posiciones y 1.000 usuarios, Madrid en ambos equipos, checksum y recursos Linux/app/BD/generador según plan; restaurar solo esta BD en `performance/seed.sql`, `performance/compose.yml`, `performance/README.md`.
 - [ ] T052 [P] Implementar escenario k6 de registro+login: 1 VU, identificadores únicos, 60 s de calentamiento excluidos y 5 min medidos, Trend conjunto HTTP completo p95<2000 ms, cero errores/checks 100 % (SC-001) en `performance/registro-login.js`.
 - [ ] T053 [P] Implementar escenario k6 API Key: 1 VU y rotaciones secuenciales con setup/login fuera de medición, calentamiento y duración del plan, Trend HTTP completo p95<500 ms, cero errores/checks 100 % (SC-002) en `performance/api-key.js`.

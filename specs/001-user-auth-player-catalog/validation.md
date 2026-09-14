@@ -4,6 +4,8 @@ Fecha: 2026-09-06. Alcance: T005, estado posterior a T001–T004 y anterior a T0
 
 ## Estado inicial registrado
 
+**Nota de estado actual**: Las notas históricas de esta sección reflejan cortes anteriores. El estado vigente es T001–T049 completadas y validadas, con T050–T061 pendientes. Los cierres posteriores de T023, T037 y T049 son la evidencia vigente para las historias de usuario.
+
 Directorio: `C:\Users\Leandro\IdeaProjects\DevchesterUnitedV2`.
 Rama real: `master`. HEAD: `d721a6d54fad1773915e703593a61411ea951e01`.
 La evidencia corresponde al árbol de trabajo con cambios previos, no solamente a ese commit. No se cambió de rama ni se creó un commit.
@@ -292,3 +294,28 @@ La suite completa del proyecto terminó con **BUILD SUCCESSFUL in 4m 17s**: **36
 - `RevocacionEnCursoE2ETest` validó la consulta autorizada durante una revocación y la respuesta 503 ante una base de datos inaccesible.
 
 **Control de cierre T049: PASSED.** US3 queda validada con pruebas de dominio, Repository, Service y E2E. La suite completa permanece en verde.
+
+## Actualización T050 — revisión transversal y cierre (2026-09-14)
+
+Se revisó la implementación completa de T001–T049 contra la Constitución, `spec.md`, `plan.md` y `tasks.md`. No se detectaron incumplimientos reales que requirieran modificar código productivo ni tests.
+
+### Controles revisados
+
+- Separación estricta por capas: los Controllers dependen de interfaces de Service y no acceden directamente a Repository.
+- DTOs en los límites HTTP; validaciones de formato en DTO, existencia y operaciones en Service e invariantes en Modelo.
+- Respuestas uniformes de error JSON en español para 400, 401, 403, 409, 500 y 503, sin stack traces ni detalles internos.
+- Ausencia de logging de contraseñas, secretos JWT, API Keys completas o hashes; DTOs sensibles no los exponen en `toString` ni en respuestas indebidas.
+- BCrypt con coste 12, JWT HS256 con secreto externo, API Keys hasheadas y rotación atómica según el plan.
+- Seguridad stateless, `Clock.systemUTC()` y consistencia de packages, nombres y arquitectura.
+
+### Validación ejecutada
+
+Comando reproducible:
+
+```powershell
+.\gradlew.bat test --no-daemon --console=plain
+```
+
+Resultado: **BUILD SUCCESSFUL** en 1m 16s. Suite completa: **363 tests, 0 fallos, 0 errores y 0 omitidos**. También se generó correctamente `build/reports/jacoco/test/jacocoTestReport.xml`.
+
+**Control de cierre T050: PASSED.** T001–T049 continúan validadas; no se modificaron requisitos, decisiones técnicas, código productivo ni tests. T051–T061 permanecen pendientes.

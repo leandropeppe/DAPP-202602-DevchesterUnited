@@ -4,7 +4,9 @@
 
 ## Resumen
 
-Registro, login con JWT, generación y rotación de API Key sin vencimiento y catálogo paginado con filtros parciales sin distinguir mayúsculas. Conservar Gradle, Java 21, la clase de arranque y el paquete raíz existentes. Ajustar las versiones de Boot y del wrapper durante la implementación para cumplir JUnit 5. Este documento describe el diseño; no acredita ejecución del build ni de controles externos.
+**Estado actual (2026-09-06)**: T001–T049 están implementadas y cuentan con evidencia de validación en `validation.md`, incluidos los cierres T023, T037 y T049. T050–T061 permanecen pendientes porque corresponden a validación transversal, rendimiento, Postman, CI/CD, SonarCloud y cierre del DoD.
+
+Registro, login con JWT, generación y rotación de API Key sin vencimiento y catálogo paginado con filtros parciales sin distinguir mayúsculas. Conservar Gradle, Java 21, la clase de arranque y el paquete raíz existentes. Las versiones de Boot y del wrapper ya fueron ajustadas y validadas en T001–T002 para cumplir JUnit 5. Este documento describe el diseño y el estado implementado; los gates externos finales permanecen sujetos a T050–T061.
 
 ## Contexto técnico
 
@@ -21,11 +23,11 @@ Registro, login con JWT, generación y rotación de API Key sin vencimiento y ca
 | Escala de referencia | 10.000 jugadores, 1.000 usuarios iniciales, 50 consultas concurrentes |
 | Rendimiento | p95 registro+login <2 s; API Key <500 ms; catálogo <300 ms a 50 consultas concurrentes |
 
-El repositorio declara Boot 4.1.1 y Gradle 9.7.1. Framework 7 exige JUnit Jupiter 6 para integración, incompatible con JUnit 5. La decisión de adecuar versiones, sus fuentes y alternativas están en [research.md](./research.md). Es trabajo futuro; no se modifica la Constitución.
+Nota histórica de compatibilidad: el repositorio declaraba Boot 4.1.1 y Gradle 9.7.1, mientras Framework 7 exigía JUnit Jupiter 6, incompatible con JUnit 5. La adecuación ya fue realizada y validada en T001–T002: el estado implementado usa Java 21, Gradle 8.14.4, Spring Boot 3.5.16 y las dependencias definidas en este plan. Las fuentes y alternativas de la decisión están en [research.md](./research.md); la Constitución no fue modificada.
 
 ## Verificación de Constitución
 
-Evaluación previa: el diseño anterior tenía pendientes de dependencias y no coincidía con el build existente. Se resolvieron en fase 0. Evaluación posterior a fase 1: **PASS de diseño**, con todos los controles de ejecución pendientes.
+Evaluación previa: el diseño anterior tenía pendientes de dependencias y no coincidía con el build existente. Se resolvieron en fase 0. T001–T049 están implementadas y validadas, y los controles de las historias funcionales fueron ejecutados y documentados en `validation.md`. Únicamente permanecen pendientes los gates finales T050–T061.
 
 | Regla | Aplicación | Gate de entrega |
 |-------|------------|-----------------|
@@ -105,6 +107,8 @@ Completada en [research.md](./research.md): stack, JWT, hashing, migraciones, co
 
 ### Transacciones y concurrencia
 
+La unidad de concurrencia es la adquisición del lock, no la duración completa de la solicitud HTTP. Para cada usuario, la rotación usa `FOR UPDATE NOWAIT`: una solicitud que intenta entrar mientras otra transacción conserva el lock es competidora; si encuentra el lock ocupado, debe salir con SQLSTATE `55P03` traducido a `409 Conflict`, después del rollback, sin reintentos ni mutaciones. La solicitud que adquiere el lock después del `commit` anterior inicia una rotación independiente y válida con `200 OK`. El lock es por usuario, por lo que las rotaciones de usuarios distintos no se bloquean mutuamente. El índice único parcial mantiene como invariante un máximo de una API Key activa por usuario.
+
 Registro: unicidad en BD y 409 ante duplicados; hashing antes de insertar. Rotación: transacción READ COMMITTED con fila del usuario `FOR UPDATE NOWAIT`, revocación e inserción atómicas. SQLSTATE 55P03 →409 después del rollback, sin reintentos. Índice único parcial por usuario `WHERE is_active=true` y CHECK de coherencia con `revoked_at`.
 
 La competencia se define en la adquisición del bloqueo durante la rotación: quien llega después del commit realiza una nueva rotación válida. No se promete deduplicación de toda ventana HTTP. Prueba determinista: detener ganador tras el lock, ejecutar competidoras, observar 409 y liberar ganador. Probar rollback conservando clave anterior y operaciones de usuarios distintos.
@@ -116,6 +120,10 @@ Filtros parciales literales ILIKE con escape de `%`, `_` y `!`, parámetros vinc
 Username alfanumérico ASCII de 3–30 caracteres, normalizado a minúsculas para unicidad; corregir ejemplos anteriores con `_` para respetar la regla normativa. Email máximo 254, trim y minúsculas, único. Rechazar campos JSON desconocidos y parámetros repetidos/desconocidos con 400. [Modelo de datos](./data-model.md) y [contrato](./contracts/openapi.json) detallan las restricciones.
 
 ### Pruebas
+
+SC-005 usa como fuente normativa el fixture funcional determinista de seis jugadores definido en `spec.md`, con Real Madrid, Atlético de Madrid, LaLiga y las cuatro posiciones del modelo; los fixtures de Repository agregan casos literales de `%`, `_`, `!`, comillas y tildes. La validación compara contenido completo y metadatos exactos contra el oráculo del fixture: filtros parciales case-insensitive, `Madrid`/`madrid`/`MADRID` equivalentes e incluyendo ambos equipos, AND entre filtros, escape literal, tildes significativas, orden por UUID ascendente, conteo antes de paginar, página fuera de rango con `200` y lista vacía conservando totales, y cero coincidencias con total `0` y `total_pages=0`.
+
+SC-004 se valida contra la matriz normativa de seguridad definida en `spec.md`: registro y login son públicos; la generación de API Key acepta exclusivamente JWT válido; `/api/v1/players` acepta exclusivamente API Key válida y activa; los errores de BD durante su validación responden `503`; y una consulta ya autorizada puede finalizar si la revocación ocurre durante su ejecución. Las credenciales del tipo incorrecto no se utilizan como sustituto ni como autenticación adicional.
 
 | Historia | Dominio puro | Service/Repository con PostgreSQL | E2E MockMvc |
 |----------|--------------|----------------------------------|-------------|
@@ -149,4 +157,4 @@ Sin excepciones constitucionales en el diseño. Boot 4/JUnit 5 se resuelve con v
 
 ## Traspaso a tareas
 
-Regenerar `tasks.md` con `$speckit-tasks`: reemplazar Maven, raíz `com/devchester/united` y `jjwt`; agregar FR-012, concurrencia, autorización en curso, k6/semilla, configuración global de test y contratos. Conservar controles C1–C3 y estado pendiente. La planificación termina en fase 1; la aplicación aún no se implementa.
+Nota histórica de planificación: se regeneró `tasks.md` con `$speckit-tasks` para reemplazar Maven, la raíz `com/devchester/united` y `jjwt`, y agregar FR-012, concurrencia, autorización en curso, k6/semilla, configuración global de test y contratos. La implementación de T001–T049 está documentada y validada; T050–T061 permanecen pendientes.
