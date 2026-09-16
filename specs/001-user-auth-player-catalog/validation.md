@@ -319,3 +319,83 @@ Comando reproducible:
 Resultado: **BUILD SUCCESSFUL** en 1m 16s. Suite completa: **363 tests, 0 fallos, 0 errores y 0 omitidos**. También se generó correctamente `build/reports/jacoco/test/jacocoTestReport.xml`.
 
 **Control de cierre T050: PASSED.** T001–T049 continúan validadas; no se modificaron requisitos, decisiones técnicas, código productivo ni tests. T051–T061 permanecen pendientes.
+## Actualizacion T054-T056 - reorganizacion monorepo y regresion (2026-09-16)
+
+Se valido exclusivamente el cierre de la reorganizacion estructural. No se implemento T057, US4, integracion Football-Data ni funcionalidad frontend de US5.
+
+### Estructura verificada
+
+- `backend/` contiene el proyecto Gradle completo: `build.gradle`, `settings.gradle`, `gradlew`, `gradlew.bat`, `gradle/` y `src/`, conservando el paquete `com.devchesterunited.devchesterunitedv2`.
+- `frontend/` contiene unicamente el esqueleto planificado: `package.json`, `package-lock.json`, `vite.config.js`, `src/.gitkeep`, `tests/.gitkeep` y `e2e/.gitkeep`.
+- `.specify/` y `specs/` permanecen en la raiz. `.github/`, `performance/` y `postman/` no existen en el arbol actual y permanecen como areas planificadas en raiz; no se creo contenido fuera del alcance T054-T056.
+- No existen archivos `.ts`, `.tsx` ni `tsconfig` en `frontend/`.
+
+### T054 - compilacion y empaquetado
+
+Comando desde `backend/`:
+
+```powershell
+$env:JAVA_HOME = 'C:\Users\Leandro\.jdks\corretto-21.0.12.1'
+.\gradlew.bat clean assemble --no-daemon --console=plain
+```
+
+Resultado real: **BUILD SUCCESSFUL in 12s**, 6 tareas ejecutadas. Se generaron `backend/build/libs/DevchesterUnitedV2-0.0.1-SNAPSHOT.jar` y `-plain.jar`.
+
+### T055 - regresion historica
+
+Comando desde `backend/`:
+
+```powershell
+$env:JAVA_HOME = 'C:\Users\Leandro\.jdks\corretto-21.0.12.1'
+.\gradlew.bat test --no-daemon --console=plain
+```
+
+Resultado exacto de los XML: **363 tests, 0 fallos, 0 errores y 0 omitidos**, en 22 suites. Gradle termino con **BUILD SUCCESSFUL in 1m 16s**. No se modifico ningun archivo bajo `backend/src/test/`.
+
+La cifra verificable de esta ejecucion es 363/363, coincidente con el criterio textual de T055; no se alteraron tests para ajustar el conteo.
+
+### Arranque local y Swagger
+
+Se ejecuto temporalmente el bootJar con `--spring.profiles.active=local` contra `jdbc:postgresql://localhost:5433/devchester`, PostgreSQL **16.15**, Flyway y secreto JWT sintetico de validacion. El proceso arranco en el puerto 8080; Flyway valido el esquema y se registro `Started DevchesterUnitedV2Application`.
+
+Se uso `-Duser.timezone=UTC` unicamente en el proceso de validacion, porque la instancia PostgreSQL local rechaza `America/Buenos_Aires`; no se cambio codigo ni configuracion versionada.
+
+| Recurso | Resultado |
+| --- | --- |
+| `GET http://localhost:8080/swagger-ui/index.html` | **HTTP 200** |
+| `GET http://localhost:8080/v3/api-docs` | **HTTP 200** |
+
+El proceso de validacion fue detenido despues de las comprobaciones.
+
+### Hashes SHA-256 de tests
+
+Se calcularon sobre los 24 archivos actuales de `backend/src/test/` despues de la regresion; no hubo ediciones durante T054-T056.
+
+```text
+DevchesterUnitedV2ApplicationTests.java 61C45718D8B33C238EF584E5D72D36263B79F3FAD247AC02D30A2621B5A82367
+configuration/JwtConfigTest.java D5CA60358629922E159A94D5F1E1E638525261ABF46A393892A56F4037FA7BEC
+configuration/PostgresTestSupport.java CD1DC643964865A8379810C7F7E688EFC20DF2ABE3ABF9088754908CD08070DF
+configuration/PostgresTestSupportTest.java 8D151B77A15BF8DDEF5655CEDB9ECA6F84ED66C83405A6BB48F85FCE4CB2FF0C
+controller/ApiKeyE2ETest.java 4686D2CE7FD09A181A0962FE88562B905CE454FC0AAF7F50A85BBC8FB1A15DEE
+controller/AuthE2ETest.java 2758433FF809F629029F9D5362D77802F44FD76E935719F94791909FEF017131
+controller/CommonResponsesE2ETest.java C7DAC31BF04DD9B179B443FFDFF24B39F92F1014A55B002F839A3C44854957A0
+controller/JugadorE2ETest.java 3ED54DF29A5D9566EE7B679C743746EB368D5970D9537DD8E3787F11783BEAD1
+controller/OpenApiProfilesE2ETest.java 0C080227CAE6C4D592E5E06D418932C8DB6E5D0978D8A7763FB361B31265CD7A
+controller/RevocacionEnCursoE2ETest.java 40F3BC1DB359B59232257DFE3C532F2E6B818AE518B3642C179801BDFECCF291
+controller/SecurityBaseE2ETest.java 51AFD421B51934C068AA08C3AB87F551D8E9A36209AFC52BFBEB298FC31AF070
+controller/dto/AutenticacionDTOTest.java EE056ACF4EC5D0790028839CAE619D1730031FCDD34EC0733F765E635C3D0890
+modelo/ApiKeyTest.java A266FC4407E9CA3A16585F140B75E35F5E7CECC38B71DB301570C120C5B2C70C
+modelo/JugadorTest.java 8164076ECCFDC327CF6B09716077FABB45E95E1C1F006A4AA2B41372EF1D42A0
+modelo/UsuarioTest.java 1ACF31CE0684AB35D5491C3D55192E63ADEC3C85DE60FD30BC676EF93B98F9CD
+persistence/ApiKeyRepositoryIntegrationTest.java 9B1AC4710B4570D7FD1855D11EC2F08FA0EE4DE885C257A2B324AC6CF2A06AE7
+persistence/JugadorRepositoryIntegrationTest.java 2DB628F527AA54DBB6AE96A0E4D540EE2487334775FAD077320504FBD211F079
+persistence/UsuarioRepositoryIntegrationTest.java BD0C6291D24A3D5002C5A90FE6D0DFA8ED1B7F886CDD1E91F26743B63C1916D7
+service/ApiKeyConcurrencyIntegrationTest.java 938D23833BFA7BAD30B59CCC645BBA8093975A33436C62CC92FD2F6F16F7A124
+service/ApiKeyIntegrationTest.java 51C3308D5F15A3EEA700ACF99B2062C36BF5A31A243845C3D7F032F2836C7AC9
+service/AutenticacionIntegrationTest.java 2714953ABF52173E72F962AD25DF43D7A314C3B207BC0A0078588B237C9EE442
+service/JugadorServiceIntegrationTest.java A2AC4C924C21053EF2B06446D9FD66C5AAF468BBED241506AA6AEC3EE490FD0B
+service/config/ServiceConfigTest.java 82B53592A673433CF41EEE84032C0EFB490E53CA5428DE43932D8779E7326186
+resources/application.properties 1B6FEBF14BC95D692078BD9B86A29401C5BED9FE5F5C0237B2C0F38038241D3C
+```
+
+**Control de cierre T054-T056: PASSED.** US1-US3 no tuvieron cambios funcionales ni se modificaron tests existentes. T057 continua pendiente y no se avanzo a US4.

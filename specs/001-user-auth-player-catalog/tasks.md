@@ -121,9 +121,9 @@ T001–T050 son historial completado y validado según specs/001-user-auth-playe
 - [x] T051 Trasladar el proyecto Gradle existente a backend/ (build.gradle, settings.gradle, wrappers, gradle/, src/) preservando historial y configuración; no recrear el proyecto ni cambiar el paquete com.devchesterunited.devchesterunitedv2.
 - [x] T052 [P] Preparar frontend/package.json, frontend/package-lock.json, frontend/vite.config.js y directorios frontend/src/, frontend/tests/, frontend/e2e/ para React + JavaScript; no crear TypeScript, tsconfig, .ts ni .tsx.
 - [x] T053 [P] Verificar que .specify/, specs/, .github/, performance/ y postman/ permanezcan en la raíz y documentar la estructura en specs/001-user-auth-player-catalog/plan.md.
-- [ ] T054 Validar compilación y empaquetado desde backend/ con el wrapper existente, ajustando solo rutas relativas necesarias en backend/build.gradle, backend/settings.gradle y recursos de configuración.
-- [ ] T055 Ejecutar la regresión completa histórica desde backend/ y confirmar los 363 tests previos sin modificar tests existentes en backend/src/test/.
-- [ ] T056 Registrar la reorganización, hashes de tests y resultado de regresión en specs/001-user-auth-player-catalog/validation.md; si una adaptación de test fuera imprescindible, detenerse y solicitar «SÍ» explícito antes de editarlo.
+- [x] T054 Validar compilación y empaquetado desde backend/ con el wrapper existente, ajustando solo rutas relativas necesarias en backend/build.gradle, backend/settings.gradle y recursos de configuración.
+- [x] T055 Ejecutar la regresión completa histórica desde backend/ y confirmar los 363 tests previos sin modificar tests existentes en backend/src/test/.
+- [x] T056 Registrar la reorganización, hashes de tests y resultado de regresión en specs/001-user-auth-player-catalog/validation.md; si una adaptación de test fuera imprescindible, detenerse y solicitar «SÍ» explícito antes de editarlo.
 
 ## Fase 8: User Story 4 — Sincronización externa del catálogo (P1)
 
