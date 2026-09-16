@@ -1,10 +1,12 @@
 # Evidencia de validación — preparación compartida
 
+> **Estado vigente (2026-09-16):** T001–T069 están cerradas; US1–US4 están implementadas y validadas. T070–T088 permanecen pendientes. Las secciones anteriores conservan evidencia histórica de cada corte.
+
 Fecha: 2026-09-06. Alcance: T005, estado posterior a T001–T004 y anterior a T006. Esta evidencia no declara terminado el DoD de la entrega funcional.
 
 ## Estado inicial registrado
 
-**Nota de estado actual**: Las notas históricas de esta sección reflejan cortes anteriores. El estado vigente es T001–T049 completadas y validadas, con T050–T061 pendientes. Los cierres posteriores de T023, T037 y T049 son la evidencia vigente para las historias de usuario.
+**Nota histórica**: esta sección conserva el estado registrado en el corte inicial. El estado vigente se encuentra en la nota al inicio del documento y en las últimas secciones de cierre.
 
 Directorio: `C:\Users\Leandro\IdeaProjects\DevchesterUnitedV2`.
 Rama real: `master`. HEAD: `d721a6d54fad1773915e703593a61411ea951e01`.
@@ -399,3 +401,173 @@ resources/application.properties 1B6FEBF14BC95D692078BD9B86A29401C5BED9FE5F5C023
 ```
 
 **Control de cierre T054-T056: PASSED.** US1-US3 no tuvieron cambios funcionales ni se modificaron tests existentes. T057 continua pendiente y no se avanzo a US4.
+## Actualizacion T057 - autorizacion para tests de US4 (2026-09-16)
+
+Se revisaron constitution.md, spec.md, plan.md, research.md, data-model.md, contracts/proveedor.md, contracts/openapi.json y tasks.md antes de actuar.
+
+T057 queda resuelta sin modificar tests existentes: no se requiere autorizacion "SI" porque T058-T059 solo permitirian agregar archivos nuevos, y no se propone ningun cambio en backend/src/test existente. No se inventaron external IDs ni se modificaron migraciones, modelos legados, contratos publicos o configuracion.
+
+T058 y T059 permanecen pendientes. Sus clases de produccion (Equipo, CatalogoSincronizado y FootballDataAdapter) estan planificadas respectivamente en T063 y T065, aun no existen en el backend, y los artefactos actuales no fijan una API Java concreta que permita crear tests compilables sin anticipar esas tareas. Implementarlas ahora implicaria avanzar fuera del alcance solicitado.
+
+No se ejecutaron tests nuevos porque no se agregaron tests. La regresion historica no se repitio: este cambio no afecta codigo productivo ni tests existentes. T060 y posteriores continuan pendientes.
+## Actualizacion T063-T065 - prerrequisitos productivos de US4 (2026-09-16)
+
+### Grafo de dependencias
+
+T063 modelo puro -> T060 repositories, T064 entidades/V4/repositories y T065 Adapter/DTOs.
+T064 -> T060 y T061. T065 -> T059 y T062. T063+T064+T065 -> T061/T062.
+T060+T061+T062+T063+T064+T065 -> T066.
+
+Orden aplicado: T063 -> T064 -> T065. No se siguio el orden numerico T058/T059 porque eran pruebas first de APIs productivas inexistentes. T060-T062 requieren ademas Service/Controller, que pertenecen a T066-T067.
+
+### Cambios productivos
+
+- T063: se agregaron Equipo y CatalogoSincronizado como modelos puros; Jugador conserva su constructor legacy y suma identidad externa, equipo, actividad, dorsal nullable y fabrica explicita de importacion.
+- T064: se agregaron EquipoEntity, EquipoRepository y campos normalizados a JugadorEntity/JugadorRepository.
+- T064: se agrego V4__Normalize_catalog_sync.sql. Crea equipos, conserva UUID V3, agrega team_id/external_id/actividad/timestamps, permite dorsal null, FK e indices. Las columnas legacy league/team se conservan transitoriamente para no romper US3.
+- T064: V4 incluye un trigger de compatibilidad para fixtures legacy; crea/resuelve equipos locales por liga y nombre exactos sin inventar external_id.
+- T065: se agregaron DTOs externos exclusivamente en adapter/dto, FootballDataException y FootballDataAdapter con RestClient, cinco rutas secuenciales, HTTPS sin redirects, X-Auth-Token desde FOOTBALL_DATA_API_KEY, validacion de temporadas/cantidades/squads/IDs/posiciones, control de cuota, limite de 10 MiB, timeout de conexion 5 s, respuesta 15 s y deadline 120 s.
+- Se agrego solo la propiedad versionada vacia football-data.api-key desde FOOTBALL_DATA_API_KEY; no se versiono ningun secreto.
+
+### Validacion ejecutada
+
+Desde backend:
+
+    .\gradlew.bat compileJava --no-daemon --console=plain
+    .\gradlew.bat test --no-daemon --console=plain
+    .\gradlew.bat clean assemble --no-daemon --console=plain
+
+Resultados:
+
+- Compilacion productiva: BUILD SUCCESSFUL in 9s.
+- Regresion final: 363 tests, 0 fallos, 0 errores, 0 omitidos; BUILD SUCCESSFUL in 1m 14s.
+- Empaquetado limpio: BUILD SUCCESSFUL in 10s.
+- Las ejecuciones intermedias fallidas se corrigieron antes del resultado final: separador NUL invalido en SQL, mapeo JPA de EquipoEntity, constructor de inyeccion del Adapter y compatibilidad de inserts legacy.
+
+Arranque local final:
+
+- PostgreSQL 16.15 en localhost:5433/devchester.
+- Flyway aplico V4 y quedo en version v4.
+- Tomcat inicio en puerto 8080.
+- GET /swagger-ui/index.html: HTTP 200.
+- GET /v3/api-docs: HTTP 200.
+
+T058 y T059 estan ahora desbloqueadas porque existen las APIs productivas correspondientes, pero siguen pendientes y sin marcar. No se agregaron tests nuevos en este tramo. T060, T061 y T062 siguen pendientes porque requieren completar sus respectivos niveles de prueba y, para T061/T062, el Service/Controller posterior.
+
+No se modificaron tests historicos. US1-US3 conservaron su regresion verde. La desviacion respecto de data-model.md es conservar temporalmente league/team y el trigger legacy para compatibilidad de despliegue; se documenta como transicion coordinada y no asigna external IDs a datos existentes.
+
+**Cierre productivo validado: T063-T065 [x]. T058-T062 [ ], T066 y posteriores [ ].**
+
+## Validacion T058-T060 (2026-09-16)
+
+- T058: se agregaron unitarias puras para Equipo, Jugador importado y CatalogoSincronizado. Cubren identidad externa, temporada, estados, dorsal nullable, pertenencia, snapshot valido, composicion por liga y duplicados.
+- T059: se agrego FootballDataAdapterTest con HttpServer local en 127.0.0.1. Cubre las cinco rutas, DTOs y posiciones mapeadas, payload invalido, 429, 5xx, cuota agotada y timeout. No realiza llamadas a football-data.org ni usa credenciales reales.
+- T060: se agrego SincronizacionRepositoryIntegrationTest con PostgreSQL 16/Testcontainers. Cubre V4, unicidad de external_id, asociacion team_id, dorsal NULL, estados activo/inactivo y preservacion del UUID historico V3.
+- No se modifico ningun test existente.
+
+Resultados desde backend:
+
+    .\gradlew.bat test --tests '*EquipoTest' --tests '*JugadorImportadoTest' --tests '*CatalogoSincronizadoTest' --tests '*FootballDataAdapterTest' --tests '*SincronizacionRepositoryIntegrationTest' --no-daemon --console=plain
+    .\gradlew.bat test --no-daemon --console=plain
+    .\gradlew.bat clean assemble --no-daemon --console=plain
+
+- Tests focalizados: 16 tests, 0 fallos, 0 errores, 0 omitidos; BUILD SUCCESSFUL in 25s.
+- Regresion completa: 379 tests, 0 fallos, 0 errores, 0 omitidos; BUILD SUCCESSFUL in 1m 11s. Incluye los 363 historicos sin cambios.
+- Empaquetado limpio: BUILD SUCCESSFUL in 10s.
+
+T061 y T062 permanecen pendientes: sus pruebas requieren SincronizacionCatalogoService y CatalogoController, que son prerrequisitos productivos de T066 y T067 y quedan fuera de este alcance. T066 y posteriores continúan pendientes.
+
+**Cierre validado: T058-T060 [x]. T061-T062 [ ]. T066 y posteriores [ ].**
+
+## Validacion T066-T067 (2026-09-16)
+
+- T066: se implemento SincronizacionCatalogoService con transaccion READ COMMITTED de 150 s, lock global no bloqueante `pg_try_advisory_xact_lock(114644, 1)`, consulta secuencial al Adapter y publicacion atomica.
+- El snapshot se valida antes de persistir y exige exactamente 96 equipos distribuidos 20/20/18/20/18; el dominio tambien valida IDs, pertenencias, posiciones, dorsales nullable y duplicados.
+- La publicacion hace upsert por external_id, conserva UUID/created_at, actualiza y reactiva presentes, inactiva ausentes tras snapshot valido y desactiva los datos demo sin external_id solo en el primer snapshot. No elimina filas ni inventa IDs externos.
+- T067: se implemento `POST /api/v1/catalog/sync`, protegido exclusivamente por JWT y con validacion de usuario existente. Rechaza cuerpos no vacios con 400.
+- Errores de lock se traducen a 409; proveedor, timeout, cuota, snapshot invalido y errores de BD a 503; excepciones inesperadas permanecen como 500 generico. No se exponen cuerpos, secretos ni detalles internos.
+- No se modificaron tests historicos ni se realizan llamadas reales al proveedor durante tests.
+
+Tests nuevos:
+
+    .\gradlew.bat test --tests '*SincronizacionCatalogoServiceTest' --tests '*CatalogoControllerTest' --no-daemon --console=plain
+
+- Focalizados Service/Controller: 6 tests, 0 fallos, 0 errores, 0 omitidos; BUILD SUCCESSFUL in 15s.
+- Regresion completa: 385 tests, 0 fallos, 0 errores, 0 omitidos; BUILD SUCCESSFUL in 1m 17s. Los 363 tests historicos permanecen verdes.
+- `clean assemble`: BUILD SUCCESSFUL in 10s.
+
+Arranque local:
+
+- PostgreSQL 16.15 y Flyway V4 operativos; la aplicacion inicio correctamente en puerto 8080.
+- `/v3/api-docs`: HTTP 200; `/swagger-ui/index.html`: HTTP 200.
+- OpenAPI expone `/api/v1/catalog/sync` con operationId `sincronizarCatalogo`.
+
+T061 y T062 quedan desbloqueadas técnicamente porque ya existen Service y Controller, pero permanecen sin marcar: sus pruebas de integración/E2E completas pertenecen a esas tareas y no se implementaron en este alcance. T068 y posteriores continúan pendientes.
+
+**Cierre validado: T066-T067 [x]. T061-T062 [ ]. T068 y posteriores [ ].**
+
+## Validacion T061-T062 (2026-09-16)
+
+- T061: `SincronizacionCatalogoIntegrationTest` usa PostgreSQL 16 mediante Testcontainers y el Service real, con `FootballDataAdapter` simulado. Verifica publicacion completa, exactamente 96 equipos con reparto 20/20/18/20/18, upsert por `external_id`, preservacion de UUID, reactivacion, inactivacion, primer snapshot sobre datos demo, rollback ante proveedor y lock advisory concurrente.
+- T062: `CatalogoSyncE2ETest` usa MockMvc contra el contexto real de Spring, PostgreSQL/Testcontainers y adapter simulado. Verifica 200, JWT ausente/invalido 401, cuerpo no vacio 400, proveedor 503, error inesperado 500 y que GET `/api/v1/players` no invoca el adapter.
+- Los fixtures externos son sintéticos; no se realizaron llamadas a football-data.org ni se usaron credenciales reales.
+- No se modificaron tests históricos.
+
+Comandos ejecutados desde backend:
+
+    .\gradlew.bat test --tests '*SincronizacionCatalogoIntegrationTest' --tests '*CatalogoSyncE2ETest' --no-daemon --console=plain
+    .\gradlew.bat test --no-daemon --console=plain
+    .\gradlew.bat clean assemble --no-daemon --console=plain
+
+- Tests focalizados T061-T062: **9 tests, 0 fallos, 0 errores y 0 omitidos**; BUILD SUCCESSFUL in 29s.
+- Regresión completa: **394 tests, 0 fallos, 0 errores y 0 omitidos**; BUILD SUCCESSFUL in 1m 20s. Los 363 históricos permanecen aprobados.
+- Empaquetado limpio: BUILD SUCCESSFUL in 10s.
+
+T061 y T062 quedan cerradas con evidencia. T068 y posteriores continúan pendientes.
+
+**Cierre validado: T061-T062 [x]. T068 y posteriores [ ].**
+
+## Validacion T068-T069 y cierre US4 (2026-09-16)
+
+### Alcance y dependencia
+
+T068 es el gate de pruebas completo de US4: unitarias, adapter sin Internet, repositories, Service y E2E; exige verificar snapshot, rollback, 503, lock 409 y registrar evidencia. T069 depende de T068 y exige confirmar que los tests históricos permanecen intactos y ejecutar la regresión final de backend. Se ejecutaron en ese orden.
+
+### T068
+
+Se ejecutó desde `backend/`:
+
+    .\gradlew.bat test --tests '*EquipoTest' --tests '*JugadorImportadoTest' --tests '*CatalogoSincronizadoTest' --tests '*FootballDataAdapterTest' --tests '*SincronizacionRepositoryIntegrationTest' --tests '*SincronizacionCatalogoServiceTest' --tests '*SincronizacionCatalogoIntegrationTest' --tests '*CatalogoControllerTest' --tests '*CatalogoSyncE2ETest' --no-daemon --console=plain
+
+Resultado verificable: **31 tests, 0 fallos, 0 errores y 0 omitidos; BUILD SUCCESSFUL in 34s**. Las pruebas del proveedor usan fixtures loopback/mock; no hubo Internet ni credenciales reales.
+
+La cobertura incluye las cinco ligas, 96 equipos con reparto 20/20/18/20/18, idempotencia/upsert, reactivación, ausentes, datos demo sin external_id, atomicidad, rollback de proveedor, lock advisory concurrente, 409, 503, 500, JWT 401, body 400 y ausencia de llamadas del GET local al adapter.
+
+También se verificó runtime local con PostgreSQL 16.15 en `localhost:5433/devchester`, perfil `local` y Flyway V4. `/v3/api-docs` respondió HTTP 200, `/swagger-ui/index.html` respondió HTTP 200 y OpenAPI expuso `/api/v1/catalog/sync` con operationId `sincronizarCatalogo`. El proceso de validación fue detenido posteriormente.
+
+### T069
+
+Se ejecutó la regresión completa desde `backend/`:
+
+    .\gradlew.bat test --no-daemon --console=plain
+
+Resultado verificable: **394 tests, 0 fallos, 0 errores y 0 omitidos; BUILD SUCCESSFUL in 1m 20s**. Los **363 tests históricos** continúan pasando y no se modificó ningún test histórico.
+
+Empaquetado final:
+
+    .\gradlew.bat clean assemble --no-daemon --console=plain
+
+Resultado: **BUILD SUCCESSFUL in 10s**.
+
+No se requirieron cambios productivos ni refactors para T068-T069. US1-US3 mantienen su comportamiento validado. T068 y T069 quedan cerradas; T070 y posteriores continúan pendientes.
+
+**Cierre US4 validado: T057-T069 [x]. T070 y posteriores [ ].**
+
+## Remediación de consistencia documental (2026-09-16)
+
+- Se alinearon los estados vigentes de `spec.md`, `plan.md`, `tasks.md`, `contracts/openapi.json` y este documento: T001–T069 cerradas; T070–T088 pendientes.
+- T068 explicita la cobertura de consulta local de jugadores activos con equipo activo, correspondiente a FR-031.
+- Se aclaró que el actor de US4 es cualquier usuario existente con JWT válido, sin RBAC adicional en este alcance.
+- Se distinguió el endpoint propio de sincronización de las cinco rutas externas del proveedor.
+- Se documentó que las columnas legacy `league`/`team` se conservan en V4 para compatibilidad y que su eliminación queda fuera del alcance actual.
+- No se modificó código ni tests; no se requirieron nuevas ejecuciones de Gradle para esta remediación documental.

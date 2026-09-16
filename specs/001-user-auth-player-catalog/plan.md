@@ -4,7 +4,7 @@
 
 ## Resumen
 
-**Estado actual (2026-09-15)**: `tasks.md` marca T001–T050 realizadas; la evidencia histórica está en `validation.md`. T051–T061 siguen pendientes. Esta revisión diseña US4/US5 y FR-013–035, todavía sin implementar; no acredita nuevamente las pruebas históricas ni los gates de entrega.
+**Estado vigente (2026-09-16)**: `tasks.md` marca T001–T069 realizadas; la evidencia acumulada está en `validation.md`. US1–US4 están implementadas y validadas. US5 y los gates T070–T088 siguen pendientes.
 
 Conservar registro, login JWT, API Keys y consultas paginadas. Agregar un Adapter Football-Data.org v4, sincronización manual global con publicación atómica en PostgreSQL, entidades Equipo/Jugador con identidad externa y actividad, y una SPA React. Usar temporada vigente por liga; 96 equipos activos; ausentes inactivos y reactivables; dorsal nullable; credenciales frontend por pestaña. Conservar Gradle, Java 21, el paquete raíz y las migraciones aplicadas.
 
@@ -45,7 +45,7 @@ Nota histórica de compatibilidad: el repositorio declaraba Boot 4.1.1 y Gradle 
 | Persistencia aislada | Entidades en `persistence/dto`; Repository no invoca lógica del dominio | Integración de cada Repository |
 | Validación por capa | DTO formato/trimming; Service existencia; Modelo invariantes | Casos felices y borde |
 | JWT y API Key | JWT para generar credenciales; API Key obligatoria en catálogo; registro/login públicos según spec | Matriz de autenticación contractual |
-| OpenAPI y español | Cinco endpoints, dorsal nullable y errores en español | Swagger UI y comparación de contrato |
+| OpenAPI y español | Contrato del endpoint propio, cinco rutas externas, dorsal nullable y errores en español | Swagger UI y comparación de contrato |
 | Protección de tests | Conservar `DevchesterUnitedV2ApplicationTests.java`; agregar soporte en archivos nuevos | Cambiar/borrar tests existentes exige «SÍ» explícito |
 | DoD local y Postman | Build, arranque, flujo completo y colección ejecutable | Evidencia en `validation.md` |
 | GitHub Actions | Build y todas las suites antes de integrar en principal | Build SUCCESS para commit/PR exacto |
@@ -179,7 +179,9 @@ SC-004 se valida contra la matriz normativa de seguridad definida en `spec.md`: 
 
 Adapter: servidor HTTP local y fixtures sintéticos versionados, incluyendo cinco ligas/96 equipos, error HTTP, cuerpo inválido/truncado, squad ausente/vacío, nombres de una palabra, posiciones detalladas, dorsal null, duplicados y timeouts. No se ejecuta la API real desde ninguna suite. SC-006–009 se prueban con fixtures exactos y PostgreSQL; además la aceptación de operación real requiere verificar credencial/cobertura del proveedor. Barreras deterministas mantienen sync antes del commit para verificar 409, lectura del snapshot anterior y liberación tras error. Añadir pruebas de contenido/paginación con entidades inactivas y dorsal null, sin debilitar el oráculo previo.
 
-SC-010 exige navegador→proxy→backend real→PostgreSQL; mocks de frontend por sí solos no lo acreditan. Definir `frontend/e2e/compose.yml` con proyecto `devchester-e2e`, PostgreSQL dedicado en tmpfs y el bootJar construido desde `backend/` en puerto loopback 18080; esperar readiness y cargar fixture SQL normalizado de forma controlada después de Flyway. Playwright inicia preview en 4173 con proxy hacia 18080 mediante `vite.config.js` y `DEV_API_TARGET`. CI prepara imágenes, dependencias y navegador antes de ejecutar sin Internet. Credenciales exclusivamente sintéticas; nunca reutilizar DB_URL del entorno personal. No se ejecutaron builds ni suites durante este flujo documental.
+SC-010 exige navegador→proxy→backend real→PostgreSQL; mocks de frontend por sí solos no lo acreditan. Definir `frontend/e2e/compose.yml` con proyecto `devchester-e2e`, PostgreSQL dedicado en tmpfs y el bootJar construido desde `backend/` en puerto loopback 18080; esperar readiness y cargar fixture SQL normalizado de forma controlada después de Flyway. Playwright inicia preview en 4173 con proxy hacia 18080 mediante `vite.config.js` y `DEV_API_TARGET`. CI prepara imágenes, dependencias y navegador antes de ejecutar sin Internet. Credenciales exclusivamente sintéticas; nunca reutilizar DB_URL del entorno personal. La evidencia de builds y suites ejecutadas se mantiene en `validation.md`.
+
+En el alcance T064–T069 se conservan las columnas legacy `league`/`team` para compatibilidad con el DTO público y los datos existentes; su eliminación queda fuera de US4 y requiere una migración coordinada posterior.
 
 Agregar pruebas JOSE de algoritmo/firma/emisor/audiencia. SC-004 exige matriz de rechazos al 100 %; SC-005 compara contenido y totales contra fixtures. Casos felices y borde en cada nivel, sin H2 ni MockMvc dentro de tests de Service. Mantener todas las pruebas existentes.
 

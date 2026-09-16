@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.UUID;
+import java.time.Instant;
 
 @Entity
 @Table(name = "jugadores")
@@ -22,8 +23,18 @@ public class JugadorEntity {
     private String equipo;
     @Column(name = "position", nullable = false, length = 30)
     private String posicion;
-    @Column(name = "jersey_number", nullable = false)
-    private int dorsal;
+    @Column(name = "jersey_number")
+    private Integer dorsal;
+    @Column(name = "external_id")
+    private Long idExterno;
+    @Column(name = "team_id")
+    private UUID equipoId;
+    @Column(name = "is_active", nullable = false)
+    private boolean activo;
+    @Column(name = "created_at", nullable = false)
+    private Instant creadoEn;
+    @Column(name = "updated_at", nullable = false)
+    private Instant actualizadoEn;
     @Column(name = "nationality", nullable = false, length = 100)
     private String nacionalidad;
 
@@ -39,6 +50,16 @@ public class JugadorEntity {
         this.posicion = posicion;
         this.dorsal = dorsal;
         this.nacionalidad = nacionalidad;
+        this.activo = true;
+    }
+
+    public JugadorEntity(UUID id, Long idExterno, String nombre, String apellido, UUID equipoId,
+            String posicion, Integer dorsal, String nacionalidad, boolean activo,
+            Instant creadoEn, Instant actualizadoEn, String liga, String equipo) {
+        this.id=id; this.idExterno=idExterno; this.nombre=nombre; this.apellido=apellido;
+        this.equipoId=equipoId; this.posicion=posicion; this.dorsal=dorsal; this.nacionalidad=nacionalidad;
+        this.activo=activo; this.creadoEn=creadoEn; this.actualizadoEn=actualizadoEn;
+        this.liga=liga; this.equipo=equipo;
     }
 
     public UUID getId() { return id; }
@@ -47,6 +68,12 @@ public class JugadorEntity {
     public String getLiga() { return liga; }
     public String getEquipo() { return equipo; }
     public String getPosicion() { return posicion; }
-    public int getDorsal() { return dorsal; }
+    public int getDorsal() { return dorsal == null ? 0 : dorsal; }
     public String getNacionalidad() { return nacionalidad; }
+    public Integer getNumeroCamiseta() { return dorsal; }
+    public Long getIdExterno() { return idExterno; }
+    public UUID getEquipoId() { return equipoId; }
+    public boolean isActivo() { return activo; }
+    public Instant getCreadoEn() { return creadoEn; }
+    public Instant getActualizadoEn() { return actualizadoEn; }
 }

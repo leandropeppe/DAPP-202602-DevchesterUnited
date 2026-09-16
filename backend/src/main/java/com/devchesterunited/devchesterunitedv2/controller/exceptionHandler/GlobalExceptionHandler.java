@@ -16,9 +16,20 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
+import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    @ExceptionHandler(SincronizacionEnCursoException.class)
+    public ResponseEntity<Object> syncConflict(SincronizacionEnCursoException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponseDTO("Ya hay una sincronizacion del catalogo en curso"));
+    }
+
+    @ExceptionHandler(FootballDataException.class)
+    public ResponseEntity<Object> providerUnavailable(FootballDataException exception) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ErrorResponseDTO("No fue posible sincronizar el catalogo con el proveedor externo"));
+    }
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> invalidInput(ConstraintViolationException exception) {
         return response(HttpStatus.BAD_REQUEST);

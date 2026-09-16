@@ -16,7 +16,7 @@ description: "Tareas de implementación de autenticación y catálogo de jugador
 - Las pruebas son obligatorias por la Constitución y por la corrección C1 ya autorizada. Escribir pruebas antes de implementar la historia, observar fallo esperado y ejecutarlas nuevamente al cerrar. Fallos de compilación por componentes aún ausentes no acreditan la validación funcional final.
 - No modificar ni borrar tests existentes sin un «SÍ» explícito. Agregar archivos nuevos y soporte de configuración para preservar `src/test/java/com/devchesterunited/devchesterunitedv2/DevchesterUnitedV2ApplicationTests.java`.
 - Mantener Java 21, JUnit 5, PostgreSQL real/Testcontainers, unitarias sin Spring, E2E MockMvc solo en controller, casos felices y borde y documentación/errores en español.
-- Nota histórica de regeneración: esta versión reemplazó los IDs del borrador anterior, cuyo estado inicial era pendiente. El estado vigente es T001–T049 completadas y validadas; T050–T061 permanecen pendientes.
+- Nota histórica de regeneración: esta versión reemplazó los IDs del borrador anterior, cuyo estado inicial era pendiente. El estado vigente se detalla en la sección final: T001–T069 están completadas y validadas.
 
 ## Fase 1: Preparación compartida
 
@@ -131,19 +131,19 @@ T001–T050 son historial completado y validado según specs/001-user-auth-playe
 
 **Prueba independiente**: fixtures HTTP locales representan las cinco respuestas; un snapshot válido publica equipos/jugadores, un fallo devuelve 503 y conserva el snapshot anterior, y una ejecución concurrente devuelve 409.
 
-- [ ] T057 Obtener autorización constitucional «SÍ» explícita antes de modificar cualquier test existente que dependa del esquema V3; registrar el diff propuesto y la decisión en specs/001-user-auth-player-catalog/validation.md.
-- [ ] T058 [P] [US4] Crear unitarias puras para Equipo, jugador importado y CatalogoSincronizado, incluyendo identidad externa, estados, pertenencia, duplicados, dorsal nullable y temporada vigente, en backend/src/test/java/com/devchesterunited/devchesterunitedv2/modelo/.
-- [ ] T059 [P] [US4] Crear pruebas del Adapter con servidor HTTP local para cinco ligas, respuestas inválidas, 429/5xx, timeout, cuota y mapeo de DTO externo en backend/src/test/java/com/devchesterunited/devchesterunitedv2/adapter/FootballDataAdapterTest.java.
-- [ ] T060 [P] [US4] Crear integración de repositories para V4, IDs externos únicos, asociación equipo-jugador, inactivación/reactivación, dorsal null y preservación de UUID V3 en backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/SincronizacionRepositoryIntegrationTest.java.
-- [ ] T061 [P] [US4] Crear integración de Service con PostgreSQL/Testcontainers para advisory lock global, competidor 409, publicación atómica, rollback y snapshot anterior en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/SincronizacionCatalogoIntegrationTest.java.
-- [ ] T062 [P] [US4] Crear E2E MockMvc del endpoint de sincronización para JWT válido, cuerpo/query rechazados, 200, 400, 409, 503 y 500 en backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/CatalogoSyncE2ETest.java.
-- [ ] T063 [US4] Implementar modelos puros Equipo, CatalogoSincronizado, estados y reglas de snapshot sin dependencias de Spring/JPA en backend/src/main/java/com/devchesterunited/devchesterunitedv2/modelo/.
-- [ ] T064 [US4] Implementar entidades/repositories y migración V4 para equipos, team_id, IDs externos, actividad y dorsal nullable, conservando UUID V3, en backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/ y backend/src/main/resources/db/migration/V4__Normalize_catalog_sync.sql.
-- [ ] T065 [US4] Implementar DTOs Football-Data en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/dto/ y FootballDataAdapter con RestClient, temporada vigente, cinco rutas, timeouts y traducción de errores en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/impl/.
-- [ ] T066 [US4] Implementar SincronizacionCatalogoService como único orquestador Adapter-Modelo-Persistence: lock global PostgreSQL, consultas secuenciales, validación 96 equipos, inactivación/reactivación, reintento manual idempotente, commit único y rollback en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/.
-- [ ] T067 [US4] Implementar POST /api/v1/catalog/sync en backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/CatalogoController.java, con JWT, errores 409/503 y contrato de cinco endpoints en specs/001-user-auth-player-catalog/contracts/openapi.json.
-- [ ] T068 [US4] Ejecutar unitarias, Repository, Service, Adapter y E2E de US4 sin Internet ni credenciales reales; verificar rollback, 503, lock 409 y registrar resultados en specs/001-user-auth-player-catalog/validation.md.
-- [ ] T069 [US4] Confirmar que los tests históricos permanecen intactos y ejecutar la regresión backend completa después de US4; registrar cualquier cambio autorizado y su evidencia en specs/001-user-auth-player-catalog/validation.md.
+- [x] T057 Obtener autorización constitucional «SÍ» explícita antes de modificar cualquier test existente que dependa del esquema V3; registrar el diff propuesto y la decisión en specs/001-user-auth-player-catalog/validation.md.
+- [x] T058 [P] [US4] Crear unitarias puras para Equipo, jugador importado y CatalogoSincronizado, incluyendo identidad externa, estados, pertenencia, duplicados, dorsal nullable y temporada vigente, en backend/src/test/java/com/devchesterunited/devchesterunitedv2/modelo/.
+- [x] T059 [P] [US4] Crear pruebas del Adapter con servidor HTTP local para cinco ligas, respuestas inválidas, 429/5xx, timeout, cuota y mapeo de DTO externo en backend/src/test/java/com/devchesterunited/devchesterunitedv2/adapter/FootballDataAdapterTest.java.
+- [x] T060 [P] [US4] Crear integración de repositories para V4, IDs externos únicos, asociación equipo-jugador, inactivación/reactivación, dorsal null y preservación de UUID V3 en backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/SincronizacionRepositoryIntegrationTest.java.
+- [x] T061 [P] [US4] Crear integración de Service con PostgreSQL/Testcontainers para advisory lock global, competidor 409, publicación atómica, rollback y snapshot anterior en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/SincronizacionCatalogoIntegrationTest.java.
+- [x] T062 [P] [US4] Crear E2E MockMvc del endpoint de sincronización para JWT válido, cuerpo/query rechazados, 200, 400, 409, 503 y 500 en backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/CatalogoSyncE2ETest.java.
+- [x] T063 [US4] Implementar modelos puros Equipo, CatalogoSincronizado, estados y reglas de snapshot sin dependencias de Spring/JPA en backend/src/main/java/com/devchesterunited/devchesterunitedv2/modelo/.
+- [x] T064 [US4] Implementar entidades/repositories y migración V4 para equipos, team_id, IDs externos, actividad y dorsal nullable, conservando UUID V3, en backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/ y backend/src/main/resources/db/migration/V4__Normalize_catalog_sync.sql.
+- [x] T065 [US4] Implementar DTOs Football-Data en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/dto/ y FootballDataAdapter con RestClient, temporada vigente, cinco rutas, timeouts y traducción de errores en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/impl/.
+- [x] T066 [US4] Implementar SincronizacionCatalogoService como único orquestador Adapter-Modelo-Persistence: lock global PostgreSQL, consultas secuenciales, validación 96 equipos, inactivación/reactivación, reintento manual idempotente, commit único y rollback en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/.
+- [x] T067 [US4] Implementar POST /api/v1/catalog/sync en backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/CatalogoController.java, con JWT, errores 409/503 y el contrato del endpoint propio junto con las cinco rutas externas en specs/001-user-auth-player-catalog/contracts/openapi.json.
+- [x] T068 [US4] Ejecutar unitarias, Repository, Service, Adapter y E2E de US4 sin Internet ni credenciales reales; verificar rollback, 503, lock 409, la consulta local de jugadores activos con equipo activo y registrar resultados en specs/001-user-auth-player-catalog/validation.md.
+- [x] T069 [US4] Confirmar que los tests históricos permanecen intactos y ejecutar la regresión backend completa después de US4; registrar cualquier cambio autorizado y su evidencia en specs/001-user-auth-player-catalog/validation.md.
 
 ## Fase 9: User Story 5 — Frontend web MVP (P2)
 
@@ -183,5 +183,7 @@ T050 completada → Monorepo T051–T056 → US4 T057–T069 → US5 T070–T078
 ## Estado y cobertura
 
 - T001–T050: [x] historial completado, respaldado por validation.md; US1, US2 y US3 no son trabajo pendiente.
-- T051–T088: [ ] trabajo nuevo pendiente para reorganización, US4, US5 y gates finales.
+- T051–T069: [x] reorganización y US4 completadas, respaldadas por validation.md.
+- T070–T078: [ ] US5 pendiente.
+- T079–T088: [ ] gates finales pendientes.
 - La suite histórica de 363 tests se conserva como regresión; no se afirma que las pruebas nuevas, CI, SonarCloud, performance, frontend o aceptación externa estén ejecutadas.

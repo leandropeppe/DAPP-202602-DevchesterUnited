@@ -3,9 +3,11 @@
 
 **Rama de Funcionalidad (Feature Branch)**: `001-user-auth-player-catalog`
 
+**Estado vigente (2026-09-16)**: T001–T069 completadas; US1–US4 implementadas y validadas. US5 y los gates finales T070–T088 permanecen pendientes.
+
 **Fecha de Creación**: 2026-09-02
 
-**Estado**: Implementación funcional de US1–US3 y T001–T050 validada; US4, US5 y gates finales pendientes
+**Estado histórico**: esta línea conserva la descripción del corte inicial; el estado vigente aparece arriba.
 
 **Entrada**: Descripción del usuario: "Crear los requerimientos y contratos para la Entrega Nro 1 de Devchester United: gestión de usuarios, autenticación JWT, generación de API Key, catálogo de jugadores, sincronización del catálogo real desde una API externa de fútbol y frontend web React para consumir las funcionalidades disponibles."
 
@@ -83,7 +85,7 @@ Como consumidor de la API utilizando una API Key válida, quiero buscar y filtra
 
 ### User Story 4 - Sincronización del Catálogo Real de Jugadores (Prioridad: P1)
 
-Como administrador u operador de Devchester United, quiero sincronizar el catálogo de equipos y jugadores desde una fuente externa confiable, para disponer localmente de las plantillas reales de las cinco principales ligas europeas sin depender de la API externa durante las consultas normales del catálogo.
+Como usuario autenticado existente (rol operativo de administrador u operador) de Devchester United, quiero sincronizar el catálogo de equipos y jugadores desde una fuente externa confiable, para disponer localmente de las plantillas reales de las cinco principales ligas europeas sin depender de la API externa durante las consultas normales del catálogo. En esta entrega la autorización requiere un JWT válido asociado a un usuario existente; no se define una comprobación RBAC adicional.
 
 **Por qué esta prioridad**: Alta. El catálogo actual demuestra el funcionamiento de búsqueda y filtrado, pero la aplicación necesita datos reales y suficientemente completos para representar el dominio previsto.
 

@@ -3,7 +3,7 @@
   "info": {
     "title": "Devchester United — Autenticación y catálogo sincronizado",
     "version": "1.1.0",
-    "description": "Contrato objetivo de la Entrega 1, revisión 2026-09-15; ampliación pendiente de implementación. Registro/login públicos, JWT para generar API Key y sincronizar, X-API-KEY para catálogo local. Mensajes en español. Swagger solo en local/test. Jugador admite dorsal null y apellido vacío cuando no existe un apellido separado en la fuente."
+    "description": "Contrato de la Entrega 1, revisión 2026-09-16; US1–US4 implementadas y validadas. US5 y los gates finales permanecen pendientes. Registro/login públicos, JWT para generar API Key y sincronizar, X-API-KEY para catálogo local. Mensajes en español. Swagger solo en local/test. Jugador admite dorsal null y apellido vacío cuando no existe un apellido separado en la fuente."
   },
   "servers": [
     {
