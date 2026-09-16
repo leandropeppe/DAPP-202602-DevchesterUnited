@@ -1,65 +1,282 @@
 # Constitution: Core & Foundation (Devchester United)
 
 ## 1. Stack Tecnológico
-- **Lenguaje y Framework:** Java 21 con Spring Boot.
+- **Lenguaje y Framework Backend:** Java 21 con Spring Boot.
+- **Frontend Web:** React.
 - **Base de Datos:** PostgreSQL para persistencia de datos.
-- **Testing Frameworks:** JUnit 5 + Testcontainers (para entorno de base de datos real en pruebas de integración).
+- **Testing Frameworks Backend:** JUnit 5 + Testcontainers (para entorno de base de datos real en pruebas de integración).
+- **Integraciones Externas:** Las APIs de terceros deben consumirse exclusivamente a través de una capa `adapter`, desacoplada del dominio y de los controladores.
 
+---
 ## 2. Principios de Arquitectura y Diseño por Capas
-- **División Estricta de Capas:**
-    - `Controller`: Maneja la capa de entrada HTTP/REST. **Solo habla con la capa de Service.**
-    - `Service`: Orquesta la lógica entre los objetos de Modelo y la capa de Persistencia.
-    - `Modelo`: Contiene la lógica de negocio rica (modelo lógico del dominio). **No conoce ni interactúa con ninguna otra capa.**
-    - `Persistencia / Repository`: Conoce las entidades del modelo para persistirlas, pero **no realiza llamadas de lógica sobre él.**
-- **OpenAPI v3 / Swagger:** Todos los endpoints expuestos deben documentarse bajo el estándar OpenAPI v3, accesible mediante interfaz de Swagger UI.
 
-- **Estructura de Paquetes Obligatoria (Package by Layer):**
-  El proyecto DEBE seguir estrictamente la siguiente organización de paquetes tradicional a partir del paquete raíz (p. ej. `com.devchester.united`):
+### División estricta de capas
 
-  ```text
-  src/main/java/com/devchester/united/
-  ├── configuration/         # Configuración general de Spring / Security / Swagger / App
-  ├── controller/            # Controladores REST de la aplicación
-  │   ├── dto/               # DTOs de Request y Response (ej. LoginRequestDTO, RegisterRequestDTO)
-  │   └── exceptionHandler/  # Manejador global de excepciones (@ControllerAdvice)
-  ├── modelo/                # Objetos del modelo lógico del dominio puro
-  │   ├── exception/         # Excepciones propias del dominio
-  │   └── utils/             # Utilidades o helpers del modelo
-  ├── persistence/           # Capa de datos y repositorios/DAOs JPA
-  │   └── dto/               # Entidades JPA o DAOs de persistencia
-  └── service/               # Servicios y Casos de Uso
-      ├── config/            # Configuraciones específicas de servicios
-      ├── impl/              # Implementaciones concretas de los servicios
-      └── interfaces/        # Interfaces de los servicios
+- `Controller`
+  - Maneja exclusivamente la capa de entrada HTTP/REST.
+  - Solo habla con la capa de `Service`.
+  - No puede acceder directamente a `Repository`, `Adapter` ni APIs externas.
 
-## 3. Políticas de Validación en Capas
-- **Validación en DTO (Request):** Forma, tipo de datos, validaciones de formato (`@NotNull`, `@NotBlank`, etc.), trimming y sanitización del input.
-- **Validación en Service:** Existencia de recursos y viabilidad operacional (resolución de IDs, búsqueda de entidades en BD).
-- **Validación en Modelo:** Invariantes de dominio en los propios objetos de negocio, lanzando **excepciones propias del dominio** cuando se violen.
+- `Service`
+  - Orquesta los casos de uso de la aplicación.
+  - Coordina objetos de `Modelo`, `Persistence` y `Adapter`.
+  - Contiene la lógica de aplicación y la coordinación transaccional cuando corresponda.
+  - No debe contener detalles HTTP propios de proveedores externos.
 
-## 4. Estrategia de Testing y Definición de Listo (Definition of Done)
-- **Niveles de Pruebas:**
-    - **Unitarias:** Pruebas del dominio puro sin contexto de Spring y sin conexión a BD.
-    - **Integración:** Pruebas de Services y Repositories corriendo contra una base de datos PostgreSQL real levantada mediante **Testcontainers**.
-    - **End-to-End (E2E):** Pruebas de controladores con **MockMvc**, ubicadas exclusivamente en su propio paquete (jamás dentro de un test de service).
-    - **Cobertura:** Todos los tests deben contemplar tanto **casos felices** como **casos borde**.
-- **Regla Inmutable de Tests:** Queda estrictamente prohibido modificar o borrar un test existente en cualquier fase del flujo sin pedir permiso y recibir un "SÍ" explícito del usuario.
-- **Criterios de Finalización (DoD):** Un requerimiento está terminado únicamente si:
-    1. Cuenta con tests unitarios e integración (felices y bordes) y todos ejecutan en PASSED.
-    2. La aplicación compila y levanta correctamente con la configuración local.
-    3. La colección de Postman del proyecto queda actualizada con los endpoints nuevos.
+- `Modelo`
+  - Contiene la lógica de negocio rica y las invariantes del dominio.
+  - No conoce ni interactúa con Controller, Service, Persistence, Adapter, Spring ni APIs externas.
+  - Debe mantenerse independiente de infraestructura.
 
-## 5. Gobernanza, Calidad y CI/CD
-- **Build & CI Pipeline:** Todo commit/PR integrado en la rama principal debe ejecutar y aprobar la integración continua en GitHub Actions de forma obligatoria (Build SUCCESS).
-- **Quality Gate (SonarCloud):** Proyecto vinculado a SonarCloud manteniendo un umbral estricto: **máximo 10 issues abiertos** (sin vulnerabilidades ni smells críticos).
-- **Convenciones de Idioma:**
-    - Documentación, mensajes de error y explicaciones en **español**.
-    - Nombre del dominio en **español** (sin acentos ni 'ñ' en identificadores de código).
-    - Términos técnicos y normativos en **inglés**.
+- `Persistence / Repository`
+  - Responsable exclusivamente de la persistencia y recuperación de datos.
+  - Conoce las entidades necesarias para persistir el estado.
+  - No realiza llamadas de lógica de negocio sobre el modelo.
+  - No consume APIs externas.
 
-## 6. Alcance de la Entrega Nro 1 (Phase 1 Scope)
-- **Seguridad:** Autenticación JWT e identificación obligatoria por API Key para acceder a los endpoints privados.
-- **Funcionalidades:**
-    - Creación de usuario y generación de API Key.
-    - Endpoint de catálogo de jugadores (con filtros por liga, equipo y posición).
-- **Fuera de Alcance:** Mercado de tokens (compras/ventas), schedulers, estrategias de valuación y cotizaciones históricas.
+- `Adapter`
+  - Encapsula toda comunicación con sistemas o APIs externas.
+  - Traduce contratos externos a representaciones internas de la aplicación.
+  - No contiene lógica de negocio.
+  - Solo puede ser utilizado por la capa `Service`.
+  - No debe ser invocado directamente desde Controller, Modelo o Repository.
+
+### Regla de dependencias permitidas
+
+```text
+Controller ──→ Service
+
+Service ──→ Modelo
+Service ──→ Persistence
+Service ──→ Adapter
+
+Adapter ──→ API externa
+Persistence ──→ PostgreSQL
+```
+
+No están permitidas dependencias directas como:
+
+```text
+Controller ──X──→ Repository
+Controller ──X──→ Adapter
+Controller ──X──→ API externa
+
+Modelo ──X──→ Spring
+Modelo ──X──→ Persistence
+Modelo ──X──→ Adapter
+Modelo ──X──→ API externa
+
+Frontend ──X──→ PostgreSQL
+Frontend ──X──→ APIs externas del backend
+```
+
+### Persistencia local frente a integraciones externas
+
+- Los datos provenientes de APIs externas que sean necesarios para el funcionamiento del dominio deben persistirse localmente cuando así lo determine el caso de uso.
+- Los endpoints de consulta del negocio no deben depender en tiempo real de la disponibilidad de una API externa, salvo que el requisito lo establezca explícitamente.
+- Una indisponibilidad temporal del proveedor externo no debe impedir consultar información local previamente persistida.
+- Un fallo de sincronización no debe corromper ni eliminar datos locales válidos previamente almacenados.
+
+### OpenAPI v3 / Swagger
+
+- Todos los endpoints públicos expuestos por el backend deben documentarse mediante OpenAPI v3.
+- La documentación debe estar disponible mediante Swagger UI en los entornos definidos por la aplicación.
+- El contrato OpenAPI debe representar correctamente endpoints, requests, responses, códigos HTTP, mecanismos de autenticación y esquemas de error.
+
+---
+
+## 3. Estructura de Paquetes Obligatoria
+
+El backend DEBE seguir estrictamente una organización Package by Layer a partir del paquete raíz, por ejemplo:
+
+```text
+src/main/java/com/devchester/united/
+├── configuration/
+├── controller/
+│   ├── dto/
+│   └── exceptionHandler/
+├── modelo/
+│   ├── exception/
+│   └── utils/
+├── persistence/
+│   └── dto/
+├── adapter/
+│   ├── dto/
+│   └── impl/
+└── service/
+    ├── config/
+    ├── impl/
+    └── interfaces/
+```
+
+### Regla de DTOs externos
+
+- Los DTOs pertenecientes a APIs externas deben vivir dentro de `adapter/dto`.
+- Los DTOs externos no deben reutilizarse como DTOs públicos del Controller.
+- Los DTOs externos no deben convertirse en objetos de dominio de forma implícita.
+- La traducción entre contrato externo y representación interna debe ocurrir dentro de la capa `Adapter` o mediante mecanismos de mapeo asociados a ella.
+
+---
+
+## 4. Políticas de Validación en Capas
+
+- **Validación en DTO Request:** forma, tipo, requeridos, formato, longitudes, trimming, sanitización y validaciones como `@NotNull`, `@NotBlank`, etc.
+- **Validación en Service:** existencia de recursos, resolución de IDs, viabilidad operacional, reglas que requieran persistencia y coordinación del caso de uso.
+- **Validación en Modelo:** invariantes de dominio, estados inválidos y reglas de negocio puras mediante excepciones propias del dominio.
+
+Las validaciones realizadas en capas superiores no reemplazan las invariantes del Modelo.
+
+---
+
+## 5. Integraciones con APIs Externas
+
+- Toda integración con terceros DEBE implementarse mediante la capa `Adapter`.
+- Queda prohibido realizar llamadas HTTP a APIs externas desde Controller, Modelo o Repository.
+- Los Services no deben depender de detalles HTTP específicos del proveedor.
+
+### Credenciales y secretos
+
+- API Keys, tokens y credenciales externas deben proporcionarse mediante variables de entorno o mecanismos seguros equivalentes.
+- Queda estrictamente prohibido versionar secretos reales, incluir credenciales reales en código o configuración versionada, o registrar secretos completos en logs.
+
+### Mapeo de datos
+
+- Los contratos externos deben encapsularse dentro del Adapter.
+- Las estructuras entregadas por un proveedor externo no definen directamente el modelo de dominio de Devchester United.
+- El Adapter debe traducir los datos externos a representaciones internas controladas por la aplicación.
+
+### Sincronización
+
+- Los procesos de sincronización deben ser idempotentes siempre que el caso de uso lo permita.
+- Deben evitarse duplicados al volver a importar información previamente sincronizada.
+- Las entidades sincronizadas deben conservar, cuando sea necesario, el identificador externo del proveedor para permitir futuras actualizaciones.
+- Una nueva sincronización debe actualizar entidades existentes cuando corresponda en lugar de crear duplicados.
+
+### Manejo de errores externos
+
+- Los errores de proveedores externos deben traducirse a errores propios de la aplicación.
+- Los detalles internos de la respuesta del proveedor no deben filtrarse directamente al consumidor de la API.
+- Timeouts, errores HTTP o respuestas inválidas no deben dejar el sistema en un estado inconsistente.
+- Un fallo externo no debe provocar la eliminación de información local válida previamente sincronizada.
+
+---
+## 6. Estrategia de Testing y Definition of Done
+
+### Niveles de pruebas
+
+- **Unitarias:** dominio puro, sin Spring ni conexión a base de datos.
+- **Integración:** Services y Repositories contra PostgreSQL real mediante Testcontainers.
+- **End-to-End (E2E):** controladores con MockMvc, ubicados exclusivamente en su paquete correspondiente.
+- **Adapter:** integraciones externas probadas sin depender del proveedor real, contemplando éxito, errores HTTP, respuestas inválidas o incompletas, fallos de comunicación, timeout y mapeo.
+- **Cobertura funcional:** todos los tests deben contemplar casos felices y casos borde.
+
+### Regla inmutable de tests
+
+Queda estrictamente prohibido modificar o borrar un test existente en cualquier fase del flujo sin pedir permiso y recibir un **"SÍ" explícito del usuario**.
+
+### Restricción de APIs reales en tests
+
+- Las suites automatizadas no deben consumir cuotas reales de proveedores externos.
+- Los tests no deben depender de conectividad a Internet.
+- Los tests no deben requerir credenciales reales de terceros.
+
+### Criterios de Finalización (DoD)
+
+Un requerimiento está terminado únicamente si:
+
+1. Cuenta con tests unitarios y/o de integración según corresponda, incluyendo casos felices y borde, y todos ejecutan en PASSED.
+2. La aplicación compila correctamente.
+3. La aplicación levanta correctamente con la configuración local definida.
+4. La colección de Postman queda actualizada cuando el requerimiento modifica o agrega endpoints.
+
+Cuando el requerimiento incluya una integración externa:
+
+5. El Adapter cuenta con pruebas automatizadas.
+6. Se verifica el comportamiento ante indisponibilidad o respuestas inválidas del proveedor.
+7. Ningún secreto real queda versionado.
+8. La sincronización puede ejecutarse nuevamente sin generar duplicados indebidos.
+
+Cuando el requerimiento incluya frontend:
+
+9. El frontend compila correctamente.
+10. El frontend consume únicamente endpoints documentados del backend.
+11. Las validaciones del frontend son complementarias y no reemplazan las validaciones del backend.
+
+## 7. Frontend Web
+
+- El frontend web se implementará utilizando React.
+- El frontend es consumidor de la API REST de Devchester United.
+- El frontend no accede directamente a PostgreSQL.
+- El frontend no debe consumir directamente APIs externas utilizadas internamente por el backend.
+- Toda comunicación con el backend debe respetar los contratos HTTP/OpenAPI publicados.
+
+### Responsabilidades del frontend
+
+El frontend puede contener lógica de presentación, navegación, estado de interfaz, validaciones de experiencia de usuario y transformación de datos para representación visual.
+
+El frontend no debe contener lógica de negocio del dominio, acceso directo a persistencia, credenciales de proveedores externos ni secretos de backend.
+
+### Seguridad
+
+- Los secretos de infraestructura y proveedores externos nunca deben exponerse al frontend.
+- Ninguna validación realizada en React reemplaza la validación equivalente del backend.
+- La autorización efectiva siempre es responsabilidad del backend.
+
+### Contratos
+
+- El frontend debe consumir exclusivamente endpoints soportados y documentados por la API.
+- Cuando una necesidad del frontend requiera información no disponible, primero debe evolucionarse el contrato backend correspondiente.
+
+## 8. Gobernanza, Calidad y CI/CD
+
+### Build & CI Pipeline
+
+- Todo commit o Pull Request integrado en la rama principal debe ejecutar y aprobar la integración continua mediante GitHub Actions.
+- El pipeline debe mantener estado `BUILD SUCCESS`.
+
+### Quality Gate
+
+- El proyecto debe estar vinculado a SonarCloud.
+- Se mantiene como criterio máximo:
+  - 10 issues abiertos;
+  - 0 vulnerabilidades;
+  - 0 smells críticos.
+
+### Convenciones de idioma
+
+- Documentación, mensajes de error y explicaciones: español.
+- Nombre del dominio: español.
+- Los identificadores del código no utilizan acentos ni `ñ`.
+- Términos técnicos, estándares y conceptos normativos pueden mantenerse en inglés.
+
+---
+
+## 9. Alcance de la Entrega Nro 1
+
+### Seguridad
+
+- Autenticación mediante JWT.
+- Identificación mediante API Key para los endpoints privados definidos por el contrato.
+
+### Funcionalidades
+
+- Creación de usuario.
+- Login.
+- Generación y rotación de API Key.
+- Catálogo de jugadores con filtros por liga, equipo y posición.
+- Integración de catálogo con una fuente externa para obtener y actualizar equipos y jugadores de las cinco principales ligas europeas.
+- Persistencia local de los datos obtenidos desde la fuente externa.
+- Frontend web MVP en React para consumir las funcionalidades disponibles del backend.
+
+### Fuera de alcance
+
+Permanecen fuera del alcance de esta entrega, salvo que una especificación posterior indique lo contrario:
+
+- mercado de tokens;
+- compra y venta de jugadores;
+- portfolio;
+- estrategias de valuación;
+- cotizaciones históricas;
+- ranking de mercado;
+- schedulers de valuación;
+- funcionalidades avanzadas de mercado.

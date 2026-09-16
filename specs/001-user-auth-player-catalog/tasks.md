@@ -109,71 +109,79 @@ description: "Tareas de implementación de autenticación y catálogo de jugador
 **Prueba independiente y control de cierre**: Todas las historias PASSED más mediciones, arranque, Postman, CI y SonarCloud con evidencia real.
 
 - [x] T050 Revisar separación de capas, DTOs/errores españoles y ausencia de secretos en logs; corregir producción si corresponde y repetir suites afectadas antes de medir en `src/main/java/com/devchesterunited/devchesterunitedv2/controller/AuthController.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/controller/JugadorController.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/AutenticacionServiceImpl.java`, `specs/001-user-auth-player-catalog/validation.md`.
-- [ ] T051 Preparar fixture y entorno descartable de rendimiento: 10.000 jugadores (20 ligas×20 equipos×25), cuatro posiciones y 1.000 usuarios, Madrid en ambos equipos, checksum y recursos Linux/app/BD/generador según plan; restaurar solo esta BD en `performance/seed.sql`, `performance/compose.yml`, `performance/README.md`.
-- [ ] T052 [P] Implementar escenario k6 de registro+login: 1 VU, identificadores únicos, 60 s de calentamiento excluidos y 5 min medidos, Trend conjunto HTTP completo p95<2000 ms, cero errores/checks 100 % (SC-001) en `performance/registro-login.js`.
-- [ ] T053 [P] Implementar escenario k6 API Key: 1 VU y rotaciones secuenciales con setup/login fuera de medición, calentamiento y duración del plan, Trend HTTP completo p95<500 ms, cero errores/checks 100 % (SC-002) en `performance/api-key.js`.
-- [ ] T054 [P] Implementar escenario k6 catálogo: 50 VU constantes sin pausas, mezcla 20 % de cada tipo definido en plan, page=1/limit=20, calentamiento excluido y Trend HTTP completo p95<300 ms, cero errores/checks 100 % (SC-003) en `performance/catalogo.js`.
-- [ ] T055 Ejecutar tres repeticiones por escenario con restauración del fixture, conservar resúmenes/recursos/commit/checksum y comprobar cada umbral; si falla corregir causa y repetir mediciones afectadas, sin reducir carga o relajar metas en `specs/001-user-auth-player-catalog/validation.md`, `performance/results/README.md`.
-- [ ] T056 Comparar Swagger UI y /v3/api-docs contra los cuatro endpoints del contrato: rutas, esquemas, parámetros, seguridad, errores y perfiles; corregir anotaciones/configuración, no debilitar contrato para ocultar discrepancias en `specs/001-user-auth-player-catalog/contracts/openapi.json`, `src/main/java/com/devchesterunited/devchesterunitedv2/configuration/OpenApiConfig.java`, `specs/001-user-auth-player-catalog/validation.md`.
-- [ ] T057 Crear o actualizar colección Postman con cuatro endpoints, variables baseUrl/JWT/API Key, ejemplos felices y errores en español; importar y ejecutar flujo sin guardar secretos reales en `postman/DevchesterUnited.postman_collection.json`.
-- [ ] T058 Configurar GitHub Actions para Java 21, wrapper, Docker/Testcontainers, build y todas las pruebas sin omisiones, informe JaCoCo y artefactos; exigir Build SUCCESS antes de integrar en principal en `.github/workflows/ci.yml`, `build.gradle`.
-- [ ] T059 Configurar vinculación/análisis SonarCloud con secretos de CI y esperar Quality Gate; agregar comprobación explícita de máximo 10 issues abiertos, cero vulnerabilidades y cero smells críticos sobre el análisis del commit en `.github/workflows/ci.yml`, `build.gradle`, `scripts/verify-sonar-gate.ps1`.
-- [ ] T060 Ejecutar quickstart completo con configuración local: clean build, arranque, migraciones, flujo HTTP y Postman; registrar comandos/resultados, hashes de tests preservados y actualizar instrucciones solo si cambiaron comandos reales en `specs/001-user-auth-player-catalog/quickstart.md`, `specs/001-user-auth-player-catalog/validation.md`.
-- [ ] T061 Cerrar DoD solo con pruebas por capa PASSED, build/arranque, Postman, mediciones y URLs de GitHub Actions/SonarCloud exitosos del commit final; controles pendientes o sin acceso siguen abiertos, no declarar entrega completa en `specs/001-user-auth-player-catalog/validation.md`.
+---
+## Continuación pendiente después de T050
 
-## Dependencias y orden de ejecución
+T001–T050 son historial completado y validado según specs/001-user-auth-player-catalog/validation.md. No se vuelven a generar tareas de US1, US2 ni US3. Las tareas siguientes son nuevas, permanecen pendientes y usan la estructura futura backend/ y frontend/.
 
-```text
-Preparación (T001–T005)
-  → Fundamentos (T006–T010)
-    → US1 (T011–T023)
-      → US2 (T024–T037)
-        → US3 (T038–T049)
-          → Validación y entrega (T050–T061)
-```
+## Fase 7: Reorganización estructural del monorepo
 
-- Orden secuencial por defecto. US2 requiere usuario/JWT de US1; US3 requiere autenticación API Key de US2. Cada cierre vuelve a ejecutar las historias anteriores.
-- Pruebas US1 T011–T014 pueden escribirse juntas después de T010; US2 T024–T028 después de T023; US3 T038–T042 después de T037. Se ejecutan contra implementación completa antes del cierre de su fase.
-- Modelos preceden a Services; entidades/migraciones preceden a Repository; DTO/Service preceden a controllers. Los tests escritos primero no deben marcar la historia terminada mientras fallen.
-- T033 extiende archivos creados en US1; T035 completa SecurityConfig y depende de T034. No editar estos archivos concurrentemente.
-- T050 debe terminar antes de medir; T051 prepara datos/entorno. T052–T054 pueden implementarse en paralelo después de T051. T055 depende de los tres scripts y de las suites PASSED.
-- T058 precede a T059 porque comparten build/workflow. T060 usa la colección T057 y se realiza después de toda corrección de código. T061 depende de T050–T060 y del resultado externo para el commit final. Cambios posteriores invalidan la evidencia afectada.
+**Objetivo**: mover el Gradle existente sin recrearlo, preparar el frontend y demostrar que el estado validado no se degrada.
 
-## Ejemplos de ejecución paralela por historia
+- [x] T051 Trasladar el proyecto Gradle existente a backend/ (build.gradle, settings.gradle, wrappers, gradle/, src/) preservando historial y configuración; no recrear el proyecto ni cambiar el paquete com.devchesterunited.devchesterunitedv2.
+- [x] T052 [P] Preparar frontend/package.json, frontend/package-lock.json, frontend/vite.config.js y directorios frontend/src/, frontend/tests/, frontend/e2e/ para React + JavaScript; no crear TypeScript, tsconfig, .ts ni .tsx.
+- [x] T053 [P] Verificar que .specify/, specs/, .github/, performance/ y postman/ permanezcan en la raíz y documentar la estructura en specs/001-user-auth-player-catalog/plan.md.
+- [ ] T054 Validar compilación y empaquetado desde backend/ con el wrapper existente, ajustando solo rutas relativas necesarias en backend/build.gradle, backend/settings.gradle y recursos de configuración.
+- [ ] T055 Ejecutar la regresión completa histórica desde backend/ y confirmar los 363 tests previos sin modificar tests existentes en backend/src/test/.
+- [ ] T056 Registrar la reorganización, hashes de tests y resultado de regresión en specs/001-user-auth-player-catalog/validation.md; si una adaptación de test fuera imprescindible, detenerse y solicitar «SÍ» explícito antes de editarlo.
 
-| Historia | Grupo independiente | Prerrequisito | Integración final |
-|----------|---------------------|---------------|-------------------|
-| US1 | T011 contrato, T012 dominio, T013 Service, T014 Repository | T010 completo | T023 |
-| US2 | T024 contrato, T025 dominio, T026 Service, T027 Repository, T028 concurrencia | T023 completo | T037 |
-| US3 | T038 contrato, T039 dominio, T040 Service, T041 Repository, T042 revocación en curso | T037 completo | T049 |
+## Fase 8: User Story 4 — Sincronización externa del catálogo (P1)
 
-Las tareas de escritura de pruebas trabajan sobre archivos diferentes; comparten el contrato y no deben modificar los componentes productivos desde ese grupo. No lanzar suites que comparten fixtures mutables en paralelo sin aislamiento de BD.
+**Objetivo**: sincronizar cinco ligas mediante Adapter y publicar un snapshot local atómico (FR-013–FR-022, FR-030–FR-035, SC-006–SC-009).
 
-## Cobertura de requisitos
+**Prueba independiente**: fixtures HTTP locales representan las cinco respuestas; un snapshot válido publica equipos/jugadores, un fallo devuelve 503 y conserva el snapshot anterior, y una ejecución concurrente devuelve 409.
 
-| Requisito | Tareas principales |
-|-----------|--------------------|
-| FR-001 | T011–T018, T021–T023 |
-| FR-002 | T011, T018, T022 |
-| FR-003 | T013, T008, T021 |
-| FR-004 | T019–T023 |
-| FR-005 | T024, T019–T020, T035–T036 |
-| FR-006 | T026, T032–T033 |
-| FR-007 | T026–T027, T030, T033–T034 |
-| FR-008 | T025–T031, T033, T037 |
-| FR-009 | T034–T035, T038, T042, T048–T049 |
-| FR-010 | T038, T040–T041, T045–T048 |
-| FR-011 | T038, T040, T045–T048 |
-| FR-012 | T025–T026, T029–T030, T033 |
-| SC-001 | T051–T052, T055 |
-| SC-002 | T051, T053, T055 |
-| SC-003 | T051, T054–T055 |
-| SC-004 | T020, T024, T035, T038, T042, T049 |
-| SC-005 | T040–T041, T045–T049 |
+- [ ] T057 Obtener autorización constitucional «SÍ» explícita antes de modificar cualquier test existente que dependa del esquema V3; registrar el diff propuesto y la decisión en specs/001-user-auth-player-catalog/validation.md.
+- [ ] T058 [P] [US4] Crear unitarias puras para Equipo, jugador importado y CatalogoSincronizado, incluyendo identidad externa, estados, pertenencia, duplicados, dorsal nullable y temporada vigente, en backend/src/test/java/com/devchesterunited/devchesterunitedv2/modelo/.
+- [ ] T059 [P] [US4] Crear pruebas del Adapter con servidor HTTP local para cinco ligas, respuestas inválidas, 429/5xx, timeout, cuota y mapeo de DTO externo en backend/src/test/java/com/devchesterunited/devchesterunitedv2/adapter/FootballDataAdapterTest.java.
+- [ ] T060 [P] [US4] Crear integración de repositories para V4, IDs externos únicos, asociación equipo-jugador, inactivación/reactivación, dorsal null y preservación de UUID V3 en backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/SincronizacionRepositoryIntegrationTest.java.
+- [ ] T061 [P] [US4] Crear integración de Service con PostgreSQL/Testcontainers para advisory lock global, competidor 409, publicación atómica, rollback y snapshot anterior en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/SincronizacionCatalogoIntegrationTest.java.
+- [ ] T062 [P] [US4] Crear E2E MockMvc del endpoint de sincronización para JWT válido, cuerpo/query rechazados, 200, 400, 409, 503 y 500 en backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/CatalogoSyncE2ETest.java.
+- [ ] T063 [US4] Implementar modelos puros Equipo, CatalogoSincronizado, estados y reglas de snapshot sin dependencias de Spring/JPA en backend/src/main/java/com/devchesterunited/devchesterunitedv2/modelo/.
+- [ ] T064 [US4] Implementar entidades/repositories y migración V4 para equipos, team_id, IDs externos, actividad y dorsal nullable, conservando UUID V3, en backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/ y backend/src/main/resources/db/migration/V4__Normalize_catalog_sync.sql.
+- [ ] T065 [US4] Implementar DTOs Football-Data en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/dto/ y FootballDataAdapter con RestClient, temporada vigente, cinco rutas, timeouts y traducción de errores en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/impl/.
+- [ ] T066 [US4] Implementar SincronizacionCatalogoService como único orquestador Adapter-Modelo-Persistence: lock global PostgreSQL, consultas secuenciales, validación 96 equipos, inactivación/reactivación, reintento manual idempotente, commit único y rollback en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/.
+- [ ] T067 [US4] Implementar POST /api/v1/catalog/sync en backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/CatalogoController.java, con JWT, errores 409/503 y contrato de cinco endpoints en specs/001-user-auth-player-catalog/contracts/openapi.json.
+- [ ] T068 [US4] Ejecutar unitarias, Repository, Service, Adapter y E2E de US4 sin Internet ni credenciales reales; verificar rollback, 503, lock 409 y registrar resultados en specs/001-user-auth-player-catalog/validation.md.
+- [ ] T069 [US4] Confirmar que los tests históricos permanecen intactos y ejecutar la regresión backend completa después de US4; registrar cualquier cambio autorizado y su evidencia en specs/001-user-auth-player-catalog/validation.md.
 
-## Estrategia de implementación
+## Fase 9: User Story 5 — Frontend web MVP (P2)
 
-1. Completar preparación/fundamentos y US1 como primer incremento verificable: registro y login.
-2. Completar US2 para el MVP de credenciales indicado en el plan: usuario, JWT y API Key rotatoria.
-3. Completar US3 para cubrir toda la funcionalidad de la Entrega 1.
-4. Ejecutar validación transversal y cerrar únicamente con evidencia real de todos los controles; un MVP funcional no equivale al DoD completo.
+**Objetivo**: SPA React + JavaScript que consuma exclusivamente la API documentada (FR-023–FR-029, SC-010).
+
+**Prueba independiente**: Playwright ejecuta registro → login → API Key → catálogo/paginación contra backend local; recarga, logout y pestañas respetan el aislamiento de sesión.
+
+- [ ] T070 [P] [US5] Crear frontend/src/api/http.js con fetch, rutas relativas, cabeceras por operación, manejo de 400/401/409/503 y sin secretos externos.
+- [ ] T071 [P] [US5] Crear almacenamiento/contexto de JWT y API Key por pestaña en frontend/src/session/storage.js y frontend/src/session/SessionContext.jsx usando sessionStorage, expiración y logout local.
+- [ ] T072 [P] [US5] Crear vistas/componentes .jsx de registro, login, credenciales/API Key y catálogo en frontend/src/, con filtros, paginación, dorsal null, accesibilidad y estados de error.
+- [ ] T073 [US5] Configurar rutas /registro, /login, /credenciales, /catalogo, fallback SPA y proxy Vite en frontend/src/App.jsx, frontend/src/main.jsx y frontend/vite.config.js.
+- [ ] T074 [P] [US5] Crear pruebas Vitest/Testing Library de formularios, cliente fetch, almacenamiento por pestaña, expiración JWT, rotación, logout y errores en frontend/tests/.
+- [ ] T075 [P] [US5] Crear compose/fixture de backend local y pruebas Playwright del flujo SC-010, recarga, pestaña independiente, secreto de una sola visualización, filtros, paginación y bloqueo de hosts externos en frontend/e2e/.
+- [ ] T076 [US5] Verificar que el frontend contiene exclusivamente React + JavaScript (.js/.jsx), sin TypeScript, tsconfig, .ts ni .tsx, y que no expone secretos en frontend/package.json ni frontend/src/.
+- [ ] T077 [US5] Ejecutar npm install, Vitest, build Vite, preview y Playwright desde frontend/; registrar SC-010 y resultados en specs/001-user-auth-player-catalog/validation.md.
+- [ ] T078 [US5] Ejecutar regresión backend y frontend conjuntamente, sin modificar tests históricos, y documentar integración en specs/001-user-auth-player-catalog/validation.md.
+
+## Fase 10: Gates finales actualizados
+
+**Objetivo**: completar gates todavía no ejecutados para el alcance ampliado; ningún gate se considera aprobado por configuración solamente.
+
+- [ ] T079 [P] Preparar fixture/entorno k6 de 10.000 jugadores y 1.000 usuarios en performance/seed.sql, performance/compose.yml y performance/README.md.
+- [ ] T080 [P] Ejecutar escenarios de rendimiento registro/login, API Key y catálogo para SC-001–SC-003 con tres repeticiones, restauración y recursos reproducibles en performance/registro-login.js, performance/api-key.js, performance/catalogo.js y performance/results/.
+- [ ] T081 Comparar Swagger UI y /v3/api-docs con los cinco endpoints, esquemas, autenticación y errores; registrar discrepancias y correcciones en specs/001-user-auth-player-catalog/contracts/openapi.json y validation.md.
+- [ ] T082 [P] Actualizar colección Postman con register, login, API Key, sync y players, variables y ejemplos sin secretos en postman/DevchesterUnited.postman_collection.json.
+- [ ] T083 Configurar GitHub Actions con Gradle usando backend/ como working directory y npm/Vite usando frontend/, ejecutando suites backend, Vitest, build y Playwright en .github/workflows/ci.yml.
+- [ ] T084 Configurar y ejecutar SonarCloud/Quality Gate para el monorepo, incluyendo backend y frontend, en .github/workflows/ci.yml, backend/build.gradle y scripts/verify-sonar-gate.ps1.
+- [ ] T085 Ejecutar quickstart completo desde backend/ y frontend/, con migraciones, arranque, flujo HTTP y frontend, y actualizar specs/001-user-auth-player-catalog/quickstart.md solo si cambian comandos reales.
+- [ ] T086 Verificar aceptación de integración externa: cuenta/proveedor habilitado para Squads, temporada vigente y snapshot utilizable; documentar evidencia o bloqueo externo sin afirmar éxito en specs/001-user-auth-player-catalog/validation.md.
+- [ ] T087 Ejecutar el flujo final de Postman y SC-010 contra backend local, verificando que el frontend no llama al proveedor externo y que los secretos no aparecen en logs, bundles ni capturas.
+- [ ] T088 Cerrar Definition of Done solo con pruebas por capa, build, arranque, performance, OpenAPI, Postman, CI, SonarCloud y aceptación externa evidenciados para el commit final en specs/001-user-auth-player-catalog/validation.md.
+
+## Dependencias y orden pendiente
+
+T050 completada → Monorepo T051–T056 → US4 T057–T069 → US5 T070–T078 → Gates finales T079–T088.
+
+## Estado y cobertura
+
+- T001–T050: [x] historial completado, respaldado por validation.md; US1, US2 y US3 no son trabajo pendiente.
+- T051–T088: [ ] trabajo nuevo pendiente para reorganización, US4, US5 y gates finales.
+- La suite histórica de 363 tests se conserva como regresión; no se afirma que las pruebas nuevas, CI, SonarCloud, performance, frontend o aceptación externa estén ejecutadas.

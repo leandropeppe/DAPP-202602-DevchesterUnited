@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Devchester United — Autenticación y catálogo",
-    "version": "1.0.0",
-    "description": "Contrato de la Entrega 1. Mensajes en español. Registro/login públicos, JWT para generar API Key y X-API-KEY para consultar catálogo. Swagger solo habilitado en perfiles local/test."
+    "title": "Devchester United — Autenticación y catálogo sincronizado",
+    "version": "1.1.0",
+    "description": "Contrato objetivo de la Entrega 1, revisión 2026-09-15; ampliación pendiente de implementación. Registro/login públicos, JWT para generar API Key y sincronizar, X-API-KEY para catálogo local. Mensajes en español. Swagger solo en local/test. Jugador admite dorsal null y apellido vacío cuando no existe un apellido separado en la fuente."
   },
   "servers": [
     {
@@ -18,7 +18,7 @@
     },
     {
       "name": "Catálogo",
-      "description": "Consulta de jugadores."
+      "description": "Consulta local de jugadores activos y sincronización manual global."
     }
   ],
   "paths": {
@@ -266,6 +266,44 @@
         }
       }
     },
+    "/api/v1/catalog/sync": {
+      "post": {
+        "operationId": "sincronizarCatalogo",
+        "tags": ["Catálogo"],
+        "summary": "Sincronizar las cinco ligas con la temporada vigente del proveedor",
+        "description": "Sin cuerpo ni parámetros. JWT válido de un usuario existente; no exige rol administrativo. API Key no autoriza ni participa. Solo una ejecución global: la competidora autenticada recibe 409 sin llamadas externas ni mutaciones. Valida cinco ligas, 96 equipos y plantillas utilizables antes de publicar en un commit. Ausentes quedan inactivos y se reactivan si reaparecen. Fallos conservan el catálogo anterior. Respuesta 200 solo tras commit; sin reintentos automáticos. Presupuesto de ejecución 120 s, infraestructura HTTP debe permitir hasta 180 s.",
+        "security": [{"BearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Snapshot completo publicado. created + updated = processed para cada entidad; updated incluye entidades existentes sin cambios y reactivadas. Los ausentes inactivados no cuentan como procesados.",
+            "content": {"application/json": {
+              "schema": {"$ref": "#/components/schemas/SincronizacionResponse"},
+              "example": {"status": "success", "message": "Catálogo sincronizado correctamente", "data": {"teams_processed": 96, "players_processed": 2473, "teams_created": 0, "teams_updated": 96, "players_created": 0, "players_updated": 2473}}
+            }}
+          },
+          "400": {
+            "description": "Solicitud autenticada con cuerpo no vacío o parámetros no admitidos.",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+          },
+          "401": {
+            "description": "JWT ausente, inválido, expirado o usuario inexistente; no se inicia la sincronización.",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}, "example": {"status": "error", "message": "No autorizado: JWT ausente, inválido o expirado"}}}
+          },
+          "409": {
+            "description": "Sincronización global en curso; esta solicitud no consulta al proveedor ni modifica el catálogo.",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}, "example": {"status": "error", "message": "Ya hay una sincronización del catálogo en curso"}}}
+          },
+          "500": {
+            "description": "Fallo interno inesperado; rollback y mensaje genérico sin detalles internos.",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
+          },
+          "503": {
+            "description": "Configuración externa ausente, proveedor o BD indisponible, cuota agotada, timeout o snapshot no utilizable. Catálogo anterior intacto; no se exponen credenciales ni respuestas externas.",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}, "example": {"status": "error", "message": "No fue posible sincronizar el catálogo con el proveedor externo"}}}
+          }
+        }
+      }
+    },
     "/api/v1/players": {
       "get": {
         "operationId": "consultarJugadores",
@@ -273,7 +311,7 @@
           "Catálogo"
         ],
         "summary": "Consultar catálogo con filtros parciales",
-        "description": "API Key activa validada al inicio contra estado confirmado; consultas ya autorizadas pueden terminar después de revocación. Filtros literales parciales sin distinguir mayúsculas, con AND; tildes significativas. Trim antes de validar, vacíos/controles/repetidos/desconocidos devuelven 400. % y _ son texto literal. Orden estable por UUID ascendente. Página fuera de rango devuelve lista vacía con totales reales; cero coincidencias implica total_pages=0. Offset fuera del rango soportado devuelve 400.",
+        "description": "Consulta exclusivamente local. Solo jugadores activos de equipos activos, incluyendo el conteo; datos y totales pertenecen al mismo snapshot de lectura. API Key activa validada al inicio; consultas ya autorizadas pueden terminar después de revocación. Filtros literales parciales case-insensitive con AND y tildes significativas. Trim antes de validar; vacíos/controles/repetidos/desconocidos devuelven 400. % y _ son literales. Orden UUID ascendente. Página fuera de rango: lista vacía y totales reales; cero coincidencias: total_pages=0. Offset no soportado: 400. jersey_number siempre presente, nullable.",
         "security": [
           {
             "ApiKeyAuth": []
@@ -645,8 +683,9 @@
           },
           "last_name": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100
+            "minLength": 0,
+            "maxLength": 100,
+            "description": "Vacío si la fuente solo informa un nombre completo; en ese caso first_name lo conserva íntegro."
           },
           "league": {
             "type": "string",
@@ -669,8 +708,10 @@
           },
           "jersey_number": {
             "type": "integer",
+            "nullable": true,
             "minimum": 1,
-            "maximum": 99
+            "maximum": 99,
+            "description": "Null cuando no está informado; la propiedad nunca se omite."
           },
           "nationality": {
             "type": "string",
@@ -741,6 +782,28 @@
               "pagination": {
                 "$ref": "#/components/schemas/Paginacion"
               }
+            }
+          }
+        }
+      },
+      "SincronizacionResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["status", "message", "data"],
+        "properties": {
+          "status": {"type": "string", "enum": ["success"]},
+          "message": {"type": "string", "example": "Catálogo sincronizado correctamente"},
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["teams_processed", "players_processed", "teams_created", "teams_updated", "players_created", "players_updated"],
+            "properties": {
+              "teams_processed": {"type": "integer", "enum": [96]},
+              "players_processed": {"type": "integer", "minimum": 1, "maximum": 10000},
+              "teams_created": {"type": "integer", "minimum": 0, "maximum": 96},
+              "teams_updated": {"type": "integer", "minimum": 0, "maximum": 96},
+              "players_created": {"type": "integer", "minimum": 0, "maximum": 10000},
+              "players_updated": {"type": "integer", "minimum": 0, "maximum": 10000}
             }
           }
         }

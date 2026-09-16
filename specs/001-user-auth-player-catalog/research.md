@@ -1,6 +1,6 @@
-# Investigación: autenticación y catálogo
+# Investigación: autenticación, catálogo sincronizado y frontend
 
-**Fecha**: 2026-09-05. Decisiones de diseño; no constituyen resultados de ejecución.
+**Fecha**: 2026-09-15. Las secciones 1–5 conservan las decisiones base de 2026-09-05; 6–10 incorporan la ampliación. Investigación documental y revisión del repositorio, sin llamadas autenticadas al proveedor, instalaciones ni ejecución de suites.
 
 ## 1. Stack y compatibilidad constitucional
 
@@ -56,3 +56,61 @@ Concretar el formato alfanumérico normativo de username como ASCII 3–30 y cor
 Recursos, datos, mezcla de consultas y duración se fijan en `plan.md`. El flujo registro+login usa una medición conjunta; no se suman percentiles. Las tres repeticiones deben pasar y los errores no cuentan como éxitos rápidos. CI, Postman, SonarCloud y evidencia de arranque permanecen obligatorios. No se introducen nuevas metas de disponibilidad ni servicios externos en esta entrega.
 
 Todas las decisiones técnicas abiertas del plan anterior quedan resueltas. Credenciales de infraestructura y resultados de gates se obtendrán al implementar; no son decisiones de diseño pendientes.
+
+## 6. Proveedor, cobertura y temporada vigente
+
+- **Decisión**: Football-Data.org v4, `/competitions/{code}/teams` para PL, PD, BL1, SA y FL1, sin filtro `season`. Requerir credencial con acceso efectivo a plantillas; usar `FOOTBALL_DATA_API_KEY` solo en backend, cabecera `X-Auth-Token`.
+- **Motivo**: los endpoints agregados permiten diseñar cinco solicitudes por snapshot. La temporada vigente la decide el proveedor. Se guarda su identificador por liga para trazabilidad.
+- **Alternativas**: 96 consultas individuales adicionales aumentan cuota y duración; se rechazan como fallback automático. No se cambia de proveedor ni se compra una suscripción en planificación.
+- **Evidencia**: [Competition](https://docs.football-data.org/general/v4/competition.html#_teams), [códigos y headers](https://docs.football-data.org/general/v4/lookup_tables.html), [cobertura](https://www.football-data.org/coverage). El [quickstart oficial](https://www.football-data.org/documentation/quickstart) contiene respuestas con `squad` vacío; documentar un campo no acredita su disponibilidad en una cuenta.
+
+Al 2026-09-15, [pricing oficial](https://www.football-data.org/pricing) anuncia Squads en «Free + Deep Data» (29 EUR/mes, 30 llamadas/minuto); el nivel Free enumera 10 llamadas/minuto y no Squads. Esto es un requisito comercial identificado, no una contratación autorizada ni un costo inmutable. Verificar plan y permisos antes de aceptación real.
+
+Las [políticas del proveedor](https://docs.football-data.org/general/v4/policies.html) definen temporada actual por inicio más reciente y roster de temporada, que puede incluir jugadores que ya pasaron por un equipo. **Límite**: esos rosters no garantizan plantillas contractuales exactas de hoy. El diseño importa el snapshot vigente publicado y rechaza asociaciones contradictorias; no resuelve transferencias eligiendo arbitrariamente la última respuesta. El recurso [Person](https://docs.football-data.org/general/v4/person.html) expone `currentTeam`, pero incorporarlo masivamente cambia cuota y duración y queda fuera de la ruta elegida. Si la aceptación exige una precisión que el snapshot real no da, se debe revisar fuente/alcance antes de declarar US4 satisfecha.
+
+## 7. Mapeo y validación del snapshot
+
+- **Decisión**: traducir contratos externos a DTOs internos explícitos; exigir IDs, equipo inequívoco, nombre utilizable, nacionalidad y posición mapeable. Dorsal ausente/null se conserva null. Nombre sin apellido separado usa `name` completo en nombre y apellido vacío, sin inferir apellidos.
+- **Motivo**: el [recurso Team](https://docs.football-data.org/general/v4/team.html) documenta variantes de nombre y posiciones propias. La identidad siempre depende del ID externo, nunca del nombre. Diccionario de posiciones y reglas exactas en [contrato de proveedor](./contracts/proveedor.md).
+- **Alternativas**: inventar dorsal, nacionalidad o posición; inferir identidad por nombre; omitir silenciosamente jugadores inválidos. Todas permitirían publicar datos no verificables y se rechazan.
+
+La cantidad 96 y reparto 20/20/18/20/18 son exigencias de la spec, no datos confirmados por esta investigación. No se fija cantidad de jugadores. Snapshot incompleto, desconocido o conflictivo falla entero. Tests usan datos sintéticos; confirmar que la cuenta real entrega los cinco squads completos es un gate posterior. No hay garantía de detectar una omisión silenciosa que el proveedor no señale.
+
+- **Decisión**: RestClient de Spring 6.2 y HTTP síncrono con conexión 5 s, respuesta 15 s, máximo 10 MiB por liga, deadline global 120 s y separación de 6 s entre consultas; sin reintentos automáticos.
+- **Motivo**: cinco consultas nominales caben en un presupuesto acotado. El Adapter traduce 403/404/429/5xx, timeouts y respuestas inválidas a fallo propio; el Service/Controller responde 503 genérico sin propagar secretos.
+- **Alternativas**: WebFlux/SDK/colas no aportan al endpoint síncrono requerido. No se ignora cuota ni se reintenta un 429 en bucle. Los números son decisiones locales que deben verificarse, no SLA del proveedor.
+- **Fuentes**: [Spring REST clients](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html), [errores del proveedor](https://docs.football-data.org/general/v4/errors.html). Respetar `X-RequestsAvailable` y `X-RequestCounter-Reset`; sus valores pueden ser afectados por otros consumidores de la cuenta.
+
+## 8. Atomicidad, migración y preservación de pruebas
+
+- **Decisión**: lock advisory transaccional global no bloqueante, snapshot en memoria antes de escribir y un único commit. La transacción conserva una conexión durante HTTP con límites explícitos, sin locks de filas de catálogo hasta aplicar datos.
+- **Motivo**: [PostgreSQL 16](https://www.postgresql.org/docs/16/explicit-locking.html#ADVISORY-LOCKS) libera el lock al finalizar la transacción y coordina instancias. Evita persistencia parcial y permite lectura MVCC del catálogo anterior.
+- **Alternativas**: mutex JVM no coordina instancias; locks de sesión requieren limpieza estricta del pool; un lease necesita fencing ante caducidad; transacciones por liga contradicen la conservación integral en fallos.
+
+- **Decisión**: V4 aditiva respecto del historial Flyway, con normalización de equipos, conservación de UUID, índices únicos de IDs externos, actividad y dorsal nullable. Desactivar semilla demostrativa solo al primer snapshot externo válido.
+- **Motivo**: V3 contiene 24 jugadores ficticios en dos equipos y no puede reinterpretarse como datos del proveedor. Relacionar por nombre con datos externos atribuiría identidades sin evidencia.
+- **Alternativas**: modificar V3 aplicada, borrar datos, fabricar IDs externos o dejar demos mezcladas con plantillas reales. Se rechazan.
+
+Los tests de Repository, Service y E2E de jugadores insertan el esquema antiguo con SQL directo. Se identifica una adaptación real de fixtures al esquema normalizado, manteniendo valores y aserciones del oráculo. Se requiere autorización explícita antes de editar esos archivos conforme a la constitución. No se propone falsear el modelo ni agregar triggers de compatibilidad solo para evitar esa revisión. Pruebas nuevas del Adapter usarán servidor HTTP local; [Spring testing clients](https://docs.spring.io/spring-framework/reference/testing/spring-mvc-test-client.html) distingue simulación de transporte y pruebas HTTP reales locales.
+
+## 9. Frontend y sesión por pestaña
+
+- **Decisión**: React + React DOM, JavaScript en archivos `.js`/`.jsx`, Vite, Node.js LTS, npm y `package-lock.json`; `fetch`, CSS y estado React bastan para las cuatro vistas del MVP. No se agrega TypeScript, `tsconfig` ni archivos `.ts`/`.tsx`; no se fija una versión específica de React/Vite en esta fase.
+- **Motivo**: una SPA consume la API existente. Las líneas verificadas son compatibles; no se migra el backend ni se incorpora SSR.
+- **Alternativas**: Next.js/SSR, Redux y un BFF amplían componentes sin un requerimiento que los necesite.
+- **Fuentes**: [versiones React](https://react.dev/versions), [requisitos Vite](https://vite.dev/guide/), [Node LTS](https://nodejs.org/en/about/previous-releases).
+
+- **Decisión**: `sessionStorage` para JWT, expiración y API Key, con estado de visualización del secreto nuevo solo en memoria. Proxy mismo origen `/api/v1`; la UI envía únicamente la credencial requerida por el endpoint. No introduce API de logout.
+- **Motivo**: cumple la sesión ordinaria de pestaña y recarga. Logout elimina explícitamente almacenamiento y estado. La API Key no depende de la expiración JWT.
+- **Alternativas**: `localStorage` persiste entre visitas; solo memoria pierde credenciales al recargar; cookies HttpOnly exigirían otro contrato. `beforeunload` no distingue cierre de recarga y no sirve para borrar credenciales.
+- **Límite documentado**: la restauración de sesión/pestaña por el navegador puede conservar los datos. No se promete borrado irrecuperable. Ventanas abiertas por la aplicación usan `noopener`; si almacenamiento está bloqueado, informar funcionamiento solo en memoria.
+- **Fuentes**: [HTML Web Storage](https://html.spec.whatwg.org/multipage/webstorage.html#the-sessionstorage-attribute), [sessionStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage), [proxy Vite](https://vite.dev/config/server-options#server-proxy).
+
+## 10. Verificación del diseño y aceptación posterior
+
+- **Decisión**: Vitest y Testing Library para componentes JavaScript; Playwright para pestañas/recargas y flujo SC-010 con backend y PostgreSQL locales. Instalar herramientas antes de correr suites desconectadas.
+- **Motivo**: una API mockeada no acredita integración completa; un test unitario no reproduce el ciclo de vida real de una pestaña.
+- **Alternativas**: solo capturas/manual o llamar al proveedor desde tests contradicen cobertura reproducible y restricciones de cuota.
+- **Fuentes**: [Vitest](https://vitest.dev/guide/), [Testing Library](https://testing-library.com/docs/react-testing-library/intro/), [Playwright](https://playwright.dev/docs/mock).
+
+Diseño resuelto sin cambiar requisitos de autenticación ni relajar fallos externos. El Gradle existente se planifica bajo `backend/` y el frontend React + JavaScript bajo `frontend/`; la organización física se aplicará durante la implementación, sin recrear Gradle. Condiciones de aceptación aún sin ejecutar: acceso real a Squads, snapshot utilizable, adaptación autorizada de fixtures, pruebas/build/arranque, rendimiento, Postman y CI/Sonar. La planificación no acredita esas condiciones.

@@ -1,19 +1,21 @@
-# Plan de implementación: Autenticación y catálogo de jugadores
+# Plan de implementación: Autenticación, catálogo sincronizado y frontend web
 
-**Rama**: `001-user-auth-player-catalog` | **Fecha**: 2026-09-05 | **Spec**: [spec.md](./spec.md)
+**Rama**: `001-user-auth-player-catalog` | **Fecha**: 2026-09-15 | **Spec**: [spec.md](./spec.md)
 
 ## Resumen
 
-**Estado actual (2026-09-06)**: T001–T049 están implementadas y cuentan con evidencia de validación en `validation.md`, incluidos los cierres T023, T037 y T049. T050–T061 permanecen pendientes porque corresponden a validación transversal, rendimiento, Postman, CI/CD, SonarCloud y cierre del DoD.
+**Estado actual (2026-09-15)**: `tasks.md` marca T001–T050 realizadas; la evidencia histórica está en `validation.md`. T051–T061 siguen pendientes. Esta revisión diseña US4/US5 y FR-013–035, todavía sin implementar; no acredita nuevamente las pruebas históricas ni los gates de entrega.
 
-Registro, login con JWT, generación y rotación de API Key sin vencimiento y catálogo paginado con filtros parciales sin distinguir mayúsculas. Conservar Gradle, Java 21, la clase de arranque y el paquete raíz existentes. Las versiones de Boot y del wrapper ya fueron ajustadas y validadas en T001–T002 para cumplir JUnit 5. Este documento describe el diseño y el estado implementado; los gates externos finales permanecen sujetos a T050–T061.
+Conservar registro, login JWT, API Keys y consultas paginadas. Agregar un Adapter Football-Data.org v4, sincronización manual global con publicación atómica en PostgreSQL, entidades Equipo/Jugador con identidad externa y actividad, y una SPA React. Usar temporada vigente por liga; 96 equipos activos; ausentes inactivos y reactivables; dorsal nullable; credenciales frontend por pestaña. Conservar Gradle, Java 21, el paquete raíz y las migraciones aplicadas.
+
+**Límite operativo**: se diseña para una cuenta del proveedor con acceso a Squads. La documentación pública no acredita los permisos de una cuenta concreta ni una importación real exitosa. El acceso efectivo y la calidad de los datos son gates de aceptación externa; no se contratan servicios durante este flujo.
 
 ## Contexto técnico
 
 | Aspecto | Decisión |
 |---------|----------|
 | Lenguaje/framework | Java 21, Spring Boot 3.5.16 y Spring Framework 6.2 administrado por su BOM |
-| Build | Gradle 8.14.4 mediante wrapper; conservar `build.gradle` y `settings.gradle`, sin crear `pom.xml` |
+| Build | Gradle mediante wrapper existente en `backend/`; conservar `build.gradle`, `settings.gradle`, `gradlew`, `gradlew.bat` y `gradle/`, sin crear `pom.xml` |
 | Dependencias | Web, Validation, Security, OAuth2 Resource Server/JOSE, Data JPA, PostgreSQL JDBC, Flyway core y módulo PostgreSQL; versiones del BOM de Boot |
 | JWT | `NimbusJwtEncoder` y `NimbusJwtDecoder` de Spring Security; no agregar `jjwt` |
 | Persistencia | PostgreSQL 16, Flyway; Hibernate `ddl-auto=validate` |
@@ -22,12 +24,17 @@ Registro, login con JWT, generación y rotación de API Key sin vencimiento y ca
 | Plataforma | REST; Windows/PowerShell para desarrollo, Linux con Docker para CI y medición |
 | Escala de referencia | 10.000 jugadores, 1.000 usuarios iniciales, 50 consultas concurrentes |
 | Rendimiento | p95 registro+login <2 s; API Key <500 ms; catálogo <300 ms a 50 consultas concurrentes |
+| Integración | RestClient de Spring 6.2 dentro de `adapter/impl`; DTOs externos en `adapter/dto`; cinco consultas agregadas, sin SDK adicional |
+| Frontend | React con JavaScript (`.js`/`.jsx`), React DOM, Vite; Node.js LTS, npm y `package-lock.json`; rutas relativas y proxy de mismo origen |
+| Pruebas nuevas | Adapter con servidor HTTP local, JUnit 5; Vitest/Testing Library y Playwright para frontend; PostgreSQL Testcontainers |
+| Presupuesto de sync | HTTP conexión 5 s, respuesta 15 s, cuerpo 10 MiB por liga; ejecución global 120 s; transacción PostgreSQL 150 s; proxy HTTP 180 s |
+| Alcance de sync | Una ejecución global; cinco ligas; máximo técnico de 10.000 jugadores por snapshot; sin cron, cola ni endpoint de trabajos |
 
 Nota histórica de compatibilidad: el repositorio declaraba Boot 4.1.1 y Gradle 9.7.1, mientras Framework 7 exigía JUnit Jupiter 6, incompatible con JUnit 5. La adecuación ya fue realizada y validada en T001–T002: el estado implementado usa Java 21, Gradle 8.14.4, Spring Boot 3.5.16 y las dependencias definidas en este plan. Las fuentes y alternativas de la decisión están en [research.md](./research.md); la Constitución no fue modificada.
 
 ## Verificación de Constitución
 
-Evaluación previa: el diseño anterior tenía pendientes de dependencias y no coincidía con el build existente. Se resolvieron en fase 0. T001–T049 están implementadas y validadas, y los controles de las historias funcionales fueron ejecutados y documentados en `validation.md`. Únicamente permanecen pendientes los gates finales T050–T061.
+**Antes de fase 0**: el stack local y las capas permiten la ampliación sin excepciones constitucionales. Se investigan acceso al proveedor, snapshot, migración y sesión web. **Después de fase 1**: las decisiones están concretadas en este plan y sus contratos; los controles siguientes pasan a nivel de diseño. El éxito de build, pruebas, integración real, CI y SonarCloud debe acreditarse al implementar.
 
 | Regla | Aplicación | Gate de entrega |
 |-------|------------|-----------------|
@@ -38,68 +45,76 @@ Evaluación previa: el diseño anterior tenía pendientes de dependencias y no c
 | Persistencia aislada | Entidades en `persistence/dto`; Repository no invoca lógica del dominio | Integración de cada Repository |
 | Validación por capa | DTO formato/trimming; Service existencia; Modelo invariantes | Casos felices y borde |
 | JWT y API Key | JWT para generar credenciales; API Key obligatoria en catálogo; registro/login públicos según spec | Matriz de autenticación contractual |
-| OpenAPI y español | Cuatro endpoints y errores en español, incluidos filtros de seguridad | Swagger UI y comparación de contrato |
+| OpenAPI y español | Cinco endpoints, dorsal nullable y errores en español | Swagger UI y comparación de contrato |
 | Protección de tests | Conservar `DevchesterUnitedV2ApplicationTests.java`; agregar soporte en archivos nuevos | Cambiar/borrar tests existentes exige «SÍ» explícito |
 | DoD local y Postman | Build, arranque, flujo completo y colección ejecutable | Evidencia en `validation.md` |
 | GitHub Actions | Build y todas las suites antes de integrar en principal | Build SUCCESS para commit/PR exacto |
 | SonarCloud | Proyecto vinculado y análisis completo | Máximo 10 issues abiertos, cero vulnerabilidades y cero smells críticos |
+| Adapter exclusivo | Solo Service utiliza Adapter; no HTTP en Controller/Modelo/Repository | Pruebas de contrato y revisión de dependencias |
+| Snapshot local | Todo o nada, identidad externa y actividad; lectura local durante fallos | PostgreSQL real, rollback y concurrencia determinista |
+| React consumidor | Solo API documentada, credenciales del proveedor solo en backend | Build frontend, flujo real SC-010 y bloqueo de red externa en tests |
+| Tests sin terceros | Fixtures sintéticos y servidor local, sin claves reales | Suites ejecutables sin Internet una vez provisionadas herramientas |
+
+La normalización cambia fixtures SQL en `JugadorE2ETest`, `JugadorRepositoryIntegrationTest` y `JugadorServiceIntegrationTest`: insertan `league/team` directamente. Su adaptación se debe presentar como diff concreto y requiere el «SÍ» explícito constitucional antes de editar esos tests. No se reduce cobertura ni se agregan excepciones al esquema productivo para sostener fixtures antiguos. Este plan no modifica tests; esa autorización es una dependencia de la implementación, no una excepción concedida.
 
 No se sustituyen CI/Sonar por validación local ni se marcan aprobados por configurar un workflow. Requieren evidencia real y acceso durante la implementación.
 
 ## Estructura del proyecto
 
 ```text
-specs/001-user-auth-player-catalog/
-├── spec.md
-├── plan.md
-├── research.md
-├── data-model.md
-├── contracts/openapi.json
-├── quickstart.md
-└── tasks.md                  # Regenerar con speckit-tasks
-build.gradle
-gradle/wrapper/gradle-wrapper.properties
-src/main/java/com/devchesterunited/devchesterunitedv2/
-├── DevchesterUnitedV2Application.java
-├── configuration/           # Seguridad, JWT, Swagger, filtro API Key
-├── controller/
-│   ├── dto/
-│   └── exceptionHandler/
-├── modelo/                  # Usuario, APIKey, Jugador
-│   ├── exception/
-│   └── utils/
-├── persistence/             # UsuarioRepository, APIKeyRepository, JugadorRepository
-│   └── dto/                 # Entidades JPA
-└── service/
-    ├── config/              # Clock y PasswordEncoder
-    ├── impl/
-    └── interfaces/
-src/main/resources/
-├── application.properties
-└── db/migration/            # V1 usuarios, V2 api_keys, V3 jugadores y semilla
-src/test/java/com/devchesterunited/devchesterunitedv2/
-├── DevchesterUnitedV2ApplicationTests.java  # Conservar
-├── configuration/           # Soporte nuevo de Testcontainers
-├── modelo/                  # Unitarias puras
-├── service/                 # Integración PostgreSQL
-├── persistence/             # Integración PostgreSQL
-└── controller/              # E2E MockMvc exclusivamente
-src/test/resources/application.properties
-performance/                # Scripts k6 y semilla reproducible a implementar
-postman/DevchesterUnited.postman_collection.json
-.github/workflows/ci.yml
+backend/
+├── build.gradle
+├── settings.gradle
+├── gradlew
+├── gradlew.bat
+├── gradle/
+├── src/main/java/com/devchesterunited/devchesterunitedv2/
+│   ├── DevchesterUnitedV2Application.java
+│   ├── configuration/       # Seguridad, JWT, Swagger, filtro API Key
+│   ├── controller/          # dto/ y exceptionHandler/
+│   ├── modelo/              # Usuario, APIKey, Jugador, Equipo, CatalogoSincronizado
+│   ├── persistence/         # Repositories y dto/ JPA
+│   ├── adapter/             # dto/ externo e impl/ FootballDataAdapter
+│   └── service/             # config/, impl/, interfaces/
+├── src/main/resources/
+│   ├── application.properties
+│   └── db/migration/        # V1–V3 intactas; V4 normalización y sincronización
+└── src/test/
+    ├── java/com/devchesterunited/devchesterunitedv2/
+    │   ├── DevchesterUnitedV2ApplicationTests.java
+    │   ├── configuration/
+    │   ├── modelo/
+    │   ├── service/
+    │   ├── persistence/
+    │   ├── adapter/
+    │   └── controller/
+    └── resources/application.properties
+
+frontend/
+├── package.json             # React + JavaScript, Vite y scripts
+├── package-lock.json
+├── vite.config.js
+├── src/                     # archivos .js/.jsx: vistas, componentes, api/, session/
+├── tests/                   # Vitest/Testing Library
+└── e2e/                     # Playwright, compose.yml y fixture de navegador
+
+.specify/                    # proyecto SDD en la raíz
+specs/                       # artefactos SDD en la raíz
+.github/                     # CI en la raíz; Gradle usa backend/, npm usa frontend/
+performance/                 # k6 y semilla reproducible en la raíz
+postman/                     # colección en la raíz
 ```
 
 ## Fase 0: investigación
 
-Completada en [research.md](./research.md): stack, JWT, hashing, migraciones, concurrencia, filtros y medición. El raíz actual permite que el test existente descubra la misma clase de arranque. La configuración global nueva de test usará el driver JDBC de Testcontainers (`jdbc:tc:postgresql:16:///devchester_test`, con su módulo JDBC) para ejecutar también `contextLoads` sin editarlo; las suites concurrentes usarán contenedor explícito compartido y conexiones independientes. Configurar secreto JWT exclusivo de test en recursos de test.
+Consolidada en [research.md](./research.md): se conservan decisiones de autenticación y se agregan cobertura externa, mapeo, publicación atómica, migración y frontend. No quedan elecciones técnicas sin resolver. La disponibilidad comercial de Squads y la validación de una cuenta real quedan identificadas como prerrequisitos operativos. La implementación moverá el Gradle existente a `backend/` conservando su historial/configuración; no se recrea el proyecto. El frontend será React + JavaScript en `frontend/`, con archivos `.js`/`.jsx`, sin TypeScript, `tsconfig` ni `.ts`/`.tsx`.
 
 ## Fase 1: diseño y contratos
 
 ### Seguridad y capas
 
-- Cadenas de seguridad por ruta: registro/login públicos, generación solo Bearer JWT, catálogo solo `X-API-KEY`; no aceptar credenciales del tipo equivocado. Sin sesiones/cookies. Swagger público en local/test; deshabilitado en otros perfiles.
-- JWT HS256 con secreto Base64 externo de al menos 32 bytes, `iss=devchester-united`, `aud=devchester-api`, `sub=usr_<uuid>`, `iat` y `exp=iat+3600s`. Validar algoritmo, firma, emisor, audiencia, tiempo y existencia del usuario. Clock controlable; tolerancia temporal cero. Sin refresh ni logout.
+- Seguridad por ruta: registro/login públicos, generación y sincronización solo Bearer JWT, catálogo solo `X-API-KEY`. La matriz normativa permite sincronizar a cualquier usuario existente con JWT válido: no se inventa un rol ADMIN. Ampliar los filtros/configuración existentes respetando que una credencial irrelevante no sustituya ni interfiera con la exigida. Sin sesiones/cookies de backend. Swagger público en local/test; deshabilitado en otros perfiles.
+- JWT HS256 con secreto Base64 externo de al menos 32 bytes (`JWT_SECRET`, propiedad existente `jwt.secret`), `iss=devchester-united`, `aud=devchester-api`, `sub=usr_<uuid>`, `iat` y `exp=iat+3600s`. Validar algoritmo, firma, emisor, audiencia, tiempo y existencia del usuario. Clock controlable; tolerancia temporal cero. Sin refresh ni endpoint de logout; cerrar sesión web borra únicamente el estado local.
 - BCrypt coste 12; contraseña de 8–72 caracteres y máximo 72 bytes UTF-8, con mayúscula, minúscula y número. No truncar ni aplicar trimming: rechazar espacios externos, conservar interiores. PasswordEncoder en infraestructura de Service, nunca en modelo puro.
 - API Key `dev_key_` más 32 bytes aleatorios en Base64URL sin padding; guardar SHA-256 hexadecimal y prefijo de 14 caracteres. Respuesta solo después del commit y `Cache-Control: no-store`, igual que login. Nunca registrar credenciales, tokens o hashes en logs.
 - El filtro API Key delega en Service; consulta primaria al inicio de cada solicitud, sin caché entre solicitudes. Consulta ya autorizada puede terminar tras revocación. Error de BD →503, nunca autorización ni falso 401.
@@ -119,7 +134,36 @@ Filtros parciales literales ILIKE con escape de `%`, `_` y `!`, parámetros vinc
 
 Username alfanumérico ASCII de 3–30 caracteres, normalizado a minúsculas para unicidad; corregir ejemplos anteriores con `_` para respetar la regla normativa. Email máximo 254, trim y minúsculas, único. Rechazar campos JSON desconocidos y parámetros repetidos/desconocidos con 400. [Modelo de datos](./data-model.md) y [contrato](./contracts/openapi.json) detallan las restricciones.
 
-### Pruebas
+### Sincronización externa y atomicidad
+
+`CatalogoController` delega en `SincronizacionCatalogoService`; el Service coordina Adapter, Modelo y Repository. DTOs externos nunca salen al Controller ni se convierten implícitamente en dominio. `CatalogoSincronizado` verifica pertenencia, cantidad por liga, unicidad y coherencia del snapshot como reglas puras; Service resuelve UUID existentes y ejecuta transiciones de actividad sobre los modelos.
+
+1. Autenticar JWT y existencia del usuario; cuerpo o query no admitidos →400 una vez autenticado. Verificar configuración del proveedor sin mostrar su valor.
+2. Abrir una transacción y adquirir `pg_try_advisory_xact_lock` con clave fija de la aplicación, vía Repository. Si está ocupado →409 inmediato sin HTTP externo. El lock transaccional se conserva hasta commit/rollback y coordina instancias que comparten PostgreSQL; no usar un mutex JVM.
+3. Antes de toda mutación de catálogo, obtener secuencialmente `/competitions/{PL,PD,BL1,SA,FL1}/teams`, sin `season`, validando cada respuesta. Conservar `season.id/startDate/endDate` por liga. No consultar personas/equipos individualmente como fallback silencioso.
+4. Validar snapshot completo: 20/20/18/20/18 equipos únicos, cinco competiciones correctas, squads presentes y no vacíos, IDs positivos, campos obligatorios mapeables y un equipo por jugador. Los duplicados idénticos del mismo jugador/equipo se colapsan; asociaciones conflictivas invalidan todo. `players_processed` no es una constante: 2473 es solo un ejemplo.
+5. Resolver UUID por ID externo; crear o actualizar equipos/jugadores, transferir asociación cuando el snapshot sea inequívoco, reactivar presentes e inactivar ausentes. En la primera publicación válida desactivar también la semilla demostrativa, sin borrarla ni asignarle IDs externos ficticios. Publicar todos los cambios en el único commit.
+6. Devolver 200 después del commit con contadores; ante fallo HTTP, cuota, timeout, payload inválido, pérdida de BD o validación externa →503 y rollback. Error interno inesperado →500 y rollback. Liberar recursos al terminar. Si se pierde la respuesta después del commit, el catálogo ya quedó publicado: una nueva acción manual idempotente reconcilia el estado.
+
+Tradeoff: se mantiene una conexión/transacción abierta durante la obtención externa, hasta 120 s, pero no se bloquean filas del catálogo durante HTTP. Es la opción acotada que evita locks de sesión filtrados al pool y leases vencidos mientras una ejecución aún escribe. Mantener pool de al menos 10 conexiones, deadline de pared comprobado antes de cada paso y antes del commit, timeouts HTTP/SQL y rollback al vencer. Las consultas conservan `REPEATABLE_READ`: cada petición ve datos y totales del mismo snapshot; peticiones distintas pueden ver publicaciones diferentes.
+
+Cadenciar consultas de una ejecución con intervalo mínimo de 6 s, sin reintentos automáticos; si headers indican cuota insuficiente para continuar, abortar con 503. La cuota externa sigue siendo autoridad, incluso entre ejecuciones consecutivas o si otra aplicación comparte la credencial: 429 externo →503. No se promete que una nueva sincronización admitida tenga cuota disponible. La política y sus tests están en [proveedor.md](./contracts/proveedor.md).
+
+La composición 96 es una condición de esta entrega: una temporada futura que no respete ese reparto no se publica ni se rellena artificialmente. La documentación del proveedor describe rosters de temporada, no prueba la pertenencia contractual exacta a la fecha; aceptar datos reales requiere verificar esa correspondencia. Ante ambigüedad el sistema conserva el snapshot anterior.
+
+### Evolución de datos y compatibilidad
+
+V4 crea `equipos`, normaliza `jugadores.team_id`, agrega IDs externos únicos y estados de actividad, permite dorsal null y conserva los UUID de V3. Se migran los equipos locales por combinación exacta liga/nombre, sin atribuirles identidad del proveedor. El DTO público mantiene `league/team` como proyección del equipo. Nombres propios sin apellido se representan con el nombre completo en `first_name` y `last_name=""`; no se inventan apellidos. Mantener los constructores estrictos legados del modelo y añadir una fábrica explícita para entidades importadas. [data-model.md](./data-model.md) detalla esquema, estados y validación.
+
+### Frontend y experiencia
+
+SPA bajo `frontend/`, implementada con React + JavaScript (`.js`/`.jsx`), `fetch` y estado/contexto local, sin SSR ni librerías adicionales de estado global salvo necesidad justificada. Cuatro vistas: registro, login, API Key y catálogo. No se agrega una pantalla de sincronización al alcance US5. Vite proxy `/api/v1` hacia el backend en desarrollo/preview; distribución posterior bajo mismo origen mediante reverse proxy. No habilitar CORS global ni exponer secretos en `VITE_*`. No agregar TypeScript, `tsconfig` ni archivos `.ts`/`.tsx`.
+
+`sessionStorage` conserva credenciales al recargar; React mantiene separada la presentación transitoria del secreto recién generado. Logout borra almacenamiento y datos protegidos; JWT expirado requiere login solo para operaciones JWT; API Key revocada se descarta al recibir 401 de catálogo. Navegación/recarga no generan claves. Rotación exige acción y advertencia de revocación; 409/red ambigua no reintenta automáticamente. Si el almacenamiento está bloqueado, informar persistencia limitada a memoria.
+
+Se verifica cierre ordinario de pestaña; los mecanismos del navegador para restaurar sesiones pueden recuperar `sessionStorage`. No prometer borrado irrecuperable ni usar `beforeunload` para borrar, porque también se ejecuta al recargar. Usar `noopener` al abrir ventanas propias. Validar este límite con el contrato [frontend.md](./contracts/frontend.md).
+
+### Pruebas por historia y regresión
 
 SC-005 usa como fuente normativa el fixture funcional determinista de seis jugadores definido en `spec.md`, con Real Madrid, Atlético de Madrid, LaLiga y las cuatro posiciones del modelo; los fixtures de Repository agregan casos literales de `%`, `_`, `!`, comillas y tildes. La validación compara contenido completo y metadatos exactos contra el oráculo del fixture: filtros parciales case-insensitive, `Madrid`/`madrid`/`MADRID` equivalentes e incluyendo ambos equipos, AND entre filtros, escape literal, tildes significativas, orden por UUID ascendente, conteo antes de paginar, página fuera de rango con `200` y lista vacía conservando totales, y cero coincidencias con total `0` y `total_pages=0`.
 
@@ -130,6 +174,12 @@ SC-004 se valida contra la matriz normativa de seguridad definida en `spec.md`: 
 | US1 / FR-001–004 | Invariantes Usuario | Registro, hashing, duplicados y búsquedas | 201, login 200, 400, 401, 409 |
 | US2 / FR-005–008,012 | Estado APIKey | Hash, una activa, rotación, rollback, concurrencia | JWT válido/ausente/inválido/expirado, secreto una vez, 409 |
 | US3 / FR-009–011 | Invariantes Jugador | Filtros literales, AND, orden, paginación, totales | Madrid en ambos equipos, mayúsculas, 400, 401 y revocación en curso |
+| US4 / FR-013–022,030–032,035 | Equipo, snapshot, identidad, actividad y dorsal opcional | V3→V4, upsert, rollback, inactivación, reactivación, transferencia y lock entre conexiones | 200 con contadores, JWT 401, competencia 409, incompletitud/timeout/cuota 503 |
+| US5 / FR-023–029,033–035 | Estado/validación de interfaz | Componentes con API simulada; backend real para flujo completo | Playwright registro→login→clave→catálogo, recarga/logout, filtros/paginación, null y errores |
+
+Adapter: servidor HTTP local y fixtures sintéticos versionados, incluyendo cinco ligas/96 equipos, error HTTP, cuerpo inválido/truncado, squad ausente/vacío, nombres de una palabra, posiciones detalladas, dorsal null, duplicados y timeouts. No se ejecuta la API real desde ninguna suite. SC-006–009 se prueban con fixtures exactos y PostgreSQL; además la aceptación de operación real requiere verificar credencial/cobertura del proveedor. Barreras deterministas mantienen sync antes del commit para verificar 409, lectura del snapshot anterior y liberación tras error. Añadir pruebas de contenido/paginación con entidades inactivas y dorsal null, sin debilitar el oráculo previo.
+
+SC-010 exige navegador→proxy→backend real→PostgreSQL; mocks de frontend por sí solos no lo acreditan. Definir `frontend/e2e/compose.yml` con proyecto `devchester-e2e`, PostgreSQL dedicado en tmpfs y el bootJar construido desde `backend/` en puerto loopback 18080; esperar readiness y cargar fixture SQL normalizado de forma controlada después de Flyway. Playwright inicia preview en 4173 con proxy hacia 18080 mediante `vite.config.js` y `DEV_API_TARGET`. CI prepara imágenes, dependencias y navegador antes de ejecutar sin Internet. Credenciales exclusivamente sintéticas; nunca reutilizar DB_URL del entorno personal. No se ejecutaron builds ni suites durante este flujo documental.
 
 Agregar pruebas JOSE de algoritmo/firma/emisor/audiencia. SC-004 exige matriz de rechazos al 100 %; SC-005 compara contenido y totales contra fixtures. Casos felices y borde en cada nivel, sin H2 ni MockMvc dentro de tests de Service. Mantener todas las pruebas existentes.
 
@@ -149,7 +199,7 @@ Cada repetición debe cumplir umbrales, cero errores HTTP inesperados y checks f
 
 ### Entrega y evidencia
 
-[quickstart.md](./quickstart.md) define validación local. Postman debe incluir cuatro endpoints, variables y errores; verificar importación/ejecución. CI ejecuta build, todas las pruebas y JaCoCo; análisis SonarCloud del commit y comprobación explícita de conteos constitucionales además del Quality Gate estándar. Guardar comandos, resultados y enlaces en `validation.md`, a crear al implementar. Los gates pendientes bloquean entrega.
+[quickstart.md](./quickstart.md) define validación local. Postman debe incluir cinco endpoints, variables y errores. CI usa `backend/` como working directory para Gradle (`./gradlew`/`gradlew.bat`) y `frontend/` como working directory para npm/Vite (`npm ci`, `npm run build`, tests y Playwright). `.github/`, `performance/`, `postman/`, `.specify/` y `specs/` permanecen en la raíz. Los jobs deben invocar explícitamente `working-directory: backend` para pasos Gradle y `working-directory: frontend` para pasos npm/Vite; no asumir que el checkout raíz contiene `build.gradle` o `package.json`. SonarCloud exige los conteos constitucionales además del Quality Gate. Agregar evidencia a `validation.md` sin reemplazar resultados históricos. Registrar duración y resultado de sync, liga/temporada y contadores, con ID de correlación; no loguear headers, secretos ni payloads completos. No se agregan servicios de telemetría. Gates pendientes bloquean entrega, no se acreditan por existir este diseño.
 
 ## Seguimiento de complejidad
 
@@ -157,4 +207,4 @@ Sin excepciones constitucionales en el diseño. Boot 4/JUnit 5 se resuelve con v
 
 ## Traspaso a tareas
 
-Nota histórica de planificación: se regeneró `tasks.md` con `$speckit-tasks` para reemplazar Maven, la raíz `com/devchester/united` y `jjwt`, y agregar FR-012, concurrencia, autorización en curso, k6/semilla, configuración global de test y contratos. La implementación de T001–T049 está documentada y validada; T050–T061 permanecen pendientes.
+Ejecutar `$speckit-tasks` sobre este diseño conservando T001–T050 y la evidencia histórica. Agregar tareas US4/US5 y actualizar el alcance de T051–T061: fixture de rendimiento normalizado, cinco endpoints, frontend y aceptación externa. Incluir la revisión/autorización de cambios concretos de fixtures antes de editar tests existentes. Este comando termina en fase 1: no genera tareas, código, migraciones ni cambios de tests.
