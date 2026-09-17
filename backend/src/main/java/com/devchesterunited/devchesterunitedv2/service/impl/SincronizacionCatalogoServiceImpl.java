@@ -10,6 +10,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
+import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionPersistenciaException;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import java.time.Clock;
 import java.time.Instant;
@@ -53,9 +54,15 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
                 LOCK_KEY_1, LOCK_KEY_2);
         if (!Boolean.TRUE.equals(adquirido)) throw new SincronizacionEnCursoException();
 
-        CatalogoSincronizado snapshot = adapter.sincronizar();
-        boolean primerSnapshot = equipos.findAll().stream().noneMatch(e -> e.getIdExterno() != null);
-        return publicar(snapshot, primerSnapshot);
+        try {
+            CatalogoSincronizado snapshot = adapter.sincronizar();
+            boolean primerSnapshot = equipos.findAll().stream().noneMatch(e -> e.getIdExterno() != null);
+            return publicar(snapshot, primerSnapshot);
+        } catch (com.devchesterunited.devchesterunitedv2.adapter.FootballDataException exception) {
+            throw exception;
+        } catch (DataAccessException exception) {
+            throw new SincronizacionPersistenciaException(exception);
+        }
     }
 
     @Override
@@ -91,7 +98,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             JugadorEntity anterior = existentesJugadores.get(jugador.getIdExterno());
             UUID id = anterior == null ? jugador.getId() : anterior.getId();
             if (anterior == null) jugadoresCreados++;
-            jugadores.save(new JugadorEntity(id, jugador.getIdExterno(), jugador.getNombre(), jugador.getApellido(),
+            jugadores.save(new JugadorEntity(id, jugador.getIdExterno(), jugador.getNombre(),
                     equiposSnapshot.get(jugador.getEquipoId() == null ? null : equipoExterno(snapshot, jugador.getEquipoId())),
                     jugador.getPosicion(), jugador.getDorsal() == 0 ? null : jugador.getDorsal(), jugador.getNacionalidad(),
                     true, anterior == null ? ahora : anterior.getCreadoEn(), ahora,
@@ -127,7 +134,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         for (JugadorEntity jugador : jugadores.findAll()) {
             if ((jugador.getIdExterno() == null && primerSnapshot)
                     || jugador.getIdExterno() != null && !presentesJugadores.contains(jugador.getIdExterno())) {
-                jugadores.save(new JugadorEntity(jugador.getId(), jugador.getIdExterno(), jugador.getNombre(), jugador.getApellido(),
+                jugadores.save(new JugadorEntity(jugador.getId(), jugador.getIdExterno(), jugador.getNombre(),
                         jugador.getEquipoId(), jugador.getPosicion(), jugador.getNumeroCamiseta(), jugador.getNacionalidad(),
                         false, jugador.getCreadoEn(), ahora, jugador.getLiga(), jugador.getEquipo()));
             }

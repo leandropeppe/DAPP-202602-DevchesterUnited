@@ -157,6 +157,8 @@ V4 crea `equipos`, normaliza `jugadores.team_id`, agrega IDs externos únicos y 
 
 ### Frontend y experiencia
 
+El contrato vigente de jugadores usa `name` como nombre completo; no expone `first_name` ni `last_name`. La sincronización conserva exactamente el `name` recibido por Football-Data.
+
 SPA bajo `frontend/`, implementada con React + JavaScript (`.js`/`.jsx`), `fetch` y estado/contexto local, sin SSR ni librerías adicionales de estado global salvo necesidad justificada. Cuatro vistas: registro, login, API Key y catálogo. No se agrega una pantalla de sincronización al alcance US5. Vite proxy `/api/v1` hacia el backend en desarrollo/preview; distribución posterior bajo mismo origen mediante reverse proxy. No habilitar CORS global ni exponer secretos en `VITE_*`. No agregar TypeScript, `tsconfig` ni archivos `.ts`/`.tsx`.
 
 `sessionStorage` conserva credenciales al recargar; React mantiene separada la presentación transitoria del secreto recién generado. Logout borra almacenamiento y datos protegidos; JWT expirado requiere login solo para operaciones JWT; API Key revocada se descarta al recibir 401 de catálogo. Navegación/recarga no generan claves. Rotación exige acción y advertencia de revocación; 409/red ambigua no reintenta automáticamente. Si el almacenamiento está bloqueado, informar persistencia limitada a memoria.

@@ -32,7 +32,7 @@ class SincronizacionRepositoryIntegrationTest extends PostgresTestSupport {
         equipos.saveAndFlush(new EquipoEntity(EQUIPO_ID, 990001L, "Equipo importado", "EI", "EIM", "LaLiga",
                 "https://img.example/equipo.png", true, 2026L, LocalDate.of(2026, 8, 1),
                 LocalDate.of(2027, 5, 31), AHORA, AHORA));
-        jugadores.saveAndFlush(new JugadorEntity(JUGADOR_ID, 990002L, "Nombre", "Apellido", EQUIPO_ID, "Forward", null,
+        jugadores.saveAndFlush(new JugadorEntity(JUGADOR_ID, 990002L, "Nombre Apellido", EQUIPO_ID, "Forward", null,
                 "Argentina", true, AHORA, AHORA, "LaLiga", "Equipo importado"));
 
         var jugador = jugadores.findByIdExterno(990002L).orElseThrow();

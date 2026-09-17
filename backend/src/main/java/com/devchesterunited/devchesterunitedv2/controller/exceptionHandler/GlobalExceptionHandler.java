@@ -18,12 +18,18 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
+import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionPersistenciaException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(SincronizacionEnCursoException.class)
     public ResponseEntity<Object> syncConflict(SincronizacionEnCursoException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponseDTO("Ya hay una sincronizacion del catalogo en curso"));
+    }
+
+    @ExceptionHandler(SincronizacionPersistenciaException.class)
+    public ResponseEntity<Object> syncPersistenceUnavailable(SincronizacionPersistenciaException exception) {
+        return response(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @ExceptionHandler(FootballDataException.class)

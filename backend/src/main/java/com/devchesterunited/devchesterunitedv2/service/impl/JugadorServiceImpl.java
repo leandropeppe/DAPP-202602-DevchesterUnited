@@ -40,7 +40,6 @@ public class JugadorServiceImpl implements JugadorService {
         return new JugadorResponseDTO(
                 "ply_" + entidad.getId(),
                 entidad.getNombre(),
-                entidad.getApellido(),
                 entidad.getLiga(),
                 entidad.getEquipo(),
                 entidad.getPosicion(),

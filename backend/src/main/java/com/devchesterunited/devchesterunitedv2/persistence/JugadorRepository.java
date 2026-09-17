@@ -21,16 +21,18 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
     // Escapar primero ! para no volver a escapar los ! introducidos para % y _.
     // Los casts también permiten a PostgreSQL resolver el tipo de parámetros nulos.
     String FILTROS = """
-            WHERE (CAST(:liga AS text) IS NULL OR league ILIKE
+            WHERE j.is_active = TRUE
+              AND EXISTS (SELECT 1 FROM equipos e WHERE e.id = j.team_id AND e.is_active = TRUE)
+              AND (CAST(:liga AS text) IS NULL OR j.league ILIKE
                 ('%' || replace(replace(replace(CAST(:liga AS text), '!', '!!'), '%', '!%'), '_', '!_') || '%') ESCAPE '!')
-              AND (CAST(:equipo AS text) IS NULL OR team ILIKE
+              AND (CAST(:equipo AS text) IS NULL OR j.team ILIKE
                 ('%' || replace(replace(replace(CAST(:equipo AS text), '!', '!!'), '%', '!%'), '_', '!_') || '%') ESCAPE '!')
-              AND (CAST(:posicion AS text) IS NULL OR position ILIKE
+              AND (CAST(:posicion AS text) IS NULL OR j.position ILIKE
                 ('%' || replace(replace(replace(CAST(:posicion AS text), '!', '!!'), '%', '!%'), '_', '!_') || '%') ESCAPE '!')
             """;
 
     /** Offset basado en cero; orden fijo, independiente de cualquier entrada del cliente. */
-    @Query(value = "SELECT * FROM jugadores " + FILTROS
+    @Query(value = "SELECT j.* FROM jugadores j " + FILTROS
             + " ORDER BY id ASC LIMIT :limite OFFSET :offset", nativeQuery = true)
     List<JugadorEntity> buscar(@Param("liga") String liga,
             @Param("equipo") String equipo,
@@ -39,7 +41,7 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
             @Param("limite") int limite);
 
     /** Total de coincidencias antes de paginar, incluso cuando la página solicitada está vacía. */
-    @Query(value = "SELECT COUNT(*) FROM jugadores " + FILTROS, nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) FROM jugadores j " + FILTROS, nativeQuery = true)
     long contar(@Param("liga") String liga,
             @Param("equipo") String equipo,
             @Param("posicion") String posicion);

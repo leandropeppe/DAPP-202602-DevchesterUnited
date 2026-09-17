@@ -144,9 +144,7 @@ public class FootballDataAdapter {
                 String previa = jugadoresVistos.putIfAbsent(jugador.id(), firma);
                 if (previa != null && !previa.equals(firma)) throw new FootballDataException("El proveedor repitio un jugador con datos incompatibles.");
                 if (previa == null) {
-                    String nombre = nombre(jugador);
-                    String apellido = jugador.lastName() == null ? "" : jugador.lastName().trim();
-                    jugadores.add(Jugador.importado(UUID.randomUUID(), jugador.id(), nombre, apellido, idEquipo,
+                    jugadores.add(Jugador.importado(UUID.randomUUID(), jugador.id(), nombre(jugador), idEquipo,
                             posicion(jugador.position()), jugador.shirtNumber(), jugador.nationality().trim(), clock.instant()));
                 }
             }
@@ -170,18 +168,15 @@ public class FootballDataAdapter {
     }
 
     private static String nombre(FootballPlayerDTO jugador) {
-        String primero = jugador.firstName() == null ? "" : jugador.firstName().trim();
-        String ultimo = jugador.lastName() == null ? "" : jugador.lastName().trim();
-        String completo = jugador.name() == null ? "" : jugador.name().trim();
-        if (primero.isEmpty()) { primero = completo; ultimo = ""; }
-        if (primero.isEmpty() || primero.codePointCount(0, primero.length()) > 100 || ultimo.codePointCount(0, ultimo.length()) > 100) {
+        String completo = jugador.name() == null ? "" : jugador.name();
+        if (completo.isBlank() || completo.codePointCount(0, completo.length()) > 200) {
             throw new FootballDataException("El nombre del jugador externo no cumple el contrato.");
         }
-        return primero;
+        return completo;
     }
 
     private static String posicion(String externa) {
-        if (externa == null) throw new FootballDataException("La posicion externa es obligatoria.");
+        if (externa == null) return null;
         return switch (externa) {
             case "Goalkeeper" -> "Goalkeeper";
             case "Defence", "Defender", "Centre-Back", "Left-Back", "Right-Back" -> "Defender";
@@ -192,7 +187,7 @@ public class FootballDataAdapter {
     }
 
     private static String firma(FootballPlayerDTO j, UUID equipo) {
-        return equipo + "|" + j.firstName() + "|" + j.lastName() + "|" + j.name() + "|" + j.shirtNumber() + "|" + j.nationality() + "|" + j.position();
+        return equipo + "|" + j.name() + "|" + j.shirtNumber() + "|" + j.nationality() + "|" + j.position();
     }
 
     private static URI uriHttps(String crest) {

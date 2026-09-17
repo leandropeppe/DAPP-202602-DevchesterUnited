@@ -31,7 +31,7 @@ class CatalogoSincronizadoTest {
                 .isInstanceOf(IllegalArgumentException.class);
 
         var jugadores = new ArrayList<>(datos.jugadores);
-        jugadores.set(0, Jugador.importado(UUID.randomUUID(), datos.jugadores.get(1).getIdExterno(), "Duplicado", "",
+        jugadores.set(0, Jugador.importado(UUID.randomUUID(), datos.jugadores.get(1).getIdExterno(), "Duplicado",
                 datos.jugadores.get(0).getEquipoId(), "Forward", null, "AR", AHORA));
         assertThatThrownBy(() -> new CatalogoSincronizado(datos.equipos, jugadores))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -46,7 +46,7 @@ class CatalogoSincronizadoTest {
                 UUID id = UUID.randomUUID();
                 equipos.add(Equipo.importado(id, externo++, "Equipo " + externo, "E", "E", LIGAS.get(i), null,
                         2026, null, null, AHORA));
-                jugadores.add(Jugador.importado(UUID.randomUUID(), 10_000 + externo, "Jugador", "", id,
+                jugadores.add(Jugador.importado(UUID.randomUUID(), 10_000 + externo, "Jugador", id,
                         "Forward", null, "Argentina", AHORA));
             }
         }

@@ -12,7 +12,6 @@ public final class Jugador {
 
     private final UUID id;
     private final String nombre;
-    private final String apellido;
     private final String liga;
     private final String equipo;
     private final String posicion;
@@ -24,16 +23,18 @@ public final class Jugador {
     private final Instant creadoEn;
     private final Instant actualizadoEn;
 
-    public Jugador(UUID id, String nombre, String apellido, String liga, String equipo,
+    public Jugador(UUID id, String nombre, String liga, String equipo,
             String posicion, int dorsal, String nacionalidad) {
         if (id == null) {
             throw new JugadorException("El identificador del jugador es obligatorio.");
         }
         validarTexto(nombre, "nombre");
-        validarTexto(apellido, "apellido");
         validarTexto(liga, "liga");
         validarTexto(equipo, "equipo");
         validarTexto(nacionalidad, "nacionalidad");
+        validarMaximo(liga, "liga", 100);
+        validarMaximo(equipo, "equipo", 100);
+        validarMaximo(nacionalidad, "nacionalidad", 100);
         if (posicion == null || !POSICIONES.contains(posicion)) {
             throw new JugadorException("La posición debe ser Forward, Midfielder, Defender o Goalkeeper.");
         }
@@ -42,7 +43,6 @@ public final class Jugador {
         }
         this.id = id;
         this.nombre = nombre;
-        this.apellido = apellido;
         this.liga = liga;
         this.equipo = equipo;
         this.posicion = posicion;
@@ -55,18 +55,16 @@ public final class Jugador {
         this.actualizadoEn = Instant.EPOCH;
     }
 
-    private Jugador(UUID id, Long idExterno, String nombre, String apellido, UUID equipoId,
+    private Jugador(UUID id, Long idExterno, String nombre, UUID equipoId,
             String posicion, Integer dorsal, String nacionalidad, boolean activo,
             Instant creadoEn, Instant actualizadoEn) {
         if (id == null || idExterno == null || idExterno <= 0 || equipoId == null) {
             throw new JugadorException("El jugador importado requiere identificadores validos.");
         }
         validarTexto(nombre, "nombre");
-        if (apellido == null || apellido.codePointCount(0, apellido.length()) > 100) {
-            throw new JugadorException("El apellido del jugador no es valido.");
-        }
         validarTexto(nacionalidad, "nacionalidad");
-        if (posicion == null || !POSICIONES.contains(posicion)) {
+        validarMaximo(nacionalidad, "nacionalidad", 100);
+        if (posicion != null && !POSICIONES.contains(posicion)) {
             throw new JugadorException("La posicion del jugador no es valida.");
         }
         if (dorsal != null && (dorsal < 1 || dorsal > 99)) {
@@ -75,25 +73,25 @@ public final class Jugador {
         if (creadoEn == null || actualizadoEn == null || actualizadoEn.isBefore(creadoEn)) {
             throw new JugadorException("Las fechas del jugador no son coherentes.");
         }
-        this.id = id; this.idExterno = idExterno; this.nombre = nombre; this.apellido = apellido;
+        this.id = id; this.idExterno = idExterno; this.nombre = nombre;
         this.liga = ""; this.equipo = ""; this.equipoId = equipoId; this.posicion = posicion;
         this.dorsal = dorsal == null ? 0 : dorsal; this.nacionalidad = nacionalidad;
         this.activo = activo; this.creadoEn = creadoEn; this.actualizadoEn = actualizadoEn;
     }
 
-    public static Jugador importado(UUID id, long idExterno, String nombre, String apellido,
-            UUID equipoId, String posicion, Integer dorsal, String nacionalidad, Instant ahora) {
-        return new Jugador(id, idExterno, nombre, apellido == null ? "" : apellido, equipoId,
+    public static Jugador importado(UUID id, long idExterno, String nombre, UUID equipoId,
+            String posicion, Integer dorsal, String nacionalidad, Instant ahora) {
+        return new Jugador(id, idExterno, nombre, equipoId,
                 posicion, dorsal, nacionalidad, true, ahora, ahora);
     }
 
     public Jugador desactivar(Instant ahora) {
-        return new Jugador(id, idExterno, nombre, apellido, equipoId, posicion, dorsal == 0 ? null : dorsal,
+        return new Jugador(id, idExterno, nombre, equipoId, posicion, dorsal == 0 ? null : dorsal,
                 nacionalidad, false, creadoEn, ahora);
     }
 
     public Jugador reactivar(Instant ahora) {
-        return new Jugador(id, idExterno, nombre, apellido, equipoId, posicion, dorsal == 0 ? null : dorsal,
+        return new Jugador(id, idExterno, nombre, equipoId, posicion, dorsal == 0 ? null : dorsal,
                 nacionalidad, true, creadoEn, ahora);
     }
 
@@ -101,14 +99,19 @@ public final class Jugador {
         if (valor == null || valor.isBlank()) {
             throw new JugadorException("El campo " + campo + " es obligatorio y no puede estar vacío.");
         }
-        if (valor.codePointCount(0, valor.length()) > 100) {
-            throw new JugadorException("El campo " + campo + " no puede superar los 100 caracteres.");
+        if (valor.codePointCount(0, valor.length()) > 200) {
+            throw new JugadorException("El campo " + campo + " no puede superar los 200 caracteres.");
+        }
+    }
+
+    private static void validarMaximo(String valor, String campo, int maximo) {
+        if (valor.codePointCount(0, valor.length()) > maximo) {
+            throw new JugadorException("El campo " + campo + " no puede superar los " + maximo + " caracteres.");
         }
     }
 
     public UUID getId() { return id; }
     public String getNombre() { return nombre; }
-    public String getApellido() { return apellido; }
     public String getLiga() { return liga; }
     public String getEquipo() { return equipo; }
     public String getPosicion() { return posicion; }

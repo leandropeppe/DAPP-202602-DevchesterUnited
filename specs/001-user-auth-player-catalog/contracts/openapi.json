@@ -3,7 +3,7 @@
   "info": {
     "title": "Devchester United — Autenticación y catálogo sincronizado",
     "version": "1.1.0",
-    "description": "Contrato de la Entrega 1, revisión 2026-09-16; US1–US4 implementadas y validadas. US5 y los gates finales permanecen pendientes. Registro/login públicos, JWT para generar API Key y sincronizar, X-API-KEY para catálogo local. Mensajes en español. Swagger solo en local/test. Jugador admite dorsal null y apellido vacío cuando no existe un apellido separado en la fuente."
+    "description": "Contrato de la Entrega 1, revisión 2026-09-17; US1–US4 implementadas y validadas. US5 y los gates finales permanecen pendientes. Registro/login públicos, JWT para generar API Key y sincronizar, X-API-KEY para catálogo local. Mensajes en español. Swagger solo en local/test. Jugador expone el nombre completo en name y admite position y jersey_number null cuando la fuente no los informa."
   },
   "servers": [
     {
@@ -663,8 +663,7 @@
         "additionalProperties": false,
         "required": [
           "id",
-          "first_name",
-          "last_name",
+          "name",
           "league",
           "team",
           "position",
@@ -676,16 +675,11 @@
             "type": "string",
             "pattern": "^ply_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
           },
-          "first_name": {
+          "name": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 100
-          },
-          "last_name": {
-            "type": "string",
-            "minLength": 0,
-            "maxLength": 100,
-            "description": "Vacío si la fuente solo informa un nombre completo; en ese caso first_name lo conserva íntegro."
+            "maxLength": 200,
+            "description": "Nombre completo exactamente como lo entrega la fuente externa o como se migró desde los datos históricos."
           },
           "league": {
             "type": "string",
@@ -699,6 +693,7 @@
           },
           "position": {
             "type": "string",
+            "nullable": true,
             "enum": [
               "Forward",
               "Midfielder",

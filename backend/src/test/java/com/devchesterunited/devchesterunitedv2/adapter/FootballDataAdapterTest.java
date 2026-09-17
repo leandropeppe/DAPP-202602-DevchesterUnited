@@ -51,7 +51,7 @@ class FootballDataAdapterTest {
         iniciar((exchange, codigo) -> responder(exchange, 200, payload(codigo, cantidad(codigo), true), "100"));
         var jugadores = adapter().sincronizar().getJugadores();
         assertThat(jugadores).extracting(j -> j.getPosicion()).contains("Defender", "Midfielder", "Goalkeeper", "Forward");
-        assertThat(jugadores).anyMatch(j -> j.getDorsal() == 0 && j.getApellido().isEmpty());
+        assertThat(jugadores).anyMatch(j -> j.getDorsal() == 0 && j.getNombre().equals("Solo Nombre"));
     }
 
     @Test

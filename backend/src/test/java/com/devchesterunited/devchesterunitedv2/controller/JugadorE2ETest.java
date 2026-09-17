@@ -45,8 +45,7 @@ class JugadorE2ETest {
         JsonNode datos = exito(consulta(clave), 1, 20, 3, 1);
         assertThat(ids(datos)).containsExactly(idApi(1), idApi(2), idApi(3));
         JsonNode primero = datos.path("players").get(0);
-        assertThat(primero.path("first_name").asText()).isEqualTo("Julián");
-        assertThat(primero.path("last_name").asText()).isEqualTo("Álvarez");
+        assertThat(primero.path("name").asText()).isEqualTo("Julián Álvarez");
         assertThat(primero.path("team").asText()).isEqualTo("Atlético de Madrid");
         assertThat(primero.path("league").asText()).isEqualTo("LaLiga");
         assertThat(primero.path("position").asText()).isEqualTo("Forward");
@@ -233,8 +232,8 @@ class JugadorE2ETest {
 
     private void insertar(int id, String nombre, String apellido, String liga, String equipo,
             String posicion, int dorsal, String nacionalidad) {
-        jdbc.update("INSERT INTO jugadores (id, first_name, last_name, league, team, position, jersey_number, nationality) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                UUID.fromString(idApi(id).substring(4)), nombre, apellido, liga, equipo, posicion, dorsal, nacionalidad);
+        jdbc.update("INSERT INTO jugadores (id, name, league, team, position, jersey_number, nationality) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                UUID.fromString(idApi(id).substring(4)), nombre + " " + apellido, liga, equipo, posicion, dorsal, nacionalidad);
     }
 
     private static String idApi(int numero) {
@@ -255,13 +254,13 @@ class JugadorE2ETest {
         assertThat(datos.fieldNames()).toIterable().containsExactlyInAnyOrder("players", "pagination");
         assertThat(datos.path("players").isArray()).isTrue();
         for (JsonNode jugador : datos.path("players")) {
-            assertThat(jugador.fieldNames()).toIterable().containsExactlyInAnyOrder("id", "first_name", "last_name",
+            assertThat(jugador.fieldNames()).toIterable().containsExactlyInAnyOrder("id", "name",
                     "league", "team", "position", "jersey_number", "nationality");
             assertThat(jugador.path("id").isTextual()).isTrue();
             assertThat(jugador.path("id").asText()).matches("ply_[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}");
-            for (String campo : List.of("first_name", "last_name", "league", "team", "nationality")) {
+            for (String campo : List.of("name", "league", "team", "nationality")) {
                 assertThat(jugador.path(campo).isTextual()).isTrue();
-                assertThat(jugador.path(campo).asText()).isNotBlank().hasSizeBetween(1, 100);
+                assertThat(jugador.path(campo).asText()).isNotBlank().hasSizeBetween(1, campo.equals("name") ? 200 : 100);
             }
             assertThat(jugador.path("position").asText()).isIn("Forward", "Midfielder", "Defender", "Goalkeeper");
             assertThat(jugador.path("jersey_number").isIntegralNumber()).isTrue();

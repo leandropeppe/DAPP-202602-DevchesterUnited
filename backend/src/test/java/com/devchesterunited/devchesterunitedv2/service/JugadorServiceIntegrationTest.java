@@ -32,6 +32,7 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
     @BeforeEach
     void prepararCatalogo() {
         jdbc.update("DELETE FROM jugadores");
+        jdbc.update("UPDATE equipos SET is_active = TRUE");
         insertar(6, "Manuel", "Neuer", "Bundesliga", "Bayern", "Goalkeeper", 1, "Alemania");
         insertar(3, "Phil", "Foden", "Premier League", "Manchester City", "Forward", 47, "Inglaterra");
         insertar(1, "Julián", "Álvarez", "LaLiga", "Atlético de Madrid", "Forward", 9, "Argentina");
@@ -126,12 +127,12 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
     void mapeaTodosLosCamposPublicosYElIdentificadorOpaco() {
         var respuesta = servicio.consultar(new FiltroJugadoresDTO(null, null, null, 1, 20));
         assertThat(respuesta.jugadores()).containsExactly(
-                new JugadorResponseDTO(publico(1), "Julián", "Álvarez", "LaLiga", "Atlético de Madrid", "Forward", 9, "Argentina"),
-                new JugadorResponseDTO(publico(2), "Jude", "Bellingham", "LaLiga", "Real Madrid", "Midfielder", 5, "Inglaterra"),
-                new JugadorResponseDTO(publico(3), "Phil", "Foden", "Premier League", "Manchester City", "Forward", 47, "Inglaterra"),
-                new JugadorResponseDTO(publico(4), "Dani", "Carvajal", "LaLiga", "Real Madrid", "Defender", 2, "España"),
-                new JugadorResponseDTO(publico(5), "Jan", "Oblak", "LaLiga", "Atlético de Madrid", "Goalkeeper", 13, "Eslovenia"),
-                new JugadorResponseDTO(publico(6), "Manuel", "Neuer", "Bundesliga", "Bayern", "Goalkeeper", 1, "Alemania"));
+                new JugadorResponseDTO(publico(1), "Julián Álvarez", "LaLiga", "Atlético de Madrid", "Forward", 9, "Argentina"),
+                new JugadorResponseDTO(publico(2), "Jude Bellingham", "LaLiga", "Real Madrid", "Midfielder", 5, "Inglaterra"),
+                new JugadorResponseDTO(publico(3), "Phil Foden", "Premier League", "Manchester City", "Forward", 47, "Inglaterra"),
+                new JugadorResponseDTO(publico(4), "Dani Carvajal", "LaLiga", "Real Madrid", "Defender", 2, "España"),
+                new JugadorResponseDTO(publico(5), "Jan Oblak", "LaLiga", "Atlético de Madrid", "Goalkeeper", 13, "Eslovenia"),
+                new JugadorResponseDTO(publico(6), "Manuel Neuer", "Bundesliga", "Bayern", "Goalkeeper", 1, "Alemania"));
         respuesta.jugadores().forEach(jugador -> assertThat(jugador.id()).matches("ply_[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}"));
     }
 
@@ -203,7 +204,7 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
     }
 
     private void insertar(int numero, String nombre, String apellido, String liga, String equipo, String posicion, int dorsal, String nacionalidad) {
-        jdbc.update("INSERT INTO jugadores (id, first_name, last_name, league, team, position, jersey_number, nationality) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", id(numero), nombre, apellido, liga, equipo, posicion, dorsal, nacionalidad);
+        jdbc.update("INSERT INTO jugadores (id, name, league, team, position, jersey_number, nationality) VALUES (?, ?, ?, ?, ?, ?, ?)", id(numero), nombre + " " + apellido, liga, equipo, posicion, dorsal, nacionalidad);
     }
 
     private static UUID id(int numero) {

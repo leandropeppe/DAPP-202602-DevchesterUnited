@@ -13,6 +13,8 @@
 
 ## Clarifications
 
+- Q: ¿Qué debe hacer la sincronización si el proveedor devuelve un jugador válido con `position: null`? → A: Importarlo con posición null y devolver `position: null`; no inventar una categoría ni omitir al jugador por ese motivo.
+
 ### Session 2026-09-05
 
 - Q: ¿Los filtros de liga, equipo y posición deben buscar coincidencias exactas o permitir coincidencias parciales? → A: Coincidencias parciales sin distinguir mayúsculas de minúsculas; `team=Madrid` debe encontrar tanto Real Madrid como Atlético de Madrid.
@@ -274,6 +276,8 @@ Para un mismo usuario, la rotación debe adquirir la fila del usuario mediante `
 ---
 
 ## Criterios de Éxito *(obligatorio)*
+
+**Modelo vigente de Jugador:** el contrato REST expone únicamente `name` como nombre completo. Football-Data se almacena exactamente desde `player.name`, sin separar ni inferir apellido. V6 migra los datos históricos concatenando `first_name` y `last_name`, conserva UUIDs e IDs externos y elimina las columnas antiguas.
 
 ### Resultados Medibles
 

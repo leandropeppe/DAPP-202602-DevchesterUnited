@@ -35,6 +35,7 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
     @BeforeEach
     void prepararCatalogo() {
         jdbc.update("DELETE FROM jugadores");
+        jdbc.update("UPDATE equipos SET is_active = TRUE");
         // Orden de inserción deliberadamente distinto al UUID.
         insertar(6, "Liga prueba", "Club sin símbolos", "Defender");
         insertar(3, "Premier League", "Manchester City", "Forward");
@@ -158,8 +159,8 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
     }
 
     private void insertar(int numero, String liga, String equipo, String posicion) {
-        jdbc.update("INSERT INTO jugadores (id, first_name, last_name, league, team, position, jersey_number, nationality) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                id(numero), "Nombre", "Apellido", liga, equipo, posicion, numero, "Argentina");
+        jdbc.update("INSERT INTO jugadores (id, name, league, team, position, jersey_number, nationality) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                id(numero), "Nombre Apellido", liga, equipo, posicion, numero, "Argentina");
     }
 
     private static UUID id(int numero) {

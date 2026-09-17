@@ -563,6 +563,36 @@ No se requirieron cambios productivos ni refactors para T068-T069. US1-US3 manti
 
 **Cierre US4 validado: T057-T069 [x]. T070 y posteriores [ ].**
 
+## Corrección de posición nula del proveedor (2026-09-17)
+
+- Football-Data puede devolver `position: null` para un jugador válido. El Adapter ahora conserva ese valor como `null`; las posiciones informadas continúan mapeándose a `Forward`, `Midfielder`, `Defender` o `Goalkeeper`.
+- La fábrica de jugadores importados y `JugadorEntity` admiten posición nullable. La migración `V5__Allow_null_player_position.sql` elimina únicamente el `NOT NULL`; el `CHECK` existente sigue validando los valores no nulos y se preservan los datos anteriores.
+- La publicación continúa siendo atómica: un error estructural del snapshot mantiene el rollback completo. La posición ausente ya no se considera un error estructural.
+- Tests nuevos: `JugadorImportadoNullPositionTest` y `FootballDataAdapterNullPositionTest`; el segundo usa un servidor HTTP loopback con un snapshot sintético de 96 equipos.
+- Tests focalizados: **2 tests, 0 fallos, 0 errores y 0 omitidos; BUILD SUCCESSFUL in 18s**.
+- Regresión completa desde `backend/`: **394 tests, 0 fallos, 0 errores y 0 omitidos; BUILD SUCCESSFUL in 1m 23s**.
+- `clean assemble`: **BUILD SUCCESSFUL in 11s**.
+- No se realizaron llamadas a football-data.org ni se modificaron tests existentes.
+
+## Replanteo de nombre completo de Jugador (2026-09-17)
+
+- Se informó antes de adaptar los tests que `JugadorTest`, `JugadorImportadoTest`, `FootballDataAdapterTest`, `JugadorE2ETest`, `JugadorServiceIntegrationTest`, `SincronizacionCatalogoServiceTest`, `SincronizacionCatalogoIntegrationTest`, `JugadorRepositoryIntegrationTest` y `SincronizacionRepositoryIntegrationTest` dependían del contrato dividido anterior.
+- La nueva migración V6 concatena los datos históricos con `trim(concat_ws(' ', first_name, last_name))`, conserva UUIDs y elimina las columnas antiguas tras el backfill.
+- Football-Data conserva exactamente `player.name`; se verificaron `Kepa Arrizabalaga`, `Cristian Cásseres Jr.` y `Pierre Emile Højbjerg` sin separación ni transformación.
+- La persistencia del sync encapsula los errores de acceso/constraint como indisponibilidad y devuelve HTTP 503; el HTTP 409 queda reservado para `SincronizacionEnCursoException`.
+- Tests focalizados de nombres, posición nula y error de persistencia: **3 tests, 0 fallos, 0 errores y 0 omitidos; BUILD SUCCESSFUL in 15s**.
+- Regresión completa posterior: **391 tests, 0 fallos, 0 errores y 0 omitidos; BUILD SUCCESSFUL in 1m 26s**.
+- `clean assemble`: **BUILD SUCCESSFUL in 12s**.
+
+## Exclusión de semilla ficticia del catálogo consultable (2026-09-17)
+
+- No se modificaron las migraciones históricas V3–V6 ni se eliminaron físicamente registros.
+- La migración `V7__Deactivate_demo_player_seed.sql` conserva las filas demo como historial técnico y las marca inactivas.
+- `JugadorRepository.buscar()` y `contar()` ahora requieren jugador activo y equipo activo, manteniendo filtros y totales coherentes.
+- Se adaptaron los fixtures de Repository/Service para declarar explícitamente sus equipos activos.
+- Regresión completa: **391 tests, 0 fallos, 0 errores y 0 omitidos; BUILD SUCCESSFUL in 1m 24s**.
+- `clean assemble`: **BUILD SUCCESSFUL in 10s**.
+
 ## Remediación de consistencia documental (2026-09-16)
 
 - Se alinearon los estados vigentes de `spec.md`, `plan.md`, `tasks.md`, `contracts/openapi.json` y este documento: T001–T069 cerradas; T070–T088 pendientes.

@@ -91,7 +91,7 @@ class SincronizacionCatalogoServiceTest {
             UUID id = UUID.randomUUID();
             equipos.add(Equipo.importado(id, externo, "Equipo " + externo, "E", "E", ligas.get(i), null,
                     2026, null, null, AHORA));
-            jugadores.add(Jugador.importado(UUID.randomUUID(), 10000 + externo, "Jugador", "Apellido", id,
+            jugadores.add(Jugador.importado(UUID.randomUUID(), 10000 + externo, "Jugador Apellido", id,
                     "Forward", null, "Argentina", AHORA));
             externo++;
         }

@@ -115,7 +115,7 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
             UUID equipoId = UUID.randomUUID();
             equipos.add(Equipo.importado(equipoId, equipoBase + i, "Equipo " + i, "E", "E", ligas.get(liga), null,
                     2026, null, null, AHORA));
-            jugadores.add(Jugador.importado(UUID.randomUUID(), jugadorBase + i, "Jugador " + i, "Apellido", equipoId,
+            jugadores.add(Jugador.importado(UUID.randomUUID(), jugadorBase + i, "Jugador " + i + " Apellido", equipoId,
                     "Forward", null, "Argentina", AHORA));
         }
         return new CatalogoSincronizado(equipos, jugadores);

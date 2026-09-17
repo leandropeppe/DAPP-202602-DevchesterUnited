@@ -10,19 +10,19 @@ class JugadorImportadoTest {
     private static final Instant AHORA = Instant.parse("2026-09-16T12:00:00Z");
 
     @Test
-    void admiteDorsalNuloYApellidoAusente() {
-        var jugador = Jugador.importado(UUID.randomUUID(), 7L, "Nombre", null, EQUIPO,
-                "Forward", null, "Argentina", AHORA);
+    void admiteDorsalNuloYPosicionNula() {
+        var jugador = Jugador.importado(UUID.randomUUID(), 7L, "Nombre Completo", EQUIPO,
+                null, null, "Argentina", AHORA);
         assertThat(jugador.getIdExterno()).isEqualTo(7L);
         assertThat(jugador.getEquipoId()).isEqualTo(EQUIPO);
-        assertThat(jugador.getApellido()).isEmpty();
+        assertThat(jugador.getNombre()).isEqualTo("Nombre Completo");
         assertThat(jugador.getDorsal()).isZero();
         assertThat(jugador.isActivo()).isTrue();
     }
 
     @Test
     void desactivarYReactivarConservanIdentidadYPertenencia() {
-        var jugador = Jugador.importado(UUID.randomUUID(), 7L, "Nombre", "Apellido", EQUIPO,
+        var jugador = Jugador.importado(UUID.randomUUID(), 7L, "Nombre Apellido", EQUIPO,
                 "Defender", 99, "Argentina", AHORA);
         var desactivado = jugador.desactivar(AHORA.plusSeconds(1));
         var reactivado = desactivado.reactivar(AHORA.plusSeconds(2));
@@ -35,13 +35,13 @@ class JugadorImportadoTest {
 
     @Test
     void rechazaIdentidadEquipoPosicionYNacionalidadInvalidos() {
-        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 0L, "N", "", EQUIPO,
+        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 0L, "N", EQUIPO,
                 "Forward", null, "AR", AHORA)).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 1L, "N", "", null,
+        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 1L, "N", null,
                 "Forward", null, "AR", AHORA)).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 1L, "N", "", EQUIPO,
+        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 1L, "N", EQUIPO,
                 "Striker", null, "AR", AHORA)).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 1L, "N", "", EQUIPO,
+        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 1L, "N", EQUIPO,
                 "Forward", 100, "AR", AHORA)).isInstanceOf(RuntimeException.class);
     }
 }

@@ -13,15 +13,13 @@ public class JugadorEntity {
     @Id
     @Column(nullable = false)
     private UUID id;
-    @Column(name = "first_name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 200)
     private String nombre;
-    @Column(name = "last_name", nullable = false, length = 100)
-    private String apellido;
     @Column(name = "league", nullable = false, length = 100)
     private String liga;
     @Column(name = "team", nullable = false, length = 100)
     private String equipo;
-    @Column(name = "position", nullable = false, length = 30)
+    @Column(name = "position", length = 30)
     private String posicion;
     @Column(name = "jersey_number")
     private Integer dorsal;
@@ -40,11 +38,10 @@ public class JugadorEntity {
 
     protected JugadorEntity() { }
 
-    public JugadorEntity(UUID id, String nombre, String apellido, String liga, String equipo,
+    public JugadorEntity(UUID id, String nombre, String liga, String equipo,
             String posicion, int dorsal, String nacionalidad) {
         this.id = id;
         this.nombre = nombre;
-        this.apellido = apellido;
         this.liga = liga;
         this.equipo = equipo;
         this.posicion = posicion;
@@ -53,10 +50,10 @@ public class JugadorEntity {
         this.activo = true;
     }
 
-    public JugadorEntity(UUID id, Long idExterno, String nombre, String apellido, UUID equipoId,
+    public JugadorEntity(UUID id, Long idExterno, String nombre, UUID equipoId,
             String posicion, Integer dorsal, String nacionalidad, boolean activo,
             Instant creadoEn, Instant actualizadoEn, String liga, String equipo) {
-        this.id=id; this.idExterno=idExterno; this.nombre=nombre; this.apellido=apellido;
+        this.id=id; this.idExterno=idExterno; this.nombre=nombre;
         this.equipoId=equipoId; this.posicion=posicion; this.dorsal=dorsal; this.nacionalidad=nacionalidad;
         this.activo=activo; this.creadoEn=creadoEn; this.actualizadoEn=actualizadoEn;
         this.liga=liga; this.equipo=equipo;
@@ -64,7 +61,6 @@ public class JugadorEntity {
 
     public UUID getId() { return id; }
     public String getNombre() { return nombre; }
-    public String getApellido() { return apellido; }
     public String getLiga() { return liga; }
     public String getEquipo() { return equipo; }
     public String getPosicion() { return posicion; }

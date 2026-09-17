@@ -125,7 +125,7 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
             UUID equipoId = UUID.randomUUID();
             equipos.add(Equipo.importado(equipoId, equipoBase + indice, "Equipo " + indice, "E", "E", ligas.get(liga), null,
                     2026, null, null, AHORA));
-            jugadores.add(Jugador.importado(UUID.randomUUID(), jugadorBase + indice, "Jugador " + indice, "Apellido",
+            jugadores.add(Jugador.importado(UUID.randomUUID(), jugadorBase + indice, "Jugador " + indice + " Apellido",
                     equipoId, "Forward", indice % 2 == 0 ? null : 9, "Argentina", AHORA));
             indice++;
         }
