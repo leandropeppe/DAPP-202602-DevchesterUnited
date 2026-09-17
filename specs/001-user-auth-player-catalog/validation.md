@@ -1,6 +1,6 @@
 # Evidencia de validación — preparación compartida
 
-> **Estado vigente (2026-09-16):** T001–T069 están cerradas; US1–US4 están implementadas y validadas. T070–T088 permanecen pendientes. Las secciones anteriores conservan evidencia histórica de cada corte.
+> **Estado vigente (2026-09-17):** T001–T078 están cerradas; US1–US5 están implementadas y validadas. T079–T088 permanecen pendientes. Las secciones anteriores conservan evidencia histórica de cada corte.
 
 Fecha: 2026-09-06. Alcance: T005, estado posterior a T001–T004 y anterior a T006. Esta evidencia no declara terminado el DoD de la entrega funcional.
 
@@ -601,3 +601,81 @@ No se requirieron cambios productivos ni refactors para T068-T069. US1-US3 manti
 - Se distinguió el endpoint propio de sincronización de las cinco rutas externas del proveedor.
 - Se documentó que las columnas legacy `league`/`team` se conservan en V4 para compatibilidad y que su eliminación queda fuera del alcance actual.
 - No se modificó código ni tests; no se requirieron nuevas ejecuciones de Gradle para esta remediación documental.
+# Actualización T075–T077 — frontend E2E y controles reproducibles (2026-09-17)
+
+Se implementó y verificó el tercer bloque de US5 sin modificar `backend/` ni los tests históricos. El entorno E2E usa PostgreSQL 16 dedicado en `tmpfs`, credenciales sintéticas, Flyway del `bootJar` local y fixture SQL controlado. El backend se publica solamente en `127.0.0.1:18080`; Vite Preview atiende en `127.0.0.1:4173` y recibe `DEV_API_TARGET` como configuración del proxy.
+
+## Comandos y resultados
+
+Ejecutados desde `frontend/`:
+
+```powershell
+npm install --ignore-scripts       # instalación reproducible en este entorno
+npm run verify:frontend             # PASSED
+npm test -- --run                  # 18 tests, 3 archivos, PASSED
+npm run build                       # PASSED
+npm run test:e2e                    # 1 test Playwright, PASSED
+```
+
+`test:e2e` levantó PostgreSQL, esperó `/v3/api-docs`, ejecutó Flyway, cargó `frontend/e2e/fixture.sql`, inició el bootJar y sirvió el bundle mediante Vite Preview. La prueba Playwright `SC-010` terminó **1 passed**.
+
+Versiones relevantes: Node `v22.11.0`, npm `11.6.2`, Playwright Test resuelto desde `@playwright/test` del lockfile y navegador Chrome instalado localmente. Vite advierte que esta versión de Node debería actualizarse a `22.12+`; no impidió la ejecución. Para mantener la ejecución sin Internet, Playwright reutiliza Chrome del sistema y no descarga Chromium/FFmpeg.
+
+## Evidencia SC-010
+
+- Registro y login con usuario, email y contraseña sintéticos.
+- Generación de API Key; el secreto completo se muestra solo en la respuesta recién generada.
+- Recarga de `/credenciales`: el secreto completo deja de estar visible.
+- Catálogo protegido por API Key, con fixture sintético, `position` y `dorsal` nulos representados sin romper la vista.
+- Filtro por equipo y paginación de dos páginas.
+- Nueva pestaña/contexto sin compartir JWT ni API Key; logout local devuelve a `/login`.
+- Se inspeccionaron todas las solicitudes del navegador: solo hubo solicitudes al host local de Preview y a rutas `/api/v1/`; no hubo hosts externos ni referencias a Football-Data.
+- Logs, bundle, capturas y trazas no contienen credenciales reales ni secretos de entorno; el fixture y los valores de prueba son sintéticos.
+
+## T076
+
+`npm run verify:frontend` pasó: no hay `.ts`, `.tsx`, `tsconfig`, `localStorage`, referencias productivas a Football-Data ni patrones de secretos en `frontend/package.json`/`frontend/src/`. El código de aplicación permanece en React + JavaScript (`.js`/`.jsx`) y usa `sessionStorage`.
+
+T075, T076 y T077 quedan acreditadas. T078 permanece pendiente y no se ejecutó la regresión conjunta backend/frontend.
+# Intento T078 — regresión conjunta bloqueada por entorno (2026-09-17)
+
+La regresión backend sí completó correctamente: `backend/gradlew.bat test --no-daemon --console=plain` terminó con **391 tests, 0 fallos, 0 errores y 0 omitidos**, y `backend/gradlew.bat clean assemble --no-daemon --console=plain` terminó con **BUILD SUCCESSFUL**.
+
+En `frontend/`, `npm install --ignore-scripts` terminó sin vulnerabilidades, pero `npm test -- --run` no pudo iniciar Vitest porque la instalación no incluyó el binding nativo opcional de Rolldown (`@rolldown/binding-wasm32-wasi`). El error es reproducible al ejecutar Vitest después de la instalación limpia. Conforme a T078, no se ejecutaron las validaciones frontend posteriores ni se corrigió el entorno automáticamente; se detuvo el flujo antes de introducir cambios adicionales.
+
+T078 permanece pendiente y no se modificó la funcionalidad. La ejecución debe reanudarse con una instalación de dependencias que incluya correctamente los optional dependencies/bindings de Rolldown; después deberán repetirse Vitest, `verify:frontend`, build y Playwright antes de cerrar T078.
+
+## Cierre T078 — regresión conjunta backend/frontend (2026-09-17)
+
+Se reintentó T078 después de actualizar Node a `v24.21.0` y reinstalar las dependencias. No se modificó funcionalidad, `backend/` ni ningún test histórico; tampoco se agregaron tareas.
+
+### Evidencia backend
+
+Desde `backend/`:
+
+```powershell
+.\gradlew.bat test --no-daemon --console=plain
+.\gradlew.bat clean assemble --no-daemon --console=plain
+```
+
+- Regresión completa: **391 tests, 0 fallos, 0 errores y 0 omitidos**.
+- `clean assemble`: **BUILD SUCCESSFUL**.
+
+### Evidencia frontend
+
+Desde `frontend/`:
+
+```powershell
+npm test -- --run
+npm run verify:frontend
+npm run build
+npm run test:e2e
+```
+
+- Vitest: **18/18 PASSED**.
+- `npm run verify:frontend`: **PASSED**.
+- `npm run build`: **PASSED**.
+- Playwright: **1/1 PASSED**.
+- SC-010 completó registro → login → generación de API Key → consulta del catálogo contra el backend local, sin hosts externos. La evidencia también confirma recarga, logout, aislamiento entre pestañas, secreto visible una sola vez y ausencia de secretos en logs, bundles y capturas.
+
+Con esta repetición queda resuelto el bloqueo ambiental documentado arriba y T078 se marca como completada. El cierre corresponde únicamente a la regresión conjunta solicitada.

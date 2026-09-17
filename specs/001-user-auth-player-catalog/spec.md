@@ -206,8 +206,8 @@ Para un mismo usuario, la rotación debe adquirir la fila del usuario mediante `
 
 ### Requerimientos Funcionales
 
-- **FR-001**: El sistema DEBE permitir a los usuarios registrarse con un nombre de usuario único, un correo electrónico válido y una contraseña segura.
-- **FR-002**: El sistema DEBE validar los campos de entrada durante el registro (p. ej., longitud mínima de la contraseña, patrón de correo electrónico válido, formato alfanumérico del nombre de usuario).
+- **FR-001**: El sistema DEBE permitir a los usuarios registrarse con un nombre de usuario único, un correo electrónico válido y una contraseña segura. El nombre de usuario DEBE ser ASCII alfanumérico, tener entre 3 y 30 caracteres y normalizarse a minúsculas para determinar unicidad. El correo DEBE recortarse, normalizarse a minúsculas, cumplir formato válido y tener como máximo 254 caracteres.
+- **FR-002**: El sistema DEBE validar los campos de entrada durante el registro. La contraseña DEBE tener entre 8 y 72 caracteres, como máximo 72 bytes UTF-8, incluir al menos una mayúscula, una minúscula y un número, rechazar espacios externos y conservar los espacios internos.
 - **FR-003**: El sistema DEBE realizar el hashing seguro de las contraseñas de los usuarios antes de almacenarlas utilizando un algoritmo de hashing estándar de la industria (p. ej., bcrypt/Argon2).
 - **FR-004**: El sistema DEBE verificar las credenciales durante el login y emitir un JSON Web Token (JWT) seguro y con tiempo limitado.
 - **FR-005**: El sistema DEBE validar el token JWT para la autenticación en endpoints protegidos de usuario (como la generación de API Key).
@@ -216,10 +216,10 @@ Para un mismo usuario, la rotación debe adquirir la fila del usuario mediante `
 - **FR-008**: El sistema DEBE soportar como máximo una API Key activa por usuario. La generación de una nueva clave debe revocar automáticamente la anterior.
   - Ante solicitudes concurrentes de generación para el mismo usuario, solo una DEBE generar la clave y responder 200 OK; las restantes DEBEN responder 409 Conflict sin alterar las claves. La creación y la revocación se realizan de forma atómica.
 - **FR-012**: Las API Keys NO DEBEN vencer por el paso del tiempo. Una clave activa permanece vigente hasta su revocación al generar una nueva; esta regla no modifica la expiración de los JWT.
-- **FR-009**: El sistema DEBE aplicar la autenticación en el endpoint `GET /players` requiriendo una API Key válida y activa en la cabecera `X-API-KEY`.
+- **FR-009**: El sistema DEBE aplicar la autenticación en el endpoint `GET /api/v1/players` requiriendo una API Key válida y activa en la cabecera `X-API-KEY`.
   - La vigencia DEBE comprobarse al inicio de cada solicitud, antes de consultar el catálogo. Las consultas autorizadas antes de confirmarse una revocación pueden terminar; las validaciones posteriores DEBEN rechazar la clave revocada con 401 Unauthorized.
-- **FR-010**: El sistema DEBE permitir el filtrado del Catálogo de Jugadores por `league`, `team` y `position` mediante parámetros de consulta (query parameters). Cada filtro busca el texto proporcionado como una subcadena del campo correspondiente, sin distinguir mayúsculas de minúsculas.
-- **FR-011**: El sistema DEBE soportar paginación en el endpoint `/players` con límites por defecto y máximos para proteger el consumo de recursos.
+- **FR-010**: El sistema DEBE permitir el filtrado del Catálogo de Jugadores por `league`, `team` y `position` mediante parámetros de consulta (query parameters) en `GET /api/v1/players`. Cada filtro busca el texto proporcionado como una subcadena del campo correspondiente, sin distinguir mayúsculas de minúsculas.
+- **FR-011**: El sistema DEBE soportar paginación en el endpoint `/api/v1/players` con límites por defecto y máximos para proteger el consumo de recursos.
 
 ### Sincronización Externa
 

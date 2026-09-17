@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "verify:frontend": "node scripts/verify-frontend.mjs"
   },
   "dependencies": {
     "react": "latest",
@@ -20,6 +21,7 @@
     "@testing-library/react": "latest",
     "@testing-library/user-event": "latest",
     "@playwright/test": "latest",
+    "jsdom": "26.1.0",
     "vite": "latest",
     "vitest": "latest"
   }

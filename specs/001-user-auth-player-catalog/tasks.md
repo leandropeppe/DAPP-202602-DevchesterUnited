@@ -151,15 +151,15 @@ T001–T050 son historial completado y validado según specs/001-user-auth-playe
 
 **Prueba independiente**: Playwright ejecuta registro → login → API Key → catálogo/paginación contra backend local; recarga, logout y pestañas respetan el aislamiento de sesión.
 
-- [ ] T070 [P] [US5] Crear frontend/src/api/http.js con fetch, rutas relativas, cabeceras por operación, manejo de 400/401/409/503 y sin secretos externos.
-- [ ] T071 [P] [US5] Crear almacenamiento/contexto de JWT y API Key por pestaña en frontend/src/session/storage.js y frontend/src/session/SessionContext.jsx usando sessionStorage, expiración y logout local.
-- [ ] T072 [P] [US5] Crear vistas/componentes .jsx de registro, login, credenciales/API Key y catálogo en frontend/src/, con filtros, paginación, dorsal null, accesibilidad y estados de error.
-- [ ] T073 [US5] Configurar rutas /registro, /login, /credenciales, /catalogo, fallback SPA y proxy Vite en frontend/src/App.jsx, frontend/src/main.jsx y frontend/vite.config.js.
-- [ ] T074 [P] [US5] Crear pruebas Vitest/Testing Library de formularios, cliente fetch, almacenamiento por pestaña, expiración JWT, rotación, logout y errores en frontend/tests/.
-- [ ] T075 [P] [US5] Crear compose/fixture de backend local y pruebas Playwright del flujo SC-010, recarga, pestaña independiente, secreto de una sola visualización, filtros, paginación y bloqueo de hosts externos en frontend/e2e/.
-- [ ] T076 [US5] Verificar que el frontend contiene exclusivamente React + JavaScript (.js/.jsx), sin TypeScript, tsconfig, .ts ni .tsx, y que no expone secretos en frontend/package.json ni frontend/src/.
-- [ ] T077 [US5] Ejecutar npm install, Vitest, build Vite, preview y Playwright desde frontend/; registrar SC-010 y resultados en specs/001-user-auth-player-catalog/validation.md.
-- [ ] T078 [US5] Ejecutar regresión backend y frontend conjuntamente, sin modificar tests históricos, y documentar integración en specs/001-user-auth-player-catalog/validation.md.
+- [x] T070 [P] [US5] Crear frontend/src/api/http.js con fetch, rutas relativas, cabeceras por operación, manejo de 400/401/409/503 y sin secretos externos.
+- [x] T071 [P] [US5] Crear almacenamiento/contexto de JWT y API Key por pestaña en frontend/src/session/storage.js y frontend/src/session/SessionContext.jsx usando sessionStorage, expiración y logout local.
+- [x] T072 [P] [US5] Crear vistas/componentes .jsx de registro, login, credenciales/API Key y catálogo en frontend/src/, con filtros, paginación, dorsal null, accesibilidad y estados de error.
+- [x] T073 [US5] Configurar rutas /registro, /login, /credenciales, /catalogo, fallback SPA y proxy Vite en frontend/src/App.jsx, frontend/src/main.jsx y frontend/vite.config.js.
+- [x] T074 [P] [US5] Crear pruebas Vitest/Testing Library de formularios, cliente fetch, almacenamiento por pestaña, expiración JWT, rotación, logout y errores en frontend/tests/.
+- [x] T075 [P] [US5] Crear `frontend/e2e/compose.yml` y fixtures sintéticos para levantar PostgreSQL dedicado en tmpfs y el `bootJar` construido desde `backend/` en loopback:18080, esperar readiness, ejecutar Flyway y cargar el fixture controlado; crear pruebas Playwright del flujo SC-010 mediante preview en 4173 y `DEV_API_TARGET`, incluyendo recarga, pestaña independiente, secreto de una sola visualización, filtros, paginación y bloqueo de hosts externos; usar únicamente credenciales sintéticas.
+- [x] T076 [US5] Verificar que el frontend contiene exclusivamente React + JavaScript (.js/.jsx), sin TypeScript, tsconfig, .ts ni .tsx, y que no expone secretos en frontend/package.json ni frontend/src/.
+- [x] T077 [US5] Ejecutar `npm install`, Vitest, build Vite, preview y Playwright desde `frontend/`; registrar en `specs/001-user-auth-player-catalog/validation.md` la evidencia de SC-010, recarga, logout, aislamiento entre pestañas, clave visible una sola vez, ausencia de llamadas a hosts externos y ausencia de secretos en logs, bundles y capturas.
+- [x] T078 [US5] Ejecutar regresión backend y frontend conjuntamente, sin modificar tests históricos, y documentar integración en specs/001-user-auth-player-catalog/validation.md.
 
 ## Fase 10: Gates finales actualizados
 
@@ -184,6 +184,12 @@ T050 completada → Monorepo T051–T056 → US4 T057–T069 → US5 T070–T078
 
 - T001–T050: [x] historial completado, respaldado por validation.md; US1, US2 y US3 no son trabajo pendiente.
 - T051–T069: [x] reorganización y US4 completadas, respaldadas por validation.md.
-- T070–T078: [ ] US5 pendiente.
+- T070–T078: [x] US5 implementada, validada y cerrada.
 - T079–T088: [ ] gates finales pendientes.
 - La suite histórica de 363 tests se conserva como regresión; no se afirma que las pruebas nuevas, CI, SonarCloud, performance, frontend o aceptación externa estén ejecutadas.
+## Cierre del bloque US5 T075–T077 (2026-09-17)
+
+- [x] T075 E2E aislado, fixture sintético y Playwright SC-010.
+- [x] T076 verificaciones estructurales y de secretos del frontend.
+- [x] T077 Vitest, build, preview y evidencia de validación.
+- [ ] T078 regresión conjunta backend/frontend.

@@ -13,7 +13,7 @@ public class UsuarioEntity {
     @Id
     @Column(nullable = false)
     private UUID id;
-    @Column(name = "username", nullable = false, unique = true, length = 30)
+    @Column(name = "username", nullable = false, unique = true, length = 255)
     private String nombreUsuario;
     @Column(name = "email", nullable = false, unique = true, length = 254)
     private String correo;
