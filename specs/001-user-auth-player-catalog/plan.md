@@ -44,7 +44,7 @@ Nota histórica de compatibilidad: el repositorio declaraba Boot 4.1.1 y Gradle 
 | Modelo puro y rico | Usuario, APIKey y Jugador sin Spring/JPA; invariantes y excepciones propias | Unitarias sin contexto ni BD |
 | Persistencia aislada | Entidades en `persistence/dto`; Repository no invoca lógica del dominio | Integración de cada Repository |
 | Validación por capa | DTO formato/trimming; Service existencia; Modelo invariantes | Casos felices y borde |
-| JWT y API Key | JWT para generar credenciales; API Key obligatoria en catálogo; registro/login públicos según spec | Matriz de autenticación contractual |
+| JWT y API Key | JWT para generar credenciales; lecturas del catálogo públicas; API Key obligatoria solo en sincronización administrativa; registro/login públicos según spec | Matriz de autenticación contractual |
 | OpenAPI y español | Contrato del endpoint propio, cinco rutas externas, dorsal nullable y errores en español | Swagger UI y comparación de contrato |
 | Protección de tests | Conservar `DevchesterUnitedV2ApplicationTests.java`; agregar soporte en archivos nuevos | Cambiar/borrar tests existentes exige «SÍ» explícito |
 | DoD local y Postman | Build, arranque, flujo completo y colección ejecutable | Evidencia en `validation.md` |
@@ -113,11 +113,11 @@ Consolidada en [research.md](./research.md): se conservan decisiones de autentic
 
 ### Seguridad y capas
 
-- Seguridad por ruta: registro/login públicos, generación y sincronización solo Bearer JWT, catálogo solo `X-API-KEY`. La matriz normativa permite sincronizar a cualquier usuario existente con JWT válido: no se inventa un rol ADMIN. Ampliar los filtros/configuración existentes respetando que una credencial irrelevante no sustituya ni interfiera con la exigida. Sin sesiones/cookies de backend. Swagger público en local/test; deshabilitado en otros perfiles.
+- Seguridad por ruta: registro/login públicos, generación de API Key solo con Bearer JWT, lecturas del catálogo públicas y sincronización administrativa solo con `X-API-KEY`. Las API Keys son alternativas para consumidores externos o machine-to-machine en endpoints explícitamente autorizados. Sin sesiones/cookies de backend. Swagger público en local/test; deshabilitado en otros perfiles.
 - JWT HS256 con secreto Base64 externo de al menos 32 bytes (`JWT_SECRET`, propiedad existente `jwt.secret`), `iss=devchester-united`, `aud=devchester-api`, `sub=usr_<uuid>`, `iat` y `exp=iat+3600s`. Validar algoritmo, firma, emisor, audiencia, tiempo y existencia del usuario. Clock controlable; tolerancia temporal cero. Sin refresh ni endpoint de logout; cerrar sesión web borra únicamente el estado local.
 - BCrypt coste 12; contraseña de 8–72 caracteres y máximo 72 bytes UTF-8, con mayúscula, minúscula y número. No truncar ni aplicar trimming: rechazar espacios externos, conservar interiores. PasswordEncoder en infraestructura de Service, nunca en modelo puro.
 - API Key `dev_key_` más 32 bytes aleatorios en Base64URL sin padding; guardar SHA-256 hexadecimal y prefijo de 14 caracteres. Respuesta solo después del commit y `Cache-Control: no-store`, igual que login. Nunca registrar credenciales, tokens o hashes en logs.
-- El filtro API Key delega en Service; consulta primaria al inicio de cada solicitud, sin caché entre solicitudes. Consulta ya autorizada puede terminar tras revocación. Error de BD →503, nunca autorización ni falso 401.
+- El filtro API Key delega en Service y se aplica únicamente a endpoints explícitamente protegidos, actualmente la sincronización administrativa. Las lecturas públicas no deben validar API Key. Error de BD durante la autorización →503, nunca autorización ni falso 401.
 - Service mapea entidades a modelo, invoca comportamiento y persiste. Repository solo lee/escribe entidades. Excepciones en `modelo/exception`; traducción HTTP centralizada y adaptadores para errores anteriores al controller.
 
 ### Transacciones y concurrencia
@@ -127,6 +127,10 @@ La unidad de concurrencia es la adquisición del lock, no la duración completa 
 Registro: unicidad en BD y 409 ante duplicados; hashing antes de insertar. Rotación: transacción READ COMMITTED con fila del usuario `FOR UPDATE NOWAIT`, revocación e inserción atómicas. SQLSTATE 55P03 →409 después del rollback, sin reintentos. Índice único parcial por usuario `WHERE is_active=true` y CHECK de coherencia con `revoked_at`.
 
 La competencia se define en la adquisición del bloqueo durante la rotación: quien llega después del commit realiza una nueva rotación válida. No se promete deduplicación de toda ventana HTTP. Prueba determinista: detener ganador tras el lock, ejecutar competidoras, observar 409 y liberar ganador. Probar rollback conservando clave anterior y operaciones de usuarios distintos.
+
+La rotación o reemplazo de API Keys no es un requisito funcional obligatorio. Si se conserva por compatibilidad con la implementación existente, sus reglas de concurrencia y el índice de una clave activa por usuario son detalles internos de esa compatibilidad y no amplían el alcance contractual.
+
+Las reglas detalladas de `FOR UPDATE NOWAIT`, `409` y una sola clave activa que siguen en este bloque son históricas de la implementación de rotación. Quedan subordinadas a la decisión vigente: la rotación no es requisito funcional obligatorio y no debe utilizarse para ampliar el alcance.
 
 ### Consulta y validación
 
@@ -138,7 +142,7 @@ Username alfanumérico ASCII de 3–30 caracteres, normalizado a minúsculas par
 
 `CatalogoController` delega en `SincronizacionCatalogoService`; el Service coordina Adapter, Modelo y Repository. DTOs externos nunca salen al Controller ni se convierten implícitamente en dominio. `CatalogoSincronizado` verifica pertenencia, cantidad por liga, unicidad y coherencia del snapshot como reglas puras; Service resuelve UUID existentes y ejecuta transiciones de actividad sobre los modelos.
 
-1. Autenticar JWT y existencia del usuario; cuerpo o query no admitidos →400 una vez autenticado. Verificar configuración del proveedor sin mostrar su valor.
+1. Autenticar la API Key administrativa; cuerpo o query no admitidos →400 una vez autenticada. Verificar configuración del proveedor sin mostrar su valor.
 2. Abrir una transacción y adquirir `pg_try_advisory_xact_lock` con clave fija de la aplicación, vía Repository. Si está ocupado →409 inmediato sin HTTP externo. El lock transaccional se conserva hasta commit/rollback y coordina instancias que comparten PostgreSQL; no usar un mutex JVM.
 3. Antes de toda mutación de catálogo, obtener secuencialmente `/competitions/{PL,PD,BL1,SA,FL1}/teams`, sin `season`, validando cada respuesta. Conservar `season.id/startDate/endDate` por liga. No consultar personas/equipos individualmente como fallback silencioso.
 4. Validar snapshot completo: 20/20/18/20/18 equipos únicos, cinco competiciones correctas, squads presentes y no vacíos, IDs positivos, campos obligatorios mapeables y un equipo por jugador. Los duplicados idénticos del mismo jugador/equipo se colapsan; asociaciones conflictivas invalidan todo. `players_processed` no es una constante: 2473 es solo un ejemplo.
@@ -161,7 +165,7 @@ El contrato vigente de jugadores usa `name` como nombre completo; no expone `fir
 
 SPA bajo `frontend/`, implementada con React + JavaScript (`.js`/`.jsx`), `fetch` y estado/contexto local, sin SSR ni librerías adicionales de estado global salvo necesidad justificada. Cuatro vistas: registro, login, API Key y catálogo. No se agrega una pantalla de sincronización al alcance US5. Vite proxy `/api/v1` hacia el backend en desarrollo/preview; distribución posterior bajo mismo origen mediante reverse proxy. No habilitar CORS global ni exponer secretos en `VITE_*`. No agregar TypeScript, `tsconfig` ni archivos `.ts`/`.tsx`.
 
-`sessionStorage` conserva credenciales al recargar; React mantiene separada la presentación transitoria del secreto recién generado. Logout borra almacenamiento y datos protegidos; JWT expirado requiere login solo para operaciones JWT; API Key revocada se descarta al recibir 401 de catálogo. Navegación/recarga no generan claves. Rotación exige acción y advertencia de revocación; 409/red ambigua no reintenta automáticamente. Si el almacenamiento está bloqueado, informar persistencia limitada a memoria.
+`sessionStorage` conserva el JWT al recargar; React mantiene separada la presentación transitoria del secreto recién generado. Logout borra el estado local. El catálogo público no requiere ni conserva una API Key para navegar. La generación de API Key, si se expone en la vista de credenciales, es una acción explícita con JWT y nunca ocurre durante login, navegación o recarga. Si el almacenamiento está bloqueado, informar persistencia limitada a memoria.
 
 Se verifica cierre ordinario de pestaña; los mecanismos del navegador para restaurar sesiones pueden recuperar `sessionStorage`. No prometer borrado irrecuperable ni usar `beforeunload` para borrar, porque también se ejecuta al recargar. Usar `noopener` al abrir ventanas propias. Validar este límite con el contrato [frontend.md](./contracts/frontend.md).
 
@@ -169,7 +173,7 @@ Se verifica cierre ordinario de pestaña; los mecanismos del navegador para rest
 
 SC-005 usa como fuente normativa el fixture funcional determinista de seis jugadores definido en `spec.md`, con Real Madrid, Atlético de Madrid, LaLiga y las cuatro posiciones del modelo; los fixtures de Repository agregan casos literales de `%`, `_`, `!`, comillas y tildes. La validación compara contenido completo y metadatos exactos contra el oráculo del fixture: filtros parciales case-insensitive, `Madrid`/`madrid`/`MADRID` equivalentes e incluyendo ambos equipos, AND entre filtros, escape literal, tildes significativas, orden por UUID ascendente, conteo antes de paginar, página fuera de rango con `200` y lista vacía conservando totales, y cero coincidencias con total `0` y `total_pages=0`.
 
-SC-004 se valida contra la matriz normativa de seguridad definida en `spec.md`: registro y login son públicos; la generación de API Key acepta exclusivamente JWT válido; `/api/v1/players` acepta exclusivamente API Key válida y activa; los errores de BD durante su validación responden `503`; y una consulta ya autorizada puede finalizar si la revocación ocurre durante su ejecución. Las credenciales del tipo incorrecto no se utilizan como sustituto ni como autenticación adicional.
+SC-004 se valida contra la matriz normativa de seguridad definida en `spec.md`: registro y login son públicos; la generación de API Key acepta exclusivamente JWT válido; `/api/v1/players` y las lecturas de catálogo son públicas; `/api/v1/catalog/sync` acepta exclusivamente una API Key válida; y los errores de BD durante la validación de esa clave responden `503`. Las credenciales no requeridas no convierten un endpoint público en protegido.
 
 | Historia | Dominio puro | Service/Repository con PostgreSQL | E2E MockMvc |
 |----------|--------------|----------------------------------|-------------|

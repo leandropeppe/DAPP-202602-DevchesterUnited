@@ -3,10 +3,8 @@ package com.devchesterunited.devchesterunitedv2.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.controller.dto.FiltroJugadoresDTO;
-import com.devchesterunited.devchesterunitedv2.controller.dto.JugadoresResponseDTO;
-import com.devchesterunited.devchesterunitedv2.service.impl.JugadorServiceImpl;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.JugadorService;
+import com.devchesterunited.devchesterunitedv2.service.impl.SincronizacionResultado;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import com.zaxxer.hikari.HikariDataSource;
 import java.util.Map;
 import java.util.UUID;
@@ -34,12 +32,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class RevocacionEnCursoE2ETest extends PostgresTestSupport {
-    private static final String RUTA = "/api/v1/players";
+    private static final String RUTA = "/api/v1/catalog/sync";
     private static final String PASSWORD = "Catalogo123!";
 
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper mapper;
-    @Autowired GateConsulta gate;
+    @Autowired GateSincronizacion gate;
     @Autowired DataSource dataSource;
 
     @Test
@@ -49,7 +47,7 @@ class RevocacionEnCursoE2ETest extends PostgresTestSupport {
 
         try (var executor = Executors.newSingleThreadExecutor()) {
             var consulta = executor.submit(() ->
-                    mvc.perform(consulta(credenciales.apiKey()))
+                    mvc.perform(sincronizacion(credenciales.apiKey()))
                             .andReturn()
                             .getResponse()
                             .getStatus());
@@ -63,7 +61,7 @@ class RevocacionEnCursoE2ETest extends PostgresTestSupport {
             assertThat(consulta.get(30, TimeUnit.SECONDS)).isEqualTo(200);
         }
 
-        mvc.perform(consulta(credenciales.apiKey()))
+        mvc.perform(sincronizacion(credenciales.apiKey()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value("error"))
                 .andExpect(jsonPath("$.message").value("No autorizado."));
@@ -76,15 +74,15 @@ class RevocacionEnCursoE2ETest extends PostgresTestSupport {
 
         ((HikariDataSource) dataSource).close();
 
-        mvc.perform(consulta(credenciales.apiKey()))
+        mvc.perform(sincronizacion(credenciales.apiKey()))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value("error"))
                 .andExpect(jsonPath("$.message").value("El servicio no está disponible temporalmente."));
     }
 
-    private MockHttpServletRequestBuilder consulta(String apiKey) {
-        return get(RUTA).servletPath(RUTA).header("X-API-KEY", apiKey);
+    private MockHttpServletRequestBuilder sincronizacion(String apiKey) {
+        return post(RUTA).header("X-API-KEY", apiKey);
     }
 
     private Credenciales registrarYGenerarClave() throws Exception {
@@ -125,26 +123,21 @@ class RevocacionEnCursoE2ETest extends PostgresTestSupport {
     @TestConfiguration(proxyBeanMethods = false)
     static class ConfiguracionDePrueba {
         @Bean
-        GateConsulta gateConsulta(JugadorServiceImpl real) {
-            return new GateConsulta(real);
+        GateSincronizacion gateSincronizacion() {
+            return new GateSincronizacion();
         }
 
         @Bean
         @Primary
-        JugadorService jugadorServiceConGate(GateConsulta gate) {
+        SincronizacionCatalogoService sincronizacionConGate(GateSincronizacion gate) {
             return gate;
         }
     }
 
-    static final class GateConsulta implements JugadorService {
-        private final JugadorService real;
+    static final class GateSincronizacion implements SincronizacionCatalogoService {
         private final CountDownLatch autorizacionAlcanzada = new CountDownLatch(1);
         private final CountDownLatch continuar = new CountDownLatch(1);
         private volatile boolean armado;
-
-        GateConsulta(JugadorService real) {
-            this.real = real;
-        }
 
         void armar() {
             armado = true;
@@ -155,7 +148,7 @@ class RevocacionEnCursoE2ETest extends PostgresTestSupport {
         }
 
         @Override
-        public JugadoresResponseDTO consultar(FiltroJugadoresDTO filtros) {
+        public void validarUsuario(UUID usuarioId) {
             if (armado) {
                 autorizacionAlcanzada.countDown();
                 try {
@@ -167,7 +160,11 @@ class RevocacionEnCursoE2ETest extends PostgresTestSupport {
                     throw new AssertionError("La consulta fue interrumpida.", exception);
                 }
             }
-            return real.consultar(filtros);
+        }
+
+        @Override
+        public SincronizacionResultado sincronizar() {
+            return new SincronizacionResultado(0, 0, 0, 0, 0, 0);
         }
     }
 }

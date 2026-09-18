@@ -54,7 +54,8 @@ class ApiKeyE2ETest {
     @Test
     void rechazaCuerpoNoVacioYApiKeySolaNoAutoriza() throws Exception {
         String jwt = registrarYLogin();
-        error(mvc.perform(post("/api/v1/auth/apikey").contentType(MediaType.APPLICATION_JSON).content("{}")), 400);
+        error(mvc.perform(post("/api/v1/auth/apikey").header("Authorization", "Bearer " + jwt)
+                .contentType(MediaType.APPLICATION_JSON).content("{}")), 400);
         error(mvc.perform(post("/api/v1/auth/apikey").header("X-API-KEY", "dev_key_" + "a".repeat(43))), 401);
         generar(jwt).andExpect(status().isOk());
     }

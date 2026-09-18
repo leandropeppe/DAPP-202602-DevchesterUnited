@@ -88,14 +88,14 @@ $sesion = Invoke-RestMethod -Method Post -Uri "$baseUri/auth/login" -ContentType
 $jwtHeaders = @{ Authorization = "Bearer $($sesion.data.access_token)" }
 $generada = Invoke-RestMethod -Method Post -Uri "$baseUri/auth/apikey" -Headers $jwtHeaders
 $apiHeaders = @{ 'X-API-KEY' = $generada.data.api_key }
-$catalogo = Invoke-RestMethod -Uri "$baseUri/players?team=Madrid&page=1&limit=20" -Headers $apiHeaders
+$catalogo = Invoke-RestMethod -Uri "$baseUri/players?team=Madrid&page=1&limit=20"
 $catalogo.data.players | Select-Object first_name, last_name, team
 $catalogo.data.pagination
 ```
 
-Esperado: registro 201, login 200 con expires_in=3600, generación 200 sin fecha de vencimiento, catálogo 200 con ambos equipos de Madrid de la semilla. `madrid` y `MADRID` producen el mismo conjunto. Tokens quedan en memoria; no volcar respuestas de login/generación en logs de evidencia.
+Esperado: registro 201, login 200 con expires_in=3600, generación 200 sin fecha de vencimiento, catálogo público 200 con ambos equipos de Madrid de la semilla. `madrid` y `MADRID` producen el mismo conjunto. El JWT se conserva solo para operaciones que lo requieran; la API Key no es necesaria para navegar ni consultar el catálogo. No volcar respuestas de login/generación en logs de evidencia.
 
-Rotar y comprobar revocación:
+La rotación o reemplazo no es un paso obligatorio del quickstart. Si la implementación vigente lo conserva, puede comprobarse de forma opcional:
 
 ```powershell
 $renovada = Invoke-RestMethod -Method Post -Uri "$baseUri/auth/apikey" -Headers $jwtHeaders
@@ -118,7 +118,7 @@ Invoke-RestMethod -Uri "$baseUri/players?team=madrid" -Headers $apiHeaders
 | Contraseña débil/email inválido | 400 con mensaje en español |
 | Credenciales incorrectas | 401 genérico |
 | Generar clave sin JWT o con JWT expirado/alterado | 401 |
-| Catálogo sin API Key, con revocada o solo con JWT | 401 |
+| Catálogo sin credenciales | 200 |
 | Filtros combinados | AND de subcadenas, mismos resultados ante cambio de mayúsculas |
 | `%`, `_` o comilla en filtro | Búsqueda literal segura; nunca expansión SQL |
 | Filtro inexistente/página fuera de rango | 200, players vacío y totales coherentes |
@@ -137,7 +137,7 @@ Validación real separada y manual: usar exclusivamente esta BD local dedicada, 
 Con las variables HTTP de la sección 3:
 
 ```powershell
-$sync = Invoke-RestMethod -Method Post -Uri "$baseUri/catalog/sync" -Headers $jwtHeaders -TimeoutSec 180
+$sync = Invoke-RestMethod -Method Post -Uri "$baseUri/catalog/sync" -Headers $apiHeaders -TimeoutSec 180
 $sync.data
 $catalogoReal = Invoke-RestMethod -Uri "$baseUri/players?page=1&limit=20" -Headers $apiHeaders
 $catalogoReal.data.pagination
@@ -145,7 +145,7 @@ $catalogoReal.data.pagination
 
 Esperado: 200 después de commit; teams_processed=96, created+updated=processed por entidad; cantidad de jugadores variable. Plantillas consultadas localmente, sin jugadores demo activos. Segunda ejecución sobre la misma respuesta externa: cero creados, mismos UUID, sin duplicados. Las entidades existentes procesadas cuentan como updated aunque no cambien. Si la cuota externa se agotó, puede responder 503; no reintentar en bucle.
 
-Verificar sin credencial, solo API Key, JWT inválido/expirado o usuario inexistente →401. Otra ejecución en curso →409. Datos no utilizables o proveedor caído →503 conservando snapshot. Catálogo consultable con proveedor desconectado. El test fixture valida ausentes y reaparición; no manipular datos reales del proveedor para forzar esos escenarios. Si no hay cuenta con plantillas o el roster es ambiguo, dejar aceptación externa pendiente, sin marcar US4 completa.
+Verificar sincronización sin API Key o con API Key inválida/revocada →401. El JWT no autoriza la sincronización por sí solo. Otra ejecución en curso →409. Datos no utilizables o proveedor caído →503 conservando snapshot. Catálogo consultable con proveedor desconectado. El test fixture valida ausentes y reaparición; no manipular datos reales del proveedor para forzar esos escenarios. Si no hay cuenta con plantillas o el roster es ambiguo, dejar aceptación externa pendiente, sin marcar US4 completa.
 
 ## 6. Frontend
 

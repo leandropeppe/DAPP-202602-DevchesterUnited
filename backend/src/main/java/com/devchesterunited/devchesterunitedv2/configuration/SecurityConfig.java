@@ -31,11 +31,9 @@ public class SecurityConfig {
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(errors).accessDeniedHandler(errors))
                 .authorizeHttpRequests(access -> {
                     access.requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll();
-                    // El controller valida primero que no haya cuerpo y luego exige un JWT.
-                    // Esto preserva el 400 contractual para cuerpos no vacíos aun sin credencial.
-                    access.requestMatchers(HttpMethod.POST, "/api/v1/auth/apikey").permitAll();
-                    access.requestMatchers(HttpMethod.GET, "/api/v1/players").hasAuthority("API_KEY");
-                    access.requestMatchers(HttpMethod.POST, "/api/v1/catalog/sync").authenticated();
+                    access.requestMatchers(HttpMethod.POST, "/api/v1/auth/apikey").authenticated();
+                    access.requestMatchers(HttpMethod.GET, "/api/v1/players").permitAll();
+                    access.requestMatchers(HttpMethod.POST, "/api/v1/catalog/sync").hasAuthority("API_KEY");
                     if (environment.acceptsProfiles(Profiles.of("local", "test"))) {
                         if (environment.getProperty("springdoc.api-docs.enabled", Boolean.class, false)) {
                             access.requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll();

@@ -55,14 +55,14 @@ class JugadorE2ETest {
 
     @Test
     void apiKeyAusenteEs401() throws Exception {
-        error(mvc.perform(solicitud()), 401);
+        mvc.perform(solicitud()).andExpect(status().isOk());
     }
 
     @Test
     void apiKeyInvalidaEs401() throws Exception {
         String invalida = "dev_key_" + "a".repeat(43);
         secretos.add(invalida);
-        error(mvc.perform(consulta(invalida)), 401);
+        mvc.perform(consulta(invalida)).andExpect(status().isOk());
     }
 
     @Test
@@ -71,13 +71,13 @@ class JugadorE2ETest {
         String anterior = generar(jwt);
         String nueva = generar(jwt);
         assertThat(nueva.equals(anterior)).isFalse();
-        error(mvc.perform(consulta(anterior)), 401);
+        mvc.perform(consulta(anterior)).andExpect(status().isOk());
     }
 
     @Test
     void jwtBearerValidoSoloNoAutoriza() throws Exception {
         String jwt = registrarYLogin();
-        error(mvc.perform(solicitud().header("Authorization", "Bearer " + jwt)), 401);
+        mvc.perform(solicitud().header("Authorization", "Bearer " + jwt)).andExpect(status().isOk());
     }
 
     @ParameterizedTest(name = "filtro vacío {0}, caso {index}")

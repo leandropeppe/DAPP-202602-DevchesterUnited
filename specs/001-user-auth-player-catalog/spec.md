@@ -27,7 +27,7 @@
 
 - Q: ¿Qué debe pasar con los equipos y jugadores previamente sincronizados que ya no aparezcan en una sincronización completa y válida? → A: Conservarlos como inactivos y excluirlos del catálogo consultable; reactivarlos con los mismos identificadores si reaparecen. El objetivo de 96 equipos cuenta únicamente los activos. Una sincronización fallida o incompleta conserva los datos anteriores.
 - Q: ¿Qué debe ocurrir si se solicita una sincronización mientras otra sigue en curso? → A: Permitir una sola sincronización global en curso y rechazar las solicitudes adicionales con 409 Conflict, sin consultar al proveedor ni modificar el catálogo; la primera ejecución continúa.
-- Q: ¿Hasta cuándo debe recordar el frontend el JWT y la API Key del usuario? → A: Conservarlos durante la pestaña, incluso al recargar, y descartarlos al cerrar la pestaña o cerrar sesión, respetando la expiración del JWT. Cuando falte la API Key, permitir ingresar la que el usuario guardó o generar otra mediante una acción explícita que revoca la anterior; no rotarla automáticamente.
+- Q: ¿Hasta cuándo debe recordar el frontend el JWT y la API Key del usuario? → A: Conservar el JWT durante la pestaña para las operaciones que lo requieran. La API Key, si se genera o ingresa para un uso administrativo explícito, no es necesaria para navegar ni consultar el catálogo y no se genera durante login.
 - Q: ¿Qué debe hacer la sincronización si el proveedor devuelve un jugador válido pero sin número de camiseta? → A: Importarlo con dorsal null, devolver jersey_number: null en el catálogo y mostrar «Sin información» en el frontend, sin inventar un número ni omitir al jugador por ese motivo.
 - Q: ¿La sincronización debe tomar la temporada vigente de cada liga o una temporada fijada para esta entrega? → A: Usar en cada sincronización la temporada vigente informada por el proveedor para cada una de las cinco ligas soportadas, sin fijar una temporada para toda la entrega.
 
@@ -69,17 +69,17 @@ Como desarrollador autenticado en la plataforma, quiero solicitar al sistema que
 
 ### User Story 3 - Filtrado del Catálogo de Jugadores (Prioridad: P2)
 
-Como consumidor de la API utilizando una API Key válida, quiero buscar y filtrar el catálogo de jugadores por liga, equipo y posición, para que mi aplicación externa pueda obtener y mostrar plantillas y perfiles de jugadores específicos y relevantes.
+Como consumidor de la API, quiero buscar y filtrar públicamente el catálogo de jugadores por liga, equipo y posición, sin tener que crear una sesión JWT ni presentar una API Key.
 
 **Por qué esta prioridad**: Media-Alta. Esta es la funcionalidad principal de recuperación de datos y entrega de valor del módulo de catálogo.
 
-**Prueba Independiente**: Un consumidor puede proporcionar su API Key activa en las cabeceras (headers) y consultar el endpoint de jugadores con varias combinaciones de filtros, recibiendo exactamente el subconjunto de registros de jugadores que coinciden.
+**Prueba Independiente**: Un consumidor puede consultar el endpoint de jugadores sin credenciales, con varias combinaciones de filtros, recibiendo exactamente el subconjunto de registros que coinciden.
 
 **Escenarios de Aceptación**:
 
-1. **Dado** una API Key válida y un catálogo poblado de jugadores, **Cuando** se consulta con filtros de liga, equipo o posición (individualmente o combinados), **Entonces** el sistema devuelve una lista de objetos de jugadores que coinciden.
+1. **Dado** un catálogo poblado de jugadores, **Cuando** se consulta con filtros de liga, equipo o posición (individualmente o combinados), **Entonces** el sistema devuelve públicamente una lista de objetos de jugadores que coinciden.
    - Por ejemplo, `team=Madrid`, `team=madrid` y `team=MADRID` devuelven el mismo conjunto de jugadores de Real Madrid y Atlético de Madrid, si ambos equipos están presentes en el catálogo.
-2. **Dado** cualquier consulta al catálogo de jugadores, **Cuando** no se proporciona una API Key o la API Key proporcionada es inválida/revocada, **Entonces** el sistema bloquea la solicitud y devuelve un error de "no autorizado" (unauthorized).
+2. **Dado** cualquier consulta al catálogo de jugadores, **Cuando** no se proporciona ninguna credencial o se proporciona una credencial inválida, **Entonces** la solicitud continúa como consulta pública; las credenciales no son necesarias para leer el catálogo.
 3. **Dado** filtros de consulta que no coinciden con ningún jugador en el catálogo, **Cuando** se realiza la consulta, **Entonces** el sistema devuelve una lista vacía con un estado exitoso.
 4. **Dado** una solicitud para buscar jugadores, **Cuando** se proporcionan o se usan por defecto parámetros de paginación page/limit, **Entonces** el sistema devuelve el subconjunto correspondiente de resultados junto con la metadata de paginación.
 
@@ -87,7 +87,7 @@ Como consumidor de la API utilizando una API Key válida, quiero buscar y filtra
 
 ### User Story 4 - Sincronización del Catálogo Real de Jugadores (Prioridad: P1)
 
-Como usuario autenticado existente (rol operativo de administrador u operador) de Devchester United, quiero sincronizar el catálogo de equipos y jugadores desde una fuente externa confiable, para disponer localmente de las plantillas reales de las cinco principales ligas europeas sin depender de la API externa durante las consultas normales del catálogo. En esta entrega la autorización requiere un JWT válido asociado a un usuario existente; no se define una comprobación RBAC adicional.
+Como consumidor administrativo o servicio machine-to-machine autorizado de Devchester United, quiero sincronizar el catálogo de equipos y jugadores desde una fuente externa confiable utilizando una API Key válida, para disponer localmente de las plantillas reales de las cinco principales ligas europeas sin depender de la API externa durante las consultas normales del catálogo.
 
 **Por qué esta prioridad**: Alta. El catálogo actual demuestra el funcionamiento de búsqueda y filtrado, pero la aplicación necesita datos reales y suficientemente completos para representar el dominio previsto.
 
@@ -120,7 +120,7 @@ Como usuario autenticado existente (rol operativo de administrador u operador) d
 
 10. **Dado** un catálogo previamente sincronizado, **Cuando** una sincronización falla o resulta incompleta, **Entonces** se conservan los datos y estados de actividad anteriores, sin desactivar entidades por ausencias en la respuesta parcial.
 
-11. **Dado** una sincronización en curso, **Cuando** llega otra solicitud de sincronización con JWT válido, del mismo usuario o de otro, **Entonces** la nueva solicitud recibe `409 Conflict` sin consultar al proveedor ni modificar el catálogo; la ejecución en curso continúa. Al finalizar esta, con éxito o error, puede admitirse una nueva sincronización.
+11. **Dado** una sincronización en curso, **Cuando** llega otra solicitud de sincronización con API Key válida, **Entonces** la nueva solicitud recibe `409 Conflict` sin consultar al proveedor ni modificar el catálogo; la ejecución en curso continúa. Al finalizar esta, con éxito o error, puede admitirse una nueva sincronización.
 
 12. **Dado** un jugador válido cuyo dorsal está ausente o es `null` en la fuente externa, **Cuando** se completa la sincronización, **Entonces** el jugador se importa o actualiza con dorsal `null` y el catálogo devuelve `jersey_number: null`; esta ausencia no provoca la omisión del jugador ni el fallo de la sincronización.
 
@@ -142,9 +142,9 @@ Como usuario de Devchester United, quiero utilizar una interfaz web para registr
 
 2. **Dado** un usuario registrado, **Cuando** inicia sesión correctamente, **Entonces** el frontend utiliza `POST /api/v1/auth/login` y conserva el JWT durante la pestaña, incluso al recargar, respetando su expiración; lo descarta al cerrar la pestaña o cerrar sesión.
 
-3. **Dado** un usuario autenticado mediante JWT, **Cuando** solicita generar o rotar su API Key, **Entonces** el frontend utiliza `POST /api/v1/auth/apikey` y muestra la clave completa únicamente en la respuesta en la que fue generada.
+3. **Dado** un usuario autenticado mediante JWT, **Cuando** solicita explícitamente generar una API Key, **Entonces** el frontend utiliza `POST /api/v1/auth/apikey` y muestra la clave completa únicamente en la respuesta en la que fue generada; la acción no ocurre durante login ni navegación.
 
-4. **Dado** un usuario con una API Key válida, **Cuando** accede al catálogo, **Entonces** puede consultar jugadores utilizando `GET /api/v1/players`.
+4. **Dado** un usuario o visitante sin credenciales, **Cuando** accede al catálogo, **Entonces** puede consultar jugadores utilizando públicamente `GET /api/v1/players`.
 
 5. **Dado** el catálogo visible, **Cuando** se aplican filtros por liga, equipo o posición, **Entonces** el frontend envía los parámetros correspondientes al backend y representa los resultados recibidos.
 
@@ -169,7 +169,7 @@ Como usuario de Devchester United, quiero utilizar una interfaz web para registr
 ### Casos Borde (Edge Cases)
 
 - **¿Qué sucede cuando una API Key es revocada durante una solicitud de búsqueda en el catálogo?**
-  - El sistema valida la vigencia de la API Key al inicio de cada solicitud, antes de consultar el catálogo. Una consulta ya autorizada puede terminar aunque la clave se revoque durante su ejecución. Toda solicitud cuya validación ocurra después de confirmarse la revocación debe recibir 401 Unauthorized con un mensaje en español que indique que la clave es inválida o está revocada. Las API Keys no tienen vencimiento automático.
+  - La lectura del catálogo es pública y no depende de la API Key; por tanto, su revocación no afecta las consultas de jugadores. La API Key solo se valida en endpoints que la declaren explícitamente, como la sincronización administrativa.
 - **¿Cómo maneja el sistema los parámetros de filtro con caracteres inesperados o sospechosos de SQL-injection?**
   - El sistema debe sanitizar/parametrizar de forma segura todos los filtros de entrada para proteger contra inyecciones en la base de datos y devolver un error 400 Bad Request si los filtros violan los formatos estructurales.
 - **¿Qué ocurre si se realizan múltiples solicitudes paralelas para generar una API Key para el mismo usuario simultáneamente?**
@@ -200,9 +200,9 @@ Como usuario de Devchester United, quiero utilizar una interfaz web para registr
 
 ## Requerimientos *(obligatorio)*
 
-### Semántica normativa de concurrencia para la rotación de API Keys
+### Compatibilidad opcional de API Keys
 
-Para un mismo usuario, la rotación debe adquirir la fila del usuario mediante `FOR UPDATE NOWAIT`. Se considera solicitud concurrente o competidora la que intenta entrar en la sección crítica de rotación mientras otra transacción del mismo usuario mantiene ese bloqueo. De las solicitudes que compiten simultáneamente por el bloqueo, una puede adquirirlo y continuar; las demás que encuentren el bloqueo ocupado deben responder `409 Conflict`, sin reintentos, revocaciones ni otras mutaciones. Una solicitud que adquiere el bloqueo después del `commit` de la transacción anterior ya no es concurrente con ella y puede realizar una nueva rotación válida con `200 OK`. En todo momento debe existir como máximo una API Key activa por usuario. Las rotaciones de usuarios distintos no deben bloquearse mutuamente.
+La implementación actual puede conservar una operación explícita de reemplazo o revocación de API Keys y sus controles de concurrencia como compatibilidad. Esta capacidad no es obligatoria para el contrato funcional de la entrega ni debe generar acciones automáticas desde login, navegación o frontend.
 
 ### Requerimientos Funcionales
 
@@ -213,11 +213,9 @@ Para un mismo usuario, la rotación debe adquirir la fila del usuario mediante `
 - **FR-005**: El sistema DEBE validar el token JWT para la autenticación en endpoints protegidos de usuario (como la generación de API Key).
 - **FR-006**: El sistema DEBE generar una API Key criptográficamente fuerte y única ante la solicitud de un usuario autenticado.
 - **FR-007**: El sistema DEBE almacenar las API Keys de forma segura (p. ej., hasheadas en la base de datos, almacenando solo un prefijo corto visible en texto plano para identificación).
-- **FR-008**: El sistema DEBE soportar como máximo una API Key activa por usuario. La generación de una nueva clave debe revocar automáticamente la anterior.
-  - Ante solicitudes concurrentes de generación para el mismo usuario, solo una DEBE generar la clave y responder 200 OK; las restantes DEBEN responder 409 Conflict sin alterar las claves. La creación y la revocación se realizan de forma atómica.
-- **FR-012**: Las API Keys NO DEBEN vencer por el paso del tiempo. Una clave activa permanece vigente hasta su revocación al generar una nueva; esta regla no modifica la expiración de los JWT.
-- **FR-009**: El sistema DEBE aplicar la autenticación en el endpoint `GET /api/v1/players` requiriendo una API Key válida y activa en la cabecera `X-API-KEY`.
-  - La vigencia DEBE comprobarse al inicio de cada solicitud, antes de consultar el catálogo. Las consultas autorizadas antes de confirmarse una revocación pueden terminar; las validaciones posteriores DEBEN rechazar la clave revocada con 401 Unauthorized.
+- **FR-008**: La implementación puede conservar como compatibilidad una sola API Key activa por usuario y una operación explícita de reemplazo/revocación, pero la rotación no constituye una obligación funcional de esta entrega.
+- **FR-012**: Las API Keys emitidas por la implementación vigente no vencen automáticamente por el paso del tiempo; esta regla no modifica la expiración de los JWT. La revocación o reemplazo explícito, si se conserva, no es requisito funcional obligatorio.
+- **FR-009**: `GET /api/v1/players` DEBE ser un endpoint público. No DEBE requerir JWT ni API Key para consultar el catálogo.
 - **FR-010**: El sistema DEBE permitir el filtrado del Catálogo de Jugadores por `league`, `team` y `position` mediante parámetros de consulta (query parameters) en `GET /api/v1/players`. Cada filtro busca el texto proporcionado como una subcadena del campo correspondiente, sin distinguir mayúsculas de minúsculas.
 - **FR-011**: El sistema DEBE soportar paginación en el endpoint `/api/v1/players` con límites por defecto y máximos para proteger el consumo de recursos.
 
@@ -231,27 +229,40 @@ Para un mismo usuario, la rotación debe adquirir la fila del usuario mediante `
 - **FR-017**: Toda entidad sincronizada DEBE conservar el identificador externo necesario para reconocerla en sincronizaciones posteriores.
 - **FR-018**: La sincronización DEBE ser idempotente respecto del identificador externo: una entidad previamente importada debe actualizarse y no duplicarse.
 - **FR-019**: Los fallos de la API externa NO DEBEN eliminar, corromper ni volver inaccesibles datos locales previamente sincronizados.
-- **FR-020**: `GET /api/v1/players` DEBE consultar únicamente datos locales y NO DEBE depender de llamadas en tiempo real al proveedor externo.
+- **FR-020**: `GET /api/v1/players` DEBE consultar únicamente datos locales y NO DEBE depender de llamadas en tiempo real al proveedor externo. La lectura del catálogo es pública.
 - **FR-021**: Las credenciales de la API externa DEBEN obtenerse desde configuración segura y NO DEBEN quedar versionadas, persistidas como datos de dominio ni expuestas mediante respuestas HTTP.
 - **FR-022**: Las respuestas y estructuras propias del proveedor externo DEBEN traducirse mediante el Adapter antes de ser utilizadas por las capas internas.
 - **FR-030**: Tras una sincronización completa y válida, los equipos y jugadores previamente sincronizados que estén ausentes DEBEN conservarse como inactivos. Si reaparecen con el mismo identificador externo, DEBEN actualizarse y reactivarse conservando el identificador interno. Una sincronización fallida o incompleta DEBE conservar los datos y estados de actividad anteriores.
 - **FR-031**: `GET /api/v1/players` DEBE incluir únicamente jugadores activos cuyo equipo esté activo; los filtros y totales de paginación DEBEN calcularse sobre ese conjunto consultable.
-- **FR-032**: El sistema DEBE permitir como máximo una sincronización global en curso, independientemente del usuario solicitante. Mientras esté en curso, las solicitudes adicionales autenticadas DEBEN recibir `409 Conflict` sin encolarse, consultar al proveedor ni modificar el catálogo. La exclusión DEBE abarcar desde antes de la primera consulta al proveedor hasta la finalización de la operación; tras finalizar con éxito o error, DEBE poder admitirse una nueva sincronización.
+- **FR-032**: El sistema DEBE permitir como máximo una sincronización global en curso, independientemente del consumidor solicitante. Mientras esté en curso, las solicitudes adicionales autenticadas mediante API Key DEBEN recibir `409 Conflict` sin encolarse, consultar al proveedor ni modificar el catálogo. La exclusión DEBE abarcar desde antes de la primera consulta al proveedor hasta la finalización de la operación; tras finalizar con éxito o error, DEBE poder admitirse una nueva sincronización.
 - **FR-035**: La sincronización DEBE importar o actualizar jugadores válidos aunque su dorsal esté ausente o sea `null`, representándolo como `null` sin inventar un número. `GET /api/v1/players` DEBE incluir `jersey_number: null` para esos jugadores y el frontend DEBE mostrar «Sin información». Cuando el dorsal esté informado, se mantiene la validación de entero entre 1 y 99.
 
 ### Frontend
 
 - **FR-023**: El sistema DEBE disponer de un frontend web implementado en React.
 - **FR-024**: El frontend DEBE permitir registro e inicio de sesión utilizando los endpoints existentes del backend.
-- **FR-025**: El frontend DEBE permitir generar o rotar la API Key utilizando el JWT del usuario.
-- **FR-026**: El frontend DEBE permitir consultar, filtrar y paginar el catálogo utilizando la API Key correspondiente.
+- **FR-025**: El frontend puede permitir generar una API Key mediante una acción explícita utilizando el JWT del usuario; la API Key no se genera durante el login ni forma parte obligatoria de la sesión.
+- **FR-026**: El frontend DEBE permitir consultar, filtrar y paginar el catálogo sin JWT ni API Key.
 - **FR-027**: El frontend DEBE utilizar exclusivamente los contratos REST públicos de Devchester United para acceder a funcionalidades de negocio.
 - **FR-028**: El frontend NO DEBE comunicarse directamente con PostgreSQL ni con las APIs externas utilizadas por el backend.
 - **FR-029**: El frontend DEBE representar de forma comprensible los errores funcionales devueltos por el backend sin exponer detalles internos.
-- **FR-033**: El frontend DEBE conservar el JWT y la API Key durante la pestaña, permitiendo recargas y navegación sin volver a ingresarlos, y DEBE descartarlos al cerrar la pestaña o cerrar sesión. DEBE respetar la expiración del JWT y solicitar un nuevo login para operaciones que lo requieran cuando expire. Descartar las credenciales del frontend NO DEBE revocar la API Key ni modificar la expiración del JWT en el backend.
-- **FR-034**: Si no dispone de una API Key, el frontend DEBE permitir ingresar una clave guardada por el usuario o generar una nueva mediante una acción explícita con JWT vigente, advirtiendo que revoca la anterior. NO DEBE generar ni rotar API Keys automáticamente. Conservar la clave para enviarla al catálogo NO habilita volver a mostrarla completa después de la respuesta de generación.
+- **FR-033**: El frontend DEBE conservar el JWT durante la pestaña para las operaciones que lo requieran. La API Key, si se genera o ingresa para un uso administrativo explícito, no es necesaria para navegar ni consultar el catálogo y no forma parte obligatoria de la sesión.
+- **FR-034**: Si el frontend ofrece generación o ingreso de API Key, debe hacerlo mediante una acción explícita y no durante el login. No debe generar ni reemplazar claves automáticamente. La clave no debe mostrarse nuevamente completa después de su generación.
 
 ---
+
+### Enmienda normativa de seguridad 2026-09-17
+
+Esta enmienda prevalece sobre las descripciones anteriores de autenticación del catálogo y conserva el alcance funcional de esta entrega:
+
+- `POST /api/v1/auth/register` y `POST /api/v1/auth/login` son públicos.
+- `POST /api/v1/auth/apikey` requiere exclusivamente un JWT válido. El login nunca genera una API Key.
+- La API Key no forma parte de la sesión JWT ni es necesaria para navegar el frontend.
+- `GET /api/v1/players` y los endpoints de lectura del catálogo son públicos.
+- `POST /api/v1/catalog/sync` requiere exclusivamente una API Key válida, porque representa una operación administrativa/machine-to-machine.
+- Las API Keys son credenciales alternativas para consumidores externos o administrativos en endpoints explícitamente autorizados.
+- La rotación, reemplazo o revocación explícita de API Keys puede conservarse por compatibilidad con la implementación existente, pero no es un requisito funcional obligatorio ni debe asumirse en nuevos flujos.
+- Compra/venta, cotizaciones, portfolio y transacciones permanecen fuera del alcance de esta entrega. No se agregan endpoints, tareas ni implementación para esas funcionalidades.
 
 ### Entidades Clave *(Key Entities)*
 
@@ -319,17 +330,13 @@ La siguiente matriz define de forma normativa la credencial admitida por cada en
 | `POST /api/v1/auth/apikey` | JWT válido de un usuario inexistente | `401 Unauthorized`; no se genera ni revoca ninguna API Key. |
 | `POST /api/v1/auth/apikey` | Solo API Key, o API Key sin JWT válido | `401 Unauthorized`; una API Key no autoriza esta operación. |
 | `POST /api/v1/auth/apikey` | JWT válido + API Key | Permitido si el JWT es válido; la API Key no participa en la autorización. |
-| `GET /api/v1/players` | API Key válida y activa | Permitido; se autentica exclusivamente mediante API Key. |
-| `GET /api/v1/players` | API Key ausente, inválida o revocada | `401 Unauthorized`; no se consulta el catálogo. |
-| `GET /api/v1/players` | Solo JWT, sin API Key | `401 Unauthorized`; un JWT no autoriza esta operación. |
-| `GET /api/v1/players` | JWT + API Key válida y activa | Permitido; el JWT no participa en la autorización. |
-| `GET /api/v1/players` | Error real de BD al validar la API Key | `503 Service Unavailable`; acceso denegado y no se transforma el fallo en `401`. |
-| `GET /api/v1/players` | Solicitud ya autorizada y revocación posterior durante su ejecución | Puede finalizar normalmente. Las nuevas solicitudes que validen la clave después de la revocación reciben `401 Unauthorized`. |
-| `POST /api/v1/catalog/sync` | JWT válido de un usuario existente | Permitido; se autentica exclusivamente mediante JWT. |
-| `POST /api/v1/catalog/sync` | JWT ausente, alterado o expirado | `401 Unauthorized`; no se inicia la sincronización. |
-| `POST /api/v1/catalog/sync` | Solo API Key | `401 Unauthorized`; una API Key no autoriza esta operación. |
-| `POST /api/v1/catalog/sync` | JWT válido + API Key | Permitido mediante JWT; la API Key no participa en la autorización. |
-| `POST /api/v1/catalog/sync` | JWT válido y otra sincronización en curso | `409 Conflict`; no se consulta al proveedor ni se modifica el catálogo desde la solicitud rechazada. |
+| `GET /api/v1/players` | Ninguna credencial | Permitido; endpoint público. |
+| `GET /api/v1/players` | JWT, API Key o ambas | Permitido; las credenciales no participan en la autorización. |
+| `POST /api/v1/catalog/sync` | API Key válida | Permitido; se autentica exclusivamente mediante API Key administrativa. |
+| `POST /api/v1/catalog/sync` | API Key ausente, alterada o revocada | `401 Unauthorized`; no se inicia la sincronización. |
+| `POST /api/v1/catalog/sync` | Solo JWT | `401 Unauthorized`; el JWT no autoriza esta operación administrativa. |
+| `POST /api/v1/catalog/sync` | JWT + API Key válida | Permitido mediante API Key; el JWT no participa en la autorización. |
+| `POST /api/v1/catalog/sync` | API Key válida y otra sincronización en curso | `409 Conflict`; no se consulta al proveedor ni se modifica el catálogo desde la solicitud rechazada. |
 | `POST /api/v1/catalog/sync` | Proveedor externo indisponible o respuesta no utilizable | `503 Service Unavailable`; los datos locales válidos permanecen intactos. |
 
 
@@ -567,10 +574,14 @@ El plan, el modelo de datos y el contrato ejecutable existentes deben actualizar
   ```
 ---
 
+## Enmienda de seguridad vigente
+
+La política de autenticación vigente para esta entrega es: registro y login públicos; generación de API Key únicamente con JWT; catálogo y lecturas de catálogo públicas; sincronización administrativa únicamente con API Key. La API Key no se genera durante login, no forma parte obligatoria de la sesión frontend y no es necesaria para navegar. La rotación o reemplazo puede conservarse como compatibilidad de la implementación existente, pero no es un requisito funcional obligatorio. Compra/venta, cotizaciones, portfolio y transacciones siguen fuera del alcance.
+
 ## Suposiciones (Assumptions)
 
-- **API Key Única Activa**: Para simplificar la seguridad y gestión en la entrega inicial, un usuario solo puede tener una API Key activa a la vez. La generación de una nueva clave revoca inmediatamente cualquier clave anterior.
-- **Separación de Autenticación**: El login de usuario utiliza JWTs de sesión con expiración, mientras que el consumo del catálogo utiliza API Keys sin vencimiento automático, vigentes hasta su revocación al generar una nueva.
+- **API Key Única Activa**: La implementación vigente puede conservar una sola API Key activa y reemplazo explícito como compatibilidad; no es una obligación funcional nueva.
+- **Separación de Autenticación**: El login de usuario utiliza JWTs de sesión con expiración; el catálogo es público; las API Keys sin vencimiento automático se reservan para endpoints explícitamente autorizados, como la sincronización administrativa.
 - **Catálogo Sincronizado**: El catálogo local se construye y actualiza mediante sincronización con la fuente externa definida. Los consumidores generales continúan teniendo acceso de solo lectura al catálogo.
 - **Fuente Externa No Operacionalmente Crítica para Consultas**: La disponibilidad del proveedor externo es necesaria para sincronizar, pero no para consultar el catálogo ya persistido.
 - **Composición Objetivo de Ligas**: Para esta entrega se consideran 96 equipos activos distribuidos entre Premier League (20), LaLiga (20), Bundesliga (18), Serie A (20) y Ligue 1 (18). Los registros inactivos se conservan fuera del catálogo consultable y no cuentan para este objetivo.

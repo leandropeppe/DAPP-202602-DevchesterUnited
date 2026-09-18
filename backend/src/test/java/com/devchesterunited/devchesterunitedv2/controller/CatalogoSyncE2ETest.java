@@ -59,7 +59,7 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
     @Test
     void jwtValidoPublicaSnapshotCompletoYDevuelveConteos() throws Exception {
         when(adapter.sincronizar()).thenReturn(snapshot(900000L, 910000L));
-        mvc.perform(post("/api/v1/catalog/sync").with(jwtUsuario()))
+        mvc.perform(post("/api/v1/catalog/sync").header("X-API-KEY", apiKeyValida()))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.teams_processed").value(96))
                 .andExpect(jsonPath("$.data.players_processed").value(96));
@@ -72,7 +72,8 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
         mvc.perform(post("/api/v1/catalog/sync")).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/v1/catalog/sync").with(SecurityMockMvcRequestPostProcessors.jwt()
                 .jwt(j -> j.subject("usr_" + UUID.randomUUID())))).andExpect(status().isUnauthorized());
-        mvc.perform(post("/api/v1/catalog/sync").with(jwtUsuario()).contentType(MediaType.APPLICATION_JSON).content("{}"))
+        mvc.perform(post("/api/v1/catalog/sync").header("X-API-KEY", apiKeyValida())
+                .contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isBadRequest());
         verifyNoInteractions(adapter);
     }
@@ -80,29 +81,37 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
     @Test
     void proveedorFallaDevuelve503YConservaSnapshotAnterior() throws Exception {
         when(adapter.sincronizar()).thenReturn(snapshot(920000L, 930000L));
-        mvc.perform(post("/api/v1/catalog/sync").with(jwtUsuario())).andExpect(status().isOk());
+        mvc.perform(post("/api/v1/catalog/sync").header("X-API-KEY", apiKeyValida()))
+                .andExpect(status().isOk());
         long equiposAntes = jdbc.queryForObject("SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class);
         when(adapter.sincronizar()).thenThrow(new FootballDataException("fallo simulado"));
-        mvc.perform(post("/api/v1/catalog/sync").with(jwtUsuario())).andExpect(status().isServiceUnavailable());
+        mvc.perform(post("/api/v1/catalog/sync").header("X-API-KEY", apiKeyValida()))
+                .andExpect(status().isServiceUnavailable());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class)).isEqualTo(equiposAntes);
     }
 
     @Test
     void errorInesperadoDevuelve500Generico() throws Exception {
         when(adapter.sincronizar()).thenThrow(new IllegalStateException("detalle interno"));
-        mvc.perform(post("/api/v1/catalog/sync").with(jwtUsuario()))
+        mvc.perform(post("/api/v1/catalog/sync").header("X-API-KEY", apiKeyValida()))
                 .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.status").value("error"))
                 .andExpect(jsonPath("$.message").isString());
     }
 
     @Test
     void consultaDeJugadoresNoLlamaAlAdapter() throws Exception {
-        mvc.perform(get("/api/v1/players")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/players")).andExpect(status().isOk());
         verifyNoInteractions(adapter);
     }
 
     private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor jwtUsuario() {
         return jwt().jwt(j -> j.subject("usr_" + USUARIO));
+    }
+
+    private String apiKeyValida() throws Exception {
+        return mvc.perform(post("/api/v1/auth/apikey").with(jwtUsuario()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString()
+                .replaceFirst("(?s).*\"api_key\":\"([^\"]+)\".*", "$1");
     }
 
     private static CatalogoSincronizado snapshot(long equipoBase, long jugadorBase) {

@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,8 +36,8 @@ public class JugadorController {
     @Operation(
             operationId = "consultarJugadores",
             summary = "Consultar catálogo con filtros parciales",
-            description = "Consulta autenticada con API Key, filtros parciales case-insensitive y paginación.",
-            security = @SecurityRequirement(name = "ApiKeyAuth"))
+            description = "Consulta pública local, con filtros parciales case-insensitive y paginación."
+            )
     @ApiResponses({
         @ApiResponse(
                 responseCode = "200",
@@ -46,12 +45,6 @@ public class JugadorController {
         @ApiResponse(
                 responseCode = "400",
                 description = "Parámetros de consulta inválidos.",
-                content = @Content(
-                        mediaType = "application/json",
-                        schema = @Schema(implementation = ErrorResponseDTO.class))),
-        @ApiResponse(
-                responseCode = "401",
-                description = "No autorizado: API Key inválida, revocada o ausente.",
                 content = @Content(
                         mediaType = "application/json",
                         schema = @Schema(implementation = ErrorResponseDTO.class))),

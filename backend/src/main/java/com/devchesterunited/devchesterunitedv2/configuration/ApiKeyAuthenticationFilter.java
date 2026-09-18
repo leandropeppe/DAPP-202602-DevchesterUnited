@@ -16,11 +16,15 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
+    private static final RequestMatcher ENDPOINT_SINCRONIZACION =
+            new AntPathRequestMatcher("/api/v1/catalog/sync", "POST");
     private final ApiKeyService apiKeys;
     private final SecurityErrorHandler errors;
 
@@ -33,7 +37,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        if (!"GET".equals(request.getMethod()) || !request.getServletPath().equals("/api/v1/players")) {
+        if (!esEndpointAdministrativo(request)) {
             chain.doFilter(request, response);
             return;
         }
@@ -60,5 +64,9 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.clearContext();
             errors.serviceUnavailable(request, response);
         }
+    }
+
+    private static boolean esEndpointAdministrativo(HttpServletRequest request) {
+        return ENDPOINT_SINCRONIZACION.matches(request);
     }
 }

@@ -679,3 +679,100 @@ npm run test:e2e
 - SC-010 completó registro → login → generación de API Key → consulta del catálogo contra el backend local, sin hosts externos. La evidencia también confirma recarga, logout, aislamiento entre pestañas, secreto visible una sola vez y ausencia de secretos en logs, bundles y capturas.
 
 Con esta repetición queda resuelto el bloqueo ambiental documentado arriba y T078 se marca como completada. El cierre corresponde únicamente a la regresión conjunta solicitada.
+
+## Enmienda de seguridad y T089-T093 (2026-09-18)
+
+### Motivo de la enmienda
+
+Se separó la autenticación de usuarios frontend de la autenticación de consumidores externos y operaciones administrativas. El objetivo fue evitar que la navegación del catálogo dependiera de una API Key, manteniendo JWT para la sesión de usuario y API Key para endpoints administrativos explícitamente autorizados.
+
+### Política final validada
+
+- `POST /api/v1/auth/register` y `POST /api/v1/auth/login` son públicos.
+- `POST /api/v1/auth/apikey` requiere JWT válido; la API Key no se genera durante login.
+- `GET /api/v1/players` y las lecturas de catálogo implementadas son públicas y no requieren ni envían JWT o `X-API-KEY` desde el frontend.
+- `POST /api/v1/catalog/sync` requiere exclusivamente una API Key válida; JWT solo no autoriza la operación.
+- Compra/venta, cotizaciones, portfolio y transacciones continúan fuera del alcance.
+
+### Cambios realizados
+
+- T089/T090: se ajustó la autorización backend para lecturas públicas y sincronización administrativa con API Key.
+- T091: se agregaron pruebas de política y se adaptaron, con autorización explícita, los tests históricos afectados.
+- T092: el frontend dejó de bloquear `/catalogo` por ausencia de API Key y `getPlayers` no envía `Authorization` ni `X-API-KEY`. La vista de credenciales conserva la generación explícita con JWT y la visualización de la clave recién generada.
+
+### Regresión ejecutada
+
+Backend, desde `backend/`:
+
+```powershell
+.\gradlew.bat test --no-daemon --console=plain
+```
+
+Resultado real: **396 tests ejecutados, 394 exitosos, 2 fallos**. Los fallos son:
+
+- `RevocacionEnCursoE2ETest.consultaAutorizadaAntesDeRevocacionPuedeTerminarPeroLasSiguientesSon401()`: esperaba `401`, obtuvo `200`. El test histórico todavía presupone que la lectura del catálogo valida revocación de API Key; la política vigente hace público `GET /api/v1/players`.
+- `RevocacionEnCursoE2ETest.baseDeDatosInaccesibleDuranteValidacionDevuelve503()`: esperaba `503`, obtuvo `500`. El escenario histórico fuerza un fallo de validación de API Key en una lectura que ya no debe validar API Key; requiere revisión/adaptación antes del cierre final.
+
+La prueba focalizada `SecurityPolicyE2ETest` y la suite controller/security relacionada pasaron tras T089-T092, incluyendo catálogo público, `POST /auth/apikey` con JWT, sincronización con API Key válida y rechazo de JWT solo.
+
+Frontend, desde `frontend/`:
+
+```powershell
+npm.cmd test -- --run
+npm.cmd run verify:frontend
+npm.cmd run build
+npm.cmd run test:e2e
+```
+
+- Vitest: **18/18 tests exitosos**.
+- Verificación estructural: **PASSED**, 11 archivos JavaScript/JSX analizados.
+- Build Vite: **PASSED**.
+- Playwright: **1/1 PASSED** tras regenerar el `bootJar` backend antes de la ejecución. El primer intento utilizó un artefacto desactualizado y devolvió `401` al cargar el catálogo; no se modificó el test y la repetición con el artefacto actualizado pasó.
+
+El escenario Playwright validó registro, login, generación y visualización única de API Key, carga del catálogo, filtros, paginación, aislamiento entre pestañas y logout. Las solicitudes del catálogo se realizaron sin depender de la API Key.
+
+### Limitaciones y estado
+
+La regresión backend completa no está totalmente verde por los dos tests históricos de `RevocacionEnCursoE2ETest`; no se modificaron porque requieren una decisión/autorización específica sobre su adaptación al catálogo público. No hay fallos frontend pendientes.
+
+T089, T090, T091 y T092 quedan completadas. **T093 permanece pendiente** hasta resolver o autorizar la adaptación de esos dos tests históricos y repetir la regresión backend completa.
+
+## Cierre T093: regresión final de la enmienda de seguridad (2026-09-18)
+
+Se adaptó exclusivamente `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/RevocacionEnCursoE2ETest.java`. Sus dos escenarios históricos ahora ejercitan `POST /api/v1/catalog/sync`: la barrera se ubica después de la autenticación API Key en el flujo de sincronización y la indisponibilidad de BD se verifica durante `ApiKeyService` antes del controlador. No se modificó producción, frontend ni otros tests.
+
+### Backend
+
+Comandos ejecutados desde `backend/`:
+
+```powershell
+.\gradlew.bat test --tests '*RevocacionEnCursoE2ETest' --no-daemon --console=plain
+.\gradlew.bat test --tests '*SecurityPolicyE2ETest' --no-daemon --console=plain
+.\gradlew.bat test --no-daemon --console=plain
+```
+
+- `RevocacionEnCursoE2ETest`: **2/2 PASSED**.
+- `SecurityPolicyE2ETest`: **8/8 PASSED**.
+- Regresión backend completa: **391/391 tests PASSED**, 0 fallos, 0 errores y 0 omitidos.
+
+La regresión confirma catálogo público, ausencia de dependencia de API Key para las lecturas, generación de API Key protegida por JWT, sincronización protegida por API Key, rechazo de JWT solo, registro/login, sincronización, filtros y paginación.
+
+### Frontend
+
+Comandos ejecutados desde `frontend/`:
+
+```powershell
+npm.cmd test -- --run
+npm.cmd run build
+npm.cmd run test:e2e
+```
+
+- Vitest: **18/18 tests PASSED**.
+- Build Vite: **PASSED**.
+- Playwright SC-010: **1/1 PASSED**.
+
+El flujo E2E confirmó registro, login, generación y visualización de API Key, consulta pública del catálogo, filtros, paginación, aislamiento entre pestañas y logout. El catálogo se consultó sin depender de la API Key.
+
+Persisten únicamente warnings no bloqueantes de tooling: deprecación de `AntPathRequestMatcher` durante compilación y advertencias de `NO_COLOR`/`FORCE_COLOR` en Playwright. No hay fallos funcionales pendientes.
+
+Con estos resultados, T089, T090, T091, T092 y T093 quedan completadas.

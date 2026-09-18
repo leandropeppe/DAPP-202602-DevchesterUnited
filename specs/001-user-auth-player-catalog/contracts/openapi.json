@@ -3,7 +3,8 @@
   "info": {
     "title": "Devchester United — Autenticación y catálogo sincronizado",
     "version": "1.1.0",
-    "description": "Contrato de la Entrega 1, revisión 2026-09-17; US1–US4 implementadas y validadas. US5 y los gates finales permanecen pendientes. Registro/login públicos, JWT para generar API Key y sincronizar, X-API-KEY para catálogo local. Mensajes en español. Swagger solo en local/test. Jugador expone el nombre completo en name y admite position y jersey_number null cuando la fuente no los informa."
+    "x-security-policy": "Registro y login públicos; POST /auth/apikey requiere JWT; lecturas del catálogo públicas; POST /catalog/sync requiere API Key administrativa. La API Key no se genera durante login ni es necesaria para navegar el frontend.",
+    "description": "Contrato de la Entrega 1, revisión 2026-09-17; US1–US4 implementadas y validadas. US5 y los gates finales permanecen pendientes. Registro/login públicos, JWT para generar API Key, catálogo público y X-API-KEY para sincronización administrativa. La API Key no se genera durante login ni es necesaria para navegar el frontend. Mensajes en español. Swagger solo en local/test. Jugador expone el nombre completo en name y admite position y jersey_number null cuando la fuente no los informa."
   },
   "servers": [
     {
@@ -184,8 +185,8 @@
         "tags": [
           "Autenticación"
         ],
-        "summary": "Generar o rotar API Key",
-        "description": "Sin cuerpo. Requiere JWT válido y usuario existente. Sin vencimiento automático. Una transacción crea la nueva clave y revoca la anterior. Competencia por el bloqueo de rotación del mismo usuario devuelve 409 sin cambios ni reintentos automáticos; una operación posterior al commit es una nueva rotación. El secreto se devuelve solo después del commit y no se puede recuperar.",
+        "summary": "Generar API Key",
+        "description": "Sin cuerpo. Requiere JWT válido y usuario existente. La API Key no se genera durante login. Las claves emitidas por la implementación vigente no vencen automáticamente. La rotación o reemplazo explícito puede conservarse por compatibilidad, pero no es un requisito funcional obligatorio. El secreto se devuelve solo después del commit y no se puede recuperar.",
         "security": [
           {
             "BearerAuth": []
@@ -271,8 +272,8 @@
         "operationId": "sincronizarCatalogo",
         "tags": ["Catálogo"],
         "summary": "Sincronizar las cinco ligas con la temporada vigente del proveedor",
-        "description": "Sin cuerpo ni parámetros. JWT válido de un usuario existente; no exige rol administrativo. API Key no autoriza ni participa. Solo una ejecución global: la competidora autenticada recibe 409 sin llamadas externas ni mutaciones. Valida cinco ligas, 96 equipos y plantillas utilizables antes de publicar en un commit. Ausentes quedan inactivos y se reactivan si reaparecen. Fallos conservan el catálogo anterior. Respuesta 200 solo tras commit; sin reintentos automáticos. Presupuesto de ejecución 120 s, infraestructura HTTP debe permitir hasta 180 s.",
-        "security": [{"BearerAuth": []}],
+        "description": "Sin cuerpo ni parámetros. Requiere una API Key válida de consumidor administrativo o machine-to-machine. No exige rol administrativo adicional. Solo una ejecución global: la competidora autenticada recibe 409 sin llamadas externas ni mutaciones. Valida cinco ligas, 96 equipos y plantillas utilizables antes de publicar en un commit. Ausentes quedan inactivos y se reactivan si reaparecen. Fallos conservan el catálogo anterior. Respuesta 200 solo tras commit; sin reintentos automáticos. Presupuesto de ejecución 120 s, infraestructura HTTP debe permitir hasta 180 s.",
+        "security": [{"ApiKeyAuth": []}],
         "responses": {
           "200": {
             "description": "Snapshot completo publicado. created + updated = processed para cada entidad; updated incluye entidades existentes sin cambios y reactivadas. Los ausentes inactivados no cuentan como procesados.",
@@ -286,8 +287,8 @@
             "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}
           },
           "401": {
-            "description": "JWT ausente, inválido, expirado o usuario inexistente; no se inicia la sincronización.",
-            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}, "example": {"status": "error", "message": "No autorizado: JWT ausente, inválido o expirado"}}}
+            "description": "API Key ausente, inválida o revocada; no se inicia la sincronización.",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}, "example": {"status": "error", "message": "No autorizado: API Key ausente, inválida o revocada"}}}
           },
           "409": {
             "description": "Sincronización global en curso; esta solicitud no consulta al proveedor ni modifica el catálogo.",
@@ -311,12 +312,8 @@
           "Catálogo"
         ],
         "summary": "Consultar catálogo con filtros parciales",
-        "description": "Consulta exclusivamente local. Solo jugadores activos de equipos activos, incluyendo el conteo; datos y totales pertenecen al mismo snapshot de lectura. API Key activa validada al inicio; consultas ya autorizadas pueden terminar después de revocación. Filtros literales parciales case-insensitive con AND y tildes significativas. Trim antes de validar; vacíos/controles/repetidos/desconocidos devuelven 400. % y _ son literales. Orden UUID ascendente. Página fuera de rango: lista vacía y totales reales; cero coincidencias: total_pages=0. Offset no soportado: 400. jersey_number siempre presente, nullable.",
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
+        "description": "Consulta pública exclusivamente local. Solo jugadores activos de equipos activos, incluyendo el conteo; datos y totales pertenecen al mismo snapshot de lectura. No requiere JWT ni API Key. Filtros literales parciales case-insensitive con AND y tildes significativas. Trim antes de validar; vacíos/controles/repetidos/desconocidos devuelven 400. % y _ son literales. Orden UUID ascendente. Página fuera de rango: lista vacía y totales reales; cero coincidencias: total_pages=0. Offset no soportado: 400. jersey_number siempre presente, nullable.",
+        "security": [],
         "parameters": [
           {
             "name": "league",
@@ -397,7 +394,7 @@
             }
           },
           "401": {
-            "description": "No autorizado: API Key inválida, revocada o ausente.",
+              "description": "No se utiliza autenticación para la lectura pública del catálogo.",
             "content": {
               "application/json": {
                 "schema": {

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.oauth2.jwt.Jwt;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,7 +24,7 @@ class CatalogoControllerTest {
     @Test
     void jwtValidoSinCuerpoDevuelveConteos() {
         when(servicio.sincronizar()).thenReturn(new SincronizacionResultado(96, 120, 96, 0, 120, 0));
-        var respuesta = controller.sincronizar(jwt(), null);
+        var respuesta = controller.sincronizar(USUARIO, null);
         assertThat(respuesta.getStatusCode().value()).isEqualTo(200);
         assertThat(respuesta.getBody().data().equiposProcesados()).isEqualTo(96);
         assertThat(respuesta.getBody().data().jugadoresProcesados()).isEqualTo(120);
@@ -35,7 +34,7 @@ class CatalogoControllerTest {
 
     @Test
     void cuerpoNoVacioEs400YNoIniciaSincronizacion() {
-        assertThatThrownBy(() -> controller.sincronizar(jwt(), "{}"))
+        assertThatThrownBy(() -> controller.sincronizar(USUARIO, "{}"))
                 .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
         verifyNoInteractions(servicio);
     }
@@ -43,16 +42,11 @@ class CatalogoControllerTest {
     @Test
     void lockOcupadoEs409YProveedorEs503() {
         doThrow(new SincronizacionEnCursoException()).when(servicio).sincronizar();
-        assertThatThrownBy(() -> controller.sincronizar(jwt(), null)).isInstanceOf(SincronizacionEnCursoException.class);
+        assertThatThrownBy(() -> controller.sincronizar(USUARIO, null)).isInstanceOf(SincronizacionEnCursoException.class);
         reset(servicio);
         doThrow(new com.devchesterunited.devchesterunitedv2.adapter.FootballDataException("interno"))
                 .when(servicio).sincronizar();
-        assertThatThrownBy(() -> controller.sincronizar(jwt(), null))
+        assertThatThrownBy(() -> controller.sincronizar(USUARIO, null))
                 .isInstanceOf(com.devchesterunited.devchesterunitedv2.adapter.FootballDataException.class);
-    }
-
-    private static Jwt jwt() {
-        return Jwt.withTokenValue("test-token").header("alg", "HS256").subject("usr_" + USUARIO)
-                .issuedAt(java.time.Instant.now()).expiresAt(java.time.Instant.now().plusSeconds(3600)).build();
     }
 }
