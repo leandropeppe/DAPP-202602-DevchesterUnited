@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: devchester_e2e
+      POSTGRES_USER: e2e_user
+      POSTGRES_PASSWORD: e2e_password
+      TZ: UTC
+    ports:
+      - "127.0.0.1:15432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      - ./fixture.sql:/e2e/fixture.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U e2e_user -d devchester_e2e"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+# El bootJar se inicia desde e2e/global-setup.mjs con Java local en
+# 127.0.0.1:18080 para no requerir una imagen Java ni conectividad externa.
