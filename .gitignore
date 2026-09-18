@@ -48,3 +48,13 @@ target/
 Thumbs.db
 *.tmp
 *.swp
+
+
+### Frontend / Node ###
+node_modules/
+dist/
+
+### Playwright ###
+test-results/
+playwright-report/
+**/e2e/results/
