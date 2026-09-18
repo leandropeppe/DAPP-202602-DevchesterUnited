@@ -776,3 +776,25 @@ El flujo E2E confirmó registro, login, generación y visualización de API Key,
 Persisten únicamente warnings no bloqueantes de tooling: deprecación de `AntPathRequestMatcher` durante compilación y advertencias de `NO_COLOR`/`FORCE_COLOR` en Playwright. No hay fallos funcionales pendientes.
 
 Con estos resultados, T089, T090, T091, T092 y T093 quedan completadas.
+
+## Evidencia posterior al polish visual y de navegación del frontend (2026-09-18)
+
+Se mejoró la presentación de la SPA sin modificar endpoints, contratos backend, `sessionStorage` ni el comportamiento público del catálogo. El layout ahora incluye header persistente, navegación contextual, marca navegable al catálogo, cards de autenticación, estados accesibles, catálogo tabular responsive, filtros agrupados, total de resultados cuando está disponible y paginación basada en la metadata existente.
+
+El flujo validado quedó: registro → login → `/catalogo`; desde allí Credenciales continúa siendo una sección secundaria para generar explícitamente la API Key con JWT, y logout vuelve a `/login`. No se genera API Key durante login, navegación o consulta pública del catálogo.
+
+Comandos ejecutados desde `frontend/`:
+
+```powershell
+npm test -- --run
+npm run verify:frontend
+npm run build
+npm run test:e2e
+```
+
+- Vitest: **18/18 tests PASSED**, en 3 archivos.
+- `npm run verify:frontend`: **PASSED**; 17 archivos JavaScript/JSX, sin TypeScript, secretos, Football-Data ni `localStorage`.
+- Build Vite: **PASSED**.
+- Playwright SC-010: **1/1 PASSED** en 14.6 s; confirmó login al catálogo, acceso explícito a Credenciales, generación visible una sola vez, recarga, filtros, paginación, aislamiento entre pestañas y logout.
+
+No se modificó backend. No se agregaron nuevas tareas.
