@@ -9,7 +9,10 @@ import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,9 +42,7 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
 
     @BeforeEach
     void prepararUsuarioYCatalogo() {
-        jugadores.deleteAll();
-        equipos.deleteAll();
-        usuarios.deleteAll();
+        limpiarFixturesPropios();
 
         usuarios.saveAndFlush(new UsuarioEntity(USUARIO, "missingcredentialuser",
                 "missingcredential@example.com", "$2a$12$" + "a".repeat(53), AHORA, AHORA));
@@ -50,6 +51,28 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
                 LocalDate.of(2027, 5, 30), AHORA, AHORA));
         jugadores.saveAndFlush(new JugadorEntity(JUGADOR, 800001L, "Jugador Persistido", EQUIPO,
                 "Forward", null, "Argentina", true, AHORA, AHORA, "LaLiga", "Equipo Persistido"));
+    }
+
+    @AfterEach
+    void limpiarDespuesDeCadaTest() {
+        limpiarFixturesPropios();
+    }
+
+    private void limpiarFixturesPropios() {
+        Set<UUID> jugadoresPropios = new HashSet<>();
+        jugadores.findById(JUGADOR).ifPresent(jugador -> jugadoresPropios.add(jugador.getId()));
+        jugadores.findByIdExterno(800001L).ifPresent(jugador -> jugadoresPropios.add(jugador.getId()));
+        jugadores.deleteAllById(jugadoresPropios);
+        jugadores.flush();
+
+        Set<UUID> equiposPropios = new HashSet<>();
+        equipos.findById(EQUIPO).ifPresent(equipo -> equiposPropios.add(equipo.getId()));
+        equipos.findByIdExterno(700001L).ifPresent(equipo -> equiposPropios.add(equipo.getId()));
+        equipos.deleteAllById(equiposPropios);
+        equipos.flush();
+
+        usuarios.findById(USUARIO).ifPresent(usuarios::delete);
+        usuarios.flush();
     }
 
     @Test
