@@ -13,9 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FOOTBALL_DATA_API_KEY: ''
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Java 21
         uses: actions/setup-java@v6
@@ -33,6 +36,12 @@ jobs:
           chmod +x gradlew
           ./gradlew clean build --no-daemon --console=plain
 
+      - name: Run SonarQube analysis
+        working-directory: backend
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonar --no-daemon --console=plain
+
       - name: Upload backend bootJar
         uses: actions/upload-artifact@v7
         with:
@@ -44,6 +53,7 @@ jobs:
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -87,6 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FOOTBALL_DATA_API_KEY: ''
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
