@@ -3,6 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '3.5.16'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'jacoco'
+	id "org.sonarqube" version "7.5.0.8588"
 }
 
 group = 'com.devchesterUnited'
@@ -53,5 +54,12 @@ tasks.named('jacocoTestReport') {
 	reports {
 		xml.required = true
 		html.required = true
+	}
+}
+
+sonar {
+	properties {
+		property "sonar.projectKey", "leandropeppe_DAPP-202602-DevchesterUnited"
+		property "sonar.organization", "leandropeppe"
 	}
 }
