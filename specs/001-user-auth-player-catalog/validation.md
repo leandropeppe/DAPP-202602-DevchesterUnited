@@ -798,3 +798,38 @@ npm run test:e2e
 - Playwright SC-010: **1/1 PASSED** en 14.6 s; confirmó login al catálogo, acceso explícito a Credenciales, generación visible una sola vez, recarga, filtros, paginación, aislamiento entre pestañas y logout.
 
 No se modificó backend. No se agregaron nuevas tareas.
+
+## Evidencia adicional de cobertura US4, US5 y CI — 2026-09-19
+
+### US4
+
+Se agregó y validó individualmente la siguiente cobertura automatizada, sin Internet ni credenciales reales:
+
+- `FootballDataAdapterMissingCredentialTest.java`: credencial externa ausente, fallo controlado, ausencia de llamada HTTP y no exposición de secretos.
+- `SincronizacionAusenciaReactivacionIntegrationTest.java`: ausencia, inactivación, exclusión del catálogo, reaparición, conservación de UUID y ausencia de duplicados.
+- `SincronizacionCambioTemporadaIntegrationTest.java`: cambio de temporada por liga, fechas, identidad conservada, ausentes inactivos, equipos nuevos y ausencia de duplicados.
+- `FootballDataAdapterIncompleteSnapshotTest.java`: respuesta parcial no aceptada como snapshot completo.
+- `SincronizacionRespuestaIncompletaIntegrationTest.java`: conservación del snapshot previo y ausencia de cambios parciales ante una respuesta incompleta.
+
+### US5
+
+Se agregó y validó individualmente la siguiente cobertura automatizada frontend:
+
+- `credentials-api-key.test.jsx`: ingreso manual, trimming, persistencia en `sessionStorage` y ausencia de llamadas HTTP.
+- `credentials-expired-jwt.test.jsx`: JWT expirado tratado como no autenticado, conservación de API Key y ausencia de llamada protegida.
+- `views-http-errors.test.jsx`: representación visible de errores 400, 401 y 503.
+- `accessibility-current.test.jsx`: navegación por teclado representativa, labels, regiones accesibles, controles deshabilitados durante carga y semántica del catálogo.
+
+Estos tests no cierran los gaps productivos ni las validaciones manuales de accesibilidad identificadas previamente.
+
+### CI T083
+
+El workflow `.github/workflows/ci.yml` se ejecutó sobre el commit `ae16c6d`.
+
+- CI #1 detectó contaminación entre tests.
+- Se corrigió el aislamiento del test responsable en `ae16c6d`.
+- CI #2 confirmó la corrección.
+- Backend: **SUCCESS**.
+- Frontend: **SUCCESS**.
+- Playwright E2E: **SUCCESS**.
+- Duración total: **4m 43s**.
