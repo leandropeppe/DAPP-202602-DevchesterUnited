@@ -28,6 +28,7 @@ class FootballDataAdapterTest {
         if (server != null) server.stop(0);
     }
 
+
     @Test
     void consultaLasCincoLigasEnServidorLocalYMapeaElSnapshot() throws Exception {
         var rutas = new ArrayList<String>();
@@ -54,32 +55,65 @@ class FootballDataAdapterTest {
         assertThat(jugadores).anyMatch(j -> j.getDorsal() == 0 && j.getNombre().equals("Solo Nombre"));
     }
 
+    private void assertSincronizacionFalla() {
+        FootballDataAdapter adaptador = adapter();
+
+        assertThatThrownBy(adaptador::sincronizar)
+                .isInstanceOf(FootballDataException.class);
+    }
+
     @Test
     void traduce4295xxPayloadInvalidoYCuotaAgotada() throws Exception {
         iniciar((exchange, codigo) -> responder(exchange, 429, "{}", "100"));
-        assertThatThrownBy(() -> adapter().sincronizar()).isInstanceOf(FootballDataException.class);
+        assertSincronizacionFalla();
         detenerServidor();
+
         iniciar((exchange, codigo) -> responder(exchange, 200, payload(codigo, 1, false), "100"));
-        assertThatThrownBy(() -> adapter().sincronizar()).isInstanceOf(FootballDataException.class);
+        assertSincronizacionFalla();
         detenerServidor();
+
         iniciar((exchange, codigo) -> responder(exchange, 200, payload(codigo, cantidad(codigo), false), "0"));
-        assertThatThrownBy(() -> adapter().sincronizar()).isInstanceOf(FootballDataException.class);
+        assertSincronizacionFalla();
         detenerServidor();
+
         iniciar((exchange, codigo) -> responder(exchange, 503, "{}", "100"));
-        assertThatThrownBy(() -> adapter().sincronizar()).isInstanceOf(FootballDataException.class);
+        assertSincronizacionFalla();
     }
 
     @Test
     void traduceTimeoutSinAccederAInternet() throws Exception {
         iniciar((exchange, codigo) -> {
-            try { Thread.sleep(250); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
             responder(exchange, 200, payload(codigo, cantidad(codigo), false), "100");
         });
-        var clienteHttp = HttpClient.newBuilder().connectTimeout(Duration.ofMillis(100)).build();
+
+        var clienteHttp = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(100))
+                .build();
+
         var factory = new JdkClientHttpRequestFactory(clienteHttp);
         factory.setReadTimeout(Duration.ofMillis(50));
-        var cliente = RestClient.builder().baseUrl(baseUrl()).requestFactory(factory).build();
-        assertThatThrownBy(() -> new FootballDataAdapter(cliente, "test-key", mapper, java.time.Clock.systemUTC(), d -> { }).sincronizar())
+
+        var cliente = RestClient.builder()
+                .baseUrl(baseUrl())
+                .requestFactory(factory)
+                .build();
+
+        var clock = java.time.Clock.systemUTC();
+
+        var adaptador = new FootballDataAdapter(
+                cliente,
+                "test-key",
+                mapper,
+                clock,
+                d -> { }
+        );
+
+        assertThatThrownBy(adaptador::sincronizar)
                 .isInstanceOf(FootballDataException.class);
     }
 
