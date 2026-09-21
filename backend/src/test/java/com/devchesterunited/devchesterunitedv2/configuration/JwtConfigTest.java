@@ -119,7 +119,8 @@ class JwtConfigTest {
             default -> throw new AssertionError("Caso desconocido");
         }
         String token = firmar(claims.build(), JWSAlgorithm.HS256, clave);
-        assertThatThrownBy(() -> config.jwtDecoder().decode(token)).isInstanceOf(JwtException.class);
+        var decoder = config.jwtDecoder();
+        assertThatThrownBy(() -> decoder.decode(token)).isInstanceOf(JwtException.class);
     }
 
     @ParameterizedTest
@@ -131,21 +132,37 @@ class JwtConfigTest {
                 .with(org.springframework.security.oauth2.jose.jws.MacAlgorithm.from(algoritmo)).build();
         var parametros = org.springframework.security.oauth2.jwt.JwtEncoderParameters
                 .from(cabecera, config.parametrosPara(ID).getClaims());
-        assertThatThrownBy(() -> config.jwtEncoder().encode(parametros)).isInstanceOf(JwtException.class);
+        var encoder = config.jwtEncoder();
+        assertThatThrownBy(() -> encoder.encode(parametros)).isInstanceOf(JwtException.class);
     }
 
     @Test
     void rechazaFirmaAjenaPayloadManipuladoYTokenSinFirma() throws Exception {
+        var decoder = config.jwtDecoder();
+
         String ajeno = firmar(claims().build(), JWSAlgorithm.HS256, clave(64));
-        assertThatThrownBy(() -> config.jwtDecoder().decode(ajeno)).isInstanceOf(JwtException.class);
+        assertThatThrownBy(() -> decoder.decode(ajeno))
+                .isInstanceOf(JwtException.class);
+
         String token = firmar(claims().build(), JWSAlgorithm.HS256, clave);
         String[] partes = token.split("\\.");
+
         String payload = Base64.getUrlEncoder().withoutPadding().encodeToString(
-                claims().subject("usr_00000000-0000-0000-0000-000000000000").build().toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                claims().subject("usr_00000000-0000-0000-0000-000000000000")
+                        .build()
+                        .toString()
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8)
+        );
+
         String manipulado = partes[0] + "." + payload + "." + partes[2];
-        assertThatThrownBy(() -> config.jwtDecoder().decode(manipulado)).isInstanceOf(JwtException.class);
+
+        assertThatThrownBy(() -> decoder.decode(manipulado))
+                .isInstanceOf(JwtException.class);
+
         String sinFirma = new com.nimbusds.jwt.PlainJWT(claims().build()).serialize();
-        assertThatThrownBy(() -> config.jwtDecoder().decode(sinFirma)).isInstanceOf(JwtException.class);
+
+        assertThatThrownBy(() -> decoder.decode(sinFirma))
+                .isInstanceOf(JwtException.class);
     }
 
     @ParameterizedTest
@@ -161,9 +178,19 @@ class JwtConfigTest {
 
     @Test
     void exige32BytesDecodificadosNo32CaracteresBase64() {
-        assertThatThrownBy(() -> configurar(clave(31), reloj)).isInstanceOf(IllegalStateException.class);
+        var claveInvalida = clave(31);
+
+        assertThatThrownBy(() -> configurar(claveInvalida, reloj))
+                .isInstanceOf(IllegalStateException.class);
+
         var minimo = configurar(clave(32), reloj);
-        assertThatCode(() -> minimo.jwtDecoder().decode(minimo.jwtEncoder().encode(minimo.parametrosPara(ID)).getTokenValue()))
+
+        var encoder = minimo.jwtEncoder();
+        var decoder = minimo.jwtDecoder();
+        var parametros = minimo.parametrosPara(ID);
+        var token = encoder.encode(parametros).getTokenValue();
+
+        assertThatCode(() -> decoder.decode(token))
                 .doesNotThrowAnyException();
     }
 
