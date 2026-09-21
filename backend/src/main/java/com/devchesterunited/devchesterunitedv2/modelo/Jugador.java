@@ -9,6 +9,7 @@ import java.time.Instant;
 public final class Jugador {
     private static final Set<String> POSICIONES = Set.of(
             "Forward", "Midfielder", "Defender", "Goalkeeper");
+    private static final String CAMPO_NACIONALIDAD = "nacionalidad";
 
     private final UUID id;
     private final String nombre;
@@ -31,10 +32,10 @@ public final class Jugador {
         validarTexto(nombre, "nombre");
         validarTexto(liga, "liga");
         validarTexto(equipo, "equipo");
-        validarTexto(nacionalidad, "nacionalidad");
+        validarTexto(nacionalidad, CAMPO_NACIONALIDAD);
         validarMaximo(liga, "liga", 100);
         validarMaximo(equipo, "equipo", 100);
-        validarMaximo(nacionalidad, "nacionalidad", 100);
+        validarMaximo(nacionalidad, CAMPO_NACIONALIDAD, 100);
         if (posicion == null || !POSICIONES.contains(posicion)) {
             throw new JugadorException("La posición debe ser Forward, Midfielder, Defender o Goalkeeper.");
         }
@@ -62,8 +63,8 @@ public final class Jugador {
             throw new JugadorException("El jugador importado requiere identificadores validos.");
         }
         validarTexto(nombre, "nombre");
-        validarTexto(nacionalidad, "nacionalidad");
-        validarMaximo(nacionalidad, "nacionalidad", 100);
+        validarTexto(nacionalidad, CAMPO_NACIONALIDAD);
+        validarMaximo(nacionalidad, CAMPO_NACIONALIDAD, 100);
         if (posicion != null && !POSICIONES.contains(posicion)) {
             throw new JugadorException("La posicion del jugador no es valida.");
         }

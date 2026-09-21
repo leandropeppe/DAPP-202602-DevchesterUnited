@@ -20,6 +20,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -34,6 +35,7 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
     private static final UUID EQUIPO = UUID.fromString("dddddddd-dddd-dddd-dddd-dddddddddddd");
     private static final UUID JUGADOR = UUID.fromString("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
     private static final Instant AHORA = Instant.parse("2026-09-18T12:00:00Z");
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired MockMvc mvc;
     @Autowired EquipoRepository equipos;
@@ -100,9 +102,15 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
     }
 
     private String apiKeyValida() throws Exception {
-        return mvc.perform(post("/api/v1/auth/apikey").with(jwtUsuario()))
+        String json = mvc.perform(post("/api/v1/auth/apikey").with(jwtUsuario()))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString()
-                .replaceFirst("(?s).*\"api_key\":\"([^\"]+)\".*", "$1");
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return objectMapper.readTree(json)
+                .path("data")
+                .path("api_key")
+                .asText();
     }
 }

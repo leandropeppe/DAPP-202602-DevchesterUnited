@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import java.sql.SQLException;
+import org.springframework.transaction.TransactionDefinition;
 
 @Service
 public class AutenticacionServiceImpl implements AutenticacionService {
@@ -49,7 +50,7 @@ public class AutenticacionServiceImpl implements AutenticacionService {
         this.jwtConfig = jwtConfig;
         this.clock = clock;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
-        this.transactionTemplate.setIsolationLevel(TransactionTemplate.ISOLATION_READ_COMMITTED);
+        this.transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
     }
 
     @Override

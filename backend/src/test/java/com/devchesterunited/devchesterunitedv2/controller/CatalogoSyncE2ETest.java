@@ -23,6 +23,8 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -35,10 +37,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class CatalogoSyncE2ETest extends PostgresTestSupport {
     private static final UUID USUARIO = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
     private static final Instant AHORA = Instant.parse("2026-09-16T12:00:00Z");
+    private final ObjectMapper objectMapper = new ObjectMapper();
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
     @Autowired UsuarioRepository usuarios;
     @MockBean FootballDataAdapter adapter;
+
 
     @BeforeEach
     void prepararUsuario() {
@@ -109,9 +113,16 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
     }
 
     private String apiKeyValida() throws Exception {
-        return mvc.perform(post("/api/v1/auth/apikey").with(jwtUsuario()))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString()
-                .replaceFirst("(?s).*\"api_key\":\"([^\"]+)\".*", "$1");
+        String json = mvc.perform(post("/api/v1/auth/apikey").with(jwtUsuario()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return objectMapper.readTree(json)
+                .path("data")
+                .path("api_key")
+                .asText();
     }
 
     private static CatalogoSincronizado snapshot(long equipoBase, long jugadorBase) {
