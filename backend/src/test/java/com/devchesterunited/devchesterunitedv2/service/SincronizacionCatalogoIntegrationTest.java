@@ -14,22 +14,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
     private static final Instant AHORA = Instant.parse("2026-09-16T12:00:00Z");
-    @MockBean FootballDataAdapter adapter;
+    @MockitoBean FootballDataAdapter adapter;
     @Autowired JdbcTemplate jdbc;
     @Autowired SincronizacionCatalogoService servicio;
     @Autowired EquipoRepository equipos;

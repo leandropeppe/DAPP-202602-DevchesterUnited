@@ -16,7 +16,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -24,7 +25,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     private static final RequestMatcher ENDPOINT_SINCRONIZACION =
-            new AntPathRequestMatcher("/api/v1/catalog/sync", "POST");
+            PathPatternRequestMatcher.withDefaults()
+                    .matcher(HttpMethod.POST, "/api/v1/catalog/sync");
     private final ApiKeyService apiKeys;
     private final SecurityErrorHandler errors;
 

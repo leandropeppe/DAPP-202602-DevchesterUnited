@@ -17,8 +17,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -31,7 +31,7 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
     private static final long JUGADOR_AUSENTE_BASE = 800000L;
     private static final long JUGADOR_REEMPLAZO_BASE = 900000L;
 
-    @MockBean FootballDataAdapter adapter;
+    @MockitoBean FootballDataAdapter adapter;
     @Autowired JdbcTemplate jdbc;
     @Autowired SincronizacionCatalogoService servicio;
     @Autowired EquipoRepository equipos;
