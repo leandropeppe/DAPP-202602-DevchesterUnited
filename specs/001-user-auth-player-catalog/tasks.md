@@ -16,7 +16,7 @@ description: "Tareas de implementación de autenticación y catálogo de jugador
 - Las pruebas son obligatorias por la Constitución y por la corrección C1 ya autorizada. Escribir pruebas antes de implementar la historia, observar fallo esperado y ejecutarlas nuevamente al cerrar. Fallos de compilación por componentes aún ausentes no acreditan la validación funcional final.
 - No modificar ni borrar tests existentes sin un «SÍ» explícito. Agregar archivos nuevos y soporte de configuración para preservar `src/test/java/com/devchesterunited/devchesterunitedv2/DevchesterUnitedV2ApplicationTests.java`.
 - Mantener Java 21, JUnit 5, PostgreSQL real/Testcontainers, unitarias sin Spring, E2E MockMvc solo en controller, casos felices y borde y documentación/errores en español.
-- Nota histórica de regeneración: esta versión reemplazó los IDs del borrador anterior, cuyo estado inicial era pendiente. El estado vigente se detalla en la sección final: T001–T069 están completadas y validadas.
+ - Nota histórica de regeneración: esta versión reemplazó los IDs del borrador anterior, cuyo estado inicial era pendiente. El estado vigente se detalla en la sección final: T001–T078 y T089–T093 están completadas y validadas; T079–T088 permanecen pendientes.
 
 ## Fase 1: Preparación compartida
 
@@ -197,9 +197,6 @@ T050 completada → Monorepo T051–T056 → US4 T057–T069 → US5 T070–T078
 - T070–T078: [x] US5 implementada, validada y cerrada.
 - T079–T088: [ ] gates finales pendientes.
 - La suite histórica de 363 tests se conserva como regresión; no se afirma que las pruebas nuevas, CI, SonarCloud, performance, frontend o aceptación externa estén ejecutadas.
-## Cierre del bloque US5 T075–T077 (2026-09-17)
+## Cierre del bloque US5 (2026-09-17)
 
-- [x] T075 E2E aislado, fixture sintético y Playwright SC-010.
-- [x] T076 verificaciones estructurales y de secretos del frontend.
-- [x] T077 Vitest, build, preview y evidencia de validación.
-- [x] T078 regresión conjunta backend/frontend, acreditada por el cierre documentado en validation.md (backend 391 tests, Vitest, verify:frontend, build y Playwright PASSED).
+El bloque US5 quedó completado: E2E aislado, fixture sintético, verificaciones estructurales y de secretos, Vitest, build, preview, Playwright y regresión conjunta backend/frontend están acreditados en `validation.md` (backend 391 tests, Vitest, `verify:frontend`, build y Playwright PASSED).

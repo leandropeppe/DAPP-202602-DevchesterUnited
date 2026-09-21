@@ -3,11 +3,11 @@
 
 **Rama de Funcionalidad (Feature Branch)**: `001-user-auth-player-catalog`
 
-**Estado vigente (2026-09-16)**: T001–T069 completadas; US1–US4 implementadas y validadas. US5 y los gates finales T070–T088 permanecen pendientes.
+**Estado vigente (2026-09-17)**: T001–T078 y T089–T093 completadas; US1–US5 implementadas y validadas. Permanecen pendientes únicamente los gates finales T079–T088.
 
 **Fecha de Creación**: 2026-09-02
 
-**Estado histórico**: esta línea conserva la descripción del corte inicial; el estado vigente aparece arriba.
+**Estado histórico**: las referencias históricas de fases anteriores se conservan dentro de las tareas y notas de validación; el estado vigente aparece arriba.
 
 **Entrada**: Descripción del usuario: "Crear los requerimientos y contratos para la Entrega Nro 1 de Devchester United: gestión de usuarios, autenticación JWT, generación de API Key, catálogo de jugadores, sincronización del catálogo real desde una API externa de fútbol y frontend web React para consumir las funcionalidades disponibles."
 
@@ -223,7 +223,7 @@ La implementación actual puede conservar una operación explícita de reemplazo
 
 - **FR-013**: El sistema DEBE permitir sincronizar el catálogo de equipos y jugadores desde una API externa de fútbol mediante la capa `Adapter`.
 - **FR-014**: La sincronización DEBE incluir exclusivamente las cinco competiciones soportadas en esta entrega: Premier League, LaLiga, Bundesliga, Serie A y Ligue 1.
-  - En cada ejecución DEBE utilizarse la temporada vigente informada por el proveedor para cada competición. La entrega NO fija una temporada histórica ni permite seleccionarla mediante el endpoint de sincronización.
+  - En cada ejecución DEBE utilizarse la temporada vigente informada por el proveedor para cada competición. Si el proveedor no informa una temporada válida para una competición, la sincronización completa DEBE fallar de forma controlada, conservar el snapshot anterior y no modificar estados de actividad. No se permite utilizar una temporada histórica como fallback silencioso. La entrega NO fija una temporada histórica ni permite seleccionarla mediante el endpoint de sincronización.
 - **FR-015**: Una sincronización completa exitosa DEBE mantener localmente exactamente 96 equipos activos correspondientes a las cinco ligas soportadas; los equipos inactivos conservados no cuentan para este objetivo.
 - **FR-016**: El sistema DEBE persistir localmente los equipos y jugadores obtenidos desde la fuente externa.
 - **FR-017**: Toda entidad sincronizada DEBE conservar el identificador externo necesario para reconocerla en sincronizaciones posteriores.
@@ -271,7 +271,7 @@ Esta enmienda prevalece sobre las descripciones anteriores de autenticación del
   - *Atributos*: `id` (identificador único), `username` (único, alfanumérico), `email` (único, patrón de email), `password_hash` (contraseña hasheada de forma segura), `created_at` (timestamp), `updated_at` (timestamp).
 - **APIKey**:
   - Representa una credencial programática asociada a un Usuario.
-  - *Ciclo de vida*: Sin fecha de vencimiento; pasa de activa a revocada cuando el usuario genera una nueva clave.
+  - *Ciclo de vida*: La API Key no vence automáticamente. La revocación o reemplazo explícito puede conservarse por compatibilidad, pero no es requisito funcional obligatorio. Si se implementa reemplazo, la clave anterior queda revocada de forma atómica.
   - *Atributos*: `id` (identificador único), `user_id` (clave foránea a User), `key_hash` (hash criptográfico seguro del token), `key_prefix` (primeros 14 caracteres visibles del token), `is_active` (booleano), `created_at` (timestamp), `revoked_at` (timestamp opcional).
 - **Jugador (Player)**:
   - Representa un perfil de deportista perteneciente al catálogo local.
@@ -342,7 +342,7 @@ La siguiente matriz define de forma normativa la credencial admitida por cada en
 
 - **SC-001**: El percentil 95 del tiempo total del flujo secuencial de registro más login, hasta recibir el JWT, DEBE ser inferior a 2 segundos.
 - **SC-002**: El percentil 95 del tiempo de respuesta de generación de una nueva API Key DEBE ser inferior a 500 milisegundos.
-- **SC-003**: El percentil 95 del tiempo de respuesta de las consultas al catálogo protegidas con una API Key válida DEBE ser inferior a 300 milisegundos bajo una carga de 50 consultas concurrentes.
+- **SC-003**: El percentil 95 del tiempo de respuesta de `GET /api/v1/players` DEBE ser inferior a 300 milisegundos bajo una carga de 50 consultas concurrentes.
 - **SC-004**: Las solicitudes no autenticadas o no autorizadas a endpoints protegidos (protegidos por JWT o API Key) son bloqueadas con un 100% de precisión (cero falsos permitidos).
 - **SC-005**: Los resultados de búsqueda en el catálogo coinciden con los criterios de filtro proporcionados con un 100% de precisión.
 - **SC-006**: Una sincronización completa exitosa DEBE mantener exactamente 96 equipos activos pertenecientes a las cinco ligas soportadas, según la composición objetivo definida para la entrega. Los equipos inactivos conservados no cuentan para este objetivo.
