@@ -170,7 +170,18 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
     @ParameterizedTest(name = "parámetro {0}, entrada inválida {index}")
     @MethodSource("enterosInvalidos")
     void rechazaEnterosInvalidosDesdeParametros(String campo, String valor) {
-        assertThatThrownBy(() -> FiltroJugadoresDTO.desdeParametros(null, null, null, campo.equals("page") ? valor : "1", campo.equals("limit") ? valor : "20")).isInstanceOf(ConstraintViolationException.class);
+        String pagina = campo.equals("page") ? valor : "1";
+        String limite = campo.equals("limit") ? valor : "20";
+
+        assertThatThrownBy(() ->
+                FiltroJugadoresDTO.desdeParametros(
+                        null,
+                        null,
+                        null,
+                        pagina,
+                        limite
+                ))
+                .isInstanceOf(ConstraintViolationException.class);
     }
 
     static Stream<Arguments> enterosInvalidos() {

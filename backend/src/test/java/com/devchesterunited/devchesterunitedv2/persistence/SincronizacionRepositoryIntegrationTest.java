@@ -44,12 +44,41 @@ class SincronizacionRepositoryIntegrationTest extends PostgresTestSupport {
 
     @Test
     void impideIdsExternosDuplicados() {
-        equipos.saveAndFlush(new EquipoEntity(EQUIPO_ID, 990003L, "Equipo unico", "EU", "EUN", "Serie A",
-                null, true, 2026L, null, null, AHORA, AHORA));
-        assertThatThrownBy(() -> equipos.saveAndFlush(new EquipoEntity(UUID.randomUUID(), 990003L, "Repetido", "R", "REP",
-                "Serie A", null, true, 2026L, null, null, AHORA, AHORA)))
-                .isInstanceOf(DataIntegrityViolationException.class);
+        equipos.saveAndFlush(new EquipoEntity(
+                EQUIPO_ID,
+                990003L,
+                "Equipo unico",
+                "EU",
+                "EUN",
+                "Serie A",
+                null,
+                true,
+                2026L,
+                null,
+                null,
+                AHORA,
+                AHORA
+        ));
 
+        UUID nuevoId = UUID.randomUUID();
+
+        assertThatThrownBy(() ->
+                equipos.saveAndFlush(new EquipoEntity(
+                        nuevoId,
+                        990003L,
+                        "Repetido",
+                        "R",
+                        "REP",
+                        "Serie A",
+                        null,
+                        true,
+                        2026L,
+                        null,
+                        null,
+                        AHORA,
+                        AHORA
+                )))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test

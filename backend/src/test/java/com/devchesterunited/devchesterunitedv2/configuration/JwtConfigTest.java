@@ -97,7 +97,8 @@ class JwtConfigTest {
     void rechazaClaimsObligatoriosAusentes(String campo) throws Exception {
         var claims = claims().claim(campo, null).build();
         String token = firmar(claims, JWSAlgorithm.HS256, clave);
-        assertThatThrownBy(() -> config.jwtDecoder().decode(token)).isInstanceOf(JwtException.class);
+        var decoder = config.jwtDecoder();
+        assertThatThrownBy(() -> decoder.decode(token)).isInstanceOf(JwtException.class);
     }
 
     @ParameterizedTest
@@ -127,13 +128,17 @@ class JwtConfigTest {
     @ValueSource(strings = {"HS384", "HS512"})
     void rechazaOtrosAlgoritmosInclusoConLaMismaClave(String algoritmo) throws Exception {
         String token = firmar(claims().build(), JWSAlgorithm.parse(algoritmo), clave);
-        assertThatThrownBy(() -> config.jwtDecoder().decode(token)).isInstanceOf(JwtException.class);
+        var decoder = config.jwtDecoder();
+        assertThatThrownBy(() -> decoder.decode(token))
+                .isInstanceOf(JwtException.class);
         var cabecera = org.springframework.security.oauth2.jwt.JwsHeader
-                .with(org.springframework.security.oauth2.jose.jws.MacAlgorithm.from(algoritmo)).build();
+                .with(org.springframework.security.oauth2.jose.jws.MacAlgorithm.from(algoritmo))
+                .build();
         var parametros = org.springframework.security.oauth2.jwt.JwtEncoderParameters
                 .from(cabecera, config.parametrosPara(ID).getClaims());
         var encoder = config.jwtEncoder();
-        assertThatThrownBy(() -> encoder.encode(parametros)).isInstanceOf(JwtException.class);
+        assertThatThrownBy(() -> encoder.encode(parametros))
+                .isInstanceOf(JwtException.class);
     }
 
     @Test
