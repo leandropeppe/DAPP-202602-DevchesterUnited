@@ -18,8 +18,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -47,7 +47,7 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
             "Serie A", new Temporada(3104L, LocalDate.of(2026, 8, 20), LocalDate.of(2027, 5, 30)),
             "Ligue 1", new Temporada(3105L, LocalDate.of(2026, 8, 22), LocalDate.of(2027, 5, 17)));
 
-    @MockBean FootballDataAdapter adapter;
+    @MockitoBean FootballDataAdapter adapter;
     @Autowired JdbcTemplate jdbc;
     @Autowired SincronizacionCatalogoService servicio;
     @Autowired EquipoRepository equipos;
