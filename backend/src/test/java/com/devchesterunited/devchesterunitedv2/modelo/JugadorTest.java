@@ -46,7 +46,8 @@ class JugadorTest {
 
     @Test
     void rechazaIdentidadNulaConExcepcionPropia() {
-        assertThatThrownBy(() -> crear(null, campos(), 9)).isInstanceOf(JugadorException.class);
+        var datos = campos();
+        assertThatThrownBy(() -> crear(null, datos, 9)).isInstanceOf(JugadorException.class);
     }
 
     @ParameterizedTest
@@ -74,7 +75,8 @@ class JugadorTest {
     @ParameterizedTest
     @ValueSource(ints = {0, 100, -1, Integer.MIN_VALUE, Integer.MAX_VALUE})
     void rechazaDorsalFueraDeRangoConExcepcionPropia(int dorsal) {
-        assertThatThrownBy(() -> crear(ID, campos(), dorsal)).isInstanceOf(JugadorException.class);
+        var datos = campos();
+        assertThatThrownBy(() -> crear(ID, datos, dorsal)).isInstanceOf(JugadorException.class);
     }
 
     @ParameterizedTest

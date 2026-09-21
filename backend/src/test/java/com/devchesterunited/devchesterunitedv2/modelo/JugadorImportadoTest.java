@@ -35,13 +35,25 @@ class JugadorImportadoTest {
 
     @Test
     void rechazaIdentidadEquipoPosicionYNacionalidadInvalidos() {
-        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 0L, "N", EQUIPO,
-                "Forward", null, "AR", AHORA)).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 1L, "N", null,
-                "Forward", null, "AR", AHORA)).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 1L, "N", EQUIPO,
-                "Striker", null, "AR", AHORA)).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> Jugador.importado(UUID.randomUUID(), 1L, "N", EQUIPO,
-                "Forward", 100, "AR", AHORA)).isInstanceOf(RuntimeException.class);
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+        UUID id3 = UUID.randomUUID();
+        UUID id4 = UUID.randomUUID();
+
+        assertThatThrownBy(() -> Jugador.importado(id1, 0L, "N", EQUIPO,
+                "Forward", null, "AR", AHORA))
+                .isInstanceOf(RuntimeException.class);
+
+        assertThatThrownBy(() -> Jugador.importado(id2, 1L, "N", null,
+                "Forward", null, "AR", AHORA))
+                .isInstanceOf(RuntimeException.class);
+
+        assertThatThrownBy(() -> Jugador.importado(id3, 1L, "N", EQUIPO,
+                "Striker", null, "AR", AHORA))
+                .isInstanceOf(RuntimeException.class);
+
+        assertThatThrownBy(() -> Jugador.importado(id4, 1L, "N", EQUIPO,
+                "Forward", 100, "AR", AHORA))
+                .isInstanceOf(RuntimeException.class);
     }
 }

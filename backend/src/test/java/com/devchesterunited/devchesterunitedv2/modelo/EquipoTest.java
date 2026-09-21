@@ -36,11 +36,20 @@ class EquipoTest {
 
     @Test
     void rechazaIdentidadExternaYTemporadaNoPositivas() {
-        assertThatThrownBy(() -> Equipo.importado(UUID.randomUUID(), 0, "Club", "C", "CLU", "LaLiga", null,
-                2026, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 2, 1), AHORA))
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+
+        LocalDate inicio = LocalDate.of(2026, 1, 1);
+        LocalDate fin = LocalDate.of(2026, 2, 1);
+
+        assertThatThrownBy(() ->
+                Equipo.importado(id1, 0, "Club", "C", "CLU", "LaLiga", null,
+                        2026, inicio, fin, AHORA))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> Equipo.importado(UUID.randomUUID(), 1, "Club", "C", "CLU", "LaLiga", null,
-                0, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 2, 1), AHORA))
+
+        assertThatThrownBy(() ->
+                Equipo.importado(id2, 1, "Club", "C", "CLU", "LaLiga", null,
+                        0, inicio, fin, AHORA))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

@@ -33,11 +33,19 @@ class ApiKeyTest {
     void revocaUnaSolaVezYLaTransicionEsIrreversible() {
         var clave = new APIKey(ID, USUARIO, HASH, PREFIJO, true, CREADA, null);
         Instant revocada = CREADA.plusSeconds(30);
+
         clave.revocar(revocada);
+
         assertThat(clave.isActiva()).isFalse();
         assertThat(clave.getRevocadaEn()).isEqualTo(revocada);
-        assertThatThrownBy(() -> clave.revocar(revocada.plusSeconds(1))).isInstanceOf(ApiKeyException.class);
-        assertThatThrownBy(() -> clave.activar()).isInstanceOf(ApiKeyException.class);
+
+        Instant segundaRevocacion = revocada.plusSeconds(1);
+
+        assertThatThrownBy(() -> clave.revocar(segundaRevocacion))
+                .isInstanceOf(ApiKeyException.class);
+
+        assertThatThrownBy(clave::activar)
+                .isInstanceOf(ApiKeyException.class);
     }
 
     @Test
@@ -51,13 +59,22 @@ class ApiKeyTest {
 
     @Test
     void rechazaFechasYEstadosIncoherentes() {
-        assertThatThrownBy(() -> new APIKey(ID, USUARIO, HASH, PREFIJO, false, CREADA, null))
+        assertThatThrownBy(() ->
+                new APIKey(ID, USUARIO, HASH, PREFIJO, false, CREADA, null))
                 .isInstanceOf(ApiKeyException.class);
-        assertThatThrownBy(() -> new APIKey(ID, USUARIO, HASH, PREFIJO, true, CREADA, CREADA))
+
+        assertThatThrownBy(() ->
+                new APIKey(ID, USUARIO, HASH, PREFIJO, true, CREADA, CREADA))
                 .isInstanceOf(ApiKeyException.class);
-        assertThatThrownBy(() -> new APIKey(ID, USUARIO, HASH, PREFIJO, false, CREADA, CREADA.minusSeconds(1)))
+
+        Instant revocadaAntesDeCreacion = CREADA.minusSeconds(1);
+
+        assertThatThrownBy(() ->
+                new APIKey(ID, USUARIO, HASH, PREFIJO, false, CREADA, revocadaAntesDeCreacion))
                 .isInstanceOf(ApiKeyException.class);
-        assertThatThrownBy(() -> new APIKey(ID, USUARIO, "", PREFIJO, true, CREADA, null))
+
+        assertThatThrownBy(() ->
+                new APIKey(ID, USUARIO, "", PREFIJO, true, CREADA, null))
                 .isInstanceOf(ApiKeyException.class);
     }
 }

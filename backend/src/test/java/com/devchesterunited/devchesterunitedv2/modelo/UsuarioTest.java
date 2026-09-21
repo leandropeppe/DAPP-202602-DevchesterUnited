@@ -33,23 +33,45 @@ class UsuarioTest {
     @NullAndEmptySource
     @ValueSource(strings = {" ", "\t\n"})
     void rechazaIdentidadOHashVaciosConExcepcionPropia(String vacio) {
-        assertThatThrownBy(() -> new Usuario(UUID.randomUUID(), vacio, "a@example.com", HASH, FECHA, FECHA))
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+        UUID id3 = UUID.randomUUID();
+
+        assertThatThrownBy(() ->
+                new Usuario(id1, vacio, "a@example.com", HASH, FECHA, FECHA))
                 .isInstanceOf(UsuarioException.class);
-        assertThatThrownBy(() -> new Usuario(UUID.randomUUID(), "jugador", vacio, HASH, FECHA, FECHA))
+
+        assertThatThrownBy(() ->
+                new Usuario(id2, "jugador", vacio, HASH, FECHA, FECHA))
                 .isInstanceOf(UsuarioException.class);
-        assertThatThrownBy(() -> new Usuario(UUID.randomUUID(), "jugador", "a@example.com", vacio, FECHA, FECHA))
+
+        assertThatThrownBy(() ->
+                new Usuario(id3, "jugador", "a@example.com", vacio, FECHA, FECHA))
                 .isInstanceOf(UsuarioException.class);
     }
 
     @Test
     void rechazaIdYFechasNulosOActualizacionAnterior() {
-        assertThatThrownBy(() -> new Usuario(null, "jugador", "a@example.com", HASH, FECHA, FECHA))
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+        UUID id3 = UUID.randomUUID();
+
+        var fechaAnterior = FECHA.minusNanos(1);
+
+        assertThatThrownBy(() ->
+                new Usuario(null, "jugador", "a@example.com", HASH, FECHA, FECHA))
                 .isInstanceOf(UsuarioException.class);
-        assertThatThrownBy(() -> new Usuario(UUID.randomUUID(), "jugador", "a@example.com", HASH, null, FECHA))
+
+        assertThatThrownBy(() ->
+                new Usuario(id1, "jugador", "a@example.com", HASH, null, FECHA))
                 .isInstanceOf(UsuarioException.class);
-        assertThatThrownBy(() -> new Usuario(UUID.randomUUID(), "jugador", "a@example.com", HASH, FECHA, null))
+
+        assertThatThrownBy(() ->
+                new Usuario(id2, "jugador", "a@example.com", HASH, FECHA, null))
                 .isInstanceOf(UsuarioException.class);
-        assertThatThrownBy(() -> new Usuario(UUID.randomUUID(), "jugador", "a@example.com", HASH, FECHA, FECHA.minusNanos(1)))
+
+        assertThatThrownBy(() ->
+                new Usuario(id3, "jugador", "a@example.com", HASH, FECHA, fechaAnterior))
                 .isInstanceOf(UsuarioException.class);
     }
 }
