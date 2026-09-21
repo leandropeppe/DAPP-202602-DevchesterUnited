@@ -63,6 +63,122 @@ public class FootballDataAdapter {
         this.sleeper = sleeper;
     }
 
+    private void validarRespuesta(FootballTeamsResponseDTO respuesta, Liga liga) {
+        if (respuesta == null
+                || respuesta.competition() == null
+                || !liga.codigo().equals(respuesta.competition().code())
+                || respuesta.season() == null
+                || respuesta.season().id() == null
+                || respuesta.season().id() <= 0
+                || respuesta.season().startDate() == null
+                || respuesta.season().endDate() == null
+                || respuesta.season().endDate().isBefore(respuesta.season().startDate())
+                || respuesta.teams() == null
+                || respuesta.count() == null
+                || respuesta.count() != respuesta.teams().size()
+                || respuesta.teams().size() != liga.cantidad()) {
+
+            throw new FootballDataException(
+                    "La respuesta del proveedor no forma un snapshot utilizable."
+            );
+        }
+    }
+
+    private void convertirEquipo(
+            FootballTeamDTO equipoExterno,
+            Liga liga,
+            FootballSeasonDTO temporada,
+            List<Equipo> equipos,
+            List<Jugador> jugadores,
+            Map<Long, UUID> equiposPorExterno,
+            Map<Long, String> jugadoresVistos) {
+
+        validarEquipo(equipoExterno);
+
+        if (equiposPorExterno.containsKey(equipoExterno.id())) {
+            throw new FootballDataException("El proveedor repitio un equipo.");
+        }
+
+        UUID idEquipo = UUID.randomUUID();
+        equiposPorExterno.put(equipoExterno.id(), idEquipo);
+
+        equipos.add(Equipo.importado(
+                idEquipo,
+                equipoExterno.id(),
+                equipoExterno.name(),
+                equipoExterno.shortName(),
+                equipoExterno.tla(),
+                liga.nombre(),
+                uriHttps(equipoExterno.crest()),
+                temporada.id(),
+                temporada.startDate(),
+                temporada.endDate(),
+                clock.instant()
+        ));
+
+        Set<Long> idsEnEquipo = new HashSet<>();
+
+        for (FootballPlayerDTO jugador : equipoExterno.squad()) {
+            convertirJugador(
+                    jugador,
+                    idEquipo,
+                    idsEnEquipo,
+                    jugadores,
+                    jugadoresVistos
+            );
+        }
+    }
+
+    private void convertirJugador(
+            FootballPlayerDTO jugador,
+            UUID idEquipo,
+            Set<Long> idsEnEquipo,
+            List<Jugador> jugadores,
+            Map<Long, String> jugadoresVistos) {
+
+        validarJugador(jugador);
+
+        String firma = firma(jugador, idEquipo);
+
+        if (!idsEnEquipo.add(jugador.id())) {
+            validarJugadorDuplicado(jugador.id(), firma, jugadoresVistos);
+            return;
+        }
+
+        String previa = jugadoresVistos.putIfAbsent(jugador.id(), firma);
+
+        if (previa != null && !previa.equals(firma)) {
+            throw new FootballDataException(
+                    "El proveedor repitio un jugador con datos incompatibles."
+            );
+        }
+
+        if (previa == null) {
+            jugadores.add(Jugador.importado(
+                    UUID.randomUUID(),
+                    jugador.id(),
+                    nombre(jugador),
+                    idEquipo,
+                    posicion(jugador.position()),
+                    jugador.shirtNumber(),
+                    jugador.nationality().trim(),
+                    clock.instant()
+            ));
+        }
+    }
+
+    private void validarJugadorDuplicado(
+            Long jugadorId,
+            String firma,
+            Map<Long, String> jugadoresVistos) {
+
+        if (!firma.equals(jugadoresVistos.get(jugadorId))) {
+            throw new FootballDataException(
+                    "El proveedor repitio un jugador con datos incompatibles."
+            );
+        }
+    }
+
     private static RestClient crearCliente(RestClient.Builder builder) {
         var http = java.net.http.HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
@@ -111,43 +227,28 @@ public class FootballDataAdapter {
         catch (RestClientException e) { throw new FootballDataException("No fue posible consultar el proveedor.", e); }
     }
 
-    private void convertir(FootballTeamsResponseDTO respuesta, Liga liga, List<Equipo> equipos,
-            List<Jugador> jugadores, Map<Long, UUID> equiposPorExterno, Map<Long, String> jugadoresVistos) {
-        if (respuesta == null || respuesta.competition() == null || !liga.codigo().equals(respuesta.competition().code())
-                || respuesta.season() == null || respuesta.season().id() == null || respuesta.season().id() <= 0
-                || respuesta.season().startDate() == null || respuesta.season().endDate() == null
-                || respuesta.season().endDate().isBefore(respuesta.season().startDate())
-                || respuesta.teams() == null || respuesta.count() == null || respuesta.count() != respuesta.teams().size()
-                || respuesta.teams().size() != liga.cantidad()) {
-            throw new FootballDataException("La respuesta del proveedor no forma un snapshot utilizable.");
-        }
+    private void convertir(
+            FootballTeamsResponseDTO respuesta,
+            Liga liga,
+            List<Equipo> equipos,
+            List<Jugador> jugadores,
+            Map<Long, UUID> equiposPorExterno,
+            Map<Long, String> jugadoresVistos) {
+
+        validarRespuesta(respuesta, liga);
+
         FootballSeasonDTO temporada = respuesta.season();
+
         for (FootballTeamDTO equipoExterno : respuesta.teams()) {
-            validarEquipo(equipoExterno);
-            UUID idEquipo = equiposPorExterno.get(equipoExterno.id());
-            if (idEquipo != null) throw new FootballDataException("El proveedor repitio un equipo.");
-            idEquipo = UUID.randomUUID();
-            equiposPorExterno.put(equipoExterno.id(), idEquipo);
-            equipos.add(Equipo.importado(idEquipo, equipoExterno.id(), equipoExterno.name(), equipoExterno.shortName(),
-                    equipoExterno.tla(), liga.nombre(), uriHttps(equipoExterno.crest()), temporada.id(),
-                    temporada.startDate(), temporada.endDate(), clock.instant()));
-            Set<Long> idsEnEquipo = new HashSet<>();
-            for (FootballPlayerDTO jugador : equipoExterno.squad()) {
-                validarJugador(jugador);
-                String firma = firma(jugador, idEquipo);
-                if (!idsEnEquipo.add(jugador.id())) {
-                    if (!firma.equals(jugadoresVistos.get(jugador.id()))) {
-                        throw new FootballDataException("El proveedor repitio un jugador con datos incompatibles.");
-                    }
-                    continue;
-                }
-                String previa = jugadoresVistos.putIfAbsent(jugador.id(), firma);
-                if (previa != null && !previa.equals(firma)) throw new FootballDataException("El proveedor repitio un jugador con datos incompatibles.");
-                if (previa == null) {
-                    jugadores.add(Jugador.importado(UUID.randomUUID(), jugador.id(), nombre(jugador), idEquipo,
-                            posicion(jugador.position()), jugador.shirtNumber(), jugador.nationality().trim(), clock.instant()));
-                }
-            }
+            convertirEquipo(
+                    equipoExterno,
+                    liga,
+                    temporada,
+                    equipos,
+                    jugadores,
+                    equiposPorExterno,
+                    jugadoresVistos
+            );
         }
     }
 

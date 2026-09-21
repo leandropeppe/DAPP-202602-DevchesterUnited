@@ -32,17 +32,20 @@ public record FiltroJugadoresDTO(String liga, String equipo, String posicion, In
     }
 
     private static String validarFiltro(String valor, String campo, int maximo) {
+        final String prefijoFiltro = "El filtro ";
         if (valor == null) return null;
         if (valor.codePoints().anyMatch(Character::isISOControl)) {
-            throw invalido("El filtro " + campo + " no permite caracteres de control.");
+            throw invalido(prefijoFiltro + campo + " no permite caracteres de control.");
         }
         String normalizado = valor.trim();
         if (normalizado.isBlank()) {
-            throw invalido("El filtro " + campo + " no puede estar vacío.");
+            throw invalido(prefijoFiltro + campo + " no puede estar vacío.");
         }
         if (normalizado.codePointCount(0, normalizado.length()) > maximo) {
-            throw invalido("El filtro " + campo + " supera la longitud máxima de " + maximo + " caracteres.");
+            throw invalido(prefijoFiltro + campo + " supera la longitud máxima de "
+                    + maximo + " caracteres.");
         }
+
         return normalizado;
     }
 

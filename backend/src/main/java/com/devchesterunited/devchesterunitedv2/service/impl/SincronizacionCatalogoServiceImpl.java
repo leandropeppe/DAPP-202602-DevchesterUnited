@@ -74,43 +74,127 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
     private SincronizacionResultado publicar(CatalogoSincronizado snapshot, boolean primerSnapshot) {
         Instant ahora = clock.instant();
+
         Map<Long, UUID> equiposSnapshot = new HashMap<>();
         Map<Long, Jugador> jugadoresSnapshot = new HashMap<>();
+
+        int equiposCreados = guardarEquipos(snapshot, equiposSnapshot, ahora);
+        int jugadoresCreados = guardarJugadores(snapshot, equiposSnapshot, jugadoresSnapshot, ahora);
+
+        equipos.flush();
+        jugadores.flush();
+
+        inactivarAusentes(
+                snapshot,
+                equiposSnapshot.keySet(),
+                jugadoresSnapshot.keySet(),
+                ahora,
+                primerSnapshot
+        );
+
+        return new SincronizacionResultado(
+                snapshot.getEquipos().size(),
+                snapshot.getJugadores().size(),
+                equiposCreados,
+                snapshot.getEquipos().size() - equiposCreados,
+                jugadoresCreados,
+                snapshot.getJugadores().size() - jugadoresCreados
+        );
+    }
+
+    private int guardarEquipos(
+            CatalogoSincronizado snapshot,
+            Map<Long, UUID> equiposSnapshot,
+            Instant ahora) {
+
         Map<Long, EquipoEntity> existentesEquipos = existentesEquipos(snapshot);
         int equiposCreados = 0;
+
         for (Equipo equipo : snapshot.getEquipos()) {
             EquipoEntity anterior = existentesEquipos.get(equipo.getIdExterno());
-            UUID id = anterior == null ? equipo.getId() : anterior.getId();
-            if (anterior == null) equiposCreados++;
-            else equiposSnapshot.put(equipo.getIdExterno(), id);
-            equipos.save(new EquipoEntity(id, equipo.getIdExterno(), equipo.getNombre(), equipo.getNombreCorto(),
-                    equipo.getSigla(), equipo.getLiga(), equipo.getEscudoUrl() == null ? null : equipo.getEscudoUrl().toString(),
-                    true, equipo.getTemporadaExternaId(), equipo.getInicioTemporada(), equipo.getFinTemporada(),
-                    anterior == null ? ahora : anterior.getCreadoEn(), ahora));
+
+            UUID id = anterior == null
+                    ? equipo.getId()
+                    : anterior.getId();
+
+            if (anterior == null) {
+                equiposCreados++;
+            }
+
+            equipos.save(new EquipoEntity(
+                    id,
+                    equipo.getIdExterno(),
+                    equipo.getNombre(),
+                    equipo.getNombreCorto(),
+                    equipo.getSigla(),
+                    equipo.getLiga(),
+                    equipo.getEscudoUrl() == null ? null : equipo.getEscudoUrl().toString(),
+                    true,
+                    equipo.getTemporadaExternaId(),
+                    equipo.getInicioTemporada(),
+                    equipo.getFinTemporada(),
+                    anterior == null ? ahora : anterior.getCreadoEn(),
+                    ahora
+            ));
+
             equiposSnapshot.put(equipo.getIdExterno(), id);
         }
 
+        return equiposCreados;
+    }
+
+    private int guardarJugadores(
+            CatalogoSincronizado snapshot,
+            Map<Long, UUID> equiposSnapshot,
+            Map<Long, Jugador> jugadoresSnapshot,
+            Instant ahora) {
+
         Map<Long, JugadorEntity> existentesJugadores = new HashMap<>();
-        for (JugadorEntity jugador : jugadores.findAllByIdExternoIn(snapshot.getJugadores().stream()
-                .map(Jugador::getIdExterno).toList())) existentesJugadores.put(jugador.getIdExterno(), jugador);
+
+        for (JugadorEntity jugador : jugadores.findAllByIdExternoIn(
+                snapshot.getJugadores().stream()
+                        .map(Jugador::getIdExterno)
+                        .toList())) {
+
+            existentesJugadores.put(jugador.getIdExterno(), jugador);
+        }
+
         int jugadoresCreados = 0;
+
         for (Jugador jugador : snapshot.getJugadores()) {
             JugadorEntity anterior = existentesJugadores.get(jugador.getIdExterno());
-            UUID id = anterior == null ? jugador.getId() : anterior.getId();
-            if (anterior == null) jugadoresCreados++;
-            jugadores.save(new JugadorEntity(id, jugador.getIdExterno(), jugador.getNombre(),
-                    equiposSnapshot.get(jugador.getEquipoId() == null ? null : equipoExterno(snapshot, jugador.getEquipoId())),
-                    jugador.getPosicion(), jugador.getDorsal() == 0 ? null : jugador.getDorsal(), jugador.getNacionalidad(),
-                    true, anterior == null ? ahora : anterior.getCreadoEn(), ahora,
-                    equipoLiga(snapshot, jugador.getEquipoId()), equipoNombre(snapshot, jugador.getEquipoId())));
+
+            UUID id = anterior == null
+                    ? jugador.getId()
+                    : anterior.getId();
+
+            if (anterior == null) {
+                jugadoresCreados++;
+            }
+
+            jugadores.save(new JugadorEntity(
+                    id,
+                    jugador.getIdExterno(),
+                    jugador.getNombre(),
+                    equiposSnapshot.get(
+                            jugador.getEquipoId() == null
+                                    ? null
+                                    : equipoExterno(snapshot, jugador.getEquipoId())
+                    ),
+                    jugador.getPosicion(),
+                    jugador.getDorsal() == 0 ? null : jugador.getDorsal(),
+                    jugador.getNacionalidad(),
+                    true,
+                    anterior == null ? ahora : anterior.getCreadoEn(),
+                    ahora,
+                    equipoLiga(snapshot, jugador.getEquipoId()),
+                    equipoNombre(snapshot, jugador.getEquipoId())
+            ));
+
             jugadoresSnapshot.put(jugador.getIdExterno(), jugador);
         }
-        equipos.flush();
-        jugadores.flush();
-        inactivarAusentes(snapshot, equiposSnapshot.keySet(), jugadoresSnapshot.keySet(), ahora, primerSnapshot);
-        return new SincronizacionResultado(snapshot.getEquipos().size(), snapshot.getJugadores().size(), equiposCreados,
-                snapshot.getEquipos().size() - equiposCreados, jugadoresCreados,
-                snapshot.getJugadores().size() - jugadoresCreados);
+
+        return jugadoresCreados;
     }
 
     private Map<Long, EquipoEntity> existentesEquipos(CatalogoSincronizado snapshot) {
