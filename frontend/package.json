@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "verify:frontend": "node scripts/verify-frontend.mjs"
   },
@@ -16,11 +17,12 @@
     "react-dom": "latest"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "latest",
+    "@playwright/test": "latest",
     "@testing-library/jest-dom": "latest",
     "@testing-library/react": "latest",
     "@testing-library/user-event": "latest",
-    "@playwright/test": "latest",
+    "@vitejs/plugin-react": "latest",
+    "@vitest/coverage-v8": "^5.0.1",
     "jsdom": "26.1.0",
     "vite": "latest",
     "vitest": "latest"
