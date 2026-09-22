@@ -144,7 +144,7 @@ jobs:
           backend/gradlew -p backend sonar
           --no-daemon
           --console=plain
-          -Dsonar.projectBaseDir=.
+          -Dsonar.projectBaseDir="${{ github.workspace }}"
           -Dsonar.sources=backend/src/main/java,frontend/src
           -Dsonar.tests=backend/src/test/java,frontend/tests
           -Dsonar.coverage.jacoco.xmlReportPaths=backend/build/reports/jacoco/test/jacocoTestReport.xml
