@@ -134,6 +134,9 @@ jobs:
           name: frontend-lcov
           path: frontend/coverage
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x backend/gradlew
+
       - name: Run SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
