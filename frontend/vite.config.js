@@ -24,7 +24,21 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: './tests/setup.js',
       clearMocks: true,
-      exclude: ['e2e/**', 'node_modules/**', 'dist/**']
+      exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'html', 'lcov'],
+        reportsDirectory: './coverage',
+        include: ['src/**/*.{js,jsx}'],
+        exclude: [
+          '**/tests/**',
+          '**/e2e/**',
+          '**/coverage/**',
+          '**/dist/**',
+          '**/node_modules/**',
+          '**/*.config.{js,mjs,cjs}'
+        ]
+      }
     }
   }
 })

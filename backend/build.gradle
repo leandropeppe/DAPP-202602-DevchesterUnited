@@ -63,3 +63,8 @@ sonar {
 		property "sonar.organization", "leandropeppe"
 	}
 }
+
+tasks.named('sonar') {
+	dependsOn tasks.named('classes')
+	dependsOn tasks.named('testClasses')
+}

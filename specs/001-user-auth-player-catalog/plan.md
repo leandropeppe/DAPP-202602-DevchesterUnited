@@ -4,7 +4,7 @@
 
 ## Resumen
 
-**Estado vigente (2026-09-17)**: `tasks.md` marca T001–T074 realizadas; la evidencia acumulada está en `validation.md` para T001–T069. US1–US4 están implementadas y validadas; la base, las vistas MVP y las pruebas frontend de US5 están implementadas. T075–T078 y los gates T079–T088 siguen pendientes.
+**Estado vigente (2026-09-17)**: `tasks.md` marca T001–T078 realizadas; la evidencia acumulada está en `validation.md` para T001–T078. US1–US5 están implementadas y validadas; permanecen pendientes únicamente los gates T079–T088.
 
 Conservar registro, login JWT, API Keys y consultas paginadas. Agregar un Adapter Football-Data.org v4, sincronización manual global con publicación atómica en PostgreSQL, entidades Equipo/Jugador con identidad externa y actividad, y una SPA React. Usar temporada vigente por liga; 96 equipos activos; ausentes inactivos y reactivables; dorsal nullable; credenciales frontend por pestaña. Conservar Gradle, Java 21, el paquete raíz y las migraciones aplicadas.
 
@@ -218,4 +218,4 @@ Sin excepciones constitucionales en el diseño. Boot 4/JUnit 5 se resuelve con v
 Ejecutar `$speckit-tasks` sobre este diseño conservando T001–T050 y la evidencia histórica. Agregar tareas US4/US5 y actualizar el alcance de T051–T061: fixture de rendimiento normalizado, cinco endpoints, frontend y aceptación externa. Incluir la revisión/autorización de cambios concretos de fixtures antes de editar tests existentes. Este comando termina en fase 1: no genera tareas, código, migraciones ni cambios de tests.
 ## Cierre de ejecución US5 (2026-09-17)
 
-T075–T077 están implementadas y validadas. T078 y los gates T079–T088 permanecen pendientes.
+T075–T078 están implementadas y validadas. Permanecen pendientes únicamente los gates T079–T088.
