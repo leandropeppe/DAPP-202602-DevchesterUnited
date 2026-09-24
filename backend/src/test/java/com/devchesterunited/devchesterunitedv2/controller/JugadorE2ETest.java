@@ -70,7 +70,7 @@ class JugadorE2ETest {
         String jwt = registrarYLogin();
         String anterior = generar(jwt);
         String nueva = generar(jwt);
-        assertThat(nueva.equals(anterior)).isFalse();
+        assertThat(nueva).isNotEqualTo(anterior);
         mvc.perform(consulta(anterior)).andExpect(status().isOk());
     }
 
@@ -207,7 +207,7 @@ class JugadorE2ETest {
                 .content(mapper.writeValueAsString(Map.of("username", nombre, "password", PASSWORD))))
                 .andExpect(status().isOk()));
         String jwt = login.path("data").path("access_token").asText();
-        assertThat(jwt.isBlank()).isFalse();
+        assertThat(jwt).isNotBlank();
         secretos.add(jwt);
         return jwt;
     }
@@ -216,7 +216,7 @@ class JugadorE2ETest {
         JsonNode respuesta = json(mvc.perform(post("/api/v1/auth/apikey").header("Authorization", "Bearer " + jwt))
                 .andExpect(status().isOk()));
         String clave = respuesta.path("data").path("api_key").asText();
-        assertThat(clave.matches("dev_key_[A-Za-z0-9_-]{43}")).isTrue();
+        assertThat(clave).matches("dev_key_[A-Za-z0-9_-]{43}");
         secretos.add(clave);
         return clave;
     }
@@ -315,7 +315,7 @@ class JugadorE2ETest {
                 "SQLSTATE", "SELECT ", "INSERT ", "jdbc:", "access_token", "api_key"));
         for (String prohibido : prohibidos) {
             // No incluir el secreto ni el cuerpo en el diagnóstico de la aserción.
-            assertThat(texto.contains(prohibido)).as("La respuesta no debe revelar secretos ni detalles internos").isFalse();
+            assertThat(texto).as("La respuesta no debe revelar secretos ni detalles internos").doesNotContain(prohibido);
         }
     }
 }

@@ -29,8 +29,8 @@ class ApiKeyIntegrationTest extends PostgresTestSupport {
         var fila = jdbc.queryForMap("SELECT * FROM api_keys WHERE user_id = ?", usuario);
         assertThat(fila.get("key_hash")).isNotEqualTo(secreto).satisfiesAnyOf(
                 valor -> assertThat(valor.toString()).matches("[0-9a-f]{64}"));
-        assertThat(fila.get("key_prefix")).isEqualTo(secreto.substring(0, 14));
-        assertThat(fila.get("is_active")).isEqualTo(true);
+        assertThat(fila).containsEntry("key_prefix", secreto.substring(0, 14));
+        assertThat(fila).containsEntry("is_active", true);
         assertThat(fila.get("revoked_at")).isNull();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys WHERE user_id = ? AND is_active", Long.class, usuario))
                 .isEqualTo(1L);
@@ -45,12 +45,12 @@ class ApiKeyIntegrationTest extends PostgresTestSupport {
         assertThat(segunda).isNotEqualTo(primera);
         var filas = jdbc.queryForList("SELECT key_hash, key_prefix, is_active, created_at, revoked_at FROM api_keys WHERE user_id = ? ORDER BY created_at", usuario);
         assertThat(filas).hasSize(2);
-        assertThat(filas.get(0).get("is_active")).isEqualTo(false);
+        assertThat(filas.get(0)).containsEntry("is_active", false);
         assertThat(filas.get(0).get("revoked_at")).isNotNull();
-        assertThat(filas.get(1).get("is_active")).isEqualTo(true);
+        assertThat(filas.get(1)).containsEntry("is_active", true);
         assertThat(filas.get(1).get("revoked_at")).isNull();
-        assertThat(filas.get(0).get("key_prefix")).isEqualTo(primera.substring(0, 14));
-        assertThat(filas.get(1).get("key_prefix")).isEqualTo(segunda.substring(0, 14));
+        assertThat(filas.get(0)).containsEntry("key_prefix", primera.substring(0, 14));
+        assertThat(filas.get(1)).containsEntry("key_prefix", segunda.substring(0, 14));
     }
 
     @Test
@@ -67,8 +67,8 @@ class ApiKeyIntegrationTest extends PostgresTestSupport {
         try {
             assertThatThrownBy(() -> servicio.generar(usuario)).isInstanceOf(RuntimeException.class);
             var fila = jdbc.queryForMap("SELECT key_prefix, is_active, revoked_at FROM api_keys WHERE user_id = ? AND is_active", usuario);
-            assertThat(fila.get("key_prefix")).isEqualTo(primera.substring(0, 14));
-            assertThat(fila.get("is_active")).isEqualTo(true);
+            assertThat(fila).containsEntry("key_prefix", primera.substring(0, 14));
+            assertThat(fila).containsEntry("is_active", true);
             assertThat(fila.get("revoked_at")).isNull();
         } finally {
             jdbc.execute("DROP TRIGGER IF EXISTS test_api_key_failure_trigger ON api_keys");

@@ -37,7 +37,7 @@ class AutenticacionIntegrationTest extends PostgresTestSupport {
             servicio.registrar(" " + nombre.toUpperCase(java.util.Locale.ROOT) + " ",
                     " " + nombre.toUpperCase(java.util.Locale.ROOT) + "@EXAMPLE.COM ", CLAVE);
             var fila = jdbc.queryForMap("SELECT * FROM usuarios WHERE username = ?", nombre);
-            assertThat(fila.get("email")).isEqualTo(nombre + "@example.com");
+            assertThat(fila).containsEntry("email", nombre + "@example.com");
             String hash = (String) fila.get("password_hash");
             assertThat(hash).startsWith("$2").isNotEqualTo(CLAVE);
             assertThat(encoder.matches(CLAVE, hash)).isTrue();
