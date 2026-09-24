@@ -30,7 +30,7 @@ public class SecurityErrorHandler implements AuthenticationEntryPoint, AccessDen
         write(response, 403, "Acceso denegado.");
     }
 
-    public void serviceUnavailable(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void serviceUnavailable(HttpServletResponse response) throws IOException {
         write(response, 503, "El servicio no está disponible temporalmente.");
     }
 

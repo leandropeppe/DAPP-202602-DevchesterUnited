@@ -85,7 +85,6 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         jugadores.flush();
 
         inactivarAusentes(
-                snapshot,
                 equiposSnapshot.keySet(),
                 jugadoresSnapshot.keySet(),
                 ahora,
@@ -205,7 +204,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         return resultado;
     }
 
-    private void inactivarAusentes(CatalogoSincronizado snapshot, Set<Long> presentesEquipos,
+    private void inactivarAusentes(Set<Long> presentesEquipos,
             Set<Long> presentesJugadores, Instant ahora, boolean primerSnapshot) {
         for (EquipoEntity equipo : equipos.findAll()) {
             if ((equipo.getIdExterno() == null && primerSnapshot)
