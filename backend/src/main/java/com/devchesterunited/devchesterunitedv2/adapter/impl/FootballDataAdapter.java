@@ -199,7 +199,7 @@ public class FootballDataAdapter {
             comprobarDeadline(limite);
             if (i > 0) dormirCadencia(limite);
             Liga liga = LIGAS.get(i);
-            FootballTeamsResponseDTO respuesta = obtener(liga.codigo(), limite);
+            FootballTeamsResponseDTO respuesta = obtener(liga.codigo());
             convertir(respuesta, liga, equipos, jugadores, equiposPorExterno, jugadoresVistos);
         }
         comprobarDeadline(limite);
@@ -210,7 +210,7 @@ public class FootballDataAdapter {
         }
     }
 
-    private FootballTeamsResponseDTO obtener(String codigo, Instant limite) {
+    private FootballTeamsResponseDTO obtener(String codigo) {
         try {
             return cliente.get().uri("/competitions/" + codigo + "/teams")
                     .header("X-Auth-Token", apiKey)

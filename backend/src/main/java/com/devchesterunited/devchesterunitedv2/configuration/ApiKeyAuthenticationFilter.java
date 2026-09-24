@@ -64,7 +64,7 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             errors.commence(request, response, exception);
         } catch (DataAccessException exception) {
             SecurityContextHolder.clearContext();
-            errors.serviceUnavailable(request, response);
+            errors.serviceUnavailable(response);
         }
     }
 
