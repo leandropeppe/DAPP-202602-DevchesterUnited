@@ -69,7 +69,7 @@ class AutenticacionDTOTest {
     void registroRechazaContrasenasInvalidas(String clave) {
         var errores = VALIDATOR.validate(new RegistroRequestDTO("jugador", "a@example.com", clave));
         assertThat(errores).isNotEmpty().allSatisfy(error -> {
-            assertThat(error.getPropertyPath().toString()).isEqualTo("contrasena");
+            assertThat(error.getPropertyPath()).hasToString("contrasena");
             assertThat(error.getMessage()).contains("contraseña");
         });
     }
