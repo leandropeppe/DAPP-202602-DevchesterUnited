@@ -16,7 +16,7 @@
 .players-table tr:last-child td { border-bottom: 0; }
 .players-table td:first-child { color: #111827; font-weight: 750; }
 .players-table td:not(:first-child) { color: #4b5563; }
-.empty-state { padding: 34px 20px; border: 1px dashed #cfd4dc; border-radius: 14px; background: #fff; text-align: center; }
+.empty-state { display: block; padding: 34px 20px; border: 1px dashed #cfd4dc; border-radius: 14px; background: #fff; text-align: center; }
 .empty-state strong { display: block; color: #111827; font-size: 1.05rem; }
 .pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 22px; }
 .pagination__label { min-width: 120px; color: #4b5563; font-size: .9rem; text-align: center; }
