@@ -27,7 +27,7 @@ export default function CredentialsPage ({ onNavigate, session }) {
       <div className="page-heading"><p className="eyebrow">Administración</p><h1 id="credentials-title">Credenciales</h1><p>Gestioná la clave para integraciones administrativas. No es necesaria para consultar el catálogo.</p></div>
       <div className="card" style={{ padding: 'clamp(22px, 4vw, 36px)' }}>
         {!jwt || isJwtExpired ? <StatusMessage type="error">Inicia sesión para generar o rotar una API Key.</StatusMessage> : null}
-        {apiKey ? <p className="status-message status-message--info" role="status">API Key conservada: {apiKey.slice(0, 14)}…</p> : <p className="muted">No hay una API Key guardada en esta pestaña.</p>}
+        {apiKey ? <output className="status-message status-message--info">API Key conservada: {apiKey.slice(0, 14)}…</output> : <p className="muted">No hay una API Key guardada en esta pestaña.</p>}
         <p><strong>Importante:</strong> generar una nueva API Key revoca la anterior.</p>
         <button className="button button--primary" type="button" onClick={rotateKey} disabled={!jwt || isJwtExpired || state.status === 'loading'}>{state.status === 'loading' ? 'Generando…' : 'Generar o rotar API Key'}</button>
         {newKey ? <div className="status-message status-message--success" role="alert" aria-live="polite"><p>Guardá esta clave ahora; no volverá a mostrarse completa.</p><code>{newKey}</code></div> : null}

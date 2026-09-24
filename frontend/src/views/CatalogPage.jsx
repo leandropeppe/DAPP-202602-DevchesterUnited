@@ -36,7 +36,7 @@ export default function CatalogPage () {
       </form>
       {state.status === 'loading' ? <StatusMessage type="info">Cargando jugadores…</StatusMessage> : null}
       {state.status === 'error' ? <StatusMessage type="error">{state.message}</StatusMessage> : null}
-      {state.status === 'success' && catalog.players.length === 0 ? <div className="empty-state" role="status"><strong>No hay jugadores que coincidan con los filtros.</strong><span className="muted">Probá con otros términos de búsqueda.</span></div> : null}
+      {state.status === 'success' && catalog.players.length === 0 ? <output className="empty-state"><strong>No hay jugadores que coincidan con los filtros.</strong><span className="muted">Probá con otros términos de búsqueda.</span></output> : null}
       {catalog.players.length > 0 ? <>
         <div className="catalog-summary"><h2>Resultados</h2>{totalRecords !== undefined ? <span>{totalRecords} jugadores encontrados</span> : null}</div>
         <div className="players-table-wrap"><table className="players-table"><caption className="sr-only">Jugadores del catálogo</caption><thead><tr><th>Jugador</th><th>Liga</th><th>Equipo</th><th>Posición</th><th>Dorsal</th></tr></thead><tbody>{catalog.players.map((player) => <tr key={player.id}><td data-label="Jugador">{player.name}</td><td data-label="Liga">{player.league}</td><td data-label="Equipo">{player.team}</td><td data-label="Posición"><span className="sr-only">Posición: {noInfo(player.position)}</span><span aria-hidden="true">{noInfo(player.position)}</span></td><td data-label="Dorsal"><span className="sr-only">Dorsal: {noInfo(player.jersey_number)}</span><span aria-hidden="true">{noInfo(player.jersey_number)}</span></td></tr>)}</tbody></table></div>
