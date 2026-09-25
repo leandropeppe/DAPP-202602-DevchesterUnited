@@ -20,10 +20,6 @@ class JugadorTest {
         var jugador = crear(ID, campos(), 9);
         assertThat(jugador.getId()).isEqualTo(ID);
         assertThat(jugador.getNombre()).isEqualTo(campos()[0]);
-        /*
-        assertThat(jugador.getNombre()).isEqualTo("Julián");
-        assertThat(jugador.getNombre()).isEqualTo("Julián Álvarez");
-        */
         assertThat(jugador.getLiga()).isEqualTo("LaLiga");
         assertThat(jugador.getEquipo()).isEqualTo("Atlético de Madrid");
         assertThat(jugador.getPosicion()).isEqualTo("Forward");
