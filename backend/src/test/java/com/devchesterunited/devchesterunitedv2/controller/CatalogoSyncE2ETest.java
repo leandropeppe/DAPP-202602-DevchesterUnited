@@ -127,7 +127,6 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
 
     private static CatalogoSincronizado snapshot(long equipoBase, long jugadorBase) {
         List<String> ligas = List.of("Premier League", "LaLiga", "Bundesliga", "Serie A", "Ligue 1");
-        List<Integer> cantidades = List.of(20, 20, 18, 20, 18);
         var equipos = new ArrayList<Equipo>();
         var jugadores = new ArrayList<Jugador>();
         for (int i = 0; i < 96; i++) {
