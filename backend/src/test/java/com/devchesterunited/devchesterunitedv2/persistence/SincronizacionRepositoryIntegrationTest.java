@@ -62,22 +62,24 @@ class SincronizacionRepositoryIntegrationTest extends PostgresTestSupport {
 
         UUID nuevoId = UUID.randomUUID();
 
+        var equipoRepetido = new EquipoEntity(
+                nuevoId,
+                990003L,
+                "Repetido",
+                "R",
+                "REP",
+                "Serie A",
+                null,
+                true,
+                2026L,
+                null,
+                null,
+                AHORA,
+                AHORA
+        );
+
         assertThatThrownBy(() ->
-                equipos.saveAndFlush(new EquipoEntity(
-                        nuevoId,
-                        990003L,
-                        "Repetido",
-                        "R",
-                        "REP",
-                        "Serie A",
-                        null,
-                        true,
-                        2026L,
-                        null,
-                        null,
-                        AHORA,
-                        AHORA
-                )))
+                equipos.saveAndFlush(equipoRepetido))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
