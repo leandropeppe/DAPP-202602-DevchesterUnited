@@ -106,9 +106,7 @@ describe('accesibilidad implementada del frontend', () => {
 
       resolveRequest(response)
       resolved = true
-      await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument())
-
-      const table = screen.getByRole('table')
+      const table = await screen.findByRole('table')
       expect(table.querySelector('caption')).toHaveTextContent(/Jugadores del cat/)
       expect(within(table).getAllByRole('columnheader')).toHaveLength(5)
       expect(screen.getByLabelText('Liga')).toBeInTheDocument()
