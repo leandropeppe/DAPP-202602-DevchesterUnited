@@ -1,3 +1,12 @@
+<!--
+Sync Impact Report
+- Version change: sin versión explícita previa → 1.1.0
+- Principios modificados: ninguno
+- Secciones agregadas: estándares permanentes de formato, legibilidad y estructura del frontend
+- Secciones removidas: ninguna
+- Follow-up TODOs: ninguno
+-->
+
 # Constitution: Core & Foundation (Devchester United)
 
 ## 1. Stack Tecnológico
@@ -280,3 +289,41 @@ Permanecen fuera del alcance de esta entrega, salvo que una especificación post
 - ranking de mercado;
 - schedulers de valuación;
 - funcionalidades avanzadas de mercado.
+
+---
+
+## 10. Estándares Permanentes del Frontend
+
+Estas reglas son obligatorias para todas las futuras páginas, componentes y
+modificaciones del frontend. Su objetivo es mantener un código legible,
+predecible y consistente sin alterar el comportamiento funcional.
+
+- La indentación debe ser consistente y utilizar exactamente 2 espacios.
+- El estilo JavaScript existente debe conservarse: comillas simples y ausencia
+  de punto y coma.
+- No se deben escribir múltiples instrucciones en una misma línea.
+- Las funciones, condicionales, bloques try/catch y callbacks complejos deben
+  utilizar bloques multilínea.
+- Los elementos JSX anidados deben ubicarse en líneas independientes, con
+  indentación jerárquica.
+- Los atributos JSX deben distribuirse en varias líneas cuando eso mejore la
+  legibilidad.
+- Se deben evitar operadores ternarios extensos en una sola línea.
+- El código debe separar visualmente imports, constantes, hooks, funciones
+  auxiliares y JSX.
+- Prettier debe utilizarse como herramienta de formato, respetando las
+  convenciones del proyecto.
+- Toda implementación o modificación frontend debe aplicar estas reglas y
+  preservar comportamiento, validaciones, accesibilidad y contratos existentes.
+
+## 11. Instrucciones de Desarrollo Frontend para Codex
+
+Codex debe tratar la sección 10 como una regla permanente al crear o modificar
+cualquier archivo del frontend. Antes de entregar cambios debe revisar que no
+haya instrucciones múltiples en una línea, que el JSX mantenga estructura
+jerárquica y que el formato siga las convenciones indicadas. Los cambios de
+formato no deben modificar validaciones, accesibilidad, llamadas HTTP ni
+contratos del backend.
+
+**Version**: 1.1.0 | **Ratified**: TODO(RATIFICATION_DATE): conservar la fecha
+original de adopción cuando se documente | **Last Amended**: 2026-09-25
