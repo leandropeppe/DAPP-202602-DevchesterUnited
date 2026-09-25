@@ -34,12 +34,8 @@ class PostgresTestSupportTest extends PostgresTestSupport {
                 writer.get(10, TimeUnit.SECONDS);
             }
             assertThat(count()).isEqualTo(1);
-            assertThatThrownBy(() -> inTransaction(connection -> {
-                try (var statement = connection.createStatement()) {
-                    statement.executeUpdate("INSERT INTO soporte_fixture VALUES (2)");
-                }
-                throw new IllegalStateException("Fallo controlado");
-            })).isInstanceOf(IllegalStateException.class);
+            assertThatThrownBy(this::insertarYFallar)
+                    .isInstanceOf(IllegalStateException.class);
             assertThat(count()).isEqualTo(1);
             assertThatThrownBy(() -> executeFixtures(sql(
                     "INSERT INTO soporte_fixture VALUES (3); INSERT INTO soporte_fixture VALUES (1);")))
@@ -62,6 +58,15 @@ class PostgresTestSupportTest extends PostgresTestSupport {
             rows.next();
             return rows.getLong(1);
         }
+    }
+
+    private void insertarYFallar() throws Exception {
+        inTransaction(connection -> {
+            try (var statement = connection.createStatement()) {
+                statement.executeUpdate("INSERT INTO soporte_fixture VALUES (2)");
+            }
+            throw new IllegalStateException("Fallo controlado");
+        });
     }
 
     private static ByteArrayResource sql(String sql) {
