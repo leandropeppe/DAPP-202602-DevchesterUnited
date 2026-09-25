@@ -1,8 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.service.interfaces;
 
-import com.devchesterunited.devchesterunitedv2.controller.dto.FiltroJugadoresDTO;
-import com.devchesterunited.devchesterunitedv2.controller.dto.JugadoresResponseDTO;
+import com.devchesterunited.devchesterunitedv2.service.dto.FiltroJugadoresConsulta;
+import com.devchesterunited.devchesterunitedv2.service.dto.JugadoresResultado;
 
 public interface JugadorService {
-    JugadoresResponseDTO consultar(FiltroJugadoresDTO filtros);
+    JugadoresResultado consultar(FiltroJugadoresConsulta filtros);
 }

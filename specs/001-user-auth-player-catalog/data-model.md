@@ -65,8 +65,8 @@ No inferir identidad externa por nombre; equipos locales migrados mantienen `ext
 |---------|------------------|--------------|
 | id | id | UUID PK; API `ply_<uuid>` |
 | idExterno | external_id | bigint positivo UNIQUE; null solo en datos locales previos |
-| nombre | first_name | varchar(100), no vacío |
-| apellido | last_name | varchar(100), no nulo; vacío permitido solo para importado sin apellido separado |
+| nombre | name | varchar(200), no vacío; representación vigente de dominio, persistencia y API |
+| campos históricos | first_name / last_name | Compatibilidad interna con el esquema anterior; no forman parte de la representación REST vigente |
 | equipoId | team_id | UUID FK equipos.id no nulo, sin eliminación en cascada |
 | posicion | position | varchar(30) nullable; Forward/Midfielder/Defender/Goalkeeper cuando está informada |
 | dorsal | jersey_number | Integer 1–99 o null; nunca 0 como sustituto |
@@ -74,15 +74,15 @@ No inferir identidad externa por nombre; equipos locales migrados mantienen `ext
 | activo | is_active | boolean no nulo |
 | creadoEn / actualizadoEn | created_at / updated_at | timestamptz; actualizadoEn >= creadoEn |
 
-El DTO público conserva los ocho campos existentes; `league` y `team` se proyectan desde Equipo y no se duplican como columnas de Jugador. No expone external_id, team_id, actividad ni metadatos de temporadas. `jersey_number` se serializa explícitamente aunque sea null. Índices: UNIQUE external_id y B-tree team_id; no agregar índices de subcadena sin medir.
+El DTO público expone `name` como nombre completo, junto con los campos públicos vigentes; `league` y `team` se proyectan desde Equipo y no se duplican como columnas de Jugador. No expone external_id, team_id, actividad ni metadatos de temporadas. `jersey_number` se serializa explícitamente aunque sea null. Los campos históricos `first_name`/`last_name` pueden conservarse para compatibilidad interna, pero no se publican ni sustituyen a `name`. Índices: UNIQUE external_id y B-tree team_id; no agregar índices de subcadena sin medir.
 
-Mantener las validaciones de los constructores legados para sus entradas actuales. La nueva fábrica explícita de importación permite apellido vacío cuando el proveedor entrega solo `name`, exige ID externo/equipo y admite dorsal y posición null; comparte todas las otras invariantes. No asignar apellidos inventados. El Adapter entrega nombres estructurados si son completos; si no, conserva `name` completo en `first_name` y `last_name=""`. Nacionalidad ausente o una posición informada pero no soportada invalidan el snapshot; una posición null representa que el proveedor no clasificó al jugador.
+Mantener las validaciones de los constructores legados para sus entradas actuales. La nueva fábrica explícita de importación recibe y conserva `name` como nombre completo, exige ID externo/equipo y admite dorsal y posición null; comparte todas las otras invariantes. No asignar apellidos inventados. Si se mantienen `first_name`/`last_name` por compatibilidad interna, pueden proyectar datos históricos sin formar parte del DTO REST ni alterar `name`. Nacionalidad ausente o una posición informada pero no soportada invalidan el snapshot; una posición null representa que el proveedor no clasificó al jugador.
 
 Un jugador pertenece a un único Equipo y tiene una posición principal; no hay historial de afiliaciones. Si reaparece en otro equipo en un snapshot inequívoco, cambia team_id sin cambiar UUID. Jugadores ausentes se inactivan; presentes se reactivan. Un jugador activo nunca se publica con equipo inactivo. No inferir unicidad por nombre o dorsal. Duplicados externos idénticos en el mismo equipo se colapsan; duplicados conflictivos entre equipos impiden publicar.
 
 ## Snapshot y resultado de sincronización
 
-El modelo vigente de `Jugador` utiliza únicamente `nombre`, persistido en `jugadores.name` (`varchar(200)`, no vacío). `position` y `jersey_number` pueden ser null cuando el proveedor no informa esos datos. Las referencias a `first_name`/`last_name` describen el esquema anterior y quedan reemplazadas por V6.
+El modelo vigente de `Jugador` utiliza únicamente `name`, persistido en `jugadores.name` (`varchar(200)`, no vacío). `position` y `jersey_number` pueden ser null cuando el proveedor no informa esos datos. Las referencias a `first_name`/`last_name` describen compatibilidad con el esquema anterior y no representan el contrato REST vigente.
 
 `CatalogoSincronizado` es un objeto de dominio puro en memoria, no una entidad JPA: contiene cinco ligas con temporada, 96 equipos y jugadores deduplicados. Valida el reparto 20/20/18/20/18, IDs, pertenencia y referencias. Service resuelve las entidades persistidas y aplica las transiciones antes de guardarlas; Repository nunca invoca reglas del modelo.
 

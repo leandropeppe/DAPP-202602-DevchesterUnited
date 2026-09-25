@@ -4,7 +4,7 @@
 
 ## Resumen
 
-**Estado vigente (2026-09-17)**: `tasks.md` marca T001–T078 realizadas; la evidencia acumulada está en `validation.md` para T001–T078. US1–US5 están implementadas y validadas; permanecen pendientes únicamente los gates T079–T088.
+**Estado documental vigente (2026-09-25)**: T001–T078, T083 y T089–T098 figuran completadas con evidencia histórica en `validation.md`. La funcionalidad US1–US5 y la corrección constitucional C1 están implementadas según el código inspeccionado y la evidencia registrada; la aceptación operativa final permanece abierta por T079, T080, T081, T082 y T084–T088. T079 y T084 tienen configuración parcial, pero no ejecución/cierre verificable.
 
 Conservar registro, login JWT, API Keys y consultas paginadas. Agregar un Adapter Football-Data.org v4, sincronización manual global con publicación atómica en PostgreSQL, entidades Equipo/Jugador con identidad externa y actividad, y una SPA React. Usar temporada vigente por liga; 96 equipos activos; ausentes inactivos y reactivables; dorsal nullable; credenciales frontend por pestaña. Conservar Gradle, Java 21, el paquete raíz y las migraciones aplicadas.
 
@@ -128,9 +128,7 @@ Registro: unicidad en BD y 409 ante duplicados; hashing antes de insertar. Rotac
 
 La competencia se define en la adquisición del bloqueo durante la rotación: quien llega después del commit realiza una nueva rotación válida. No se promete deduplicación de toda ventana HTTP. Prueba determinista: detener ganador tras el lock, ejecutar competidoras, observar 409 y liberar ganador. Probar rollback conservando clave anterior y operaciones de usuarios distintos.
 
-La rotación o reemplazo de API Keys no es un requisito funcional obligatorio. Si se conserva por compatibilidad con la implementación existente, sus reglas de concurrencia y el índice de una clave activa por usuario son detalles internos de esa compatibilidad y no amplían el alcance contractual.
-
-Las reglas detalladas de `FOR UPDATE NOWAIT`, `409` y una sola clave activa que siguen en este bloque son históricas de la implementación de rotación. Quedan subordinadas a la decisión vigente: la rotación no es requisito funcional obligatorio y no debe utilizarse para ampliar el alcance.
+La generación, rotación/reemplazo explícito, revocación, unicidad y concurrencia de API Keys son requisitos vigentes de esta especificación. La implementación y las pruebas históricas cubren el flujo descrito; la evidencia de cierre final debe conservarse junto con el resto de los gates. El frontend nunca rota claves automáticamente.
 
 ### Consulta y validación
 
@@ -157,7 +155,7 @@ La composición 96 es una condición de esta entrega: una temporada futura que n
 
 ### Evolución de datos y compatibilidad
 
-V4 crea `equipos`, normaliza `jugadores.team_id`, agrega IDs externos únicos y estados de actividad, permite dorsal null y conserva los UUID de V3. Se migran los equipos locales por combinación exacta liga/nombre, sin atribuirles identidad del proveedor. El DTO público mantiene `league/team` como proyección del equipo. Nombres propios sin apellido se representan con el nombre completo en `first_name` y `last_name=""`; no se inventan apellidos. Mantener los constructores estrictos legados del modelo y añadir una fábrica explícita para entidades importadas. [data-model.md](./data-model.md) detalla esquema, estados y validación.
+V4 crea `equipos`, normaliza `jugadores.team_id`, agrega IDs externos únicos y estados de actividad, permite dorsal null y conserva los UUID de V3. Se migran los equipos locales por combinación exacta liga/nombre, sin atribuirles identidad del proveedor. El DTO público mantiene `league/team` como proyección del equipo y usa `name` como nombre completo del jugador. La fuente externa se conserva exactamente desde `player.name`, sin separar ni inferir apellido. Si dominio o persistencia conservan temporalmente `first_name`/`last_name` por compatibilidad histórica, esos campos son internos y no forman parte del contrato REST. [data-model.md](./data-model.md) detalla esquema, estados y validación.
 
 ### Frontend y experiencia
 
@@ -179,8 +177,8 @@ SC-004 se valida contra la matriz normativa de seguridad definida en `spec.md`: 
 |----------|--------------|----------------------------------|-------------|
 | US1 / FR-001–004 | Invariantes Usuario | Registro, hashing, duplicados y búsquedas | 201, login 200, 400, 401, 409 |
 | US2 / FR-005–008,012 | Estado APIKey | Hash, una activa, rotación, rollback, concurrencia | JWT válido/ausente/inválido/expirado, secreto una vez, 409 |
-| US3 / FR-009–011 | Invariantes Jugador | Filtros literales, AND, orden, paginación, totales | Madrid en ambos equipos, mayúsculas, 400, 401 y revocación en curso |
-| US4 / FR-013–022,030–032,035 | Equipo, snapshot, identidad, actividad y dorsal opcional | V3→V4, upsert, rollback, inactivación, reactivación, transferencia y lock entre conexiones | 200 con contadores, JWT 401, competencia 409, incompletitud/timeout/cuota 503 |
+| US3 / FR-009–011 | Invariantes Jugador | Filtros literales, AND, orden, paginación, totales | Acceso sin credenciales, Madrid en ambos equipos, mayúsculas, 400 y lista pública |
+| US4 / FR-013–022,030–032,035 | Equipo, snapshot, identidad, actividad y dorsal opcional | V3→V4, upsert, rollback, inactivación, reactivación, transferencia y lock entre conexiones | 200 con contadores, API Key ausente/inválida 401, JWT solo insuficiente 401, competencia 409, incompletitud/timeout/cuota 503 |
 | US5 / FR-023–029,033–035 | Estado/validación de interfaz | Componentes con API simulada; backend real para flujo completo | Playwright registro→login→clave→catálogo, recarga/logout, filtros/paginación, null y errores |
 
 Adapter: servidor HTTP local y fixtures sintéticos versionados, incluyendo cinco ligas/96 equipos, error HTTP, cuerpo inválido/truncado, squad ausente/vacío, nombres de una palabra, posiciones detalladas, dorsal null, duplicados y timeouts. No se ejecuta la API real desde ninguna suite. SC-006–009 se prueban con fixtures exactos y PostgreSQL; además la aceptación de operación real requiere verificar credencial/cobertura del proveedor. Barreras deterministas mantienen sync antes del commit para verificar 409, lectura del snapshot anterior y liberación tras error. Añadir pruebas de contenido/paginación con entidades inactivas y dorsal null, sin debilitar el oráculo previo.
@@ -209,13 +207,36 @@ Cada repetición debe cumplir umbrales, cero errores HTTP inesperados y checks f
 
 [quickstart.md](./quickstart.md) define validación local. Postman debe incluir cinco endpoints, variables y errores. CI usa `backend/` como working directory para Gradle (`./gradlew`/`gradlew.bat`) y `frontend/` como working directory para npm/Vite (`npm ci`, `npm run build`, tests y Playwright). `.github/`, `performance/`, `postman/`, `.specify/` y `specs/` permanecen en la raíz. Los jobs deben invocar explícitamente `working-directory: backend` para pasos Gradle y `working-directory: frontend` para pasos npm/Vite; no asumir que el checkout raíz contiene `build.gradle` o `package.json`. SonarCloud exige los conteos constitucionales además del Quality Gate. Agregar evidencia a `validation.md` sin reemplazar resultados históricos. Registrar duración y resultado de sync, liga/temporada y contadores, con ID de correlación; no loguear headers, secretos ni payloads completos. No se agregan servicios de telemetría. Gates pendientes bloquean entrega, no se acreditan por existir este diseño.
 
+### Decisiones vigentes, deuda y backlog
+
+- **Seguridad vigente**: registro/login públicos; `POST /api/v1/auth/apikey` requiere JWT; `GET /api/v1/players` es público y no valida credenciales; `POST /api/v1/catalog/sync` requiere exclusivamente API Key administrativa. La API Key sigue formando parte de los requisitos obligatorios de generación, almacenamiento seguro, rotación/reemplazo, revocación, unicidad y concurrencia, pero no del acceso al catálogo público.
+- **Sincronización**: pertenece al alcance documentado de esta feature y de la Entrega Nro 1 constitucional, específicamente US4 y FR-013–FR-022/FR-030–FR-035. No se inventa una asignación a Entrega 2 o 3. La aceptación real del proveedor continúa siendo T086.
+- **Separación de contratos de aplicación (C1 aprobado)**: las interfaces e implementaciones de `Service` no dependen de paquetes `controller` ni de DTOs HTTP. Los resultados y consultas internos viven bajo `service/dto`; cada Controller traduce entre sus DTOs HTTP y esos modelos internos. Esta separación no cambia rutas, JSON, códigos HTTP, seguridad, validaciones ni transacciones.
+- **SonarCloud**: el workflow y el plugin están configurados, pero el Quality Gate y los conteos constitucionales aún requieren ejecución documentada en T084. El equipo informa 46 issues pendientes (14 Medium y 32 Low); este plan no lo presenta como verificación propia ni asume que todos requieran cambios estructurales.
+
+| Categoría | Estado documentado | Referencias |
+|---|---|---|
+| Implementado y con evidencia histórica | US1–US5, JWT, API Key, catálogo público, sync local con Adapter, frontend, CI y corrección constitucional C1 | T001–T078, T083, T089–T098 |
+| Implementado, pendiente de validación final | Performance, comparación OpenAPI, quickstart, Postman, aceptación externa y Sonar | T079, T080, T081, T082 y T084–T088 |
+| Requisito vigente de esta entrega | Rotación/concurrencia de API Key y seguridad por endpoint | FR-005–FR-012, SC-002/SC-004 |
+| Deuda técnica pendiente | Constructores extensos y acoplamientos menores a revisar | No relacionada con C1 ni con el contrato |
+| Entrega futura | No se asignan funcionalidades concretas sin decisión aprobada | Pendiente de definición del equipo |
+
+### Orden de ejecución de gates
+
+1. **En paralelo**: T079 prepara el entorno de performance; T082 prepara Postman; T084 completa la preparación de Sonar; T081 prepara la matriz de comparación OpenAPI.
+2. **Después de T079**: T080 ejecuta las mediciones reproducibles de rendimiento.
+3. **Después de T081 y T082**: T085 ejecuta el quickstart y T087 ejecuta el flujo final Postman + SC-010.
+4. **En paralelo cuando exista acceso suficiente al proveedor**: T086 documenta la aceptación o bloqueo externo del proveedor; no modifica sus criterios de aceptación. T088 cierra el DoD únicamente después de reunir todas las evidencias de T079–T087.
+5. **Trabajo paralelizable para dos personas**: Persona A: T079→T080 y T084. Persona B: T081→T082→T085→T087. T086 puede ejecutarse en paralelo cuando exista una cuenta/proveedor disponible; T088 queda necesariamente al final.
+
 ## Seguimiento de complejidad
 
-Sin excepciones constitucionales en el diseño. Boot 4/JUnit 5 se resuelve con versiones compatibles; el raíz existente mantiene la estructura por capas.
+La dependencia Service → DTOs de Controller queda eliminada por la corrección C1 aprobada. Boot 4/JUnit 5 se resuelve con versiones compatibles; el raíz existente mantiene la estructura por capas.
 
 ## Traspaso a tareas
 
 Ejecutar `$speckit-tasks` sobre este diseño conservando T001–T050 y la evidencia histórica. Agregar tareas US4/US5 y actualizar el alcance de T051–T061: fixture de rendimiento normalizado, cinco endpoints, frontend y aceptación externa. Incluir la revisión/autorización de cambios concretos de fixtures antes de editar tests existentes. Este comando termina en fase 1: no genera tareas, código, migraciones ni cambios de tests.
 ## Cierre de ejecución US5 (2026-09-17)
 
-T075–T078 están implementadas y validadas. Permanecen pendientes únicamente los gates T079–T088.
+T075–T078 están implementadas y validadas según la evidencia registrada. T083 también está completada. Permanecen pendientes T079, T080, T081, T082 y T084–T088; T079 y T084 cuentan con configuración parcial, pero no con cierre verificable.

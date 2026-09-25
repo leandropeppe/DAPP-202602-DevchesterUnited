@@ -3,7 +3,7 @@
 
 **Rama de Funcionalidad (Feature Branch)**: `001-user-auth-player-catalog`
 
-**Estado vigente (2026-09-17)**: T001–T078 y T089–T093 completadas; US1–US5 implementadas y validadas. Permanecen pendientes únicamente los gates finales T079–T088.
+**Estado documental vigente (2026-09-25)**: T001–T078, T083 y T089–T098 figuran completadas con evidencia histórica; US1–US5 y la corrección constitucional C1 están implementadas según el código y la evidencia registrada. Permanecen pendientes T079, T080, T081, T082 y T084–T088; T079 y T084 están parcialmente preparados y sin cierre verificable.
 
 **Fecha de Creación**: 2026-09-02
 
@@ -20,7 +20,7 @@
 - Q: ¿Los filtros de liga, equipo y posición deben buscar coincidencias exactas o permitir coincidencias parciales? → A: Coincidencias parciales sin distinguir mayúsculas de minúsculas; `team=Madrid` debe encontrar tanto Real Madrid como Atlético de Madrid.
 - Q: ¿Las API Keys deben vencer después de un plazo o seguir vigentes hasta que el usuario genere una nueva? → A: Sin vencimiento automático; permanecen vigentes hasta su revocación al generar una nueva.
 - Q: Si llegan dos solicitudes simultáneas para generar una API Key del mismo usuario, ¿una debe tener éxito y la otra recibir 409 Conflict? → A: Sí; una sola solicitud genera la clave y las demás solicitudes competidoras reciben 409 Conflict sin modificar la clave ganadora.
-- Q: Cuando una API Key se revoca, ¿las consultas al catálogo que ya fueron autorizadas pueden terminar, bloqueando su uso en las siguientes solicitudes? → A: Sí; validar la vigencia al inicio de cada solicitud y permitir que las consultas ya autorizadas terminen.
+- Q: Cuando una API Key se revoca, ¿qué efecto tiene sobre las consultas al catálogo? → A: Ninguno: las lecturas del catálogo son públicas y no validan API Keys. La revocación solo afecta solicitudes a endpoints que declaren explícitamente autorización por API Key.
 - Q: ¿Los límites de respuesta deben cumplirse para el 95 % de las solicitudes, permitiendo que hasta un 5 % tarde más? → A: Sí; percentil 95 inferior a 2 segundos para registro más login, 500 ms para generación de API Key y 300 ms para catálogo con 50 consultas concurrentes. El entorno y los datos de prueba se definirán en el plan.
 
 ### Session 2026-09-15
@@ -52,9 +52,9 @@ Como desarrollador de la plataforma, quiero registrar una nueva cuenta de usuari
 
 ### User Story 2 - Generación Segura de API Key (Prioridad: P1)
 
-Como desarrollador autenticado en la plataforma, quiero solicitar al sistema que genere una API Key única utilizando mi token JWT, para poder autenticar las solicitudes de mi aplicación externa al catálogo de jugadores sin exponer mi nombre de usuario y contraseña en el código del cliente.
+Como desarrollador autenticado en la plataforma, quiero solicitar al sistema que genere una API Key única utilizando mi token JWT, para autenticar solicitudes de consumidores externos en los endpoints que declaren explícitamente autorización por API Key, actualmente la sincronización administrativa, sin exponer mi nombre de usuario y contraseña.
 
-**Por qué esta prioridad**: Alta. Esto proporciona las credenciales principales para el acceso programático a la API del Catálogo de Jugadores. Desvincula el acceso programático a largo plazo de los inicios de sesión interactivos basados en sesiones.
+**Por qué esta prioridad**: Alta. Esto proporciona una credencial programática para los endpoints que la requieran explícitamente, actualmente la sincronización administrativa. No es necesaria para consultar el catálogo público y desvincula esas operaciones protegidas de los inicios de sesión interactivos.
 
 **Prueba Independiente**: Un usuario autenticado puede enviar su token JWT válido al endpoint de generación de claves y recibir una API Key nueva y segura.
 
@@ -154,13 +154,13 @@ Como usuario de Devchester United, quiero utilizar una interfaz web para registr
 
 8. **Dado** cualquier operación del frontend, **Cuando** necesita información de negocio, **Entonces** consume exclusivamente la API REST de Devchester United y nunca PostgreSQL ni Football-Data.org directamente.
 
-9. **Dado** un JWT vigente y una API Key válida conservados en la pestaña, **Cuando** el usuario recarga o navega dentro del frontend, **Entonces** puede seguir operando sin volver a ingresarlos; la recarga no vuelve a mostrar la clave completa ni genera otra.
+9. **Dado** un JWT vigente y, si corresponde, una API Key válida conservada en la pestaña, **Cuando** el usuario recarga o navega dentro del frontend, **Entonces** puede seguir operando en las vistas que requieran esas credenciales sin volver a ingresarlas; la recarga no vuelve a mostrar la clave completa ni genera otra. La consulta del catálogo público no depende de ellas.
 
 10. **Dado** credenciales conservadas por el frontend, **Cuando** el usuario cierra la pestaña o cierra sesión, **Entonces** se descartan tanto el JWT como la API Key del frontend. Esto no revoca la API Key en el backend ni modifica la expiración del JWT.
 
-11. **Dado** que el frontend no conserva una API Key, **Cuando** el usuario quiere consultar el catálogo, **Entonces** puede ingresar una clave que haya guardado o solicitar explícitamente una nueva mediante un JWT vigente, con aviso de que esta acción revoca la anterior. El frontend nunca genera ni rota claves automáticamente.
+11. **Dado** que el usuario necesita una operación administrativa protegida, **Cuando** el frontend no conserva una API Key, **Entonces** puede ingresar una clave que haya guardado o solicitar explícitamente una nueva mediante un JWT vigente, con aviso de que esta acción revoca la anterior. La consulta del catálogo público no requiere clave y el frontend nunca genera ni rota claves automáticamente.
 
-12. **Dado** un JWT expirado, **Cuando** el usuario intenta una operación que requiere JWT, **Entonces** el frontend solicita un nuevo inicio de sesión; la expiración no revoca la API Key ni modifica su vigencia para consultar el catálogo.
+12. **Dado** un JWT expirado, **Cuando** el usuario intenta una operación que requiere JWT, **Entonces** el frontend solicita un nuevo inicio de sesión; la expiración no revoca la API Key ni modifica el acceso público al catálogo.
 
 13. **Dado** un jugador con `jersey_number: null`, **Cuando** el frontend muestra sus datos, **Entonces** representa el dorsal como «Sin información».
 
@@ -200,9 +200,11 @@ Como usuario de Devchester United, quiero utilizar una interfaz web para registr
 
 ## Requerimientos *(obligatorio)*
 
-### Compatibilidad opcional de API Keys
+### Estado funcional de API Keys
 
-La implementación actual puede conservar una operación explícita de reemplazo o revocación de API Keys y sus controles de concurrencia como compatibilidad. Esta capacidad no es obligatoria para el contrato funcional de la entrega ni debe generar acciones automáticas desde login, navegación o frontend.
+La generación, unicidad, rotación/reemplazo explícito, revocación y concurrencia de API Keys son requisitos obligatorios y vigentes de esta especificación. Debe existir como máximo una clave activa por usuario; generar una nueva revoca la anterior dentro de una operación atómica, y las solicitudes competidoras se resuelven con `409 Conflict` sin mutaciones adicionales. La implementación actual y su evidencia histórica están registradas en `validation.md`; el cierre operativo de la entrega todavía depende de los gates finales, pero estos requisitos no se rebajan.
+
+El frontend no debe generar ni rotar claves automáticamente. La API Key solo se genera mediante una acción explícita autorizada por JWT. No se asignan estos requisitos a Entregas 2 o 3 porque los documentos actuales no contienen una decisión aprobada que los difiera.
 
 ### Requerimientos Funcionales
 
@@ -213,8 +215,8 @@ La implementación actual puede conservar una operación explícita de reemplazo
 - **FR-005**: El sistema DEBE validar el token JWT para la autenticación en endpoints protegidos de usuario (como la generación de API Key).
 - **FR-006**: El sistema DEBE generar una API Key criptográficamente fuerte y única ante la solicitud de un usuario autenticado.
 - **FR-007**: El sistema DEBE almacenar las API Keys de forma segura (p. ej., hasheadas en la base de datos, almacenando solo un prefijo corto visible en texto plano para identificación).
-- **FR-008**: La implementación puede conservar como compatibilidad una sola API Key activa por usuario y una operación explícita de reemplazo/revocación, pero la rotación no constituye una obligación funcional de esta entrega.
-- **FR-012**: Las API Keys emitidas por la implementación vigente no vencen automáticamente por el paso del tiempo; esta regla no modifica la expiración de los JWT. La revocación o reemplazo explícito, si se conserva, no es requisito funcional obligatorio.
+- **FR-008**: El sistema DEBE mantener como máximo una API Key activa por usuario. Una solicitud explícita de generar una nueva DEBE revocar la anterior y crear la nueva de forma atómica. Las solicitudes competidoras para el mismo usuario DEBEN resolverse con una sola respuesta `200 OK` y las restantes con `409 Conflict`, sin crear ni revocar claves adicionales.
+- **FR-012**: Las API Keys emitidas no vencen automáticamente por el paso del tiempo. Esta regla no modifica la expiración de los JWT. La revocación por reemplazo y la concurrencia descritas en FR-008 siguen siendo requisitos vigentes.
 - **FR-009**: `GET /api/v1/players` DEBE ser un endpoint público. No DEBE requerir JWT ni API Key para consultar el catálogo.
 - **FR-010**: El sistema DEBE permitir el filtrado del Catálogo de Jugadores por `league`, `team` y `position` mediante parámetros de consulta (query parameters) en `GET /api/v1/players`. Cada filtro busca el texto proporcionado como una subcadena del campo correspondiente, sin distinguir mayúsculas de minúsculas.
 - **FR-011**: El sistema DEBE soportar paginación en el endpoint `/api/v1/players` con límites por defecto y máximos para proteger el consumo de recursos.
@@ -224,10 +226,10 @@ La implementación actual puede conservar una operación explícita de reemplazo
 - **FR-013**: El sistema DEBE permitir sincronizar el catálogo de equipos y jugadores desde una API externa de fútbol mediante la capa `Adapter`.
 - **FR-014**: La sincronización DEBE incluir exclusivamente las cinco competiciones soportadas en esta entrega: Premier League, LaLiga, Bundesliga, Serie A y Ligue 1.
   - En cada ejecución DEBE utilizarse la temporada vigente informada por el proveedor para cada competición. Si el proveedor no informa una temporada válida para una competición, la sincronización completa DEBE fallar de forma controlada, conservar el snapshot anterior y no modificar estados de actividad. No se permite utilizar una temporada histórica como fallback silencioso. La entrega NO fija una temporada histórica ni permite seleccionarla mediante el endpoint de sincronización.
-- **FR-015**: Una sincronización completa exitosa DEBE mantener localmente exactamente 96 equipos activos correspondientes a las cinco ligas soportadas; los equipos inactivos conservados no cuentan para este objetivo.
+- **FR-015**: Una sincronización completa exitosa DEBE mantener localmente la composición de equipos activos definida para esta entrega; su cantidad exacta y distribución por liga se validan mediante SC-006. Los equipos inactivos conservados no cuentan para este objetivo.
 - **FR-016**: El sistema DEBE persistir localmente los equipos y jugadores obtenidos desde la fuente externa.
 - **FR-017**: Toda entidad sincronizada DEBE conservar el identificador externo necesario para reconocerla en sincronizaciones posteriores.
-- **FR-018**: La sincronización DEBE ser idempotente respecto del identificador externo: una entidad previamente importada debe actualizarse y no duplicarse.
+- **FR-018**: La sincronización DEBE ser idempotente respecto del identificador externo: una entidad previamente importada debe actualizarse y no duplicarse; SC-007 y SC-008 definen su verificación medible.
 - **FR-019**: Los fallos de la API externa NO DEBEN eliminar, corromper ni volver inaccesibles datos locales previamente sincronizados.
 - **FR-020**: `GET /api/v1/players` DEBE consultar únicamente datos locales y NO DEBE depender de llamadas en tiempo real al proveedor externo. La lectura del catálogo es pública.
 - **FR-021**: Las credenciales de la API externa DEBEN obtenerse desde configuración segura y NO DEBEN quedar versionadas, persistidas como datos de dominio ni expuestas mediante respuestas HTTP.
@@ -261,7 +263,7 @@ Esta enmienda prevalece sobre las descripciones anteriores de autenticación del
 - `GET /api/v1/players` y los endpoints de lectura del catálogo son públicos.
 - `POST /api/v1/catalog/sync` requiere exclusivamente una API Key válida, porque representa una operación administrativa/machine-to-machine.
 - Las API Keys son credenciales alternativas para consumidores externos o administrativos en endpoints explícitamente autorizados.
-- La rotación, reemplazo o revocación explícita de API Keys puede conservarse por compatibilidad con la implementación existente, pero no es un requisito funcional obligatorio ni debe asumirse en nuevos flujos.
+- La rotación, reemplazo o revocación explícita de API Keys forma parte de los requisitos vigentes de esta especificación. No debe ejecutarse automáticamente desde login, navegación o frontend.
 - Compra/venta, cotizaciones, portfolio y transacciones permanecen fuera del alcance de esta entrega. No se agregan endpoints, tareas ni implementación para esas funcionalidades.
 
 ### Entidades Clave *(Key Entities)*
@@ -271,11 +273,12 @@ Esta enmienda prevalece sobre las descripciones anteriores de autenticación del
   - *Atributos*: `id` (identificador único), `username` (único, alfanumérico), `email` (único, patrón de email), `password_hash` (contraseña hasheada de forma segura), `created_at` (timestamp), `updated_at` (timestamp).
 - **APIKey**:
   - Representa una credencial programática asociada a un Usuario.
-  - *Ciclo de vida*: La API Key no vence automáticamente. La revocación o reemplazo explícito puede conservarse por compatibilidad, pero no es requisito funcional obligatorio. Si se implementa reemplazo, la clave anterior queda revocada de forma atómica.
+  - *Ciclo de vida*: La API Key no vence automáticamente. La generación explícita de una nueva revoca y reemplaza atómicamente la anterior; la concurrencia, unicidad y rechazo de competidoras forman parte del requisito funcional obligatorio.
   - *Atributos*: `id` (identificador único), `user_id` (clave foránea a User), `key_hash` (hash criptográfico seguro del token), `key_prefix` (primeros 14 caracteres visibles del token), `is_active` (booleano), `created_at` (timestamp), `revoked_at` (timestamp opcional).
 - **Jugador (Player)**:
   - Representa un perfil de deportista perteneciente al catálogo local.
-  - *Atributos*: `id` (identificador interno único), `external_id` (identificador estable de la fuente externa), `first_name`, `last_name`, `team_id`, `position`, `jersey_number` (entero de 1 a 99 o `null` si no está informado), `nationality`, `is_active` (booleano), `created_at`, `updated_at`.
+  - *Atributos REST y de aplicación*: `id` (identificador interno único), `external_id` (identificador estable de la fuente externa), `name` (nombre completo), `team_id`, `position`, `jersey_number` (entero de 1 a 99 o `null` si no está informado), `nationality`, `is_active` (booleano), `created_at`, `updated_at`.
+  - La representación REST vigente usa únicamente `name`; no separa ni infiere apellido. Si la persistencia conserva temporalmente `first_name`/`last_name` por compatibilidad histórica, esos campos no forman parte del contrato REST y su mapeo debe preservar el nombre completo sin inventar datos.
   - Cada jugador pertenece a un único Equipo.
   - `external_id` permite identificar y actualizar al jugador durante sincronizaciones posteriores.
   - *Ciclo de vida*: Activo al importarse; pasa a inactivo si está ausente en una sincronización completa y válida, y se reactiva si reaparece. Conserva sus identificadores interno y externo en todas las transiciones.
@@ -288,7 +291,7 @@ Esta enmienda prevalece sobre las descripciones anteriores de autenticación del
 
 ## Criterios de Éxito *(obligatorio)*
 
-**Modelo vigente de Jugador:** el contrato REST expone únicamente `name` como nombre completo. Football-Data se almacena exactamente desde `player.name`, sin separar ni inferir apellido. V6 migra los datos históricos concatenando `first_name` y `last_name`, conserva UUIDs e IDs externos y elimina las columnas antiguas.
+**Modelo vigente de Jugador:** el contrato REST y la representación de aplicación exponen únicamente `name` como nombre completo. Football-Data se conserva exactamente desde `player.name`, sin separar ni inferir apellido. Las diferencias de persistencia heredadas (`first_name`/`last_name`) son internas y no alteran el contrato; su migración o eliminación definitiva requiere una tarea específica y no forma parte de esta corrección documental.
 
 ### Resultados Medibles
 
@@ -313,7 +316,7 @@ Los filtros `league`, `team` y `position` buscan subcadenas sin distinguir mayú
 
 El conjunto consultable incluye únicamente jugadores activos cuyo equipo esté activo; los seis jugadores del fixture canónico y sus equipos se consideran activos. El resultado esperado se calcula antes de paginar: primero se determina el conjunto completo de coincidencias dentro del conjunto consultable, luego `total_records`, `total_pages=ceil(total_records/limit)` y finalmente la página ordenada por UUID ascendente. Una página fuera de rango debe responder `200`, devolver `players=[]` y conservar `current_page`, `page_size`, `total_records` y `total_pages` correspondientes al conjunto completo. Una consulta sin coincidencias debe devolver `200`, `players=[]`, `total_records=0` y `total_pages=0`.
 
-La validación de SC-005 debe comparar exactamente el contenido de cada jugador y todos los metadatos de paginación contra el oráculo derivado del fixture: identificador público, nombre, apellido, liga, equipo, posición, dorsal, nacionalidad, orden y totales. Comparar únicamente el número de resultados no acredita SC-005.
+La validación de SC-005 debe comparar exactamente el contenido de cada jugador y todos los metadatos de paginación contra el oráculo derivado del fixture: identificador público, `name`, liga, equipo, posición, dorsal, nacionalidad, orden y totales. Comparar únicamente el número de resultados no acredita SC-005.
 
 ### Matriz normativa de seguridad para SC-004
 
@@ -345,9 +348,9 @@ La siguiente matriz define de forma normativa la credencial admitida por cada en
 - **SC-003**: El percentil 95 del tiempo de respuesta de `GET /api/v1/players` DEBE ser inferior a 300 milisegundos bajo una carga de 50 consultas concurrentes.
 - **SC-004**: Las solicitudes no autenticadas o no autorizadas a endpoints protegidos (protegidos por JWT o API Key) son bloqueadas con un 100% de precisión (cero falsos permitidos).
 - **SC-005**: Los resultados de búsqueda en el catálogo coinciden con los criterios de filtro proporcionados con un 100% de precisión.
-- **SC-006**: Una sincronización completa exitosa DEBE mantener exactamente 96 equipos activos pertenecientes a las cinco ligas soportadas, según la composición objetivo definida para la entrega. Los equipos inactivos conservados no cuentan para este objetivo.
-- **SC-007**: Ejecutar dos veces consecutivas una sincronización contra el mismo conjunto de datos externo DEBE producir cero equipos y cero jugadores duplicados.
-- **SC-008**: El 100 % de los equipos y jugadores sincronizados que posean identificador externo válido DEBEN poder ser asociados posteriormente con el mismo registro local.
+- **SC-006**: Validar FR-015: una sincronización completa exitosa DEBE mantener exactamente 96 equipos activos, distribuidos en las cinco ligas soportadas según la composición objetivo de la entrega. Los equipos inactivos conservados no cuentan.
+- **SC-007**: Validar la idempotencia exigida por FR-018: ejecutar dos veces consecutivas una sincronización contra el mismo conjunto externo DEBE producir cero equipos y cero jugadores duplicados.
+- **SC-008**: Validar la identidad externa exigida por FR-017/FR-018: el 100 % de los equipos y jugadores sincronizados con identificador externo válido DEBE poder asociarse posteriormente con el mismo registro local.
 - **SC-009**: Ante una indisponibilidad simulada del proveedor externo, el 100 % de los datos locales válidos existentes antes del intento de sincronización DEBEN permanecer disponibles después del fallo.
 - **SC-010**: El frontend MVP DEBE permitir completar exitosamente el flujo registro → login → generación de API Key → consulta del catálogo utilizando exclusivamente la API REST documentada.
 
@@ -480,12 +483,10 @@ El plan, el modelo de datos y el contrato ejecutable existentes deben actualizar
 
 #### 2.1 Obtener Jugadores
 - **Endpoint**: `GET /api/v1/players`
-- **Autenticación**: Requiere API Key
-- **Momento de validación**: Al inicio de cada solicitud. Una consulta ya autorizada puede terminar si la clave se revoca durante su ejecución; las validaciones posteriores a la revocación reciben 401 Unauthorized.
+- **Autenticación**: Endpoint público; no requiere JWT ni API Key.
+- **Momento de validación**: No se valida ninguna credencial para esta lectura. La revocación de una API Key no afecta las consultas públicas al catálogo.
 - **Visibilidad**: Solo se devuelven jugadores activos cuyo equipo esté activo. Los registros inactivos quedan excluidos de los resultados y de los totales de paginación.
 - **Dorsal opcional**: `jersey_number` siempre se incluye en cada jugador y admite un entero de 1 a 99 o `null` cuando no está informado.
-- **Cabeceras (Headers)**:
-  - `X-API-KEY`: `dev_key_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA` (ejemplo ilustrativo, no utilizable)
 - **Parámetros de Consulta (Query Parameters)**:
   - `league` (opcional): Coincidencia parcial por nombre del torneo/liga, sin distinguir mayúsculas de minúsculas (p. ej., `Premier` encuentra `Premier League`).
   - `team` (opcional): Coincidencia parcial por nombre del equipo, sin distinguir mayúsculas de minúsculas (p. ej., `Madrid` encuentra `Real Madrid` y `Atlético de Madrid`).
@@ -500,8 +501,7 @@ El plan, el modelo de datos y el contrato ejecutable existentes deben actualizar
       "players": [
         {
           "id": "ply_0c1b2a3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
-          "first_name": "Luka",
-          "last_name": "Modric",
+          "name": "Luka Modric",
           "league": "LaLiga",
           "team": "Real Madrid",
           "position": "Midfielder",
@@ -518,18 +518,10 @@ El plan, el modelo de datos y el contrato ejecutable existentes deben actualizar
     }
   }
   ```
-- **Respuesta - 401 Unauthorized (JSON)**:
-  ```json
-  {
-    "status": "error",
-    "message": "No autorizado: API Key inválida o ausente"
-  }
-  ```
-
 ### 2.2 Sincronizar Catálogo
 
 - **Endpoint**: `POST /api/v1/catalog/sync`
-- **Autenticación**: Requiere JWT Bearer.
+- **Autenticación**: Requiere exclusivamente una API Key administrativa válida en `X-API-KEY`. Un JWT por sí solo no autoriza la operación.
 - **Cuerpo**: Ninguno.
 - **Objetivo**: Obtener equipos y jugadores de la temporada vigente informada por el proveedor para cada una de las cinco ligas soportadas y sincronizarlos con el catálogo local.
 - **Concurrencia**: Una sola sincronización global en curso. Las solicitudes adicionales autenticadas reciben `409 Conflict`, sin encolarse ni realizar llamadas al proveedor o cambios en el catálogo.
@@ -554,7 +546,7 @@ El plan, el modelo de datos y el contrato ejecutable existentes deben actualizar
 ```json
 {
   "status": "error",
-  "message": "No autorizado: JWT ausente, inválido o expirado"
+  "message": "No autorizado: API Key ausente, inválida o revocada"
 }
   ```
 - **Respuesta - 409 Conflict**
@@ -576,11 +568,11 @@ El plan, el modelo de datos y el contrato ejecutable existentes deben actualizar
 
 ## Enmienda de seguridad vigente
 
-La política de autenticación vigente para esta entrega es: registro y login públicos; generación de API Key únicamente con JWT; catálogo y lecturas de catálogo públicas; sincronización administrativa únicamente con API Key. La API Key no se genera durante login, no forma parte obligatoria de la sesión frontend y no es necesaria para navegar. La rotación o reemplazo puede conservarse como compatibilidad de la implementación existente, pero no es un requisito funcional obligatorio. Compra/venta, cotizaciones, portfolio y transacciones siguen fuera del alcance.
+La política de autenticación vigente para esta entrega es: registro y login públicos; generación de API Key únicamente con JWT; catálogo y lecturas de catálogo públicas; sincronización administrativa únicamente con API Key. La API Key no se genera durante login, no forma parte obligatoria de la sesión frontend y no es necesaria para navegar. La unicidad, revocación/reemplazo explícito y concurrencia de API Keys siguen siendo requisitos vigentes. Compra/venta, cotizaciones, portfolio y transacciones siguen fuera del alcance.
 
 ## Suposiciones (Assumptions)
 
-- **API Key Única Activa**: La implementación vigente puede conservar una sola API Key activa y reemplazo explícito como compatibilidad; no es una obligación funcional nueva.
+- **API Key Única Activa**: La implementación vigente y el contrato requieren una sola API Key activa por usuario, reemplazo atómico y rechazo determinista de solicitudes competidoras.
 - **Separación de Autenticación**: El login de usuario utiliza JWTs de sesión con expiración; el catálogo es público; las API Keys sin vencimiento automático se reservan para endpoints explícitamente autorizados, como la sincronización administrativa.
 - **Catálogo Sincronizado**: El catálogo local se construye y actualiza mediante sincronización con la fuente externa definida. Los consumidores generales continúan teniendo acceso de solo lectura al catálogo.
 - **Fuente Externa No Operacionalmente Crítica para Consultas**: La disponibilidad del proveedor externo es necesaria para sincronizar, pero no para consultar el catálogo ya persistido.

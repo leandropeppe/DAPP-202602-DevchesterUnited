@@ -1,6 +1,6 @@
 # Guía de validación: autenticación, sincronización y frontend
 
-**Revisión 2026-09-15**. US1–US3 y T001–T050 constan realizadas en los artefactos actuales. Esta guía describe la validación objetivo después de implementar US4/US5 y los gates pendientes; V4, sync y frontend todavía no están implementados. El monorepo previsto ubica Gradle en `backend/` y React + JavaScript/Vite en `frontend/`; `.specify/`, `specs/`, `.github/`, `performance/` y `postman/` permanecen en la raíz. No representa una ejecución exitosa. Conservar resultados históricos en `validation.md` y añadir los nuevos por commit.
+**Revisión documental 2026-09-25**. US1–US5, T001–T078, T083 y T089–T098 constan implementadas en los artefactos actuales. Esta guía describe la validación operativa y los gates pendientes T079, T080, T081, T082 y T084–T088; los resultados ejecutados deben conservarse en `validation.md` por commit. El monorepo ubica Gradle en `backend/` y React + JavaScript/Vite en `frontend/`; `.specify/`, `specs/`, `.github/`, `performance/` y `postman/` permanecen en la raíz. Esta guía no acredita por sí sola una ejecución exitosa.
 
 ## Prerrequisitos
 
@@ -89,13 +89,13 @@ $jwtHeaders = @{ Authorization = "Bearer $($sesion.data.access_token)" }
 $generada = Invoke-RestMethod -Method Post -Uri "$baseUri/auth/apikey" -Headers $jwtHeaders
 $apiHeaders = @{ 'X-API-KEY' = $generada.data.api_key }
 $catalogo = Invoke-RestMethod -Uri "$baseUri/players?team=Madrid&page=1&limit=20"
-$catalogo.data.players | Select-Object first_name, last_name, team
+$catalogo.data.players | Select-Object name, team
 $catalogo.data.pagination
 ```
 
 Esperado: registro 201, login 200 con expires_in=3600, generación 200 sin fecha de vencimiento, catálogo público 200 con ambos equipos de Madrid de la semilla. `madrid` y `MADRID` producen el mismo conjunto. El JWT se conserva solo para operaciones que lo requieran; la API Key no es necesaria para navegar ni consultar el catálogo. No volcar respuestas de login/generación en logs de evidencia.
 
-La rotación o reemplazo no es un paso obligatorio del quickstart. Si la implementación vigente lo conserva, puede comprobarse de forma opcional:
+La rotación o reemplazo explícito forma parte de los requisitos vigentes de API Key. El quickstart debe comprobarlo cuando se ejecute, sin generar ni rotar claves automáticamente desde login, navegación o frontend:
 
 ```powershell
 $renovada = Invoke-RestMethod -Method Post -Uri "$baseUri/auth/apikey" -Headers $jwtHeaders

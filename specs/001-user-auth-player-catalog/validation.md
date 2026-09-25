@@ -1,6 +1,6 @@
 # Evidencia de validación — preparación compartida
 
-> **Estado vigente (2026-09-17):** T001–T078 están cerradas; US1–US5 están implementadas y validadas. T079–T088 permanecen pendientes. Las secciones anteriores conservan evidencia histórica de cada corte.
+> **Estado vigente (2026-09-25):** T001–T078 y T089–T093 figuran cerradas con evidencia histórica; T079–T088 permanecen abiertas. T079 y T084 tienen configuración parcial, sin cierre verificable. Las secciones anteriores conservan evidencia histórica de cada corte; la sección `ESTADO VIGENTE` al final consolida la interpretación actual.
 
 Fecha: 2026-09-06. Alcance: T005, estado posterior a T001–T004 y anterior a T006. Esta evidencia no declara terminado el DoD de la entrega funcional.
 
@@ -822,6 +822,53 @@ Se agregó y validó individualmente la siguiente cobertura automatizada fronten
 
 Estos tests no cierran los gaps productivos ni las validaciones manuales de accesibilidad identificadas previamente.
 
+## ESTADO VIGENTE — consolidación documental (2026-09-25)
+
+Esta sección es la referencia actual para interpretar las secciones históricas anteriores. No reemplaza ni borra los resultados de ejecuciones previas.
+
+### Política vigente de endpoints
+
+| Endpoint | Política vigente | Evidencia documental |
+|---|---|---|
+| `POST /api/v1/auth/register` | Público | T093 y matriz vigente de `spec.md` |
+| `POST /api/v1/auth/login` | Público; emite JWT | T093 y matriz vigente de `spec.md` |
+| `POST /api/v1/auth/apikey` | Requiere JWT válido; genera la API Key solo por acción explícita | T093, `SecurityPolicyE2ETest` |
+| `GET /api/v1/players` | Público; no requiere JWT ni API Key | T089–T093, `SecurityPolicyE2ETest` |
+| `POST /api/v1/catalog/sync` | Requiere exclusivamente API Key administrativa; JWT solo no autoriza | T090–T093, `CatalogoSyncE2ETest` y `SecurityPolicyE2ETest` |
+
+La API Key sigue formando parte de la arquitectura y de los requisitos vigentes: generación segura, almacenamiento mediante hash, una sola activa por usuario, revocación/reemplazo atómico y concurrencia con `409 Conflict`. El frontend no genera ni rota claves automáticamente.
+
+### Estado de implementación y gates
+
+- **Implementado con evidencia histórica**: US1–US5, JWT, API Key, rotación/concurrencia, catálogo público, sincronización local mediante Adapter, persistencia normalizada, frontend React y CI.
+- **Configuración parcial, sin cierre verificable**: T079 dispone de `performance/seed.sql` y `performance/compose.yml`, pero faltan el entorno k6 completo y sus resultados; T084 dispone de plugin Gradle, workflow y rutas de cobertura, pero falta ejecución final, verificador y Quality Gate.
+- **Pendiente de ejecución o aceptación**: T080 performance; T081 comparación OpenAPI/Swagger; T082 colección Postman; T085 quickstart; T086 aceptación externa del proveedor; T087 flujo final Postman + SC-010; T088 Definition of Done.
+
+### SonarCloud
+
+El equipo informa 46 issues pendientes, distribuidos en 14 Medium y 32 Low. Esta cifra es contexto aportado por el equipo y no fue verificada durante esta auditoría documental. No se incorporan conteos de vulnerabilidades, smells ni Quality Gate como resultados propios.
+
+Las correcciones recientes de Sonar no están individualizadas en esta documentación con issue, commit y resultado antes/después. Por lo tanto, quedan pendientes para T084: inventariar cada corrección verificable, ejecutar el análisis del commit final y comprobar los límites constitucionales de máximo 10 issues, cero vulnerabilidades y cero smells críticos.
+
+### Resultados históricos frente a pruebas pendientes
+
+Los resultados registrados en las secciones anteriores pertenecen a commits y momentos distintos. Entre ellos se conserva evidencia de regresiones backend, Vitest, build, Playwright y CI; no se reejecutaron durante esta actualización documental.
+
+| Gate | Estado vigente | Evidencia requerida |
+|---|---|---|
+| Backend/frontend y CI | Registrado históricamente como exitoso | Commit exacto y repetición si se modifica el árbol |
+| Performance SC-001–SC-003 | Pendiente | Tres repeticiones k6 con fixture restaurado y recursos registrados |
+| OpenAPI/Swagger | Pendiente de comparación final | `/v3/api-docs`, Swagger UI y `contracts/openapi.json` |
+| Postman | Pendiente | Colección versionada, variables y ejecución sin secretos |
+| Quickstart | Pendiente | Arranque, migraciones, flujo HTTP y frontend |
+| Proveedor externo | Pendiente o bloqueado externamente | Cuenta habilitada, temporada vigente y snapshot utilizable |
+| SonarCloud | Pendiente | Análisis del commit final, Quality Gate y conteos constitucionales |
+| DoD | Pendiente | Consolidación de todos los gates anteriores en este archivo |
+
+### Commits y trazabilidad
+
+La evidencia existente identifica el commit `ae16c6d` para la segunda ejecución de CI documentada. No se inventa un commit final para los gates todavía pendientes. Los nuevos resultados deberán registrar commit, comandos, versiones y artefactos asociados.
+
 ### CI T083
 
 El workflow `.github/workflows/ci.yml` se ejecutó sobre el commit `ae16c6d`.
@@ -833,3 +880,35 @@ El workflow `.github/workflows/ci.yml` se ejecutó sobre el commit `ae16c6d`.
 - Frontend: **SUCCESS**.
 - Playwright E2E: **SUCCESS**.
 - Duración total: **4m 43s**.
+
+## Corrección constitucional C1 — separación Service/Controller (2026-09-25)
+
+Se eliminaron las dependencias de `Service` hacia DTOs HTTP de `Controller`, sin modificar `constitution.md`, contratos OpenAPI ni frontend.
+
+### Cambios verificados
+
+- Se agregaron modelos internos en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/dto/`: resultados de usuario, login, API Key, filtros de jugadores, jugadores y paginación.
+- `AutenticacionService`, `ApiKeyService` y `JugadorService`, junto con sus implementaciones, ahora dependen únicamente de `service.dto` y capas permitidas.
+- `AuthController` y `JugadorController` realizan los mappers hacia DTOs HTTP.
+- `FiltroJugadoresDTO` implementa la interfaz de consulta interna; la dependencia permitida queda en dirección `Controller → Service`.
+- Se preservaron rutas, métodos HTTP, JSON, códigos de estado, validaciones, seguridad y transacciones.
+- Se actualizaron únicamente los tests afectados para usar los modelos internos; no se eliminaron escenarios.
+- `ApiKeyResultado` y `LoginResultado` ocultan secretos en `toString()`.
+
+### Evidencia ejecutada
+
+| Comprobación | Resultado |
+|---|---|
+| `backend/gradlew.bat compileJava --no-daemon --console=plain` | PASSED |
+| `backend/gradlew.bat compileTestJava --no-daemon --console=plain` | PASSED |
+| Suite focalizada de autenticación, API Key y catálogo | PASSED; 222 tests, inicialmente 1 fallo de secreto en `toString()`, corregido y repetido exitosamente |
+| `backend/gradlew.bat test --no-daemon --console=plain` | PASSED históricamente; 402 tests, 0 failures, 0 errors, 0 skipped. Ejecución realizada por Codex; se conserva como evidencia independiente. |
+| Búsqueda de imports `Service → Controller` en `backend/src/main/java` | PASSED; sin coincidencias |
+
+### Validación posterior confirmada por el usuario
+
+Posteriormente, el usuario confirmó la ejecución personal de la suite completa del backend: **447 tests ejecutados y 447 aprobados**, sin fallos reportados. Esta es una ejecución distinta e independiente de la ejecución histórica de 402 tests registrada arriba; no se atribuye a Codex.
+
+### Estado de C1
+
+**RESUELTO Y VERIFICADO.** La deuda `Service → DTOs de Controller` ya no figura como deuda aceptada; T094–T098 quedan cerradas.

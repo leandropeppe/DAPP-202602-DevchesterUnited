@@ -30,11 +30,11 @@ DTOs Jackson del proveedor exclusivamente bajo `adapter/dto`; tolerar campos adi
 | competition.code | Liga canónica según tabla anterior |
 | season.id/startDate/endDate | Metadatos de temporada por equipo |
 | squad[].id | ID externo de jugador, único globalmente |
-| firstName + lastName completos | Nombres separados conservados, trim, máximo 100 cada uno |
-| name cuando faltan nombres separados | Nombre completo en first_name; last_name vacío; no dividir por espacios ni inventar apellidos |
+| firstName + lastName completos | El proveedor puede entregarlos como datos de origen; la representación interna y REST vigente conserva el nombre completo en `name` |
+| name cuando faltan nombres separados | Conservar el nombre completo en `name`; no dividir por espacios ni inventar apellidos. `first_name`/`last_name`, si se mantienen, son únicamente compatibilidad interna histórica y no se publican |
 | nationality | Texto no vacío, máximo 100; faltante invalida snapshot |
 | shirtNumber | Ausente/null → null; presente exige entero 1–99 |
-| squad[].position | Tabla explícita siguiente; desconocido/null invalida snapshot |
+| squad[].position | Tabla explícita siguiente cuando está informada; `null` es válido, se conserva como `null` y no invalida el snapshot. Un valor informado pero desconocido invalida el snapshot |
 
 Diccionario de traducción permitido (valores externos exactos; agregar variantes solo con fixture/documentación):
 
