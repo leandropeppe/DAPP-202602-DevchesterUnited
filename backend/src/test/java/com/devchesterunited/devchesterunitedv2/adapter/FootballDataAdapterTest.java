@@ -13,6 +13,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -82,11 +84,16 @@ class FootballDataAdapterTest {
 
     @Test
     void traduceTimeoutSinAccederAInternet() throws Exception {
+        var liberarRespuesta = new CountDownLatch(1);
+
         iniciar((exchange, codigo) -> {
             try {
-                Thread.sleep(250);
+                if (!liberarRespuesta.await(2, TimeUnit.SECONDS)) {
+                    throw new IOException("El test no libero la respuesta HTTP.");
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                throw new IOException("El handler HTTP fue interrumpido.", e);
             }
             responder(exchange, 200, payload(codigo, cantidad(codigo), false), "100");
         });
@@ -113,8 +120,12 @@ class FootballDataAdapterTest {
                 d -> { }
         );
 
-        assertThatThrownBy(adaptador::sincronizar)
-                .isInstanceOf(FootballDataException.class);
+        try {
+            assertThatThrownBy(adaptador::sincronizar)
+                    .isInstanceOf(FootballDataException.class);
+        } finally {
+            liberarRespuesta.countDown();
+        }
     }
 
     private FootballDataAdapter adapter() {
