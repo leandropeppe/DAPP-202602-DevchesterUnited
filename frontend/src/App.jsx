@@ -9,8 +9,8 @@ import './styles/global.css'
 import './styles/layout.css'
 import './styles/catalog.css'
 
-const ROUTES = ['/registro', '/login', '/credenciales', '/catalogo']
-function resolveRoute (pathname) { return ROUTES.includes(pathname) ? pathname : '/login' }
+const ROUTES = new Set(['/registro', '/login', '/credenciales', '/catalogo'])
+function resolveRoute (pathname) { return ROUTES.has(pathname) ? pathname : '/login' }
 export function navigate (pathname) { window.history.pushState({}, '', pathname); window.dispatchEvent(new PopStateEvent('popstate')) }
 
 function Application () {
