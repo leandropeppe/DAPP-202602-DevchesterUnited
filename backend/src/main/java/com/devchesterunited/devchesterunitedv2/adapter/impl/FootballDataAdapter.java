@@ -2,7 +2,6 @@ package com.devchesterunited.devchesterunitedv2.adapter.impl;
 
 import java.io.IOException;
 import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
-import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballCompetitionDTO;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballPlayerDTO;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballSeasonDTO;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballTeamDTO;

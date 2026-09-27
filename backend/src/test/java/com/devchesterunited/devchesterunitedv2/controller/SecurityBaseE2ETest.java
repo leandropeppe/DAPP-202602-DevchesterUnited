@@ -2,7 +2,6 @@ package com.devchesterunited.devchesterunitedv2.controller;
 
 import com.devchesterunited.devchesterunitedv2.configuration.SecurityConfig;
 import com.devchesterunited.devchesterunitedv2.configuration.SecurityErrorHandler;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
