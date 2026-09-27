@@ -124,8 +124,8 @@ export default function RegistrationPage ({ onNavigate }) {
           >
             {state.message}
             <ul>
-              {state.details.map((detail, index) => (
-                <li key={index}>
+              {state.details.map((detail) => (
+                <li key={typeof detail === 'string' ? detail : `${detail.field}:${detail.issue}`}>
                   {typeof detail === 'string' ? detail : detail.message}
                 </li>
               ))}
