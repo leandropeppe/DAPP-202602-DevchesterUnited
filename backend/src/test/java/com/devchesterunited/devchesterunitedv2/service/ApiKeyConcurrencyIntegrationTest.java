@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.service;
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.ApiKeyService;
+import com.devchesterunited.devchesterunitedv2.service.dto.ApiKeyResultado;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -46,7 +47,7 @@ class ApiKeyConcurrencyIntegrationTest extends PostgresTestSupport {
             assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys WHERE user_id = ?", Long.class, usuario)).isEqualTo(1L);
             assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys WHERE user_id = ? AND is_active", Long.class, usuario)).isEqualTo(1L);
             var posterior = servicio.generar(usuario);
-            assertThat(posterior.getApiKey()).isNotEqualTo(resultados.stream().filter(Resultado::esExito).findFirst().orElseThrow().secreto());
+            assertThat(posterior.apiKey()).isNotEqualTo(resultados.stream().filter(Resultado::esExito).findFirst().orElseThrow().secreto());
             assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys WHERE user_id = ? AND is_active", Long.class, usuario)).isEqualTo(1L);
         }
     }
@@ -79,13 +80,9 @@ class ApiKeyConcurrencyIntegrationTest extends PostgresTestSupport {
 
     @AfterEach void limpiar() { fixtures.forEach(id -> jdbc.update("DELETE FROM usuarios WHERE id = ?", id)); }
 
-    private record Resultado(Object respuesta, String secreto, boolean conflicto) {
-        static Resultado exito(Object respuesta) {
-            try {
-                return new Resultado(respuesta, (String) respuesta.getClass().getMethod("getApiKey").invoke(respuesta), false);
-            } catch (ReflectiveOperationException error) {
-                throw new AssertionError("La respuesta de API Key debe exponer getApiKey()", error);
-            }
+    private record Resultado(ApiKeyResultado respuesta, String secreto, boolean conflicto) {
+        static Resultado exito(ApiKeyResultado respuesta) {
+            return new Resultado(respuesta, respuesta.apiKey(), false);
         }
         static Resultado conflictoResultado() { return new Resultado(null, null, true); }
         boolean esExito() { return !conflicto; }

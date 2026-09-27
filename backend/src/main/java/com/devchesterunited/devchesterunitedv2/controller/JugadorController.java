@@ -5,6 +5,8 @@ import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.JugadoresResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.JugadorService;
+import com.devchesterunited.devchesterunitedv2.service.dto.JugadorResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.JugadoresResultado;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Set;
@@ -109,8 +111,22 @@ public class JugadorController {
         FiltroJugadoresDTO filtros =
                 FiltroJugadoresDTO.desdeParametros(league, team, position, page, limit);
 
-        JugadoresResponseDTO respuesta = servicio.consultar(filtros);
+        JugadoresResponseDTO respuesta = mapear(servicio.consultar(filtros));
         return ResponseEntity.ok(new SuccessResponseDTO<>(respuesta));
+    }
+
+    private static JugadoresResponseDTO mapear(JugadoresResultado resultado) {
+        return new JugadoresResponseDTO(
+                resultado.jugadores().stream().map(JugadorController::mapear).toList(),
+                new com.devchesterunited.devchesterunitedv2.controller.dto.PaginacionDTO(
+                        resultado.paginacion().paginaActual(), resultado.paginacion().tamanoPagina(),
+                        resultado.paginacion().totalPaginas(), resultado.paginacion().totalRegistros()));
+    }
+
+    private static com.devchesterunited.devchesterunitedv2.controller.dto.JugadorResponseDTO mapear(JugadorResultado jugador) {
+        return new com.devchesterunited.devchesterunitedv2.controller.dto.JugadorResponseDTO(
+                "ply_" + jugador.id(), jugador.nombre(), jugador.liga(), jugador.equipo(), jugador.posicion(),
+                jugador.dorsal(), jugador.nacionalidad());
     }
 
     private static void validarParametros(HttpServletRequest request) {

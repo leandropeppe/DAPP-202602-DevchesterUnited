@@ -1,7 +1,6 @@
 ---
 description: "Tareas de implementación de autenticación y catálogo de jugadores"
 ---
-
 # Tareas: Autenticación y catálogo de jugadores
 
 **Fecha**: 2026-09-05. **Rama**: `001-user-auth-player-catalog`.
@@ -16,7 +15,7 @@ description: "Tareas de implementación de autenticación y catálogo de jugador
 - Las pruebas son obligatorias por la Constitución y por la corrección C1 ya autorizada. Escribir pruebas antes de implementar la historia, observar fallo esperado y ejecutarlas nuevamente al cerrar. Fallos de compilación por componentes aún ausentes no acreditan la validación funcional final.
 - No modificar ni borrar tests existentes sin un «SÍ» explícito. Agregar archivos nuevos y soporte de configuración para preservar `src/test/java/com/devchesterunited/devchesterunitedv2/DevchesterUnitedV2ApplicationTests.java`.
 - Mantener Java 21, JUnit 5, PostgreSQL real/Testcontainers, unitarias sin Spring, E2E MockMvc solo en controller, casos felices y borde y documentación/errores en español.
- - Nota histórica de regeneración: esta versión reemplazó los IDs del borrador anterior, cuyo estado inicial era pendiente. El estado vigente se detalla en la sección final: T001–T078 y T089–T093 están completadas y validadas; T079–T088 permanecen pendientes.
+ - Nota histórica de regeneración: esta versión reemplazó los IDs del borrador anterior, cuyo estado inicial era pendiente. El estado vigente se detalla en la sección final: T001–T078, T083 y T089–T098 están completadas según la evidencia registrada; permanecen pendientes T079, T080, T081, T082 y T084–T088, con T079 y T084 parcialmente preparadas.
 
 ## Fase 1: Preparación compartida
 
@@ -64,11 +63,11 @@ description: "Tareas de implementación de autenticación y catálogo de jugador
 
 ## Fase 4: User Story 2 — Generación de API Key (P1)
 
-**Objetivo**: Emitir claves sin vencimiento y proteger su generación con JWT (FR-005–FR-008, FR-012). La rotación es compatibilidad opcional, no requisito funcional obligatorio.
+**Objetivo**: Emitir claves sin vencimiento, proteger su generación con JWT y cumplir obligatoriamente unicidad, rotación/reemplazo, revocación y concurrencia (FR-005–FR-008, FR-012). Estos requisitos siguen vigentes.
 
-**Prueba independiente y control de cierre**: Tras US1, generar con JWT válido, rechazar JWT inválido con 401 y no generar la clave durante login; todas sus pruebas PASSED. Las pruebas históricas de rotación/concurrencia se conservan como evidencia de compatibilidad, pero no definen el contrato vigente.
+**Prueba independiente y control de cierre**: Tras US1, generar con JWT válido, rechazar JWT inválido con 401, mantener una sola clave activa, revocar/reemplazar atómicamente y devolver 409 a competidoras sin mutaciones adicionales. La clave no se genera durante login ni se rota automáticamente desde frontend.
 
-T024–T033 permanecen marcadas como completadas porque describen trabajo ya realizado. Sus comprobaciones de reemplazo, revocación, una clave activa y concurrencia son compatibilidad de la implementación existente; no deben interpretarse como nuevos requisitos obligatorios ni bloquear el alcance vigente.
+T024–T033 permanecen marcadas como completadas porque describen trabajo ya realizado. Sus comprobaciones de reemplazo, revocación, una clave activa y concurrencia son parte de los requisitos vigentes, además de contar con evidencia histórica; los gates finales de la entrega se gestionan separadamente en T079–T088.
 
 - [x] T024 [P] [US2] Escribir primero contrato MockMvc POST /api/v1/auth/apikey: 200, no-store, secreto una vez, cuerpo no vacío 400, JWT ausente/alterado/expirado o usuario inexistente 401, 409 y esquema de errores; solo API Key no autoriza (SC-004) en `src/test/java/com/devchesterunited/devchesterunitedv2/controller/ApiKeyE2ETest.java`.
 - [x] T025 [P] [US2] Escribir primero unitarias puras de APIKey: estado activo/revocado, coherencia de fechas y vigencia sin expiración aunque avance el tiempo (FR-012) en `src/test/java/com/devchesterunited/devchesterunitedv2/modelo/ApiKeyTest.java`.
@@ -81,7 +80,7 @@ T024–T033 permanecen marcadas como completadas porque describen trabajo ya rea
 - [x] T032 [US2] Crear respuesta de clave con token dev_key_ + 43 caracteres Base64URL, prefix/is_active/created_at y sin expiración; evitar incluir secretos en toString en `src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/ApiKeyResponseDTO.java`.
 - [x] T033 [US2] Extender Service con generación de 32 bytes aleatorios, SHA-256 y rotación READ COMMITTED bajo FOR UPDATE NOWAIT; revocar/insertar atómicamente y devolver solo tras commit; mapear 55P03 a 409 fuera de transacción fallida sin reintentar en `src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/AutenticacionService.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/AutenticacionServiceImpl.java`.
 - [x] T034 [US2] Implementar autenticación por hash/estado contra BD primaria al inicio, sin caché entre solicitudes; Service confirma usuario existente, clave activa o 401 y errores de BD 503 en `src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/ApiKeyService.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/ApiKeyServiceImpl.java`.
-- [x] T035 [US2] [Histórica, reemplazada] Implementar filtro X-API-KEY para generación JWT y catálogo API-Key; queda conservada como evidencia de la política anterior. La política vigente requiere reutilizar/reconfigurar este mecanismo para proteger únicamente la sincronización administrativa y dejar públicas las lecturas del catálogo en `src/main/java/com/devchesterunited/devchesterunitedv2/configuration/ApiKeyAuthenticationFilter.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/configuration/SecurityConfig.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/configuration/SecurityErrorHandler.java`.
+- [x] T035 [US2] [Histórica, reemplazada] Implementar filtro X-API-KEY para generación JWT y catálogo API-Key; queda conservada únicamente como evidencia de la política anterior y no es criterio vigente. La política vigente protege con API Key únicamente la sincronización administrativa; las lecturas del catálogo son públicas en `src/main/java/com/devchesterunited/devchesterunitedv2/configuration/ApiKeyAuthenticationFilter.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/configuration/SecurityConfig.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/configuration/SecurityErrorHandler.java`.
 - [x] T036 [US2] Agregar POST /api/v1/auth/apikey a AuthController: sin cuerpo, JWT válido y existencia del usuario, no-store, 200/400/401/409 y errores comunes en español en `src/main/java/com/devchesterunited/devchesterunitedv2/controller/AuthController.java`.
 - [x] T037 [US2] Ejecutar pruebas US1/US2, comprobar 409 HTTP con bloqueo real controlado desde pruebas controller, una clave activa y ausencia de secretos persistidos/logueados; registrar evidencia en `specs/001-user-auth-player-catalog/validation.md`.
 
@@ -91,18 +90,18 @@ T024–T033 permanecen marcadas como completadas porque describen trabajo ya rea
 
 **Prueba independiente y control de cierre**: Con US1/US2 disponibles, una solicitud sin credenciales devuelve jugadores; Madrid/madrid/MADRID devuelve ambos equipos; AND y totales son exactos. Las pruebas de autorización por API Key quedan reemplazadas por pruebas de acceso público.
 
-- [x] T038 [P] [US3] [Histórica, reemplazada] Escribir primero contrato MockMvc GET /api/v1/players con API Key obligatoria; queda como evidencia de la política anterior. Debe reemplazarse por contrato de acceso público, manteniendo esquema, filtros, paginación y errores 400 en `src/test/java/com/devchesterunited/devchesterunitedv2/controller/JugadorE2ETest.java`.
+- [x] T038 [P] [US3] [Histórica, reemplazada] Escribir primero contrato MockMvc GET /api/v1/players con API Key obligatoria; queda únicamente como evidencia de la política anterior y no es criterio vigente. El criterio vigente es acceso público, manteniendo esquema, filtros, paginación y errores 400 en `src/test/java/com/devchesterunited/devchesterunitedv2/controller/JugadorE2ETest.java`.
 - [x] T039 [P] [US3] Escribir primero unitarias puras Jugador con campos obligatorios, posición válida y dorsal 1–99, casos felices/borde y excepciones de dominio en `src/test/java/com/devchesterunited/devchesterunitedv2/modelo/JugadorTest.java`.
 - [x] T040 [P] [US3] Escribir primero integración Service para filtros parciales case-insensitive, AND, sin filtros, vacíos, orden UUID y paginación; comparar contenido/totales con fixtures independientes (SC-005) en `src/test/java/com/devchesterunited/devchesterunitedv2/service/JugadorServiceIntegrationTest.java`.
 - [x] T041 [P] [US3] Escribir primero integración Repository con %/_/! y comillas literales, tildes significativas, parámetros vinculados y conteo antes de paginar; no concatenar SQL de entrada en `src/test/java/com/devchesterunited/devchesterunitedv2/persistence/JugadorRepositoryIntegrationTest.java`.
-- [x] T042 [P] [US3] [Histórica, reemplazada] Escribir prueba de revocación en curso del catálogo protegido; queda obsoleta para lecturas públicas. Debe reemplazarse por pruebas de consulta sin credenciales y de que una API Key no es necesaria para leer el catálogo en `src/test/java/com/devchesterunited/devchesterunitedv2/controller/RevocacionEnCursoE2ETest.java`.
+- [x] T042 [P] [US3] [Histórica, reemplazada] Escribir prueba de revocación en curso del catálogo protegido; queda únicamente como evidencia de la política anterior y no es criterio vigente. Debe reemplazarse por pruebas de consulta sin credenciales y de que una API Key no es necesaria para leer el catálogo en `src/test/java/com/devchesterunited/devchesterunitedv2/controller/RevocacionEnCursoE2ETest.java`.
 - [x] T043 [US3] Implementar Jugador puro con invariantes y excepciones propias según data-model.md en `src/main/java/com/devchesterunited/devchesterunitedv2/modelo/Jugador.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/modelo/exception/JugadorException.java`.
 - [x] T044 [US3] Crear JugadorEntity y migración V3 con restricciones y semilla mínima que incluya Real Madrid y Atlético de Madrid en LaLiga, todas las posiciones y datos suficientes para paginación en `src/main/java/com/devchesterunited/devchesterunitedv2/persistence/dto/JugadorEntity.java`, `src/main/resources/db/migration/V3__Create_jugadores_table.sql`.
 - [x] T045 [US3] Implementar Repository con subcadenas literales ILIKE, escape de !/%/_, AND y parámetros vinculados, orden UUID ascendente y conteo consistente; no llamar al modelo en `src/main/java/com/devchesterunited/devchesterunitedv2/persistence/JugadorRepository.java`.
 - [x] T046 [US3] Crear DTOs de filtros/respuesta/paginación con trimming, límites league/team=100 y position=30, tildes conservadas, validación de parámetros repetidos/desconocidos, page desde 1 y limit 1–100 (20 default), offset verificado en `src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/FiltroJugadoresDTO.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/JugadorResponseDTO.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/PaginacionDTO.java`.
 - [x] T047 [US3] Implementar interfaz y JugadorService: consultas, mapeo y metadatos propios, total_pages=0 sin coincidencias y lista vacía fuera de rango conservando totales; autorización ya realizada no se repite en curso en `src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/JugadorService.java`, `src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/JugadorServiceImpl.java`.
 - [x] T048 [US3] Implementar GET /api/v1/players en JugadorController delegando solo a Service, contrato OpenAPI y errores en español en `src/main/java/com/devchesterunited/devchesterunitedv2/controller/JugadorController.java`.
-- [x] T049 [US3] [Histórica, reemplazada] Ejecutar suites de las tres historias; la evidencia previa validó catálogo protegido. La nueva validación debe comprobar catálogo público, contenido exacto y ausencia de dependencia de API Key en `specs/001-user-auth-player-catalog/validation.md`.
+- [x] T049 [US3] [Histórica, reemplazada] Ejecutar suites de las tres historias; la evidencia previa validó catálogo protegido. Esa evidencia no acredita la política vigente. La validación vigente debe comprobar catálogo público, contenido exacto y ausencia de dependencia de API Key en `specs/001-user-auth-player-catalog/validation.md`.
 
 ## Fase 6: Validación transversal y entrega
 
@@ -138,12 +137,12 @@ T001–T050 son historial completado y validado según specs/001-user-auth-playe
 - [x] T059 [P] [US4] Crear pruebas del Adapter con servidor HTTP local para cinco ligas, respuestas inválidas, 429/5xx, timeout, cuota y mapeo de DTO externo en backend/src/test/java/com/devchesterunited/devchesterunitedv2/adapter/FootballDataAdapterTest.java.
 - [x] T060 [P] [US4] Crear integración de repositories para V4, IDs externos únicos, asociación equipo-jugador, inactivación/reactivación, dorsal null y preservación de UUID V3 en backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/SincronizacionRepositoryIntegrationTest.java.
 - [x] T061 [P] [US4] Crear integración de Service con PostgreSQL/Testcontainers para advisory lock global, competidor 409, publicación atómica, rollback y snapshot anterior en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/SincronizacionCatalogoIntegrationTest.java.
-- [x] T062 [P] [US4] [Histórica, reemplazada] Crear E2E MockMvc del endpoint de sincronización para JWT válido; queda como evidencia del modelo anterior. Debe reemplazarse por pruebas con API Key válida, ausencia/API Key inválida 401, cuerpo/query rechazados, 200, 400, 409, 503 y 500 en backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/CatalogoSyncE2ETest.java.
+- [x] T062 [P] [US4] [Histórica, reemplazada] Crear E2E MockMvc del endpoint de sincronización para JWT válido; queda únicamente como evidencia del modelo anterior y no es criterio vigente. Debe reemplazarse por pruebas con API Key válida, ausencia/API Key inválida 401, cuerpo/query rechazados, 200, 400, 409, 503 y 500 en backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/CatalogoSyncE2ETest.java.
 - [x] T063 [US4] Implementar modelos puros Equipo, CatalogoSincronizado, estados y reglas de snapshot sin dependencias de Spring/JPA en backend/src/main/java/com/devchesterunited/devchesterunitedv2/modelo/.
 - [x] T064 [US4] Implementar entidades/repositories y migración V4 para equipos, team_id, IDs externos, actividad y dorsal nullable, conservando UUID V3, en backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/ y backend/src/main/resources/db/migration/V4__Normalize_catalog_sync.sql.
 - [x] T065 [US4] Implementar DTOs Football-Data en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/dto/ y FootballDataAdapter con RestClient, temporada vigente, cinco rutas, timeouts y traducción de errores en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/impl/.
 - [x] T066 [US4] Implementar SincronizacionCatalogoService como único orquestador Adapter-Modelo-Persistence: lock global PostgreSQL, consultas secuenciales, validación 96 equipos, inactivación/reactivación, reintento manual idempotente, commit único y rollback en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/.
-- [x] T067 [US4] [Histórica, reemplazada] Implementar POST /api/v1/catalog/sync con JWT; queda como implementación histórica del modelo anterior. La política vigente requiere API Key administrativa, errores 401/409/503 y el contrato del endpoint propio junto con las cinco rutas externas en specs/001-user-auth-player-catalog/contracts/openapi.json.
+- [x] T067 [US4] [Histórica, reemplazada] Implementar POST /api/v1/catalog/sync con JWT; queda únicamente como implementación histórica del modelo anterior y no es criterio vigente. La política vigente requiere API Key administrativa, errores 401/409/503 y el contrato del endpoint propio junto con las cinco rutas externas en specs/001-user-auth-player-catalog/contracts/openapi.json.
 - [x] T068 [US4] Ejecutar unitarias, Repository, Service, Adapter y E2E de US4 sin Internet ni credenciales reales; verificar rollback, 503, lock 409, la consulta local de jugadores activos con equipo activo y registrar resultados en specs/001-user-auth-player-catalog/validation.md.
 - [x] T069 [US4] Confirmar que los tests históricos permanecen intactos y ejecutar la regresión backend completa después de US4; registrar cualquier cambio autorizado y su evidencia en specs/001-user-auth-player-catalog/validation.md.
 
@@ -167,12 +166,12 @@ T001–T050 son historial completado y validado según specs/001-user-auth-playe
 
 **Objetivo**: completar gates todavía no ejecutados para el alcance ampliado; ningún gate se considera aprobado por configuración solamente.
 
-- [ ] T079 [P] Preparar fixture/entorno k6 de 10.000 jugadores y 1.000 usuarios en performance/seed.sql, performance/compose.yml y performance/README.md.
+- [ ] T079 [P] [Parcial: seed.sql y compose.yml existentes; README y ejecución pendientes] Preparar fixture/entorno k6 de 10.000 jugadores y 1.000 usuarios en performance/seed.sql, performance/compose.yml y performance/README.md.
 - [ ] T080 [P] Ejecutar escenarios de rendimiento registro/login, API Key y catálogo para SC-001–SC-003 con tres repeticiones, restauración y recursos reproducibles en performance/registro-login.js, performance/api-key.js, performance/catalogo.js y performance/results/.
 - [ ] T081 Comparar Swagger UI y /v3/api-docs con los cinco endpoints, esquemas, autenticación y errores; registrar discrepancias y correcciones en specs/001-user-auth-player-catalog/contracts/openapi.json y validation.md.
 - [ ] T082 [P] Actualizar colección Postman con register, login, API Key, sync y players, variables y ejemplos sin secretos en postman/DevchesterUnited.postman_collection.json.
 - [x] T083 Configurar GitHub Actions con Gradle usando backend/ como working directory y npm/Vite usando frontend/, ejecutando suites backend, Vitest, build y Playwright en .github/workflows/ci.yml.
-- [ ] T084 Configurar y ejecutar SonarCloud/Quality Gate para el monorepo, incluyendo backend y frontend, en .github/workflows/ci.yml, backend/build.gradle y scripts/verify-sonar-gate.ps1.
+- [ ] T084 [Parcial: plugin, workflow y rutas de cobertura existentes; ejecución, verificador y cierre pendientes] Configurar y ejecutar SonarCloud/Quality Gate para el monorepo, incluyendo backend y frontend, en .github/workflows/ci.yml, backend/build.gradle y scripts/verify-sonar-gate.ps1. El equipo informa 46 issues pendientes (14 Medium y 32 Low); esta cifra no está verificada en esta tarea.
 - [ ] T085 Ejecutar quickstart completo desde backend/ y frontend/, con migraciones, arranque, flujo HTTP y frontend, y actualizar specs/001-user-auth-player-catalog/quickstart.md solo si cambian comandos reales.
 - [ ] T086 Verificar aceptación de integración externa: cuenta/proveedor habilitado para Squads, temporada vigente y snapshot utilizable; documentar evidencia o bloqueo externo sin afirmar éxito en specs/001-user-auth-player-catalog/validation.md.
 - [ ] T087 Ejecutar el flujo final de Postman y SC-010 contra backend local, verificando que el frontend no llama al proveedor externo y que los secretos no aparecen en logs, bundles ni capturas.
@@ -188,15 +187,42 @@ T001–T050 son historial completado y validado según specs/001-user-auth-playe
 
 ## Dependencias y orden pendiente
 
-T050 completada → Monorepo T051–T056 → US4 T057–T069 → US5 T070–T078 → Gates finales T079–T088.
+T050 completada → Monorepo T051–T056 → US4 T057–T069 → US5 T070–T078 → Gates finales T079–T088. Dentro de los gates: T079, T081, T082 y la preparación de T084 pueden avanzar en paralelo; T080 depende de T079; T085 y T087 dependen de T081/T082 y de un backend ejecutable; T086 puede avanzar en paralelo cuando exista acceso suficiente a una cuenta/proveedor y conserva sus criterios de aceptación; T088 depende de todos los gates anteriores.
 
 ## Estado y cobertura
 
 - T001–T050: [x] historial completado, respaldado por validation.md; US1, US2 y US3 no son trabajo pendiente.
 - T051–T069: [x] reorganización y US4 completadas, respaldadas por validation.md.
 - T070–T078: [x] US5 implementada, validada y cerrada.
-- T079–T088: [ ] gates finales pendientes.
-- La suite histórica de 363 tests se conserva como regresión; no se afirma que las pruebas nuevas, CI, SonarCloud, performance, frontend o aceptación externa estén ejecutadas.
+- T094–T098: [x] corrección constitucional C1 completada, respaldada por validation.md.
+- T079, T080, T081, T082 y T084–T088: [ ] gates finales pendientes; T079 y T084 tienen preparación parcial, sin cierre verificable. T083 está completada.
+- La suite histórica de 363 tests se conserva como regresión. La evidencia posterior registra backend/frontend y CI, pero performance, OpenAPI final, Postman, quickstart, aceptación externa y SonarCloud siguen requiriendo gates específicos.
 ## Cierre del bloque US5 (2026-09-17)
 
-El bloque US5 quedó completado: E2E aislado, fixture sintético, verificaciones estructurales y de secretos, Vitest, build, preview, Playwright y regresión conjunta backend/frontend están acreditados en `validation.md` (backend 391 tests, Vitest, `verify:frontend`, build y Playwright PASSED).
+El bloque US5 quedó completado según la evidencia posterior: E2E aislado, fixture sintético, verificaciones estructurales y de secretos, Vitest, build, preview, Playwright y regresión conjunta backend/frontend están registrados en `validation.md` (backend 391 tests, Vitest, `verify:frontend`, build y Playwright PASSED). La cifra no fue reejecutada en esta actualización documental.
+
+## Clasificación vigente del backlog
+
+| Categoría | Elementos | Estado |
+|---|---|---|
+| Implementado y verificado históricamente | US1–US5, JWT, API Key, rotación/concurrencia, catálogo público, sync local, frontend y CI | Evidencia en `validation.md`; no se reejecuta aquí |
+| Implementado, pendiente de validación final | Entorno de performance, integración externa real, comparación OpenAPI y Sonar | T079, T081, T084, T086 |
+| Entrega actual | Mediciones, Postman, quickstart, flujo final y DoD | T080, T082, T085, T087, T088 |
+| Requisito futuro | No asignado: los documentos no fundamentan Entrega 2 o 3 | Decisión pendiente del equipo |
+| Corrección constitucional C1 | Dependencia Service → DTOs de Controller | Resuelta en T094–T098 |
+
+### Registro de tareas históricas reemplazadas
+
+Las tareas `T035`, `T038`, `T042`, `T049`, `T062` y `T067` conservan identificadores y estado para preservar el historial, pero describen políticas anteriores. No deben utilizarse para inferir la aceptación vigente. Sus reemplazos documentales son: catálogo público en `T089`, autorización administrativa por API Key en `T090–T091`, y validación frontend sin dependencia de API Key en `T092`. La rotación, revocación, unicidad y concurrencia de API Keys descritas en `T024–T037` siguen siendo requisitos vigentes.
+
+## Fase 11: Corrección constitucional C1 — separación Service/Controller
+
+**Objetivo**: eliminar todas las dependencias descendentes de `Service` hacia DTOs HTTP de `Controller`, preservando los contratos REST y el comportamiento vigente.
+
+- [x] T094 [P] Definir modelos internos de aplicación bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/dto/` para resultados de autenticación, API Key y consulta de jugadores, sin dependencias de Spring MVC ni `controller`.
+- [x] T095 [P] Cambiar las interfaces e implementaciones de `AutenticacionService`, `ApiKeyService` y `JugadorService` para usar exclusivamente modelos internos de `service/dto`; conservar reglas, transacciones, seguridad y firmas funcionales de los casos de uso.
+- [x] T096 [P] Agregar mappers explícitos en `AuthController` y `JugadorController` desde modelos internos hacia DTOs HTTP, y desde filtros HTTP hacia consultas internas; no cambiar rutas, JSON, códigos, validaciones ni OpenAPI.
+- [x] T097 Verificar que no existan imports ni referencias de `service` hacia `controller` en producción y ejecutar los tests afectados con autorización explícita, sin alterar sus escenarios.
+- [x] T098 Ejecutar compilación y regresión completa del backend; registrar resultados reales, archivos modificados y diff de dependencias eliminadas en `specs/001-user-auth-player-catalog/validation.md`.
+
+**Dependencias**: T094–T096 pueden prepararse en paralelo; T097 depende de T095–T096; T098 depende de T097. Esta fase no modifica `constitution.md`, contratos OpenAPI, frontend ni funcionalidades futuras.

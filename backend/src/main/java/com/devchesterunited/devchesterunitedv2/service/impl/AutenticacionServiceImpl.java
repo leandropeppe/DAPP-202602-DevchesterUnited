@@ -1,15 +1,15 @@
 package com.devchesterunited.devchesterunitedv2.service.impl;
 
 import com.devchesterunited.devchesterunitedv2.configuration.JwtConfig;
-import com.devchesterunited.devchesterunitedv2.controller.dto.LoginResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.dto.ApiKeyResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.dto.UsuarioResponseDTO;
 import com.devchesterunited.devchesterunitedv2.modelo.Usuario;
 import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.ApiKeyRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.APIKeyEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.AutenticacionService;
+import com.devchesterunited.devchesterunitedv2.service.dto.ApiKeyResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.LoginResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.UsuarioResultado;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Locale;
@@ -55,7 +55,7 @@ public class AutenticacionServiceImpl implements AutenticacionService {
 
     @Override
     @Transactional
-    public UsuarioResponseDTO registrar(String nombreUsuario, String correo, String contrasena) {
+    public UsuarioResultado registrar(String nombreUsuario, String correo, String contrasena) {
         String nombreNormalizado = normalizar(nombreUsuario);
         String correoNormalizado = normalizar(correo);
         if (repositorio.findByNombreUsuario(nombreNormalizado).isPresent()
@@ -77,21 +77,21 @@ public class AutenticacionServiceImpl implements AutenticacionService {
 
     @Override
     @Transactional(readOnly = true)
-    public LoginResponseDTO login(String nombreUsuario, String contrasena) {
+    public LoginResultado login(String nombreUsuario, String contrasena) {
         String nombreNormalizado = normalizar(nombreUsuario);
         var entidad = repositorio.findByNombreUsuario(nombreNormalizado).orElse(null);
         if (entidad == null || contrasena == null || !codificador.matches(contrasena, entidad.getHashContrasena())) {
             throw new BadCredentialsException(MENSAJE_CREDENCIALES);
         }
         String token = jwtConfig.jwtEncoder().encode(jwtConfig.parametrosPara(entidad.getId())).getTokenValue();
-        return new LoginResponseDTO(token);
+        return new LoginResultado(token);
     }
 
     @Override
-    public ApiKeyResponseDTO generarApiKey(UUID usuarioId) {
+    public ApiKeyResultado generarApiKey(UUID usuarioId) {
         if (usuarioId == null) throw new BadCredentialsException("No autorizado.");
         try {
-            ApiKeyResponseDTO resultado = transactionTemplate.execute(status -> generarDentroDeTransaccion(usuarioId));
+            ApiKeyResultado resultado = transactionTemplate.execute(status -> generarDentroDeTransaccion(usuarioId));
             if (resultado == null) throw new IllegalStateException("No se pudo generar la API Key.");
             return resultado;
         } catch (DataAccessException exception) {
@@ -102,7 +102,7 @@ public class AutenticacionServiceImpl implements AutenticacionService {
         }
     }
 
-    private ApiKeyResponseDTO generarDentroDeTransaccion(UUID usuarioId) {
+    private ApiKeyResultado generarDentroDeTransaccion(UUID usuarioId) {
         if (repositorio.findByIdForUpdateNoWait(usuarioId).isEmpty()) {
             throw new BadCredentialsException("No autorizado.");
         }
@@ -119,7 +119,7 @@ public class AutenticacionServiceImpl implements AutenticacionService {
         String prefijo = token.substring(0, 14);
         Instant creada = clock.instant();
         apiKeyRepository.saveAndFlush(new APIKeyEntity(UUID.randomUUID(), usuarioId, hash, prefijo, true, creada, null));
-        return new ApiKeyResponseDTO(token, prefijo, true, creada);
+        return new ApiKeyResultado(token, prefijo, true, creada);
     }
 
     private static APIKeyEntity anteriorRevocada(APIKeyEntity anterior, Instant revocada) {
@@ -159,8 +159,8 @@ public class AutenticacionServiceImpl implements AutenticacionService {
                 entidad.getHashContrasena(), entidad.getCreadoEn(), entidad.getActualizadoEn());
     }
 
-    private static UsuarioResponseDTO aRespuesta(Usuario usuario) {
-        return new UsuarioResponseDTO("usr_" + usuario.getId(), usuario.getNombreUsuario(),
+    private static UsuarioResultado aRespuesta(Usuario usuario) {
+        return new UsuarioResultado(usuario.getId(), usuario.getNombreUsuario(),
                 usuario.getCorreo(), usuario.getCreadoEn());
     }
 }

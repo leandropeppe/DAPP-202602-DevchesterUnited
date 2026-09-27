@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.service.impl;
 
-import com.devchesterunited.devchesterunitedv2.controller.dto.ApiKeyResponseDTO;
+import com.devchesterunited.devchesterunitedv2.service.dto.ApiKeyResultado;
 import com.devchesterunited.devchesterunitedv2.persistence.ApiKeyRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.ApiKeyService;
@@ -27,7 +27,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
     }
 
     @Override
-    public ApiKeyResponseDTO generar(UUID usuarioId) {
+    public ApiKeyResultado generar(UUID usuarioId) {
         return autenticacion.generarApiKey(usuarioId);
     }
 

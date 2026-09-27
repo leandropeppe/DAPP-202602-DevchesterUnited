@@ -2,9 +2,9 @@ package com.devchesterunited.devchesterunitedv2.service;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.controller.dto.FiltroJugadoresDTO;
-import com.devchesterunited.devchesterunitedv2.controller.dto.JugadorResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.dto.JugadoresResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.dto.PaginacionDTO;
+import com.devchesterunited.devchesterunitedv2.service.dto.JugadorResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.JugadoresResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.PaginacionResultado;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.JugadorService;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Arrays;
@@ -127,13 +127,13 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
     void mapeaTodosLosCamposPublicosYElIdentificadorOpaco() {
         var respuesta = servicio.consultar(new FiltroJugadoresDTO(null, null, null, 1, 20));
         assertThat(respuesta.jugadores()).containsExactly(
-                new JugadorResponseDTO(publico(1), "Julián Álvarez", "LaLiga", "Atlético de Madrid", "Forward", 9, "Argentina"),
-                new JugadorResponseDTO(publico(2), "Jude Bellingham", "LaLiga", "Real Madrid", "Midfielder", 5, "Inglaterra"),
-                new JugadorResponseDTO(publico(3), "Phil Foden", "Premier League", "Manchester City", "Forward", 47, "Inglaterra"),
-                new JugadorResponseDTO(publico(4), "Dani Carvajal", "LaLiga", "Real Madrid", "Defender", 2, "España"),
-                new JugadorResponseDTO(publico(5), "Jan Oblak", "LaLiga", "Atlético de Madrid", "Goalkeeper", 13, "Eslovenia"),
-                new JugadorResponseDTO(publico(6), "Manuel Neuer", "Bundesliga", "Bayern", "Goalkeeper", 1, "Alemania"));
-        respuesta.jugadores().forEach(jugador -> assertThat(jugador.id()).matches("ply_[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}"));
+                new JugadorResultado(id(1), "Julián Álvarez", "LaLiga", "Atlético de Madrid", "Forward", 9, "Argentina"),
+                new JugadorResultado(id(2), "Jude Bellingham", "LaLiga", "Real Madrid", "Midfielder", 5, "Inglaterra"),
+                new JugadorResultado(id(3), "Phil Foden", "Premier League", "Manchester City", "Forward", 47, "Inglaterra"),
+                new JugadorResultado(id(4), "Dani Carvajal", "LaLiga", "Real Madrid", "Defender", 2, "España"),
+                new JugadorResultado(id(5), "Jan Oblak", "LaLiga", "Atlético de Madrid", "Goalkeeper", 13, "Eslovenia"),
+                new JugadorResultado(id(6), "Manuel Neuer", "Bundesliga", "Bayern", "Goalkeeper", 1, "Alemania"));
+        respuesta.jugadores().forEach(jugador -> assertThat(jugador.id()).isNotNull());
     }
 
     @ParameterizedTest(name = "filtro {0}, caso inválido {index}")
@@ -206,12 +206,12 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
         return new FiltroJugadoresDTO(campo == 0 ? valor : null, campo == 1 ? valor : null, campo == 2 ? valor : null, 1, 20);
     }
 
-    private static void verificarIds(JugadoresResponseDTO respuesta, int... numeros) {
-        assertThat(respuesta.jugadores()).extracting(JugadorResponseDTO::id).containsExactlyElementsOf(Arrays.stream(numeros).mapToObj(JugadorServiceIntegrationTest::publico).toList());
+    private static void verificarIds(JugadoresResultado respuesta, int... numeros) {
+        assertThat(respuesta.jugadores()).extracting(JugadorResultado::id).containsExactlyElementsOf(Arrays.stream(numeros).mapToObj(JugadorServiceIntegrationTest::id).toList());
     }
 
-    private static void verificarPaginacion(JugadoresResponseDTO respuesta, int pagina, int limite, long registros, long paginas) {
-        assertThat(respuesta.paginacion()).isEqualTo(new PaginacionDTO(pagina, limite, paginas, registros));
+    private static void verificarPaginacion(JugadoresResultado respuesta, int pagina, int limite, long registros, long paginas) {
+        assertThat(respuesta.paginacion()).isEqualTo(new PaginacionResultado(pagina, limite, paginas, registros));
     }
 
     private void insertar(int numero, String nombre, String apellido, String liga, String equipo, String posicion, int dorsal, String nacionalidad) {
@@ -222,5 +222,4 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
         return UUID.fromString("10000000-0000-0000-0000-" + String.format("%012d", numero));
     }
 
-    private static String publico(int numero) { return "ply_" + id(numero); }
 }

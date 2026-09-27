@@ -7,6 +7,9 @@ import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO
 import com.devchesterunited.devchesterunitedv2.controller.dto.UsuarioResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.ApiKeyResponseDTO;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.AutenticacionService;
+import com.devchesterunited.devchesterunitedv2.service.dto.ApiKeyResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.LoginResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.UsuarioResultado;
 import jakarta.validation.Valid;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
@@ -31,7 +34,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<SuccessResponseDTO<UsuarioResponseDTO>> registrar(
             @Valid @RequestBody RegistroRequestDTO solicitud) {
-        var respuesta = servicio.registrar(solicitud.nombreUsuario(), solicitud.correo(), solicitud.contrasena());
+        UsuarioResponseDTO respuesta = mapear(servicio.registrar(solicitud.nombreUsuario(), solicitud.correo(), solicitud.contrasena()));
         return ResponseEntity.status(201)
                 .body(new SuccessResponseDTO<>("Usuario registrado correctamente", respuesta));
     }
@@ -39,7 +42,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<SuccessResponseDTO<LoginResponseDTO>> login(
             @Valid @RequestBody LoginRequestDTO solicitud) {
-        var respuesta = servicio.login(solicitud.nombreUsuario(), solicitud.contrasena());
+        LoginResponseDTO respuesta = mapear(servicio.login(solicitud.nombreUsuario(), solicitud.contrasena()));
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
                 .header(HttpHeaders.PRAGMA, "no-cache")
                 .body(new SuccessResponseDTO<>("Autenticación exitosa", respuesta));
@@ -55,9 +58,22 @@ public class AuthController {
             throw new org.springframework.security.authentication.BadCredentialsException("No autorizado.");
         }
         UUID usuario = UUID.fromString(jwt.getSubject().substring(4));
-        var respuesta = servicio.generarApiKey(usuario);
+        ApiKeyResponseDTO respuesta = mapear(servicio.generarApiKey(usuario));
         return ResponseEntity.ok().cacheControl(CacheControl.noStore())
                 .header(HttpHeaders.PRAGMA, "no-cache")
                 .body(new SuccessResponseDTO<>("API Key generada correctamente. Guardá esta clave; no se volverá a mostrar.", respuesta));
+    }
+
+    private static UsuarioResponseDTO mapear(UsuarioResultado resultado) {
+        return new UsuarioResponseDTO("usr_" + resultado.id(), resultado.nombreUsuario(),
+                resultado.correo(), resultado.creadoEn());
+    }
+
+    private static LoginResponseDTO mapear(LoginResultado resultado) {
+        return new LoginResponseDTO(resultado.tokenAcceso());
+    }
+
+    private static ApiKeyResponseDTO mapear(ApiKeyResultado resultado) {
+        return new ApiKeyResponseDTO(resultado.apiKey(), resultado.prefijo(), resultado.activa(), resultado.creadaEn());
     }
 }

@@ -24,7 +24,7 @@ class ApiKeyIntegrationTest extends PostgresTestSupport {
     void generaClavePersistiendoSoloHashPrefijoYUnaActiva() {
         UUID usuario = crearUsuario();
         var respuesta = servicio.generar(usuario);
-        String secreto = respuesta.getApiKey();
+        String secreto = respuesta.apiKey();
         assertThat(secreto).matches("dev_key_[A-Za-z0-9_-]{43}");
         var fila = jdbc.queryForMap("SELECT * FROM api_keys WHERE user_id = ?", usuario);
         assertThat(fila.get("key_hash")).isNotEqualTo(secreto).satisfiesAnyOf(
@@ -40,8 +40,8 @@ class ApiKeyIntegrationTest extends PostgresTestSupport {
     @Test
     void rotacionRevocaLaAnteriorYConservaSoloLaNueva() {
         UUID usuario = crearUsuario();
-        String primera = servicio.generar(usuario).getApiKey();
-        String segunda = servicio.generar(usuario).getApiKey();
+        String primera = servicio.generar(usuario).apiKey();
+        String segunda = servicio.generar(usuario).apiKey();
         assertThat(segunda).isNotEqualTo(primera);
         var filas = jdbc.queryForList("SELECT key_hash, key_prefix, is_active, created_at, revoked_at FROM api_keys WHERE user_id = ? ORDER BY created_at", usuario);
         assertThat(filas).hasSize(2);
@@ -56,7 +56,7 @@ class ApiKeyIntegrationTest extends PostgresTestSupport {
     @Test
     void falloDeInsercionHaceRollbackYConservaClaveAnterior() throws Exception {
         UUID usuario = crearUsuario();
-        String primera = servicio.generar(usuario).getApiKey();
+        String primera = servicio.generar(usuario).apiKey();
         inTransaction(connection -> {
             try (var statement = connection.createStatement()) {
                 statement.execute("CREATE OR REPLACE FUNCTION test_api_key_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'fallo controlado'; END; $$");

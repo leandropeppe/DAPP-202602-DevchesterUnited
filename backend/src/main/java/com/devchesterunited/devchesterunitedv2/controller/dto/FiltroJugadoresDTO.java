@@ -1,10 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.controller.dto;
 
 import jakarta.validation.ConstraintViolationException;
+import com.devchesterunited.devchesterunitedv2.service.dto.FiltroJugadoresConsulta;
 import java.util.Set;
 
 /** Entrada validada; null indica filtro o paginación ausente. */
-public record FiltroJugadoresDTO(String liga, String equipo, String posicion, Integer pagina, Integer limite) {
+public record FiltroJugadoresDTO(String liga, String equipo, String posicion, Integer pagina, Integer limite)
+        implements FiltroJugadoresConsulta {
     public FiltroJugadoresDTO {
         liga = validarFiltro(liga, "league", 100);
         equipo = validarFiltro(equipo, "team", 100);

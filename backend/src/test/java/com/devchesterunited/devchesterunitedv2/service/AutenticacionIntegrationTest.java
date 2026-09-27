@@ -43,7 +43,7 @@ class AutenticacionIntegrationTest extends PostgresTestSupport {
             assertThat(encoder.matches(CLAVE, hash)).isTrue();
             // Respuesta propuesta con getAccessToken(): JWT vinculado al usuario persistido.
             var respuesta = servicio.login(" " + nombre.toUpperCase(java.util.Locale.ROOT) + " ", CLAVE);
-            var token = com.nimbusds.jwt.SignedJWT.parse(respuesta.getAccessToken());
+            var token = com.nimbusds.jwt.SignedJWT.parse(respuesta.tokenAcceso());
             assertThat(token.getHeader().getAlgorithm().getName()).isEqualTo("HS256");
             var claims = token.getJWTClaimsSet();
             assertThat(claims.getSubject()).isEqualTo("usr_" + fila.get("id"));
