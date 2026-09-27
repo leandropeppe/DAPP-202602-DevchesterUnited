@@ -101,5 +101,5 @@ export const getPlayers = ({ filters = {} } = {}) => {
   }
 
   const query = params.toString()
-  return request(`/players${query ? `?${query}` : ''}`)
+  return request('/players' + (query ? '?' + query : ''))
 }
