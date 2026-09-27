@@ -16,7 +16,7 @@ export function usernameValidationMessage () {
 }
 
 export function validateEmail (value) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254
+  return /^[^\s@]{1,254}@[^\s@]{1,254}\.[^\s@]{1,254}$/.test(value) && value.length <= 254
 }
 
 export function validateRegistrationPassword (value) {
