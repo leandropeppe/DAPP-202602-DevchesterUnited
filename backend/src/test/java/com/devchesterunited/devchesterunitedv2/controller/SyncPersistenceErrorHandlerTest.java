@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.controller;
 
-import com.devchesterunited.devchesterunitedv2.controller.exceptionHandler.GlobalExceptionHandler;
+import com.devchesterunited.devchesterunitedv2.controller.exceptionhandler.GlobalExceptionHandler;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionPersistenciaException;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
