@@ -53,7 +53,7 @@ public record FiltroJugadoresDTO(String liga, String equipo, String posicion, In
 
     private static Integer entero(String valor, String campo) {
         if (valor == null) return null;
-        if (!valor.matches("[0-9]+")) {
+        if (!valor.matches("\\d+")) {
             throw invalido(campo + " debe ser un entero válido.");
         }
         try {
