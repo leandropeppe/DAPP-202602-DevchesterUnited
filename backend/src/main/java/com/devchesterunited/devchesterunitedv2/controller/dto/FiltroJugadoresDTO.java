@@ -65,7 +65,7 @@ public record FiltroJugadoresDTO(String liga, String equipo, String posicion, In
 
     private static long calcularOffset(int pagina, int limite) {
         try {
-            long offset = Math.multiplyExact(Math.subtractExact((long) pagina, 1L), (long) limite);
+            long offset = Math.multiplyExact(Math.subtractExact(pagina, 1L), (long) limite);
             // Rango admitido por el contrato de paginación de la aplicación.
             Math.toIntExact(offset);
             return offset;
