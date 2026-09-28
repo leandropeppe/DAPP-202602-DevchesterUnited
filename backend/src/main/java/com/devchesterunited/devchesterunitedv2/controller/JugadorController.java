@@ -16,7 +16,6 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,29 +39,27 @@ public class JugadorController {
             summary = "Consultar catálogo con filtros parciales",
             description = "Consulta pública local, con filtros parciales case-insensitive y paginación."
             )
-    @ApiResponses({
         @ApiResponse(
                 responseCode = "200",
-                description = "Jugadores y metadatos de paginación."),
+                description = "Jugadores y metadatos de paginación.")
         @ApiResponse(
                 responseCode = "400",
                 description = "Parámetros de consulta inválidos.",
                 content = @Content(
                         mediaType = "application/json",
-                        schema = @Schema(implementation = ErrorResponseDTO.class))),
+                        schema = @Schema(implementation = ErrorResponseDTO.class)))
         @ApiResponse(
                 responseCode = "500",
                 description = "Fallo interno; mensaje genérico en español.",
                 content = @Content(
                         mediaType = "application/json",
-                        schema = @Schema(implementation = ErrorResponseDTO.class))),
+                        schema = @Schema(implementation = ErrorResponseDTO.class)))
         @ApiResponse(
                 responseCode = "503",
                 description = "Base de datos no disponible; no se concede acceso.",
                 content = @Content(
                         mediaType = "application/json",
                         schema = @Schema(implementation = ErrorResponseDTO.class)))
-    })
     @GetMapping("/players")
     public ResponseEntity<SuccessResponseDTO<JugadoresResponseDTO>> consultar(
             @Parameter(
