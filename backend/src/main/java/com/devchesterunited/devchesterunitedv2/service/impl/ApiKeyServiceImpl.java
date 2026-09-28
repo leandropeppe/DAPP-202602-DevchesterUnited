@@ -36,17 +36,13 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         if (apiKey == null || !apiKey.matches("dev_key_[A-Za-z0-9_-]{43}")) {
             throw new BadCredentialsException(CREDENCIAL_INVALIDA);
         }
-        try {
-            String hash = sha256(apiKey);
-            var entidad = apiKeys.findByHashClaveAndActivaTrue(hash)
-                    .orElseThrow(() -> new BadCredentialsException(CREDENCIAL_INVALIDA));
-            if (usuarios.findById(entidad.getUsuarioId()).isEmpty()) {
-                throw new BadCredentialsException(CREDENCIAL_INVALIDA);
-            }
-            return entidad.getUsuarioId();
-        } catch (DataAccessException exception) {
-            throw exception;
+        String hash = sha256(apiKey);
+        var entidad = apiKeys.findByHashClaveAndActivaTrue(hash)
+                .orElseThrow(() -> new BadCredentialsException(CREDENCIAL_INVALIDA));
+        if (usuarios.findById(entidad.getUsuarioId()).isEmpty()) {
+            throw new BadCredentialsException(CREDENCIAL_INVALIDA);
         }
+        return entidad.getUsuarioId();
     }
 
     private static String sha256(String valor) {
