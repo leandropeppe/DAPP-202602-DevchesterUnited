@@ -29,8 +29,9 @@ class ApiKeyIntegrationTest extends PostgresTestSupport {
         var fila = jdbc.queryForMap("SELECT * FROM api_keys WHERE user_id = ?", usuario);
         assertThat(fila.get("key_hash")).isNotEqualTo(secreto).satisfiesAnyOf(
                 valor -> assertThat(valor.toString()).matches("[0-9a-f]{64}"));
-        assertThat(fila).containsEntry("key_prefix", secreto.substring(0, 14));
-        assertThat(fila).containsEntry("is_active", true);
+        assertThat(fila)
+                .containsEntry("key_prefix", secreto.substring(0, 14))
+                .containsEntry("is_active", true);
         assertThat(fila.get("revoked_at")).isNull();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys WHERE user_id = ? AND is_active", Long.class, usuario))
                 .isEqualTo(1L);
