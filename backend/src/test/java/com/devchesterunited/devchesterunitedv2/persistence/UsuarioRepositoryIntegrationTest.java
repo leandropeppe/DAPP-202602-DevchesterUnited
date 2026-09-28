@@ -57,7 +57,7 @@ class UsuarioRepositoryIntegrationTest extends PostgresTestSupport {
         UUID otro = UUID.randomUUID();
         try {
             insertar(id, nombre(id), nombre(id) + "@example.com", FECHA, FECHA);
-            Throwable fallo = catchThrowable(() -> insertar(otro, mismoNombre ? nombre(id) : nombre(otro),
+            Throwable fallo = catchThrowable(() -> insertar(otro, nombre(mismoNombre ? id : otro),
                     mismoNombre ? nombre(otro) + "@example.com" : nombre(id) + "@example.com", FECHA, FECHA));
             assertThat(fallo).isInstanceOf(SQLException.class);
             assertThat(((SQLException) fallo).getSQLState()).isEqualTo("23505");
