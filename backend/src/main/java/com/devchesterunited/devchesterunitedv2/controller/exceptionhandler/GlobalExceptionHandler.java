@@ -1,4 +1,4 @@
-package com.devchesterunited.devchesterunitedv2.controller.exceptionHandler;
+package com.devchesterunited.devchesterunitedv2.controller.exceptionhandler;
 
 import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
 import jakarta.validation.ConstraintViolationException;
