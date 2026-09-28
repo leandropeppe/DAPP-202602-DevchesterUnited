@@ -22,7 +22,7 @@ export function validateEmail (value) {
 export function validateRegistrationPassword (value) {
   const bytes = new TextEncoder().encode(value).length
   return value.length >= 8 && value.length <= 72 && bytes <= 72 &&
-    /[a-z]/.test(value) && /[A-Z]/.test(value) && /[0-9]/.test(value) &&
+    /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value) &&
     !/^\s|\s$/.test(value)
 }
 
