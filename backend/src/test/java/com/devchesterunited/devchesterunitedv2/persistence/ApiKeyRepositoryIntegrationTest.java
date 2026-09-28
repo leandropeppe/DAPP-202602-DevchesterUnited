@@ -38,7 +38,7 @@ class ApiKeyRepositoryIntegrationTest extends PostgresTestSupport {
     }
 
     @Test
-    void hashEsUnico() throws Exception {
+    void hashEsUnico() {
         UUID usuario = crearUsuario();
         repositorio.saveAndFlush(new APIKeyEntity(UUID.randomUUID(), usuario, HASH, "dev_key_123456", true, Instant.now(), null));
         assertThatThrownBy(() -> insertarJdbc(UUID.randomUUID(), usuario, HASH, false, Instant.now(), Instant.now()))
@@ -47,7 +47,7 @@ class ApiKeyRepositoryIntegrationTest extends PostgresTestSupport {
     }
 
     @Test
-    void checkActivoImpideRevokedAtYCheckRevocadoExigeFecha() throws Exception {
+    void checkActivoImpideRevokedAtYCheckRevocadoExigeFecha() {
         UUID usuario = crearUsuario();
         assertThatThrownBy(() -> insertarJdbc(UUID.randomUUID(), usuario, HASH, true, Instant.now(), Instant.now()))
                 .isInstanceOf(SQLException.class).satisfies(error -> assertThat(((SQLException) error).getSQLState()).isEqualTo("23514"));
