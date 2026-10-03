@@ -12,6 +12,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.mapper.JugadorMapper;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
 import com.devchesterunited.devchesterunitedv2.service.impl.SincronizacionCatalogoServiceImpl;
 import java.time.Clock;
@@ -44,7 +45,7 @@ class SincronizacionCatalogoServiceTest {
     @BeforeEach
     void preparar() {
         servicio = new SincronizacionCatalogoServiceImpl(adapter, equipos, jugadores, usuarios, identidades, jdbc,
-                Clock.fixed(AHORA, java.time.ZoneOffset.UTC));
+                Clock.fixed(AHORA, java.time.ZoneOffset.UTC), new JugadorMapper());
         lenient().when(equipos.findAllByIdExternoIn(anyList())).thenReturn(List.of());
         lenient().when(jugadores.findAllByIdExternoIn(anyList())).thenReturn(List.of());
         lenient().when(equipos.findAll()).thenReturn(List.of());

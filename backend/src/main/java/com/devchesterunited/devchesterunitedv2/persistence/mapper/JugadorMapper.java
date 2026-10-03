@@ -1,0 +1,60 @@
+package com.devchesterunited.devchesterunitedv2.persistence.mapper;
+
+import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
+import org.springframework.stereotype.Component;
+
+/** Traduce el perfil de dominio de un jugador a su representación JPA. */
+@Component
+public class JugadorMapper {
+
+    /**
+     * Mapea un jugador del snapshot, conservando la identidad local y la fecha
+     * de creación cuando ya existe una fila persistida.
+     */
+    public JugadorEntity toEntity(Jugador jugador, Equipo equipo, UUID equipoId,
+            JugadorEntity anterior, Instant ahora) {
+        Objects.requireNonNull(jugador, "jugador es obligatorio");
+        Objects.requireNonNull(equipo, "equipo es obligatorio");
+        Objects.requireNonNull(equipoId, "equipoId es obligatorio");
+        Objects.requireNonNull(ahora, "ahora es obligatorio");
+
+        return new JugadorEntity(
+                anterior == null ? jugador.getId() : anterior.getId(),
+                jugador.getIdExterno(),
+                jugador.getNombre(),
+                equipoId,
+                jugador.getPosicion(),
+                jugador.getDorsal() == 0 ? null : jugador.getDorsal(),
+                jugador.getNacionalidad(),
+                jugador.isActivo(),
+                anterior == null ? ahora : anterior.getCreadoEn(),
+                ahora,
+                equipo.getLiga(),
+                equipo.getNombre());
+    }
+
+    /** Mapea una fila existente al estado inactivo sin alterar sus datos. */
+    public JugadorEntity toInactiveEntity(JugadorEntity actual, Instant ahora) {
+        Objects.requireNonNull(actual, "actual es obligatorio");
+        Objects.requireNonNull(ahora, "ahora es obligatorio");
+
+        return new JugadorEntity(
+                actual.getId(),
+                actual.getIdExterno(),
+                actual.getNombre(),
+                actual.getEquipoId(),
+                actual.getPosicion(),
+                actual.getNumeroCamiseta(),
+                actual.getNacionalidad(),
+                false,
+                actual.getCreadoEn(),
+                ahora,
+                actual.getLiga(),
+                actual.getEquipo());
+    }
+}
