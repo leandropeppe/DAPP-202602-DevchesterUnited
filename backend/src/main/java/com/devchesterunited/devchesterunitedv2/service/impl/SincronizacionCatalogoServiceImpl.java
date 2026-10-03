@@ -162,7 +162,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
         for (JugadorEntity jugador : jugadores.findAllByIdExternoIn(
                 snapshot.getJugadores().stream()
-                        .map(Jugador::getIdExterno)
+                        .map(jugador -> snapshot.getExternalId(jugador.getId()))
                         .toList())) {
 
             existentesJugadores.put(jugador.getIdExterno(), jugador);
@@ -171,7 +171,8 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         int jugadoresCreados = 0;
 
         for (Jugador jugador : snapshot.getJugadores()) {
-            JugadorEntity anterior = existentesJugadores.get(jugador.getIdExterno());
+            long externalId = snapshot.getExternalId(jugador.getId());
+            JugadorEntity anterior = existentesJugadores.get(externalId);
 
             if (anterior == null) {
                 jugadoresCreados++;
@@ -180,11 +181,11 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             Equipo equipo = equipo(snapshot, jugador.getEquipoId());
             UUID equipoIdPersistido = equiposSnapshot.get(equipo.getIdExterno());
             JugadorEntity persistido = jugadores.save(
-                    jugadorMapper.toEntity(jugador, equipo, equipoIdPersistido, anterior, ahora));
+                    jugadorMapper.toEntity(jugador, externalId, equipo, equipoIdPersistido, anterior, ahora));
 
-            guardarIdentidadFootballData(persistido, jugador.getIdExterno());
+            guardarIdentidadFootballData(persistido, externalId);
 
-            jugadoresSnapshot.put(jugador.getIdExterno(), jugador);
+            jugadoresSnapshot.put(externalId, jugador);
         }
 
         return jugadoresCreados;

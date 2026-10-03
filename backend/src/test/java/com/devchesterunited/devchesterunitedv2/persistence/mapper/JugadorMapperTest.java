@@ -17,11 +17,11 @@ class JugadorMapperTest {
     void mapeaJugadorNuevoConEquipoYColumnasLegacy() {
         UUID jugadorId = UUID.randomUUID();
         UUID equipoId = UUID.randomUUID();
-        Jugador jugador = Jugador.importado(jugadorId, 77L, "Lionel Messi", equipoId,
+        Jugador jugador = new Jugador(jugadorId, "Lionel Messi", equipoId,
                 "Forward", 10, "Argentina", ACTUALIZADO);
         Equipo equipo = equipo(equipoId);
 
-        JugadorEntity resultado = mapper.toEntity(jugador, equipo, equipoId, null, ACTUALIZADO);
+        JugadorEntity resultado = mapper.toEntity(jugador, 77L, equipo, equipoId, null, ACTUALIZADO);
 
         assertThat(resultado.getId()).isEqualTo(jugadorId);
         assertThat(resultado.getIdExterno()).isEqualTo(77L);
@@ -39,13 +39,13 @@ class JugadorMapperTest {
     void mapeaActualizacionConservandoUuidExternalIdYFechaDeCreacion() {
         UUID anteriorId = UUID.randomUUID();
         UUID equipoId = UUID.randomUUID();
-        Jugador jugador = Jugador.importado(UUID.randomUUID(), 88L, "Nombre actualizado", equipoId,
+        Jugador jugador = new Jugador(UUID.randomUUID(), "Nombre actualizado", equipoId,
                 "Midfielder", null, "Uruguay", ACTUALIZADO);
         JugadorEntity anterior = new JugadorEntity(anteriorId, 88L, "Nombre anterior", equipoId,
                 "Forward", 9, "Argentina", false, CREADO, CREADO,
                 "Liga anterior", "Equipo anterior");
 
-        JugadorEntity resultado = mapper.toEntity(jugador, equipo(equipoId), equipoId, anterior, ACTUALIZADO);
+        JugadorEntity resultado = mapper.toEntity(jugador, 88L, equipo(equipoId), equipoId, anterior, ACTUALIZADO);
 
         assertThat(resultado.getId()).isEqualTo(anteriorId);
         assertThat(resultado.getIdExterno()).isEqualTo(88L);

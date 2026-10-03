@@ -11,7 +11,9 @@ import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -109,6 +111,7 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
         List<Integer> cantidades = List.of(20, 20, 18, 20, 18);
         List<Equipo> equiposSnapshot = new ArrayList<>();
         List<Jugador> jugadoresSnapshot = new ArrayList<>();
+        Map<UUID, Long> ids = new HashMap<>();
         int indice = 0;
         for (int liga = 0; liga < ligas.size(); liga++) {
             for (int i = 0; i < cantidades.get(liga); i++) {
@@ -116,11 +119,13 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
                 equiposSnapshot.add(Equipo.importado(equipoId, 600000L + indice,
                         "Equipo " + indice, "E", "E", ligas.get(liga), null,
                         2026L, null, null, AHORA));
-                jugadoresSnapshot.add(Jugador.importado(UUID.randomUUID(), 700000L + indice,
-                        "Jugador " + indice, equipoId, "Forward", null, "Argentina", AHORA));
+                Jugador jugadorInterno = new Jugador(UUID.randomUUID(), "Jugador " + indice,
+                        equipoId, "Forward", null, "Argentina", AHORA);
+                jugadoresSnapshot.add(jugadorInterno);
+                ids.put(jugadorInterno.getId(), 700000L + indice);
                 indice++;
             }
         }
-        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot);
+        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids);
     }
 }

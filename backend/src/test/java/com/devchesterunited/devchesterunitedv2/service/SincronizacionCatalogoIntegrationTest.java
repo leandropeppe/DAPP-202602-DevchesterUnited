@@ -11,6 +11,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -120,16 +121,19 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
         List<Integer> cantidades = List.of(20, 20, 18, 20, 18);
         var equipos = new ArrayList<Equipo>();
         var jugadores = new ArrayList<Jugador>();
+        var ids = new HashMap<UUID, Long>();
         int indice = 0;
         for (int liga = 0; liga < ligas.size(); liga++) for (int i = 0; i < cantidades.get(liga); i++) {
             UUID equipoId = UUID.randomUUID();
             equipos.add(Equipo.importado(equipoId, equipoBase + indice, "Equipo " + indice, "E", "E", ligas.get(liga), null,
                     2026, null, null, AHORA));
-            jugadores.add(Jugador.importado(UUID.randomUUID(), jugadorBase + indice, "Jugador " + indice + " Apellido",
-                    equipoId, "Forward", indice % 2 == 0 ? null : 9, "Argentina", AHORA));
+            Jugador jugador = new Jugador(UUID.randomUUID(), "Jugador " + indice + " Apellido",
+                    equipoId, "Forward", indice % 2 == 0 ? null : 9, "Argentina", AHORA);
+            jugadores.add(jugador);
+            ids.put(jugador.getId(), jugadorBase + indice);
             indice++;
         }
-        return new CatalogoSincronizado(equipos, jugadores);
+        return new CatalogoSincronizado(equipos, jugadores, ids);
     }
 
 }

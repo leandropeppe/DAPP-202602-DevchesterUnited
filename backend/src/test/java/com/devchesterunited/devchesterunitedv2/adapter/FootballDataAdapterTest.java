@@ -43,7 +43,7 @@ class FootballDataAdapterTest {
         assertThat(snapshot.getJugadores()).hasSize(96);
         assertThat(rutas).containsExactly("/competitions/PL/teams", "/competitions/PD/teams",
                 "/competitions/BL1/teams", "/competitions/SA/teams", "/competitions/FL1/teams");
-        assertThat(snapshot.getJugadores().get(0).getIdExterno()).isNotNull();
+        assertThat(snapshot.getIdentidadesFootballData()).containsValue(60000L);
         assertThat(snapshot.getEquipos().get(0).getEscudoUrl()).isEqualTo(URI.create("https://img.example/10000.png"));
     }
 
@@ -52,7 +52,7 @@ class FootballDataAdapterTest {
         iniciar((exchange, codigo) -> responder(exchange, 200, payload(codigo, cantidad(codigo), true), "100"));
         var jugadores = adapter().sincronizar().getJugadores();
         assertThat(jugadores).extracting(j -> j.getPosicion()).contains("Defender", "Midfielder", "Goalkeeper", "Forward");
-        assertThat(jugadores).anyMatch(j -> j.getDorsal() == 0 && j.getNombre().equals("Solo Nombre"));
+        assertThat(jugadores).anyMatch(j -> j.getDorsal() == null && j.getNombre().equals("Solo Nombre"));
     }
 
     private void assertSincronizacionFalla() {

@@ -11,6 +11,7 @@ import com.devchesterunited.devchesterunitedv2.service.interfaces.Sincronizacion
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -133,6 +134,7 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
         List<Integer> cantidades = List.of(20, 20, 18, 20, 18);
         List<Equipo> equiposSnapshot = new ArrayList<>();
         List<Jugador> jugadoresSnapshot = new ArrayList<>();
+        Map<UUID, Long> ids = new HashMap<>();
         int indice = 0;
         for (int liga = 0; liga < ligas.size(); liga++) {
             String nombreLiga = ligas.get(liga);
@@ -145,12 +147,14 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
                         reemplazo ? "Equipo Nuevo" : "Equipo " + indice, "E", "E", nombreLiga, null,
                         temporada.id(), temporada.inicio(), temporada.fin(), AHORA));
                 long idExternoJugador = reemplazo ? JUGADOR_NUEVO : JUGADOR_BASE + indice;
-                jugadoresSnapshot.add(Jugador.importado(UUID.randomUUID(), idExternoJugador,
-                        "Jugador " + idExternoJugador, equipoId, "Forward", null, "Argentina", AHORA));
+                Jugador jugadorInterno = new Jugador(UUID.randomUUID(), "Jugador " + idExternoJugador,
+                        equipoId, "Forward", null, "Argentina", AHORA);
+                jugadoresSnapshot.add(jugadorInterno);
+                ids.put(jugadorInterno.getId(), idExternoJugador);
                 indice++;
             }
         }
-        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot);
+        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids);
     }
 
     private record Temporada(Long id, LocalDate inicio, LocalDate fin) { }

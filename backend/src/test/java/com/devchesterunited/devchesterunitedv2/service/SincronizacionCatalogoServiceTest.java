@@ -18,6 +18,7 @@ import com.devchesterunited.devchesterunitedv2.service.impl.SincronizacionCatalo
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -92,6 +93,7 @@ class SincronizacionCatalogoServiceTest {
     private static CatalogoSincronizado snapshot() {
         var equipos = new ArrayList<Equipo>();
         var jugadores = new ArrayList<Jugador>();
+        var ids = new HashMap<UUID, Long>();
         List<String> ligas = List.of("Premier League", "LaLiga", "Bundesliga", "Serie A", "Ligue 1");
         List<Integer> cantidades = List.of(20, 20, 18, 20, 18);
         long externo = 1;
@@ -99,10 +101,12 @@ class SincronizacionCatalogoServiceTest {
             UUID id = UUID.randomUUID();
             equipos.add(Equipo.importado(id, externo, "Equipo " + externo, "E", "E", ligas.get(i), null,
                     2026, null, null, AHORA));
-            jugadores.add(Jugador.importado(UUID.randomUUID(), 10000 + externo, "Jugador Apellido", id,
-                    "Forward", null, "Argentina", AHORA));
+            Jugador jugador = new Jugador(UUID.randomUUID(), "Jugador Apellido", id,
+                    "Forward", null, "Argentina", AHORA);
+            jugadores.add(jugador);
+            ids.put(jugador.getId(), 10000 + externo);
             externo++;
         }
-        return new CatalogoSincronizado(equipos, jugadores);
+        return new CatalogoSincronizado(equipos, jugadores, ids);
     }
 }
