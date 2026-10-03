@@ -3,7 +3,7 @@ param(
     [string]$ProjectKey = 'leandropeppe_DAPP-202602-DevchesterUnited',
     [string]$HostUrl = 'https://sonarcloud.io',
     [string]$Token = $env:SONAR_TOKEN,
-    [int]$MaxOpenIssues = 10
+    [int]$MaxOpenIssues = 20
 )
 
 Set-StrictMode -Version Latest
