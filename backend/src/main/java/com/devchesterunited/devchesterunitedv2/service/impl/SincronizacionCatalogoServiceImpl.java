@@ -4,11 +4,14 @@ import com.devchesterunited.devchesterunitedv2.adapter.ProveedorCatalogo;
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionPersistenciaException;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
@@ -16,6 +19,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.dao.DataAccessException;
@@ -32,16 +36,19 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     private final ProveedorCatalogo adapter;
     private final EquipoRepository equipos;
     private final JugadorRepository jugadores;
+    private final IdentidadExternaJugadorRepository identidades;
     private final UsuarioRepository usuarios;
     private final JdbcTemplate jdbc;
     private final Clock clock;
 
     public SincronizacionCatalogoServiceImpl(ProveedorCatalogo adapter, EquipoRepository equipos,
-            JugadorRepository jugadores, UsuarioRepository usuarios, JdbcTemplate jdbc, Clock clock) {
+            JugadorRepository jugadores, UsuarioRepository usuarios,
+            IdentidadExternaJugadorRepository identidades, JdbcTemplate jdbc, Clock clock) {
         this.adapter = adapter;
         this.equipos = equipos;
         this.jugadores = jugadores;
         this.usuarios = usuarios;
+        this.identidades = Objects.requireNonNull(identidades, "identidades es obligatoria");
         this.jdbc = jdbc;
         this.clock = clock;
     }
@@ -170,7 +177,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
                 jugadoresCreados++;
             }
 
-            jugadores.save(new JugadorEntity(
+            JugadorEntity persistido = jugadores.save(new JugadorEntity(
                     id,
                     jugador.getIdExterno(),
                     jugador.getNombre(),
@@ -189,10 +196,24 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
                     equipoNombre(snapshot, jugador.getEquipoId())
             ));
 
+            guardarIdentidadFootballData(persistido, jugador.getIdExterno());
+
             jugadoresSnapshot.put(jugador.getIdExterno(), jugador);
         }
 
         return jugadoresCreados;
+    }
+
+    private void guardarIdentidadFootballData(JugadorEntity jugador, long externalId) {
+        IdentidadExternaJugadorEntity identidad = identidades
+                .findByJugador_IdAndProveedor(jugador.getId(), ProveedorIdentidadExterna.FOOTBALL_DATA)
+                .orElseGet(() -> new IdentidadExternaJugadorEntity(
+                        UUID.randomUUID(), jugador, ProveedorIdentidadExterna.FOOTBALL_DATA, externalId));
+        if (!identidad.getExternalId().equals(externalId)) {
+            identidad = new IdentidadExternaJugadorEntity(identidad.getId(), jugador,
+                    ProveedorIdentidadExterna.FOOTBALL_DATA, externalId);
+        }
+        identidades.save(identidad);
     }
 
     private Map<Long, EquipoEntity> existentesEquipos(CatalogoSincronizado snapshot) {

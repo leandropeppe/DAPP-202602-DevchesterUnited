@@ -6,10 +6,12 @@ import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
 import com.devchesterunited.devchesterunitedv2.service.impl.SincronizacionCatalogoServiceImpl;
 import java.time.Clock;
@@ -34,13 +36,14 @@ class SincronizacionCatalogoServiceTest {
     @Mock ProveedorCatalogo adapter;
     @Mock EquipoRepository equipos;
     @Mock JugadorRepository jugadores;
+    @Mock IdentidadExternaJugadorRepository identidades;
     @Mock UsuarioRepository usuarios;
     @Mock JdbcTemplate jdbc;
     private SincronizacionCatalogoServiceImpl servicio;
 
     @BeforeEach
     void preparar() {
-        servicio = new SincronizacionCatalogoServiceImpl(adapter, equipos, jugadores, usuarios, jdbc,
+        servicio = new SincronizacionCatalogoServiceImpl(adapter, equipos, jugadores, usuarios, identidades, jdbc,
                 Clock.fixed(AHORA, java.time.ZoneOffset.UTC));
         lenient().when(equipos.findAllByIdExternoIn(anyList())).thenReturn(List.of());
         lenient().when(jugadores.findAllByIdExternoIn(anyList())).thenReturn(List.of());
@@ -48,6 +51,9 @@ class SincronizacionCatalogoServiceTest {
         lenient().when(jugadores.findAll()).thenReturn(List.of());
         lenient().when(equipos.save(any(EquipoEntity.class))).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(jugadores.save(any(JugadorEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(identidades.findByJugador_IdAndProveedor(any(), any())).thenReturn(java.util.Optional.empty());
+        lenient().when(identidades.save(any(IdentidadExternaJugadorEntity.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
     }
 
     @Test
@@ -63,6 +69,7 @@ class SincronizacionCatalogoServiceTest {
         assertThat(resultado.jugadoresCreados()).isEqualTo(96);
         verify(equipos).flush();
         verify(jugadores).flush();
+        verify(identidades, times(96)).save(any(IdentidadExternaJugadorEntity.class));
     }
 
     @Test
