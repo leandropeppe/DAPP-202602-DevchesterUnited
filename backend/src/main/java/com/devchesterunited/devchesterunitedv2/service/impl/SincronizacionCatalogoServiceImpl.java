@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.service.impl;
 
-import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.adapter.ProveedorCatalogo;
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
@@ -29,14 +29,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogoService {
     private static final long LOCK_KEY_1 = 114644L;
     private static final long LOCK_KEY_2 = 1L;
-    private final FootballDataAdapter adapter;
+    private final ProveedorCatalogo adapter;
     private final EquipoRepository equipos;
     private final JugadorRepository jugadores;
     private final UsuarioRepository usuarios;
     private final JdbcTemplate jdbc;
     private final Clock clock;
 
-    public SincronizacionCatalogoServiceImpl(FootballDataAdapter adapter, EquipoRepository equipos,
+    public SincronizacionCatalogoServiceImpl(ProveedorCatalogo adapter, EquipoRepository equipos,
             JugadorRepository jugadores, UsuarioRepository usuarios, JdbcTemplate jdbc, Clock clock) {
         this.adapter = adapter;
         this.equipos = equipos;

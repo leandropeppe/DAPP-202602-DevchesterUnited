@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.adapter.impl;
 
 import java.io.IOException;
 import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
+import com.devchesterunited.devchesterunitedv2.adapter.ProveedorCatalogo;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballPlayerDTO;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballSeasonDTO;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballTeamDTO;
@@ -32,7 +33,7 @@ import org.springframework.web.client.RestClientException;
 
 /** Adapter aislado para Football-Data.org; nunca expone sus DTOs al dominio. */
 @Component
-public class FootballDataAdapter {
+public class FootballDataAdapter implements ProveedorCatalogo {
     private static final URI BASE_PRODUCTIVA = URI.create("https://api.football-data.org/v4");
     private static final List<Liga> LIGAS = List.of(
             new Liga("PL", "Premier League", 20), new Liga("PD", "LaLiga", 20),
@@ -187,6 +188,7 @@ public class FootballDataAdapter {
         return builder.baseUrl(BASE_PRODUCTIVA.toString()).requestFactory(factory).build();
     }
 
+    @Override
     public CatalogoSincronizado sincronizar() {
         if (apiKey.isBlank()) throw new FootballDataException("La integracion externa no esta configurada.");
         Instant limite = clock.instant().plus(DEADLINE);

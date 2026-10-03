@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service;
 
 import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
-import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.adapter.ProveedorCatalogo;
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class SincronizacionCatalogoServiceTest {
     private static final Instant AHORA = Instant.parse("2026-09-16T12:00:00Z");
-    @Mock FootballDataAdapter adapter;
+    @Mock ProveedorCatalogo adapter;
     @Mock EquipoRepository equipos;
     @Mock JugadorRepository jugadores;
     @Mock UsuarioRepository usuarios;
