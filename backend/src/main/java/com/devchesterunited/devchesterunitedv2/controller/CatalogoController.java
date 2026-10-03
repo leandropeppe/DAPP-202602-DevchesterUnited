@@ -38,7 +38,9 @@ public class CatalogoController {
         @ApiResponse(responseCode = "500", description = "Fallo inesperado.", content = @Content(schema = @Schema(implementation = ErrorResponseDTO.class)))
     @PostMapping("/sync")
     public ResponseEntity<SuccessResponseDTO<SincronizacionResponseDTO>> sincronizar(
-            @AuthenticationPrincipal UUID usuario, @RequestBody(required = false) String cuerpo) {
+            @AuthenticationPrincipal UUID usuario,
+            @io.swagger.v3.oas.annotations.Parameter(hidden = true)
+            @RequestBody(required = false) String cuerpo) {
         if (cuerpo != null && !cuerpo.isBlank()) {
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.BAD_REQUEST, "La solicitud no es valida.");

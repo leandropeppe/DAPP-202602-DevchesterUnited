@@ -59,6 +59,7 @@ tasks.named('jacocoTestReport') {
 
 sonar {
 	properties {
+		property "sonar.host.url", "https://sonarcloud.io"
 		property "sonar.projectKey", "leandropeppe_DAPP-202602-DevchesterUnited"
 		property "sonar.organization", "leandropeppe"
 	}

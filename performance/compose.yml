@@ -8,8 +8,9 @@ services:
       TZ: UTC
     ports:
       - "127.0.0.1:15433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
     volumes:
-      - performance_pgdata:/var/lib/postgresql/data
       - ./seed.sql:/performance/seed.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U performance_user -d devchester_performance"]
@@ -20,5 +21,3 @@ services:
     mem_limit: 2g
     shm_size: 256m
 
-volumes:
-  performance_pgdata:

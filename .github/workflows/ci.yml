@@ -150,6 +150,12 @@ jobs:
           -Dsonar.coverage.jacoco.xmlReportPaths=backend/build/reports/jacoco/test/jacocoTestReport.xml
           -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
 
+      - name: Verify SonarCloud Quality Gate and issue limits
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: pwsh
+        run: ./scripts/verify-sonar-gate.ps1 -ProjectKey 'leandropeppe_DAPP-202602-DevchesterUnited'
+
   e2e:
     name: Playwright E2E
     needs:

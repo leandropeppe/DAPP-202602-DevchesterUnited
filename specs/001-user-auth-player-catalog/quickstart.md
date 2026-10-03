@@ -1,6 +1,6 @@
 # Guía de validación: autenticación, sincronización y frontend
 
-**Revisión documental 2026-09-25**. US1–US5, T001–T078, T083 y T089–T098 constan implementadas en los artefactos actuales. Esta guía describe la validación operativa y los gates pendientes T079, T080, T081, T082 y T084–T088; los resultados ejecutados deben conservarse en `validation.md` por commit. El monorepo ubica Gradle en `backend/` y React + JavaScript/Vite en `frontend/`; `.specify/`, `specs/`, `.github/`, `performance/` y `postman/` permanecen en la raíz. Esta guía no acredita por sí sola una ejecución exitosa.
+**Revisión documental 2026-09-30**. US1–US5, T001–T079, T081–T085, T087 y T089–T098 constan implementadas en los artefactos actuales. Esta guía describe la validación operativa y los gates pendientes T080, T084, T086 y T088; los resultados ejecutados deben conservarse en `validation.md` por commit. El monorepo ubica Gradle en `backend/` y React + JavaScript/Vite en `frontend/`; `.specify/`, `specs/`, `.github/`, `performance/` y `postman/` permanecen en la raíz. Esta guía no acredita por sí sola una ejecución exitosa.
 
 ## Prerrequisitos
 

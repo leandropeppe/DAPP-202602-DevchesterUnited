@@ -4,7 +4,7 @@
 
 ## Resumen
 
-**Estado documental vigente (2026-09-25)**: T001–T078, T083 y T089–T098 figuran completadas con evidencia histórica en `validation.md`. La funcionalidad US1–US5 y la corrección constitucional C1 están implementadas según el código inspeccionado y la evidencia registrada; la aceptación operativa final permanece abierta por T079, T080, T081, T082 y T084–T088. T079 y T084 tienen configuración parcial, pero no ejecución/cierre verificable.
+**Estado documental vigente (2026-10-03)**: T001–T079, T081–T086, T087 y T089–T098 figuran completadas con evidencia histórica o ejecución reciente en `validation.md`. La funcionalidad US1–US5 y la corrección constitucional C1 están implementadas según el código inspeccionado y la evidencia registrada; la aceptación operativa final permanece abierta por T080 y T088. T084 fue ejecutada y verificada en CI; T086 quedó documentada como bloqueo externo.
 
 Conservar registro, login JWT, API Keys y consultas paginadas. Agregar un Adapter Football-Data.org v4, sincronización manual global con publicación atómica en PostgreSQL, entidades Equipo/Jugador con identidad externa y actividad, y una SPA React. Usar temporada vigente por liga; 96 equipos activos; ausentes inactivos y reactivables; dorsal nullable; credenciales frontend por pestaña. Conservar Gradle, Java 21, el paquete raíz y las migraciones aplicadas.
 
@@ -212,19 +212,19 @@ Cada repetición debe cumplir umbrales, cero errores HTTP inesperados y checks f
 - **Seguridad vigente**: registro/login públicos; `POST /api/v1/auth/apikey` requiere JWT; `GET /api/v1/players` es público y no valida credenciales; `POST /api/v1/catalog/sync` requiere exclusivamente API Key administrativa. La API Key sigue formando parte de los requisitos obligatorios de generación, almacenamiento seguro, rotación/reemplazo, revocación, unicidad y concurrencia, pero no del acceso al catálogo público.
 - **Sincronización**: pertenece al alcance documentado de esta feature y de la Entrega Nro 1 constitucional, específicamente US4 y FR-013–FR-022/FR-030–FR-035. No se inventa una asignación a Entrega 2 o 3. La aceptación real del proveedor continúa siendo T086.
 - **Separación de contratos de aplicación (C1 aprobado)**: las interfaces e implementaciones de `Service` no dependen de paquetes `controller` ni de DTOs HTTP. Los resultados y consultas internos viven bajo `service/dto`; cada Controller traduce entre sus DTOs HTTP y esos modelos internos. Esta separación no cambia rutas, JSON, códigos HTTP, seguridad, validaciones ni transacciones.
-- **SonarCloud**: el workflow y el plugin están configurados, pero el Quality Gate y los conteos constitucionales aún requieren ejecución documentada en T084. El equipo informa 46 issues pendientes (14 Medium y 32 Low); este plan no lo presenta como verificación propia ni asume que todos requieran cambios estructurales.
+ - **SonarCloud**: el workflow, el plugin y el verificador están configurados; el Quality Gate y los conteos constitucionales fueron ejecutados y aprobados en CI para el commit validado.
 
 | Categoría | Estado documentado | Referencias |
 |---|---|---|
 | Implementado y con evidencia histórica | US1–US5, JWT, API Key, catálogo público, sync local con Adapter, frontend, CI y corrección constitucional C1 | T001–T078, T083, T089–T098 |
-| Implementado, pendiente de validación final | Performance, comparación OpenAPI, quickstart, Postman, aceptación externa y Sonar | T079, T080, T081, T082 y T084–T088 |
+ | Implementado, pendiente de validación final | Mediciones de performance | T080 y T088 |
 | Requisito vigente de esta entrega | Rotación/concurrencia de API Key y seguridad por endpoint | FR-005–FR-012, SC-002/SC-004 |
 | Deuda técnica pendiente | Constructores extensos y acoplamientos menores a revisar | No relacionada con C1 ni con el contrato |
 | Entrega futura | No se asignan funcionalidades concretas sin decisión aprobada | Pendiente de definición del equipo |
 
 ### Orden de ejecución de gates
 
-1. **En paralelo**: T079 prepara el entorno de performance; T082 prepara Postman; T084 completa la preparación de Sonar; T081 prepara la matriz de comparación OpenAPI.
+1. **En paralelo**: T079 prepara el entorno de performance; T082 prepara Postman; T084 ejecuta y verifica SonarCloud; T081 prepara la matriz de comparación OpenAPI.
 2. **Después de T079**: T080 ejecuta las mediciones reproducibles de rendimiento.
 3. **Después de T081 y T082**: T085 ejecuta el quickstart y T087 ejecuta el flujo final Postman + SC-010.
 4. **En paralelo cuando exista acceso suficiente al proveedor**: T086 documenta la aceptación o bloqueo externo del proveedor; no modifica sus criterios de aceptación. T088 cierra el DoD únicamente después de reunir todas las evidencias de T079–T087.
@@ -239,4 +239,4 @@ La dependencia Service → DTOs de Controller queda eliminada por la corrección
 Ejecutar `$speckit-tasks` sobre este diseño conservando T001–T050 y la evidencia histórica. Agregar tareas US4/US5 y actualizar el alcance de T051–T061: fixture de rendimiento normalizado, cinco endpoints, frontend y aceptación externa. Incluir la revisión/autorización de cambios concretos de fixtures antes de editar tests existentes. Este comando termina en fase 1: no genera tareas, código, migraciones ni cambios de tests.
 ## Cierre de ejecución US5 (2026-09-17)
 
-T075–T078 están implementadas y validadas según la evidencia registrada. T083 también está completada. Permanecen pendientes T079, T080, T081, T082 y T084–T088; T079 y T084 cuentan con configuración parcial, pero no con cierre verificable.
+ T075–T078 están implementadas y validadas según la evidencia registrada. T079 y T081–T085, T087 también están completadas. Permanecen pendientes T080, T086 y T088.

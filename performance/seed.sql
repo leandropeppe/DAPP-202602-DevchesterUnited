@@ -115,6 +115,11 @@ SELECT
     TIMESTAMPTZ '2026-01-01T00:00:00Z'
 FROM generate_series(1, 1000) AS serie(usuario);
 
+-- Refresh statistics after restoring the bulk fixture.
+ANALYZE equipos;
+ANALYZE jugadores;
+ANALYZE usuarios;
+
 -- Validaciones internas: un seed incompleto debe abortar la transacción.
 DO $$
 BEGIN

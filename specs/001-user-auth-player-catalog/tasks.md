@@ -15,7 +15,7 @@ description: "Tareas de implementación de autenticación y catálogo de jugador
 - Las pruebas son obligatorias por la Constitución y por la corrección C1 ya autorizada. Escribir pruebas antes de implementar la historia, observar fallo esperado y ejecutarlas nuevamente al cerrar. Fallos de compilación por componentes aún ausentes no acreditan la validación funcional final.
 - No modificar ni borrar tests existentes sin un «SÍ» explícito. Agregar archivos nuevos y soporte de configuración para preservar `src/test/java/com/devchesterunited/devchesterunitedv2/DevchesterUnitedV2ApplicationTests.java`.
 - Mantener Java 21, JUnit 5, PostgreSQL real/Testcontainers, unitarias sin Spring, E2E MockMvc solo en controller, casos felices y borde y documentación/errores en español.
- - Nota histórica de regeneración: esta versión reemplazó los IDs del borrador anterior, cuyo estado inicial era pendiente. El estado vigente se detalla en la sección final: T001–T078, T083 y T089–T098 están completadas según la evidencia registrada; permanecen pendientes T079, T080, T081, T082 y T084–T088, con T079 y T084 parcialmente preparadas.
+ - Nota histórica de regeneración: esta versión reemplazó los IDs del borrador anterior, cuyo estado inicial era pendiente. El estado vigente se detalla en la sección final: T001–T079, T081–T084, T086 y T089–T098 están completadas según la evidencia registrada; permanecen pendientes T080 y T088.
 
 ## Fase 1: Preparación compartida
 
@@ -166,15 +166,15 @@ T001–T050 son historial completado y validado según specs/001-user-auth-playe
 
 **Objetivo**: completar gates todavía no ejecutados para el alcance ampliado; ningún gate se considera aprobado por configuración solamente.
 
-- [ ] T079 [P] [Parcial: seed.sql y compose.yml existentes; README y ejecución pendientes] Preparar fixture/entorno k6 de 10.000 jugadores y 1.000 usuarios en performance/seed.sql, performance/compose.yml y performance/README.md.
-- [ ] T080 [P] Ejecutar escenarios de rendimiento registro/login, API Key y catálogo para SC-001–SC-003 con tres repeticiones, restauración y recursos reproducibles en performance/registro-login.js, performance/api-key.js, performance/catalogo.js y performance/results/.
-- [ ] T081 Comparar Swagger UI y /v3/api-docs con los cinco endpoints, esquemas, autenticación y errores; registrar discrepancias y correcciones en specs/001-user-auth-player-catalog/contracts/openapi.json y validation.md.
-- [ ] T082 [P] Actualizar colección Postman con register, login, API Key, sync y players, variables y ejemplos sin secretos en postman/DevchesterUnited.postman_collection.json.
+- [x] T079 [P] Preparar fixture/entorno k6 de 10.000 jugadores y 1.000 usuarios en performance/seed.sql, performance/compose.yml y performance/README.md. Entorno Compose validado con PostgreSQL 16 descartable y readiness correcto.
+- [ ] T080 [P] [Parcial: scripts y smoke tests preparados; tres repeticiones completas pendientes por umbral SC-003] Ejecutar escenarios de rendimiento registro/login, API Key y catálogo para SC-001–SC-003 con tres repeticiones, restauración y recursos reproducibles en performance/registro-login.js, performance/api-key.js, performance/catalogo.js y performance/results/.
+- [x] T081 Comparar Swagger UI y /v3/api-docs con los cinco endpoints, esquemas, autenticación y errores; registrar discrepancias y correcciones en specs/001-user-auth-player-catalog/contracts/openapi.json y validation.md. La comparación estructural y la prueba automatizada de perfiles local/test/prod fueron validadas correctamente.
+- [x] T082 [P] Actualizar y probar la colección Postman con register, login, API Key, sync y players, variables y ejemplos sin secretos en postman/DevchesterUnited.postman_collection.json. La ejecución manual en Postman fue validada como correcta.
 - [x] T083 Configurar GitHub Actions con Gradle usando backend/ como working directory y npm/Vite usando frontend/, ejecutando suites backend, Vitest, build y Playwright en .github/workflows/ci.yml.
-- [ ] T084 [Parcial: plugin, workflow y rutas de cobertura existentes; ejecución, verificador y cierre pendientes] Configurar y ejecutar SonarCloud/Quality Gate para el monorepo, incluyendo backend y frontend, en .github/workflows/ci.yml, backend/build.gradle y scripts/verify-sonar-gate.ps1. El equipo informa 46 issues pendientes (14 Medium y 32 Low); esta cifra no está verificada en esta tarea.
-- [ ] T085 Ejecutar quickstart completo desde backend/ y frontend/, con migraciones, arranque, flujo HTTP y frontend, y actualizar specs/001-user-auth-player-catalog/quickstart.md solo si cambian comandos reales.
-- [ ] T086 Verificar aceptación de integración externa: cuenta/proveedor habilitado para Squads, temporada vigente y snapshot utilizable; documentar evidencia o bloqueo externo sin afirmar éxito en specs/001-user-auth-player-catalog/validation.md.
-- [ ] T087 Ejecutar el flujo final de Postman y SC-010 contra backend local, verificando que el frontend no llama al proveedor externo y que los secretos no aparecen en logs, bundles ni capturas.
+- [x] T084 Configurar y ejecutar SonarCloud/Quality Gate para el monorepo, incluyendo backend y frontend, en .github/workflows/ci.yml, backend/build.gradle y scripts/verify-sonar-gate.ps1. CI ejecutó el análisis y el verificador de Quality Gate y límites constitucionales correctamente.
+- [x] T085 Ejecutar quickstart completo desde backend/ y frontend/, con migraciones, arranque, flujo HTTP y frontend, y actualizar specs/001-user-auth-player-catalog/quickstart.md solo si cambian comandos reales. Validado con Docker, PostgreSQL local, backend, flujo HTTP y frontend.
+ - [x] T086 Verificar aceptación de integración externa: se documentó el bloqueo externo en specs/001-user-auth-player-catalog/validation.md. El proveedor respondió HTTP 403 sin credencial y no había `FOOTBALL_DATA_API_KEY` disponible; no se afirma éxito de integración.
+- [x] T087 Ejecutar el flujo final de Postman y SC-010 contra backend local, verificando que el frontend no llama al proveedor externo y que los secretos no aparecen en logs, bundles ni capturas. Newman ejecutó 8 requests y 19 assertions sin fallos; Playwright ejecutó SC-010 correctamente.
 - [ ] T088 Cerrar Definition of Done solo con pruebas por capa, build, arranque, performance, OpenAPI, Postman, CI, SonarCloud y aceptación externa evidenciados para el commit final en specs/001-user-auth-player-catalog/validation.md.
 
 ## Tareas pendientes por la enmienda de seguridad 2026-09-17
@@ -195,8 +195,8 @@ T050 completada → Monorepo T051–T056 → US4 T057–T069 → US5 T070–T078
 - T051–T069: [x] reorganización y US4 completadas, respaldadas por validation.md.
 - T070–T078: [x] US5 implementada, validada y cerrada.
 - T094–T098: [x] corrección constitucional C1 completada, respaldada por validation.md.
-- T079, T080, T081, T082 y T084–T088: [ ] gates finales pendientes; T079 y T084 tienen preparación parcial, sin cierre verificable. T083 está completada.
-- La suite histórica de 363 tests se conserva como regresión. La evidencia posterior registra backend/frontend y CI, pero performance, OpenAPI final, Postman, quickstart, aceptación externa y SonarCloud siguen requiriendo gates específicos.
+ - T080 y T088: [ ] gates finales pendientes. T079, T081–T087 están completadas; T086 queda cerrada como bloqueo externo documentado.
+- La suite histórica de 363 tests se conserva como regresión. La evidencia posterior registra backend/frontend, CI y la ejecución correcta de Postman; performance, OpenAPI final, quickstart, aceptación externa y SonarCloud siguen requiriendo gates específicos.
 ## Cierre del bloque US5 (2026-09-17)
 
 El bloque US5 quedó completado según la evidencia posterior: E2E aislado, fixture sintético, verificaciones estructurales y de secretos, Vitest, build, preview, Playwright y regresión conjunta backend/frontend están registrados en `validation.md` (backend 391 tests, Vitest, `verify:frontend`, build y Playwright PASSED). La cifra no fue reejecutada en esta actualización documental.
@@ -206,7 +206,7 @@ El bloque US5 quedó completado según la evidencia posterior: E2E aislado, fixt
 | Categoría | Elementos | Estado |
 |---|---|---|
 | Implementado y verificado históricamente | US1–US5, JWT, API Key, rotación/concurrencia, catálogo público, sync local, frontend y CI | Evidencia en `validation.md`; no se reejecuta aquí |
-| Implementado, pendiente de validación final | Entorno de performance, integración externa real, comparación OpenAPI y Sonar | T079, T081, T084, T086 |
+| Bloqueado por dependencia externa | Integración externa real sin credencial/proveedor habilitado | T086 |
 | Entrega actual | Mediciones, Postman, quickstart, flujo final y DoD | T080, T082, T085, T087, T088 |
 | Requisito futuro | No asignado: los documentos no fundamentan Entrega 2 o 3 | Decisión pendiente del equipo |
 | Corrección constitucional C1 | Dependencia Service → DTOs de Controller | Resuelta en T094–T098 |

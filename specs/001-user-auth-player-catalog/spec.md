@@ -3,7 +3,7 @@
 
 **Rama de Funcionalidad (Feature Branch)**: `001-user-auth-player-catalog`
 
-**Estado documental vigente (2026-09-25)**: T001–T078, T083 y T089–T098 figuran completadas con evidencia histórica; US1–US5 y la corrección constitucional C1 están implementadas según el código y la evidencia registrada. Permanecen pendientes T079, T080, T081, T082 y T084–T088; T079 y T084 están parcialmente preparados y sin cierre verificable.
+**Estado documental vigente (2026-09-30)**: T001–T079, T081–T085, T087 y T089–T098 figuran completadas con evidencia histórica o ejecución reciente; US1–US5 y la corrección constitucional C1 están implementadas según el código y la evidencia registrada. Permanecen pendientes T080, T084, T086 y T088; T084 mantiene configuración parcial y sin cierre verificable.
 
 **Fecha de Creación**: 2026-09-02
 
