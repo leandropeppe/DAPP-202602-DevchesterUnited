@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
 
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorCatalogoProjection;
 import java.util.List;
 import java.util.UUID;
 import java.util.Collection;
@@ -20,28 +21,40 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
     java.util.List<JugadorEntity> findAllByEquipoId(UUID equipoId);
     // Escapar primero ! para no volver a escapar los ! introducidos para % y _.
     // Los casts también permiten a PostgreSQL resolver el tipo de parámetros nulos.
-    String FILTROS = """
+    String FROM_Y_FILTROS = """
+            FROM jugadores j
+            JOIN equipos e ON e.id = j.team_id
             WHERE j.is_active = TRUE
-              AND EXISTS (SELECT 1 FROM equipos e WHERE e.id = j.team_id AND e.is_active = TRUE)
-              AND (CAST(:liga AS text) IS NULL OR j.league ILIKE
+              AND e.is_active = TRUE
+              AND (CAST(:liga AS text) IS NULL OR e.league ILIKE
                 ('%' || replace(replace(replace(CAST(:liga AS text), '!', '!!'), '%', '!%'), '_', '!_') || '%') ESCAPE '!')
-              AND (CAST(:equipo AS text) IS NULL OR j.team ILIKE
+              AND (CAST(:equipo AS text) IS NULL OR e.name ILIKE
                 ('%' || replace(replace(replace(CAST(:equipo AS text), '!', '!!'), '%', '!%'), '_', '!_') || '%') ESCAPE '!')
               AND (CAST(:posicion AS text) IS NULL OR j.position ILIKE
                 ('%' || replace(replace(replace(CAST(:posicion AS text), '!', '!!'), '%', '!%'), '_', '!_') || '%') ESCAPE '!')
             """;
 
+    String COLUMNAS_CATALOGO = """
+            SELECT j.id AS id,
+                   j.name AS nombre,
+                   e.league AS liga,
+                   e.name AS equipo,
+                   j.position AS posicion,
+                   j.jersey_number AS dorsal,
+                   j.nationality AS nacionalidad
+            """;
+
     /** Offset basado en cero; orden fijo, independiente de cualquier entrada del cliente. */
-    @Query(value = "SELECT j.* FROM jugadores j " + FILTROS
+    @Query(value = COLUMNAS_CATALOGO + FROM_Y_FILTROS
             + " ORDER BY id ASC LIMIT :limite OFFSET :offset", nativeQuery = true)
-    List<JugadorEntity> buscar(@Param("liga") String liga,
+    List<JugadorCatalogoProjection> buscar(@Param("liga") String liga,
             @Param("equipo") String equipo,
             @Param("posicion") String posicion,
             @Param("offset") long offset,
             @Param("limite") int limite);
 
     /** Total de coincidencias antes de paginar, incluso cuando la página solicitada está vacía. */
-    @Query(value = "SELECT COUNT(*) FROM jugadores j " + FILTROS, nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) " + FROM_Y_FILTROS, nativeQuery = true)
     long contar(@Param("liga") String liga,
             @Param("equipo") String equipo,
             @Param("posicion") String posicion);

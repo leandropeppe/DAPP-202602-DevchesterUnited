@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorCatalogoProjection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -74,7 +74,8 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
     @ParameterizedTest
     @ValueSource(strings = {"%", "_", "!", "!%_", "O'Brien", "\"Azul\""})
     void simbolosYComillasSonLiteralesEnLiga(String filtro) {
-        jdbc.update("UPDATE jugadores SET league = ? WHERE id = ?", "Copa !%_ O'Brien \"Azul\"", id(5));
+        jdbc.update("UPDATE equipos e SET league = ? FROM jugadores j WHERE e.id = j.team_id AND j.id = ?",
+                "Copa !%_ O'Brien \"Azul\"", id(5));
         verificar(filtro, null, null, 5);
     }
 
@@ -88,6 +89,18 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
     void acentosSiguenSiendoSignificativos() {
         verificar(null, "ATLÉTICO", null, 2);
         verificar(null, "ATLETICO", null, 4);
+    }
+
+    @Test
+    void filtrosYValoresDeCatalogoIgnoranColumnasLegacyDesactualizadas() {
+        jdbc.update("UPDATE jugadores SET league = ?, team = ? WHERE id = ?",
+                "Liga legacy", "Equipo legacy", id(1));
+
+        List<JugadorCatalogoProjection> resultado = repositorio.buscar("LaLiga", "Real Madrid", null, 0, 100);
+
+        assertThat(ids(resultado)).containsExactly(id(1));
+        assertThat(resultado.get(0).getLiga()).isEqualTo("LaLiga");
+        assertThat(resultado.get(0).getEquipo()).isEqualTo("Real Madrid");
     }
 
     @Test
@@ -136,7 +149,8 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
     @Test
     void sqlRecibeParametrosEnlazadosEnBusquedaConteoYPaginacion() {
         String entrada = "x' OR '1'='1";
-        jdbc.update("UPDATE jugadores SET team = ? WHERE id = ?", entrada, id(5));
+        jdbc.update("UPDATE equipos e SET name = ? FROM jugadores j WHERE e.id = j.team_id AND j.id = ?",
+                entrada, id(5));
         captura.limpiar();
         // El texto sospechoso debe encontrar solo su fila literal, sin ampliar la búsqueda.
         assertThat(ids(repositorio.buscar("prueba", entrada, "keeper", 0, 7))).containsExactly(id(5));
@@ -167,8 +181,8 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
         return UUID.fromString("10000000-0000-0000-0000-" + String.format("%012d", numero));
     }
 
-    private static List<UUID> ids(List<JugadorEntity> jugadores) {
-        return jugadores.stream().map(JugadorEntity::getId).toList();
+    private static List<UUID> ids(List<JugadorCatalogoProjection> jugadores) {
+        return jugadores.stream().map(JugadorCatalogoProjection::getId).toList();
     }
 
     /** Observa SQL real; no sustituye conexiones, consultas ni resultados. */

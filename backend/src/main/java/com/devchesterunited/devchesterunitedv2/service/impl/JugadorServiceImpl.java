@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.impl;
 
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorCatalogoProjection;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.JugadorService;
 import com.devchesterunited.devchesterunitedv2.service.dto.FiltroJugadoresConsulta;
 import com.devchesterunited.devchesterunitedv2.service.dto.JugadorResultado;
@@ -36,14 +36,14 @@ public class JugadorServiceImpl implements JugadorService {
                 new PaginacionResultado(filtros.pagina(), filtros.limite(), paginas, total));
     }
 
-    private static JugadorResultado aRespuesta(JugadorEntity entidad) {
+    private static JugadorResultado aRespuesta(JugadorCatalogoProjection entidad) {
         return new JugadorResultado(
                 entidad.getId(),
                 entidad.getNombre(),
                 entidad.getLiga(),
                 entidad.getEquipo(),
                 entidad.getPosicion(),
-                entidad.getDorsal(),
+                entidad.getDorsal() == null ? 0 : entidad.getDorsal(),
                 entidad.getNacionalidad()
         );
     }
