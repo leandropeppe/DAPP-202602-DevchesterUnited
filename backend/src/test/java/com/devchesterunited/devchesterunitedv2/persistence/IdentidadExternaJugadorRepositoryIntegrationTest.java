@@ -31,12 +31,8 @@ class IdentidadExternaJugadorRepositoryIntegrationTest extends PostgresTestSuppo
     }
 
     @Test
-    void backfillRegistraExternalIdLegacyComoFootballData() {
-        jdbc.update("UPDATE jugadores SET external_id = ? WHERE id = ?", 7010L, jugador);
-        jdbc.update("INSERT INTO identidades_externas_jugador "
-                + "(id, jugador_id, proveedor, external_id) "
-                + "SELECT md5('football-data::' || id::text)::uuid, id, 'FOOTBALL_DATA', external_id "
-                + "FROM jugadores WHERE id = ? AND external_id IS NOT NULL", jugador);
+    void identidadFootballDataSeAsociaAlJugadorSinColumnaLegacy() {
+        insertarIdentidad(identidadFootballData, ProveedorIdentidadExterna.FOOTBALL_DATA, 7010, jugador);
 
         var identidad = repositorio.findByJugador_IdAndProveedor(jugador,
                 ProveedorIdentidadExterna.FOOTBALL_DATA);
@@ -81,8 +77,19 @@ class IdentidadExternaJugadorRepositoryIntegrationTest extends PostgresTestSuppo
     void conservaElUuidLocalAlAsociarLaIdentidad() {
         insertarIdentidad(identidadFootballData, ProveedorIdentidadExterna.FOOTBALL_DATA, 7005, jugador);
 
-        assertThat(jdbc.queryForObject("SELECT id FROM jugadores WHERE external_id IS NULL AND id = ?",
-                UUID.class, jugador)).isEqualTo(jugador);
+        assertThat(jdbc.queryForObject("SELECT id FROM jugadores WHERE id = ?", UUID.class, jugador))
+                .isEqualTo(jugador);
+    }
+
+    @Test
+    void esquemaFinalNoConservaExternalIdLegacyEnJugadores() {
+        assertThat(jdbc.queryForObject("""
+                SELECT count(*)
+                FROM information_schema.columns
+                WHERE table_schema = current_schema()
+                  AND table_name = 'jugadores'
+                  AND column_name = 'external_id'
+                """, Integer.class)).isZero();
     }
 
     private void insertarIdentidad(UUID id, ProveedorIdentidadExterna proveedor,

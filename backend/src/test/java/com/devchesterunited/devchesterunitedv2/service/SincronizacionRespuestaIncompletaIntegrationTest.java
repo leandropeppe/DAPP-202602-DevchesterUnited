@@ -38,7 +38,7 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
 
     @BeforeEach
     void limpiarFixturesExternos() {
-        jdbc.update("DELETE FROM jugadores WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
         jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
         jdbc.update("UPDATE equipos SET is_active = true");
         jdbc.update("UPDATE jugadores SET is_active = true");
@@ -55,13 +55,13 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
         long equiposAntes = jdbc.queryForObject(
                 "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL", Long.class);
         long jugadoresAntes = jdbc.queryForObject(
-                "SELECT count(*) FROM jugadores WHERE external_id IS NOT NULL", Long.class);
+                "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA'", Long.class);
         long equiposActivosAntes = jdbc.queryForObject(
                 "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class);
         long jugadoresActivosAntes = jdbc.queryForObject(
-                "SELECT count(*) FROM jugadores WHERE external_id IS NOT NULL AND is_active", Long.class);
+                "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA' AND j.is_active", Long.class);
         UUID equipoIdAntes = equipos.findByIdExterno(600000L).orElseThrow().getId();
-        UUID jugadorIdAntes = jugadores.findByIdExterno(700000L).orElseThrow().getId();
+        UUID jugadorIdAntes = jugadorIdPorExternalId(700000L);
 
         assertThatThrownBy(servicio::sincronizar)
                 .isInstanceOf(FootballDataException.class)
@@ -71,20 +71,20 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
                 "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL", Long.class))
                 .isEqualTo(equiposAntes);
         assertThat(jdbc.queryForObject(
-                "SELECT count(*) FROM jugadores WHERE external_id IS NOT NULL", Long.class))
+                "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA'", Long.class))
                 .isEqualTo(jugadoresAntes);
         assertThat(jdbc.queryForObject(
                 "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class))
                 .isEqualTo(equiposActivosAntes);
         assertThat(jdbc.queryForObject(
-                "SELECT count(*) FROM jugadores WHERE external_id IS NOT NULL AND is_active", Long.class))
+                "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA' AND j.is_active", Long.class))
                 .isEqualTo(jugadoresActivosAntes);
         assertThat(equipos.findByIdExterno(600000L)).get()
                 .satisfies(equipo -> {
                     assertThat(equipo.getId()).isEqualTo(equipoIdAntes);
                     assertThat(equipo.isActivo()).isTrue();
                 });
-        assertThat(jugadores.findByIdExterno(700000L)).get()
+        assertThat(jugadores.findById(jugadorIdAntes)).get()
                 .satisfies(jugador -> {
                     assertThat(jugador.getId()).isEqualTo(jugadorIdAntes);
                     assertThat(jugador.isActivo()).isTrue();
@@ -95,6 +95,9 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
     }
 
     private long duplicados(String tabla) {
+        String tablaIdentidad = "jugadores".equals(tabla)
+                ? "(SELECT external_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA') identidades"
+                : tabla;
         return jdbc.queryForObject("""
                 SELECT count(*) FROM (
                     SELECT external_id
@@ -103,7 +106,11 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
                     GROUP BY external_id
                     HAVING count(*) > 1
                 ) duplicados
-                """.formatted(tabla), Long.class);
+                """.formatted(tablaIdentidad), Long.class);
+    }
+
+    private UUID jugadorIdPorExternalId(long externalId) {
+        return jdbc.queryForObject("SELECT jugador_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA' AND external_id = ?", UUID.class, externalId);
     }
 
     private static CatalogoSincronizado snapshot() {

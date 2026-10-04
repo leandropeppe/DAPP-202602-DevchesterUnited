@@ -48,7 +48,7 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
 
     @BeforeEach
     void prepararUsuario() {
-        jdbc.update("DELETE FROM jugadores WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
         jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
         jdbc.update("DELETE FROM usuarios WHERE id = ?", USUARIO);
         usuarios.save(new UsuarioEntity(USUARIO, "synce2euser", "synce2e@example.com", "$2a$12$" + "a".repeat(53), AHORA, AHORA));
@@ -57,7 +57,7 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
 
     @AfterEach
     void limpiarUsuario() {
-        jdbc.update("DELETE FROM jugadores WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
         jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
         jdbc.update("DELETE FROM usuarios WHERE id = ?", USUARIO);
     }

@@ -4,8 +4,6 @@ import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorCatalogoProjection;
 import java.util.List;
 import java.util.UUID;
-import java.util.Collection;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,8 +14,6 @@ import org.springframework.data.repository.query.Param;
  * No normaliza acentos ni invoca lógica del dominio.
  */
 public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
-    Optional<JugadorEntity> findByIdExterno(Long idExterno);
-    java.util.List<JugadorEntity> findAllByIdExternoIn(Collection<Long> idsExternos);
     java.util.List<JugadorEntity> findAllByEquipoId(UUID equipoId);
     // Escapar primero ! para no volver a escapar los ! introducidos para % y _.
     // Los casts también permiten a PostgreSQL resolver el tipo de parámetros nulos.

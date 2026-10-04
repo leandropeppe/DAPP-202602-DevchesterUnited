@@ -16,7 +16,7 @@ public class JugadorMapper {
      * Mapea un jugador del snapshot, conservando la identidad local y la fecha
      * de creación cuando ya existe una fila persistida.
      */
-    public JugadorEntity toEntity(Jugador jugador, long externalId, Equipo equipo, UUID equipoId,
+    public JugadorEntity toEntity(Jugador jugador, Equipo equipo, UUID equipoId,
             JugadorEntity anterior, Instant ahora) {
         Objects.requireNonNull(jugador, "jugador es obligatorio");
         Objects.requireNonNull(equipo, "equipo es obligatorio");
@@ -25,7 +25,6 @@ public class JugadorMapper {
 
         return new JugadorEntity(
                 anterior == null ? jugador.getId() : anterior.getId(),
-                externalId,
                 jugador.getNombre(),
                 equipoId,
                 jugador.getPosicion(),
@@ -45,7 +44,6 @@ public class JugadorMapper {
 
         return new JugadorEntity(
                 actual.getId(),
-                actual.getIdExterno(),
                 actual.getNombre(),
                 actual.getEquipoId(),
                 actual.getPosicion(),

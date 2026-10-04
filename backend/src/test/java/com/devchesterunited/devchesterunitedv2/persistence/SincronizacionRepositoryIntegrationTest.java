@@ -32,10 +32,10 @@ class SincronizacionRepositoryIntegrationTest extends PostgresTestSupport {
         equipos.saveAndFlush(new EquipoEntity(EQUIPO_ID, 990001L, "Equipo importado", "EI", "EIM", "LaLiga",
                 "https://img.example/equipo.png", true, 2026L, LocalDate.of(2026, 8, 1),
                 LocalDate.of(2027, 5, 31), AHORA, AHORA));
-        jugadores.saveAndFlush(new JugadorEntity(JUGADOR_ID, 990002L, "Nombre Apellido", EQUIPO_ID, "Forward", null,
+        jugadores.saveAndFlush(new JugadorEntity(JUGADOR_ID, "Nombre Apellido", EQUIPO_ID, "Forward", null,
                 "Argentina", true, AHORA, AHORA, "LaLiga", "Equipo importado"));
 
-        var jugador = jugadores.findByIdExterno(990002L).orElseThrow();
+        var jugador = jugadores.findById(JUGADOR_ID).orElseThrow();
         assertThat(jugador.getEquipoId()).isEqualTo(EQUIPO_ID);
         assertThat(jugador.getNumeroCamiseta()).isNull();
         assertThat(jugadores.findAllByEquipoId(EQUIPO_ID)).extracting(JugadorEntity::getId).containsExactly(JUGADOR_ID);
@@ -103,6 +103,6 @@ class SincronizacionRepositoryIntegrationTest extends PostgresTestSupport {
         var existente = jugadores.findById(historico).orElseThrow();
         assertThat(existente.getId()).isEqualTo(historico);
         assertThat(existente.getEquipoId()).isNotNull();
-        assertThat(existente.getIdExterno()).isNull();
+        assertThat(existente.getId()).isEqualTo(historico);
     }
 }

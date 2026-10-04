@@ -183,7 +183,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             Equipo equipo = equipo(snapshot, jugador.getEquipoId());
             UUID equipoIdPersistido = equiposSnapshot.get(equipo.getIdExterno());
             JugadorEntity persistido = jugadores.save(
-                    jugadorMapper.toEntity(jugador, externalId, equipo, equipoIdPersistido, anterior, ahora));
+                    jugadorMapper.toEntity(jugador, equipo, equipoIdPersistido, anterior, ahora));
 
             guardarIdentidadFootballData(persistido, externalId, identidadExistente);
 

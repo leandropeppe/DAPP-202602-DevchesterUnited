@@ -51,7 +51,7 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
         equipos.saveAndFlush(new EquipoEntity(EQUIPO, 700001L, "Equipo Persistido", "EP", "EP",
                 "LaLiga", null, true, 2518L, LocalDate.of(2026, 8, 16),
                 LocalDate.of(2027, 5, 30), AHORA, AHORA));
-        jugadores.saveAndFlush(new JugadorEntity(JUGADOR, 800001L, "Jugador Persistido", EQUIPO,
+        jugadores.saveAndFlush(new JugadorEntity(JUGADOR, "Jugador Persistido", EQUIPO,
                 "Forward", null, "Argentina", true, AHORA, AHORA, "LaLiga", "Equipo Persistido"));
     }
 
@@ -63,7 +63,6 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
     private void limpiarFixturesPropios() {
         Set<UUID> jugadoresPropios = new HashSet<>();
         jugadores.findById(JUGADOR).ifPresent(jugador -> jugadoresPropios.add(jugador.getId()));
-        jugadores.findByIdExterno(800001L).ifPresent(jugador -> jugadoresPropios.add(jugador.getId()));
         jugadores.deleteAllById(jugadoresPropios);
         jugadores.flush();
 
@@ -91,10 +90,8 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
             assertThat(equipo.isActivo()).isTrue();
         });
         assertThat(jugadores.findById(JUGADOR)).get().satisfies(jugador -> {
-            assertThat(jugador.getIdExterno()).isEqualTo(800001L);
             assertThat(jugador.isActivo()).isTrue();
         });
-        assertThat(jugadores.findAllByIdExternoIn(java.util.List.of(800001L))).hasSize(1);
     }
 
     private SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor jwtUsuario() {

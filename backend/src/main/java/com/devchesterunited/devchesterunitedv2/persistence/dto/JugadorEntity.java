@@ -23,8 +23,6 @@ public class JugadorEntity {
     private String posicion;
     @Column(name = "jersey_number")
     private Integer dorsal;
-    @Column(name = "external_id")
-    private Long idExterno;
     @Column(name = "team_id")
     private UUID equipoId;
     @Column(name = "is_active", nullable = false)
@@ -50,10 +48,10 @@ public class JugadorEntity {
         this.activo = true;
     }
 
-    public JugadorEntity(UUID id, Long idExterno, String nombre, UUID equipoId,
+    public JugadorEntity(UUID id, String nombre, UUID equipoId,
             String posicion, Integer dorsal, String nacionalidad, boolean activo,
             Instant creadoEn, Instant actualizadoEn, String liga, String equipo) {
-        this.id=id; this.idExterno=idExterno; this.nombre=nombre;
+        this.id=id; this.nombre=nombre;
         this.equipoId=equipoId; this.posicion=posicion; this.dorsal=dorsal; this.nacionalidad=nacionalidad;
         this.activo=activo; this.creadoEn=creadoEn; this.actualizadoEn=actualizadoEn;
         this.liga=liga; this.equipo=equipo;
@@ -67,7 +65,6 @@ public class JugadorEntity {
     public int getDorsal() { return dorsal == null ? 0 : dorsal; }
     public String getNacionalidad() { return nacionalidad; }
     public Integer getNumeroCamiseta() { return dorsal; }
-    public Long getIdExterno() { return idExterno; }
     public UUID getEquipoId() { return equipoId; }
     public boolean isActivo() { return activo; }
     public Instant getCreadoEn() { return creadoEn; }

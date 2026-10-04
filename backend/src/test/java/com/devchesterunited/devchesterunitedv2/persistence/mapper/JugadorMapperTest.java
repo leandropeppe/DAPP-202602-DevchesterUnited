@@ -21,10 +21,9 @@ class JugadorMapperTest {
                 "Forward", 10, "Argentina", ACTUALIZADO);
         Equipo equipo = equipo(equipoId);
 
-        JugadorEntity resultado = mapper.toEntity(jugador, 77L, equipo, equipoId, null, ACTUALIZADO);
+        JugadorEntity resultado = mapper.toEntity(jugador, equipo, equipoId, null, ACTUALIZADO);
 
         assertThat(resultado.getId()).isEqualTo(jugadorId);
-        assertThat(resultado.getIdExterno()).isEqualTo(77L);
         assertThat(resultado.getEquipoId()).isEqualTo(equipoId);
         assertThat(resultado.getLiga()).isEqualTo("Premier League");
         assertThat(resultado.getEquipo()).isEqualTo("Manchester United");
@@ -41,14 +40,13 @@ class JugadorMapperTest {
         UUID equipoId = UUID.randomUUID();
         Jugador jugador = new Jugador(UUID.randomUUID(), "Nombre actualizado", equipoId,
                 "Midfielder", null, "Uruguay", ACTUALIZADO);
-        JugadorEntity anterior = new JugadorEntity(anteriorId, 88L, "Nombre anterior", equipoId,
+        JugadorEntity anterior = new JugadorEntity(anteriorId, "Nombre anterior", equipoId,
                 "Forward", 9, "Argentina", false, CREADO, CREADO,
                 "Liga anterior", "Equipo anterior");
 
-        JugadorEntity resultado = mapper.toEntity(jugador, 88L, equipo(equipoId), equipoId, anterior, ACTUALIZADO);
+        JugadorEntity resultado = mapper.toEntity(jugador, equipo(equipoId), equipoId, anterior, ACTUALIZADO);
 
         assertThat(resultado.getId()).isEqualTo(anteriorId);
-        assertThat(resultado.getIdExterno()).isEqualTo(88L);
         assertThat(resultado.getNombre()).isEqualTo("Nombre actualizado");
         assertThat(resultado.getPosicion()).isEqualTo("Midfielder");
         assertThat(resultado.getNumeroCamiseta()).isNull();
@@ -61,14 +59,13 @@ class JugadorMapperTest {
     void mapeaDesactivacionConservandoDatosPersistidos() {
         UUID jugadorId = UUID.randomUUID();
         UUID equipoId = UUID.randomUUID();
-        JugadorEntity actual = new JugadorEntity(jugadorId, 99L, "Jugador", equipoId,
+        JugadorEntity actual = new JugadorEntity(jugadorId, "Jugador", equipoId,
                 "Defender", 5, "Chile", true, CREADO, CREADO,
                 "Liga", "Equipo");
 
         JugadorEntity resultado = mapper.toInactiveEntity(actual, ACTUALIZADO);
 
         assertThat(resultado.getId()).isEqualTo(jugadorId);
-        assertThat(resultado.getIdExterno()).isEqualTo(99L);
         assertThat(resultado.getEquipoId()).isEqualTo(equipoId);
         assertThat(resultado.getNumeroCamiseta()).isEqualTo(5);
         assertThat(resultado.getLiga()).isEqualTo("Liga");

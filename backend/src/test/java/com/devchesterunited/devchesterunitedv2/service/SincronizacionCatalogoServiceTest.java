@@ -81,7 +81,7 @@ class SincronizacionCatalogoServiceTest {
         CatalogoSincronizado snapshot = snapshot();
         UUID uuidPersistido = UUID.fromString("70000000-0000-0000-0000-000000000001");
         Equipo equipo = snapshot.getEquipos().get(0);
-        JugadorEntity jugadorPersistido = new JugadorEntity(uuidPersistido, null, "Jugador previo",
+        JugadorEntity jugadorPersistido = new JugadorEntity(uuidPersistido, "Jugador previo",
                 equipo.getId(), "Forward", 9, "Argentina", false, AHORA.minusSeconds(60),
                 AHORA.minusSeconds(30), equipo.getLiga(), equipo.getNombre());
         IdentidadExternaJugadorEntity identidad = new IdentidadExternaJugadorEntity(

@@ -41,7 +41,7 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
 
     @BeforeEach
     void limpiarFixturesExternos() {
-        jdbc.update("DELETE FROM jugadores WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
         jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
         jdbc.update("UPDATE equipos SET is_active = true");
         jdbc.update("UPDATE jugadores SET is_active = true");
@@ -87,7 +87,7 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
                 .allMatch(jugador -> jugador.isActivo())
                 .extracting(jugador -> jugador.getId())
                 .containsExactlyInAnyOrderElementsOf(jugadoresIdsIniciales);
-        assertThat(jugadores.findAllByIdExternoIn(List.of(JUGADOR_AUSENTE_BASE, JUGADOR_AUSENTE_BASE + 1)))
+        assertThat(jugadores.findAllById(List.of(jugadorIdPorExternalId(JUGADOR_AUSENTE_BASE), jugadorIdPorExternalId(JUGADOR_AUSENTE_BASE + 1))))
                 .hasSize(2).allMatch(jugador -> jugador.isActivo());
         assertThat(jugadores.contar(null, "Equipo Original 0", null)).isEqualTo(2);
         assertThat(equipos.findByIdExterno(EQUIPO_REEMPLAZO)).get()
@@ -105,12 +105,16 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
         return jdbc.queryForObject("""
                 SELECT count(*) FROM (
                     SELECT external_id
-                    FROM jugadores
-                    WHERE external_id IS NOT NULL
+                    FROM identidades_externas_jugador
+                    WHERE proveedor = 'FOOTBALL_DATA'
                     GROUP BY external_id
                     HAVING count(*) > 1
                 ) duplicados
                 """, Long.class);
+    }
+
+    private UUID jugadorIdPorExternalId(long externalId) {
+        return jdbc.queryForObject("SELECT jugador_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA' AND external_id = ?", UUID.class, externalId);
     }
 
     private static CatalogoSincronizado snapshot(boolean reemplazarEquipoOriginal) {

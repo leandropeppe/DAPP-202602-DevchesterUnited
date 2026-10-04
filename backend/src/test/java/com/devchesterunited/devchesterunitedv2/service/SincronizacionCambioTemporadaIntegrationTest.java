@@ -56,7 +56,7 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
 
     @BeforeEach
     void limpiarFixturesExternos() {
-        jdbc.update("DELETE FROM jugadores WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
         jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
         jdbc.update("UPDATE equipos SET is_active = true");
         jdbc.update("UPDATE jugadores SET is_active = true");
@@ -97,7 +97,7 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
                 .hasSize(96);
         assertThat(duplicados("equipos")).isZero();
         assertThat(duplicados("jugadores")).isZero();
-        assertThat(jugadores.findByIdExterno(JUGADOR_NUEVO)).get()
+        assertThat(jugadores.findById(jugadorIdPorExternalId(JUGADOR_NUEVO))).get()
                 .extracting(jugador -> jugador.isActivo()).isEqualTo(true);
 
         for (Map.Entry<String, Temporada> entry : TEMPORADA_NUEVA.entrySet()) {
@@ -117,6 +117,9 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
     }
 
     private long duplicados(String tabla) {
+        String tablaIdentidad = "jugadores".equals(tabla)
+                ? "(SELECT external_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA') identidades"
+                : tabla;
         return jdbc.queryForObject("""
                 SELECT count(*) FROM (
                     SELECT external_id
@@ -125,7 +128,11 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
                     GROUP BY external_id
                     HAVING count(*) > 1
                 ) duplicados
-                """.formatted(tabla), Long.class);
+                """.formatted(tablaIdentidad), Long.class);
+    }
+
+    private UUID jugadorIdPorExternalId(long externalId) {
+        return jdbc.queryForObject("SELECT jugador_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA' AND external_id = ?", UUID.class, externalId);
     }
 
     private static CatalogoSincronizado snapshot(Map<String, Temporada> temporadas,
