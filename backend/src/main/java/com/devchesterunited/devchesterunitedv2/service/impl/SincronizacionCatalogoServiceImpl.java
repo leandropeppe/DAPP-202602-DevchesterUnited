@@ -19,6 +19,8 @@ import com.devchesterunited.devchesterunitedv2.service.interfaces.Sincronizacion
 import java.time.Clock;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -86,7 +88,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         Instant ahora = clock.instant();
 
         Map<Long, UUID> equiposSnapshot = new HashMap<>();
-        Map<Long, Jugador> jugadoresSnapshot = new HashMap<>();
+        Set<UUID> jugadoresSnapshot = new HashSet<>();
 
         int equiposCreados = guardarEquipos(snapshot, equiposSnapshot, ahora);
         int jugadoresCreados = guardarJugadores(snapshot, equiposSnapshot, jugadoresSnapshot, ahora);
@@ -96,7 +98,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
         inactivarAusentes(
                 equiposSnapshot.keySet(),
-                jugadoresSnapshot.keySet(),
+                jugadoresSnapshot,
                 ahora,
                 primerSnapshot
         );
@@ -155,24 +157,24 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     private int guardarJugadores(
             CatalogoSincronizado snapshot,
             Map<Long, UUID> equiposSnapshot,
-            Map<Long, Jugador> jugadoresSnapshot,
+            Set<UUID> jugadoresSnapshot,
             Instant ahora) {
 
-        Map<Long, JugadorEntity> existentesJugadores = new HashMap<>();
-
-        for (JugadorEntity jugador : jugadores.findAllByIdExternoIn(
-                snapshot.getJugadores().stream()
-                        .map(jugador -> snapshot.getExternalId(jugador.getId()))
-                        .toList())) {
-
-            existentesJugadores.put(jugador.getIdExterno(), jugador);
+        List<Long> externalIds = snapshot.getJugadores().stream()
+                .map(jugador -> snapshot.getExternalId(jugador.getId()))
+                .toList();
+        Map<Long, IdentidadExternaJugadorEntity> identidadesPorExternalId = new HashMap<>();
+        for (IdentidadExternaJugadorEntity identidad : identidades
+                .findAllByProveedorAndExternalIdIn(ProveedorIdentidadExterna.FOOTBALL_DATA, externalIds)) {
+            identidadesPorExternalId.put(identidad.getExternalId(), identidad);
         }
 
         int jugadoresCreados = 0;
 
         for (Jugador jugador : snapshot.getJugadores()) {
             long externalId = snapshot.getExternalId(jugador.getId());
-            JugadorEntity anterior = existentesJugadores.get(externalId);
+            IdentidadExternaJugadorEntity identidadExistente = identidadesPorExternalId.get(externalId);
+            JugadorEntity anterior = identidadExistente == null ? null : identidadExistente.getJugador();
 
             if (anterior == null) {
                 jugadoresCreados++;
@@ -183,24 +185,20 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             JugadorEntity persistido = jugadores.save(
                     jugadorMapper.toEntity(jugador, externalId, equipo, equipoIdPersistido, anterior, ahora));
 
-            guardarIdentidadFootballData(persistido, externalId);
+            guardarIdentidadFootballData(persistido, externalId, identidadExistente);
 
-            jugadoresSnapshot.put(externalId, jugador);
+            jugadoresSnapshot.add(persistido.getId());
         }
 
         return jugadoresCreados;
     }
 
-    private void guardarIdentidadFootballData(JugadorEntity jugador, long externalId) {
-        IdentidadExternaJugadorEntity identidad = identidades
-                .findByJugador_IdAndProveedor(jugador.getId(), ProveedorIdentidadExterna.FOOTBALL_DATA)
-                .orElseGet(() -> new IdentidadExternaJugadorEntity(
-                        UUID.randomUUID(), jugador, ProveedorIdentidadExterna.FOOTBALL_DATA, externalId));
-        if (!identidad.getExternalId().equals(externalId)) {
-            identidad = new IdentidadExternaJugadorEntity(identidad.getId(), jugador,
-                    ProveedorIdentidadExterna.FOOTBALL_DATA, externalId);
+    private void guardarIdentidadFootballData(JugadorEntity jugador, long externalId,
+            IdentidadExternaJugadorEntity identidadExistente) {
+        if (identidadExistente == null) {
+            identidades.save(new IdentidadExternaJugadorEntity(
+                    UUID.randomUUID(), jugador, ProveedorIdentidadExterna.FOOTBALL_DATA, externalId));
         }
-        identidades.save(identidad);
     }
 
     private Map<Long, EquipoEntity> existentesEquipos(CatalogoSincronizado snapshot) {
@@ -212,7 +210,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     }
 
     private void inactivarAusentes(Set<Long> presentesEquipos,
-            Set<Long> presentesJugadores, Instant ahora, boolean primerSnapshot) {
+            Set<UUID> presentesJugadores, Instant ahora, boolean primerSnapshot) {
         for (EquipoEntity equipo : equipos.findAll()) {
             if ((equipo.getIdExterno() == null && primerSnapshot)
                     || equipo.getIdExterno() != null && !presentesEquipos.contains(equipo.getIdExterno())) {
@@ -221,9 +219,15 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
                         equipo.getInicioTemporada(), equipo.getFinTemporada(), equipo.getCreadoEn(), ahora));
             }
         }
+        Set<UUID> jugadoresConIdentidadFootballData = new HashSet<>();
+        for (IdentidadExternaJugadorEntity identidad : identidades
+                .findAllByProveedor(ProveedorIdentidadExterna.FOOTBALL_DATA)) {
+            jugadoresConIdentidadFootballData.add(identidad.getJugador().getId());
+        }
         for (JugadorEntity jugador : jugadores.findAll()) {
-            if ((jugador.getIdExterno() == null && primerSnapshot)
-                    || jugador.getIdExterno() != null && !presentesJugadores.contains(jugador.getIdExterno())) {
+            if ((!jugadoresConIdentidadFootballData.contains(jugador.getId()) && primerSnapshot)
+                    || jugadoresConIdentidadFootballData.contains(jugador.getId())
+                    && !presentesJugadores.contains(jugador.getId())) {
                 jugadores.save(jugadorMapper.toInactiveEntity(jugador, ahora));
             }
         }

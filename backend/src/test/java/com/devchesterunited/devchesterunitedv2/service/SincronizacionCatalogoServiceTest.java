@@ -48,9 +48,10 @@ class SincronizacionCatalogoServiceTest {
         servicio = new SincronizacionCatalogoServiceImpl(adapter, equipos, jugadores, usuarios, identidades, jdbc,
                 Clock.fixed(AHORA, java.time.ZoneOffset.UTC), new JugadorMapper());
         lenient().when(equipos.findAllByIdExternoIn(anyList())).thenReturn(List.of());
-        lenient().when(jugadores.findAllByIdExternoIn(anyList())).thenReturn(List.of());
         lenient().when(equipos.findAll()).thenReturn(List.of());
         lenient().when(jugadores.findAll()).thenReturn(List.of());
+        lenient().when(identidades.findAllByProveedorAndExternalIdIn(any(), anyList())).thenReturn(List.of());
+        lenient().when(identidades.findAllByProveedor(any())).thenReturn(List.of());
         lenient().when(equipos.save(any(EquipoEntity.class))).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(jugadores.save(any(JugadorEntity.class))).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(identidades.findByJugador_IdAndProveedor(any(), any())).thenReturn(java.util.Optional.empty());
@@ -72,6 +73,29 @@ class SincronizacionCatalogoServiceTest {
         verify(equipos).flush();
         verify(jugadores).flush();
         verify(identidades, times(96)).save(any(IdentidadExternaJugadorEntity.class));
+    }
+
+    @Test
+    void resuelveJugadorExistenteDesdeIdentidadYConservaUuidInterno() {
+        when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
+        CatalogoSincronizado snapshot = snapshot();
+        UUID uuidPersistido = UUID.fromString("70000000-0000-0000-0000-000000000001");
+        Equipo equipo = snapshot.getEquipos().get(0);
+        JugadorEntity jugadorPersistido = new JugadorEntity(uuidPersistido, null, "Jugador previo",
+                equipo.getId(), "Forward", 9, "Argentina", false, AHORA.minusSeconds(60),
+                AHORA.minusSeconds(30), equipo.getLiga(), equipo.getNombre());
+        IdentidadExternaJugadorEntity identidad = new IdentidadExternaJugadorEntity(
+                UUID.fromString("80000000-0000-0000-0000-000000000001"), jugadorPersistido,
+                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.FOOTBALL_DATA,
+                10001L);
+        when(identidades.findAllByProveedorAndExternalIdIn(any(), anyList())).thenReturn(List.of(identidad));
+        when(identidades.findAllByProveedor(any())).thenReturn(List.of(identidad));
+        when(adapter.sincronizar()).thenReturn(snapshot);
+
+        servicio.sincronizar();
+
+        verify(jugadores).save(argThat(j -> j.getId().equals(uuidPersistido)));
+        verify(identidades, never()).save(argThat(i -> i.getExternalId().equals(10001L)));
     }
 
     @Test
