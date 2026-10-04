@@ -51,8 +51,10 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
         equipos.saveAndFlush(new EquipoEntity(EQUIPO, 700001L, "Equipo Persistido", "EP", "EP",
                 "LaLiga", null, true, 2518L, LocalDate.of(2026, 8, 16),
                 LocalDate.of(2027, 5, 30), AHORA, AHORA));
-        jugadores.saveAndFlush(new JugadorEntity(JUGADOR, "Jugador Persistido", EQUIPO,
-                "Forward", null, "Argentina", true, AHORA, AHORA, "LaLiga", "Equipo Persistido"));
+        JugadorEntity jugador = new JugadorEntity(JUGADOR, "Jugador Persistido", EQUIPO,
+                "Forward", null, "Argentina", true);
+        jugador.conservarAuditoria(AHORA, AHORA);
+        jugadores.saveAndFlush(jugador);
     }
 
     @AfterEach

@@ -26,8 +26,7 @@ class IdentidadExternaJugadorRepositoryIntegrationTest extends PostgresTestSuppo
     @BeforeEach
     void prepararJugador() {
         jdbc.update("DELETE FROM jugadores WHERE id = ?", jugador);
-        jdbc.update("INSERT INTO jugadores (id, name, league, team, position, jersey_number, nationality) "
-                + "VALUES (?, 'Jugador Backfill', 'Liga prueba', 'Equipo prueba', 'Forward', 9, 'Argentina')", jugador);
+        insertarJugador(jugador, "Jugador Backfill", 9);
     }
 
     @Test
@@ -44,8 +43,7 @@ class IdentidadExternaJugadorRepositoryIntegrationTest extends PostgresTestSuppo
     void permiteMismoExternalIdEnProveedoresDiferentes() {
         insertarIdentidad(identidadFootballData, ProveedorIdentidadExterna.FOOTBALL_DATA, 7001, jugador);
         UUID otroJugador = UUID.fromString("50000000-0000-0000-0000-000000000002");
-        jdbc.update("INSERT INTO jugadores (id, name, league, team, position, jersey_number, nationality) "
-                + "VALUES (?, 'Otro Jugador', 'Liga prueba', 'Equipo prueba', 'Forward', 10, 'Argentina')", otroJugador);
+        insertarJugador(otroJugador, "Otro Jugador", 10);
         insertarIdentidad(identidadWhoScored, ProveedorIdentidadExterna.WHOSCORED, 7001, otroJugador);
 
         assertThat(repositorio.findByProveedorAndExternalId(ProveedorIdentidadExterna.FOOTBALL_DATA, 7001L)).isPresent();
@@ -56,8 +54,7 @@ class IdentidadExternaJugadorRepositoryIntegrationTest extends PostgresTestSuppo
     void imponeUnicidadPorProveedorYExternalId() {
         insertarIdentidad(identidadFootballData, ProveedorIdentidadExterna.FOOTBALL_DATA, 7002, jugador);
         UUID otroJugador = UUID.fromString("50000000-0000-0000-0000-000000000003");
-        jdbc.update("INSERT INTO jugadores (id, name, league, team, position, jersey_number, nationality) "
-                + "VALUES (?, 'Otro Jugador', 'Liga prueba', 'Equipo prueba', 'Forward', 11, 'Argentina')", otroJugador);
+        insertarJugador(otroJugador, "Otro Jugador", 11);
 
         assertThatThrownBy(() -> insertarIdentidad(UUID.randomUUID(),
                 ProveedorIdentidadExterna.FOOTBALL_DATA, 7002, otroJugador))
@@ -97,5 +94,11 @@ class IdentidadExternaJugadorRepositoryIntegrationTest extends PostgresTestSuppo
         jdbc.update("INSERT INTO identidades_externas_jugador "
                 + "(id, jugador_id, proveedor, external_id) VALUES (?, ?, ?, ?)",
                 id, jugadorId, proveedor.name(), externalId);
+    }
+
+    private void insertarJugador(UUID id, String nombre, int dorsal) {
+        jdbc.update("INSERT INTO equipos (id, name, league, is_active, created_at, updated_at) VALUES ((md5('Liga prueba' || '::' || 'Equipo prueba'))::uuid, 'Equipo prueba', 'Liga prueba', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ON CONFLICT (id) DO NOTHING");
+        jdbc.update("INSERT INTO jugadores (id, name, team_id, position, jersey_number, nationality) VALUES (?, ?, (md5('Liga prueba' || '::' || 'Equipo prueba'))::uuid, 'Forward', ?, 'Argentina')",
+                id, nombre, dorsal);
     }
 }

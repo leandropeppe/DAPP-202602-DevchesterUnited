@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.persistence.mapper;
 
-import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import java.time.Instant;
@@ -16,25 +15,22 @@ public class JugadorMapper {
      * Mapea un jugador del snapshot, conservando la identidad local y la fecha
      * de creación cuando ya existe una fila persistida.
      */
-    public JugadorEntity toEntity(Jugador jugador, Equipo equipo, UUID equipoId,
+    public JugadorEntity toEntity(Jugador jugador, UUID equipoId,
             JugadorEntity anterior, Instant ahora) {
         Objects.requireNonNull(jugador, "jugador es obligatorio");
-        Objects.requireNonNull(equipo, "equipo es obligatorio");
         Objects.requireNonNull(equipoId, "equipoId es obligatorio");
         Objects.requireNonNull(ahora, "ahora es obligatorio");
 
-        return new JugadorEntity(
+        JugadorEntity entidad = new JugadorEntity(
                 anterior == null ? jugador.getId() : anterior.getId(),
                 jugador.getNombre(),
                 equipoId,
                 jugador.getPosicion(),
                 jugador.getDorsal(),
                 jugador.getNacionalidad(),
-                jugador.isActivo(),
-                anterior == null ? ahora : anterior.getCreadoEn(),
-                ahora,
-                equipo.getLiga(),
-                equipo.getNombre());
+                jugador.isActivo());
+        entidad.conservarAuditoria(anterior == null ? ahora : anterior.getCreadoEn(), ahora);
+        return entidad;
     }
 
     /** Mapea una fila existente al estado inactivo sin alterar sus datos. */
@@ -42,17 +38,15 @@ public class JugadorMapper {
         Objects.requireNonNull(actual, "actual es obligatorio");
         Objects.requireNonNull(ahora, "ahora es obligatorio");
 
-        return new JugadorEntity(
+        JugadorEntity entidad = new JugadorEntity(
                 actual.getId(),
                 actual.getNombre(),
                 actual.getEquipoId(),
                 actual.getPosicion(),
                 actual.getNumeroCamiseta(),
                 actual.getNacionalidad(),
-                false,
-                actual.getCreadoEn(),
-                ahora,
-                actual.getLiga(),
-                actual.getEquipo());
+                false);
+        entidad.conservarAuditoria(actual.getCreadoEn(), ahora);
+        return entidad;
     }
 }

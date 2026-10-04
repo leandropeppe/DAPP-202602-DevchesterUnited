@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.persistence.mapper;
 
-import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import java.time.Instant;
@@ -14,19 +13,15 @@ class JugadorMapperTest {
     private final JugadorMapper mapper = new JugadorMapper();
 
     @Test
-    void mapeaJugadorNuevoConEquipoYColumnasLegacy() {
+    void mapeaJugadorNuevoSoloConEquipoId() {
         UUID jugadorId = UUID.randomUUID();
         UUID equipoId = UUID.randomUUID();
         Jugador jugador = new Jugador(jugadorId, "Lionel Messi", equipoId,
                 "Forward", 10, "Argentina", ACTUALIZADO);
-        Equipo equipo = equipo(equipoId);
-
-        JugadorEntity resultado = mapper.toEntity(jugador, equipo, equipoId, null, ACTUALIZADO);
+        JugadorEntity resultado = mapper.toEntity(jugador, equipoId, null, ACTUALIZADO);
 
         assertThat(resultado.getId()).isEqualTo(jugadorId);
         assertThat(resultado.getEquipoId()).isEqualTo(equipoId);
-        assertThat(resultado.getLiga()).isEqualTo("Premier League");
-        assertThat(resultado.getEquipo()).isEqualTo("Manchester United");
         assertThat(resultado.getNumeroCamiseta()).isEqualTo(10);
         assertThat(resultado.getNacionalidad()).isEqualTo("Argentina");
         assertThat(resultado.isActivo()).isTrue();
@@ -41,10 +36,10 @@ class JugadorMapperTest {
         Jugador jugador = new Jugador(UUID.randomUUID(), "Nombre actualizado", equipoId,
                 "Midfielder", null, "Uruguay", ACTUALIZADO);
         JugadorEntity anterior = new JugadorEntity(anteriorId, "Nombre anterior", equipoId,
-                "Forward", 9, "Argentina", false, CREADO, CREADO,
-                "Liga anterior", "Equipo anterior");
+                "Forward", 9, "Argentina", false);
+        anterior.conservarAuditoria(CREADO, CREADO);
 
-        JugadorEntity resultado = mapper.toEntity(jugador, equipo(equipoId), equipoId, anterior, ACTUALIZADO);
+        JugadorEntity resultado = mapper.toEntity(jugador, equipoId, anterior, ACTUALIZADO);
 
         assertThat(resultado.getId()).isEqualTo(anteriorId);
         assertThat(resultado.getNombre()).isEqualTo("Nombre actualizado");
@@ -60,23 +55,16 @@ class JugadorMapperTest {
         UUID jugadorId = UUID.randomUUID();
         UUID equipoId = UUID.randomUUID();
         JugadorEntity actual = new JugadorEntity(jugadorId, "Jugador", equipoId,
-                "Defender", 5, "Chile", true, CREADO, CREADO,
-                "Liga", "Equipo");
+                "Defender", 5, "Chile", true);
+        actual.conservarAuditoria(CREADO, CREADO);
 
         JugadorEntity resultado = mapper.toInactiveEntity(actual, ACTUALIZADO);
 
         assertThat(resultado.getId()).isEqualTo(jugadorId);
         assertThat(resultado.getEquipoId()).isEqualTo(equipoId);
         assertThat(resultado.getNumeroCamiseta()).isEqualTo(5);
-        assertThat(resultado.getLiga()).isEqualTo("Liga");
-        assertThat(resultado.getEquipo()).isEqualTo("Equipo");
         assertThat(resultado.isActivo()).isFalse();
         assertThat(resultado.getCreadoEn()).isEqualTo(CREADO);
         assertThat(resultado.getActualizadoEn()).isEqualTo(ACTUALIZADO);
-    }
-
-    private static Equipo equipo(UUID id) {
-        return Equipo.importado(id, 12L, "Manchester United", "Man Utd", "MUN",
-                "Premier League", null, 2026, null, null, CREADO);
     }
 }

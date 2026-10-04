@@ -5,12 +5,10 @@ VALUES
   ('40000000-0000-0000-0000-000000000001', NULL, 'Real Madrid', 'Real Madrid', 'RMA', 'LaLiga', TRUE, TIMESTAMPTZ '2026-01-01T00:00:00Z', TIMESTAMPTZ '2026-01-01T00:00:00Z'),
   ('40000000-0000-0000-0000-000000000002', NULL, 'Atletico Madrid', 'Atletico', 'ATM', 'LaLiga', TRUE, TIMESTAMPTZ '2026-01-01T00:00:00Z', TIMESTAMPTZ '2026-01-01T00:00:00Z');
 
-INSERT INTO jugadores (id, name, league, team, position, jersey_number, nationality, team_id, is_active, created_at, updated_at)
+INSERT INTO jugadores (id, name, position, jersey_number, nationality, team_id, is_active, created_at, updated_at)
 SELECT
   ('50000000-0000-0000-0000-' || lpad(g::text, 12, '0'))::uuid,
   CASE WHEN g <= 12 THEN 'Jugador Real ' ELSE 'Jugador Atletico ' END || lpad(((g - 1) % 12 + 1)::text, 2, '0'),
-  'LaLiga',
-  CASE WHEN g <= 12 THEN 'Real Madrid' ELSE 'Atletico Madrid' END,
   CASE (g - 1) % 4 WHEN 0 THEN 'Goalkeeper' WHEN 1 THEN 'Defender' WHEN 2 THEN 'Midfielder' ELSE 'Forward' END,
   CASE WHEN g % 5 = 1 THEN NULL ELSE ((g - 1) % 12 + 1) END,
   'Espana',

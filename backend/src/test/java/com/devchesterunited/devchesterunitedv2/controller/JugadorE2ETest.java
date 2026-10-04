@@ -54,6 +54,21 @@ class JugadorE2ETest {
     }
 
     @Test
+    void respuestaResuelveLigaYEquipoDesdeTeamId() throws Exception {
+        String clave = claveValida();
+        catalogo();
+        jdbc.update("UPDATE equipos SET name = ?, league = ? WHERE name = ? AND league = ?",
+                "Atletico actualizado", "Liga actualizada", "Atlético de Madrid", "LaLiga");
+
+        JsonNode datos = exito(consulta(clave), 1, 20, 3, 1);
+        JsonNode jugador = datos.path("players").get(0);
+        assertThat(jugador.path("id").asText()).isEqualTo(idApi(1));
+        assertThat(jugador.path("team").asText()).isEqualTo("Atletico actualizado");
+        assertThat(jugador.path("league").asText()).isEqualTo("Liga actualizada");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM information_schema.columns WHERE table_name = 'jugadores' AND column_name IN ('league', 'team')", Integer.class)).isZero();
+    }
+
+    @Test
     void apiKeyAusenteEs401() throws Exception {
         mvc.perform(solicitud()).andExpect(status().isOk());
     }
@@ -232,7 +247,12 @@ class JugadorE2ETest {
 
     private void insertar(int id, String nombre, String apellido, String liga, String equipo,
             String posicion, int dorsal, String nacionalidad) {
-        jdbc.update("INSERT INTO jugadores (id, name, league, team, position, jersey_number, nationality) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        jdbc.update("""
+                INSERT INTO equipos (id, name, league, is_active, created_at, updated_at)
+                VALUES ((md5(? || '::' || ?))::uuid, ?, ?, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, league = EXCLUDED.league, is_active = TRUE
+                """, liga, equipo, equipo, liga);
+        jdbc.update("INSERT INTO jugadores (id, name, team_id, position, jersey_number, nationality) VALUES (?, ?, (md5(? || '::' || ?))::uuid, ?, ?, ?)",
                 UUID.fromString(idApi(id).substring(4)), nombre + " " + apellido, liga, equipo, posicion, dorsal, nacionalidad);
     }
 
