@@ -54,11 +54,19 @@ class EstadoJugadorTest {
 
     @Test
     void rechazaFechasIncoherentes() {
-        assertThatThrownBy(() -> EstadoJugador.desdePersistencia(true, ACTUALIZADO, CREADO))
+        Instant fechaAnterior = CREADO.minusSeconds(1);
+        EstadoJugador estado = EstadoJugador.nuevo(CREADO);
+
+        assertThatThrownBy(() ->
+                EstadoJugador.desdePersistencia(true, ACTUALIZADO, CREADO))
                 .isInstanceOf(JugadorException.class);
-        assertThatThrownBy(() -> EstadoJugador.nuevo(null))
+
+        assertThatThrownBy(() ->
+                EstadoJugador.nuevo(null))
                 .isInstanceOf(JugadorException.class);
-        assertThatThrownBy(() -> EstadoJugador.nuevo(CREADO).desactivar(CREADO.minusSeconds(1)))
+
+        assertThatThrownBy(() ->
+                estado.desactivar(fechaAnterior))
                 .isInstanceOf(JugadorException.class);
     }
 }

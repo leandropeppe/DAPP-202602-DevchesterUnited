@@ -31,7 +31,9 @@ class CatalogoSincronizadoTest {
         var equipos = new ArrayList<>(datos.equipos);
         var jugadores = new ArrayList<>(datos.jugadores);
         var ids = new HashMap<>(datos.ids);
+
         var snapshot = new CatalogoSincronizado(equipos, jugadores, ids);
+
         int cantidadEquipos = snapshot.equipos().size();
         int cantidadJugadores = snapshot.jugadores().size();
         int cantidadIds = snapshot.identidadesFootballData().size();
@@ -43,9 +45,18 @@ class CatalogoSincronizadoTest {
         assertThat(snapshot.equipos()).hasSize(cantidadEquipos);
         assertThat(snapshot.jugadores()).hasSize(cantidadJugadores);
         assertThat(snapshot.identidadesFootballData()).hasSize(cantidadIds);
-        assertThatThrownBy(() -> snapshot.equipos().clear()).isInstanceOf(UnsupportedOperationException.class);
-        assertThatThrownBy(() -> snapshot.jugadores().clear()).isInstanceOf(UnsupportedOperationException.class);
-        assertThatThrownBy(() -> snapshot.identidadesFootballData().clear())
+
+        var equiposSnapshot = snapshot.equipos();
+        var jugadoresSnapshot = snapshot.jugadores();
+        var idsSnapshot = snapshot.identidadesFootballData();
+
+        assertThatThrownBy(equiposSnapshot::clear)
+                .isInstanceOf(UnsupportedOperationException.class);
+
+        assertThatThrownBy(jugadoresSnapshot::clear)
+                .isInstanceOf(UnsupportedOperationException.class);
+
+        assertThatThrownBy(idsSnapshot::clear)
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 

@@ -52,21 +52,41 @@ class IdentidadExternaJugadorRepositoryIntegrationTest extends PostgresTestSuppo
 
     @Test
     void imponeUnicidadPorProveedorYExternalId() {
-        insertarIdentidad(identidadFootballData, ProveedorIdentidadExterna.FOOTBALL_DATA, 7002, jugador);
-        UUID otroJugador = UUID.fromString("50000000-0000-0000-0000-000000000003");
+        insertarIdentidad(
+                identidadFootballData,
+                ProveedorIdentidadExterna.FOOTBALL_DATA,
+                7002,
+                jugador);
+
+        UUID otroJugador = UUID.fromString(
+                "50000000-0000-0000-0000-000000000003");
+        UUID nuevaIdentidad = UUID.randomUUID();
+
         insertarJugador(otroJugador, "Otro Jugador", 11);
 
-        assertThatThrownBy(() -> insertarIdentidad(UUID.randomUUID(),
-                ProveedorIdentidadExterna.FOOTBALL_DATA, 7002, otroJugador))
+        assertThatThrownBy(() -> insertarIdentidad(
+                nuevaIdentidad,
+                ProveedorIdentidadExterna.FOOTBALL_DATA,
+                7002,
+                otroJugador))
                 .isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void unJugadorNoPuedeTenerDosIdentidadesDelMismoProveedor() {
-        insertarIdentidad(identidadFootballData, ProveedorIdentidadExterna.FOOTBALL_DATA, 7003, jugador);
+        insertarIdentidad(
+                identidadFootballData,
+                ProveedorIdentidadExterna.FOOTBALL_DATA,
+                7003,
+                jugador);
 
-        assertThatThrownBy(() -> insertarIdentidad(UUID.randomUUID(),
-                ProveedorIdentidadExterna.FOOTBALL_DATA, 7004, jugador))
+        UUID nuevaIdentidad = UUID.randomUUID();
+
+        assertThatThrownBy(() -> insertarIdentidad(
+                nuevaIdentidad,
+                ProveedorIdentidadExterna.FOOTBALL_DATA,
+                7004,
+                jugador))
                 .isInstanceOf(RuntimeException.class);
     }
 

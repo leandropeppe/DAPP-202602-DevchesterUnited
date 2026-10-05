@@ -26,15 +26,23 @@ class IdentidadExternaJugadorTest {
 
     @Test
     void rechazaProveedorNulo() {
-        assertThatThrownBy(() -> new IdentidadExternaJugador(UUID.randomUUID(),
-                null, 42))
+        UUID jugadorId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> new IdentidadExternaJugador(
+                jugadorId,
+                null,
+                42))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void rechazaExternalIdInvalido() {
-        assertThatThrownBy(() -> new IdentidadExternaJugador(UUID.randomUUID(),
-                ProveedorIdentidadExterna.WHOSCORED, 0))
+        UUID jugadorId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> new IdentidadExternaJugador(
+                jugadorId,
+                ProveedorIdentidadExterna.WHOSCORED,
+                0))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

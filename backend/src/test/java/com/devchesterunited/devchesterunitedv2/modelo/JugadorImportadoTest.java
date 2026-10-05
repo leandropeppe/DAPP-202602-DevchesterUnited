@@ -33,11 +33,23 @@ class JugadorImportadoTest {
 
     @Test
     void rechazaEquipoPosicionYNacionalidadInvalidos() {
-        assertThatThrownBy(() -> new Jugador(UUID.randomUUID(), "N", null,
-                "Forward", null, "AR", AHORA)).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> new Jugador(UUID.randomUUID(), "N", EQUIPO,
-                "Striker", null, "AR", AHORA)).isInstanceOf(RuntimeException.class);
-        assertThatThrownBy(() -> new Jugador(UUID.randomUUID(), "N", EQUIPO,
-                "Forward", 100, "AR", AHORA)).isInstanceOf(RuntimeException.class);
+        UUID jugadorSinEquipo = UUID.randomUUID();
+        UUID jugadorConPosicionInvalida = UUID.randomUUID();
+        UUID jugadorConDorsalInvalido = UUID.randomUUID();
+
+        assertThatThrownBy(() -> new Jugador(
+                jugadorSinEquipo, "N", null,
+                "Forward", null, "AR", AHORA))
+                .isInstanceOf(RuntimeException.class);
+
+        assertThatThrownBy(() -> new Jugador(
+                jugadorConPosicionInvalida, "N", EQUIPO,
+                "Striker", null, "AR", AHORA))
+                .isInstanceOf(RuntimeException.class);
+
+        assertThatThrownBy(() -> new Jugador(
+                jugadorConDorsalInvalido, "N", EQUIPO,
+                "Forward", 100, "AR", AHORA))
+                .isInstanceOf(RuntimeException.class);
     }
 }
