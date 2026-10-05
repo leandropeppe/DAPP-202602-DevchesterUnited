@@ -16,19 +16,16 @@ public final class Jugador {
     private final String posicion;
     private final Integer dorsal;
     private final String nacionalidad;
-    private final boolean activo;
-    private final Instant creadoEn;
-    private final Instant actualizadoEn;
+    private final EstadoJugador estado;
 
     /** Crea un jugador interno nuevo, activo y con timestamps iniciales iguales. */
     public Jugador(UUID id, String nombre, UUID equipoId, String posicion,
             Integer dorsal, String nacionalidad, Instant ahora) {
-        this(id, nombre, equipoId, posicion, dorsal, nacionalidad, true, ahora, ahora);
+        this(id, nombre, equipoId, posicion, dorsal, nacionalidad, EstadoJugador.nuevo(ahora));
     }
 
     private Jugador(UUID id, String nombre, UUID equipoId, String posicion,
-            Integer dorsal, String nacionalidad, boolean activo,
-            Instant creadoEn, Instant actualizadoEn) {
+            Integer dorsal, String nacionalidad, EstadoJugador estado) {
         if (id == null || equipoId == null) {
             throw new JugadorException("El jugador requiere identificadores validos.");
         }
@@ -41,18 +38,20 @@ public final class Jugador {
         if (dorsal != null && (dorsal < 1 || dorsal > 99)) {
             throw new JugadorException("El dorsal debe estar entre 1 y 99 cuando esta informado.");
         }
-        if (creadoEn == null || actualizadoEn == null || actualizadoEn.isBefore(creadoEn)) {
-            throw new JugadorException("Las fechas del jugador no son coherentes.");
-        }
+        if (estado == null) throw new JugadorException("El estado del jugador es obligatorio.");
         this.id = id;
         this.nombre = nombre;
         this.equipoId = equipoId;
         this.posicion = posicion;
         this.dorsal = dorsal;
         this.nacionalidad = nacionalidad;
-        this.activo = activo;
-        this.creadoEn = creadoEn;
-        this.actualizadoEn = actualizadoEn;
+        this.estado = estado;
+    }
+
+    /** Reconstruye un jugador con el estado conservado en persistencia. */
+    public static Jugador desdePersistencia(UUID id, String nombre, UUID equipoId,
+            String posicion, Integer dorsal, String nacionalidad, EstadoJugador estado) {
+        return new Jugador(id, nombre, equipoId, posicion, dorsal, nacionalidad, estado);
     }
 
     public Jugador desactivar(Instant ahora) {
@@ -64,8 +63,11 @@ public final class Jugador {
     }
 
     private Jugador transicionar(boolean nuevoEstado, Instant ahora) {
+        EstadoJugador nuevoEstadoJugador = nuevoEstado
+                ? estado.reactivar(ahora)
+                : estado.desactivar(ahora);
         return new Jugador(id, nombre, equipoId, posicion, dorsal, nacionalidad,
-                nuevoEstado, creadoEn, ahora);
+                nuevoEstadoJugador);
     }
 
     private static void validarTexto(String valor, String campo) {
@@ -89,7 +91,8 @@ public final class Jugador {
     public String getPosicion() { return posicion; }
     public Integer getDorsal() { return dorsal; }
     public String getNacionalidad() { return nacionalidad; }
-    public boolean isActivo() { return activo; }
-    public Instant getCreadoEn() { return creadoEn; }
-    public Instant getActualizadoEn() { return actualizadoEn; }
+    public EstadoJugador getEstado() { return estado; }
+    public boolean isActivo() { return estado.isActivo(); }
+    public Instant getCreadoEn() { return estado.getCreadoEn(); }
+    public Instant getActualizadoEn() { return estado.getActualizadoEn(); }
 }

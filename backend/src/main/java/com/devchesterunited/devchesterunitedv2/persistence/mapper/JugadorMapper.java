@@ -1,5 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.persistence.mapper;
 
+import com.devchesterunited.devchesterunitedv2.modelo.EstadoJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import java.time.Instant;
@@ -10,6 +11,20 @@ import org.springframework.stereotype.Component;
 /** Traduce el perfil de dominio de un jugador a su representación JPA. */
 @Component
 public class JugadorMapper {
+
+    /** Mapea una fila persistida a su representación de dominio. */
+    public Jugador toDomain(JugadorEntity entidad) {
+        Objects.requireNonNull(entidad, "entidad es obligatoria");
+        return Jugador.desdePersistencia(
+                entidad.getId(),
+                entidad.getNombre(),
+                entidad.getEquipoId(),
+                entidad.getPosicion(),
+                entidad.getNumeroCamiseta(),
+                entidad.getNacionalidad(),
+                EstadoJugador.desdePersistencia(
+                        entidad.isActivo(), entidad.getCreadoEn(), entidad.getActualizadoEn()));
+    }
 
     /**
      * Mapea un jugador del snapshot, conservando la identidad local y la fecha
