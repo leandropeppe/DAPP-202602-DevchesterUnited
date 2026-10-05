@@ -80,7 +80,7 @@ class SincronizacionCatalogoServiceTest {
         when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
         CatalogoSincronizado snapshot = snapshot();
         UUID uuidPersistido = UUID.fromString("70000000-0000-0000-0000-000000000001");
-        Equipo equipo = snapshot.getEquipos().get(0);
+        Equipo equipo = snapshot.equipos().get(0);
         JugadorEntity jugadorPersistido = new JugadorEntity(uuidPersistido, "Jugador previo",
                 equipo.getId(), "Forward", 9, "Argentina", false);
         jugadorPersistido.conservarAuditoria(AHORA.minusSeconds(60), AHORA.minusSeconds(30));

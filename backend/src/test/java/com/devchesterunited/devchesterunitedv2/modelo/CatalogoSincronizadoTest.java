@@ -18,9 +18,35 @@ class CatalogoSincronizadoTest {
     void aceptaSnapshotCompletoConPertenenciaValida() {
         var datos = datos();
         var snapshot = new CatalogoSincronizado(datos.equipos, datos.jugadores, datos.ids);
-        assertThat(snapshot.getEquipos()).hasSize(96);
-        assertThat(snapshot.getJugadores()).hasSize(96);
-        assertThat(snapshot.getEquipos()).isUnmodifiable();
+        assertThat(snapshot.equipos()).hasSize(96);
+        assertThat(snapshot.jugadores()).hasSize(96);
+        assertThat(snapshot.equipos()).isUnmodifiable();
+        assertThat(snapshot.jugadores()).isUnmodifiable();
+        assertThat(snapshot.identidadesFootballData()).isUnmodifiable();
+    }
+
+    @Test
+    void conservaSnapshotFrenteAMutacionesDeColeccionesOriginales() {
+        var datos = datos();
+        var equipos = new ArrayList<>(datos.equipos);
+        var jugadores = new ArrayList<>(datos.jugadores);
+        var ids = new HashMap<>(datos.ids);
+        var snapshot = new CatalogoSincronizado(equipos, jugadores, ids);
+        int cantidadEquipos = snapshot.equipos().size();
+        int cantidadJugadores = snapshot.jugadores().size();
+        int cantidadIds = snapshot.identidadesFootballData().size();
+
+        equipos.clear();
+        jugadores.clear();
+        ids.clear();
+
+        assertThat(snapshot.equipos()).hasSize(cantidadEquipos);
+        assertThat(snapshot.jugadores()).hasSize(cantidadJugadores);
+        assertThat(snapshot.identidadesFootballData()).hasSize(cantidadIds);
+        assertThatThrownBy(() -> snapshot.equipos().clear()).isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> snapshot.jugadores().clear()).isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> snapshot.identidadesFootballData().clear())
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test

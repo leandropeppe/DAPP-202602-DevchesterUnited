@@ -9,22 +9,23 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /** Snapshot completo validado antes de cualquier mutacion de persistencia. */
-public final class CatalogoSincronizado {
+public record CatalogoSincronizado(
+        List<Equipo> equipos,
+        List<Jugador> jugadores,
+        Map<UUID, Long> identidadesFootballData) {
+
     private static final Map<String, Integer> CANTIDAD_POR_LIGA = Map.of(
             "Premier League", 20, "LaLiga", 20, "Bundesliga", 18, "Serie A", 20, "Ligue 1", 18);
-    private final List<Equipo> equipos;
-    private final List<Jugador> jugadores;
-    private final Map<UUID, Long> identidadesFootballData;
 
-    public CatalogoSincronizado(List<Equipo> equipos, List<Jugador> jugadores,
-            Map<UUID, Long> identidadesFootballData) {
-        this.equipos = List.copyOf(Objects.requireNonNull(equipos));
-        this.jugadores = List.copyOf(Objects.requireNonNull(jugadores));
-        this.identidadesFootballData = Map.copyOf(Objects.requireNonNull(identidadesFootballData));
-        validar();
+    public CatalogoSincronizado {
+        equipos = List.copyOf(Objects.requireNonNull(equipos));
+        jugadores = List.copyOf(Objects.requireNonNull(jugadores));
+        identidadesFootballData = Map.copyOf(Objects.requireNonNull(identidadesFootballData));
+        validar(equipos, jugadores, identidadesFootballData);
     }
 
-    private void validar() {
+    private static void validar(List<Equipo> equipos, List<Jugador> jugadores,
+            Map<UUID, Long> identidadesFootballData) {
         if (equipos.size() != 96) throw new IllegalArgumentException("El snapshot debe contener 96 equipos.");
         if (jugadores.isEmpty() || jugadores.size() > 10_000) {
             throw new IllegalArgumentException("El snapshot debe contener entre 1 y 10000 jugadores.");
@@ -59,8 +60,5 @@ public final class CatalogoSincronizado {
         if (Set.copyOf(valores).size() != valores.size()) throw new IllegalArgumentException("Hay IDs externos duplicados de " + tipo + ".");
     }
 
-    public List<Equipo> getEquipos() { return equipos; }
-    public List<Jugador> getJugadores() { return jugadores; }
     public long getExternalId(UUID jugadorId) { return identidadesFootballData.get(jugadorId); }
-    public Map<UUID, Long> getIdentidadesFootballData() { return identidadesFootballData; }
 }

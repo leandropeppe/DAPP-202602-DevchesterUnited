@@ -104,12 +104,12 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         );
 
         return new SincronizacionResultado(
-                snapshot.getEquipos().size(),
-                snapshot.getJugadores().size(),
+                snapshot.equipos().size(),
+                snapshot.jugadores().size(),
                 equiposCreados,
-                snapshot.getEquipos().size() - equiposCreados,
+                snapshot.equipos().size() - equiposCreados,
                 jugadoresCreados,
-                snapshot.getJugadores().size() - jugadoresCreados
+                snapshot.jugadores().size() - jugadoresCreados
         );
     }
 
@@ -121,7 +121,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         Map<Long, EquipoEntity> existentesEquipos = existentesEquipos(snapshot);
         int equiposCreados = 0;
 
-        for (Equipo equipo : snapshot.getEquipos()) {
+        for (Equipo equipo : snapshot.equipos()) {
             EquipoEntity anterior = existentesEquipos.get(equipo.getIdExterno());
 
             UUID id = anterior == null
@@ -160,7 +160,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             Set<UUID> jugadoresSnapshot,
             Instant ahora) {
 
-        List<Long> externalIds = snapshot.getJugadores().stream()
+        List<Long> externalIds = snapshot.jugadores().stream()
                 .map(jugador -> snapshot.getExternalId(jugador.getId()))
                 .toList();
         Map<Long, IdentidadExternaJugadorEntity> identidadesPorExternalId = new HashMap<>();
@@ -171,7 +171,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
         int jugadoresCreados = 0;
 
-        for (Jugador jugador : snapshot.getJugadores()) {
+        for (Jugador jugador : snapshot.jugadores()) {
             long externalId = snapshot.getExternalId(jugador.getId());
             IdentidadExternaJugadorEntity identidadExistente = identidadesPorExternalId.get(externalId);
             JugadorEntity anterior = identidadExistente == null ? null : identidadExistente.getJugador();
@@ -203,14 +203,14 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
     private Map<Long, EquipoEntity> existentesEquipos(CatalogoSincronizado snapshot) {
         Map<Long, EquipoEntity> resultado = new HashMap<>();
-        for (EquipoEntity equipo : equipos.findAllByIdExternoIn(snapshot.getEquipos().stream().map(Equipo::getIdExterno).toList())) {
+        for (EquipoEntity equipo : equipos.findAllByIdExternoIn(snapshot.equipos().stream().map(Equipo::getIdExterno).toList())) {
             resultado.put(equipo.getIdExterno(), equipo);
         }
         return resultado;
     }
 
     private static Equipo equipo(CatalogoSincronizado snapshot, UUID id) {
-        return snapshot.getEquipos().stream().filter(e -> e.getId().equals(id)).findFirst().orElseThrow();
+        return snapshot.equipos().stream().filter(e -> e.getId().equals(id)).findFirst().orElseThrow();
     }
 
     private void inactivarAusentes(Set<Long> presentesEquipos,
