@@ -12,13 +12,27 @@ class IdentidadExternaJugadorTest {
         var identidad = new IdentidadExternaJugador(jugador,
                 ProveedorIdentidadExterna.FOOTBALL_DATA, 42);
 
-        assertThat(identidad.getJugadorId()).isEqualTo(jugador);
-        assertThat(identidad.getProveedor()).isEqualTo(ProveedorIdentidadExterna.FOOTBALL_DATA);
-        assertThat(identidad.getExternalId()).isEqualTo(42);
+        assertThat(identidad.jugadorId()).isEqualTo(jugador);
+        assertThat(identidad.proveedor()).isEqualTo(ProveedorIdentidadExterna.FOOTBALL_DATA);
+        assertThat(identidad.externalId()).isEqualTo(42);
     }
 
     @Test
-    void rechazaIdentidadInvalida() {
+    void rechazaJugadorIdNulo() {
+        assertThatThrownBy(() -> new IdentidadExternaJugador(null,
+                ProveedorIdentidadExterna.WHOSCORED, 42))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void rechazaProveedorNulo() {
+        assertThatThrownBy(() -> new IdentidadExternaJugador(UUID.randomUUID(),
+                null, 42))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void rechazaExternalIdInvalido() {
         assertThatThrownBy(() -> new IdentidadExternaJugador(UUID.randomUUID(),
                 ProveedorIdentidadExterna.WHOSCORED, 0))
                 .isInstanceOf(IllegalArgumentException.class);
