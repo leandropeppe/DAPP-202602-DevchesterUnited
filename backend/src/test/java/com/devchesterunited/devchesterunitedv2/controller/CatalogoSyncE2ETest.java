@@ -51,8 +51,8 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
 
     @BeforeEach
     void prepararUsuario() {
-        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
-        jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
+        jdbc.update("DELETE FROM equipos WHERE id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("DELETE FROM usuarios WHERE id = ?", USUARIO);
         usuarios.save(new UsuarioEntity(USUARIO, "synce2euser", "synce2e@example.com", "$2a$12$" + "a".repeat(53), AHORA, AHORA));
         reset(adapter);
@@ -60,8 +60,8 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
 
     @AfterEach
     void limpiarUsuario() {
-        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
-        jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
+        jdbc.update("DELETE FROM equipos WHERE id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("DELETE FROM usuarios WHERE id = ?", USUARIO);
     }
 
@@ -72,7 +72,8 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.teams_processed").value(96))
                 .andExpect(jsonPath("$.data.players_processed").value(96));
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class)).isEqualTo(96L);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM identidades_externas_equipo i JOIN equipos e ON e.id = i.equipo_id "
+                + "WHERE i.proveedor = 'FOOTBALL_DATA' AND e.is_active", Long.class)).isEqualTo(96L);
         verify(adapter).sincronizar();
     }
 
@@ -92,11 +93,13 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
         when(adapter.sincronizar()).thenReturn(snapshot(920000L, 930000L));
         mvc.perform(post("/api/v1/catalog/sync").header("X-API-KEY", apiKeyValida()))
                 .andExpect(status().isOk());
-        long equiposAntes = jdbc.queryForObject("SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class);
+        long equiposAntes = jdbc.queryForObject("SELECT count(*) FROM identidades_externas_equipo i JOIN equipos e ON e.id = i.equipo_id "
+                + "WHERE i.proveedor = 'FOOTBALL_DATA' AND e.is_active", Long.class);
         when(adapter.sincronizar()).thenThrow(new FootballDataException("fallo simulado"));
         mvc.perform(post("/api/v1/catalog/sync").header("X-API-KEY", apiKeyValida()))
                 .andExpect(status().isServiceUnavailable());
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class)).isEqualTo(equiposAntes);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM identidades_externas_equipo i JOIN equipos e ON e.id = i.equipo_id "
+                + "WHERE i.proveedor = 'FOOTBALL_DATA' AND e.is_active", Long.class)).isEqualTo(equiposAntes);
     }
 
     @Test

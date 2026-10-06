@@ -1,7 +1,9 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
+import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -23,15 +25,18 @@ class SincronizacionRepositoryIntegrationTest extends PostgresTestSupport {
     private static final UUID JUGADOR_ID = UUID.fromString("90000000-0000-0000-0000-000000000002");
 
     @Autowired EquipoRepository equipos;
+    @Autowired IdentidadExternaEquipoRepository identidadesEquipos;
     @Autowired JugadorRepository jugadores;
     @Autowired JdbcTemplate jdbc;
     @Autowired EntityManager entityManager;
 
     @Test
     void persisteEquipoJugadorAsociadoYAdmiteDorsalNulo() {
-        equipos.saveAndFlush(new EquipoEntity(EQUIPO_ID, 990001L, "Equipo importado", "EI", "EIM", "LaLiga",
+        EquipoEntity equipo = equipos.saveAndFlush(new EquipoEntity(EQUIPO_ID, "Equipo importado", "EI", "EIM", "LaLiga",
                 "https://img.example/equipo.png", true, 2026L, LocalDate.of(2026, 8, 1),
                 LocalDate.of(2027, 5, 31), AHORA, AHORA));
+        identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
+                UUID.randomUUID(), equipo, ProveedorIdentidadExterna.FOOTBALL_DATA, 990001L));
         JugadorEntity jugador = new JugadorEntity(JUGADOR_ID, "Nombre Apellido", EQUIPO_ID, "Forward", null,
                 "Argentina", true);
         jugador.conservarAuditoria(AHORA, AHORA);
@@ -41,14 +46,32 @@ class SincronizacionRepositoryIntegrationTest extends PostgresTestSupport {
         assertThat(persistido.getEquipoId()).isEqualTo(EQUIPO_ID);
         assertThat(persistido.getNumeroCamiseta()).isNull();
         assertThat(jugadores.findAllByEquipoId(EQUIPO_ID)).extracting(JugadorEntity::getId).containsExactly(JUGADOR_ID);
-        assertThat(equipos.findByIdExterno(990001L)).isPresent();
+        assertThat(identidadesEquipos.findByProveedorAndExternalId(
+                ProveedorIdentidadExterna.FOOTBALL_DATA, 990001L)).isPresent();
     }
 
     @Test
-    void impideIdsExternosDuplicados() {
+    void impideIdentidadesExternasDuplicadasPorProveedorYExternalId() {
+        EquipoEntity equipo = equipos.saveAndFlush(new EquipoEntity(
+                EQUIPO_ID, "Equipo unico", "EU", "EUN", "Serie A", null, true,
+                2026L, null, null, AHORA, AHORA));
+        identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
+                UUID.randomUUID(), equipo, ProveedorIdentidadExterna.FOOTBALL_DATA, 990003L));
+
+        UUID nuevoId = UUID.randomUUID();
+        var equipoRepetido = equipos.saveAndFlush(new EquipoEntity(
+                nuevoId, "Repetido", "R", "REP", "Serie A", null, true,
+                2026L, null, null, AHORA, AHORA));
+
+        assertThatThrownBy(() -> identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
+                UUID.randomUUID(), equipoRepetido, ProveedorIdentidadExterna.FOOTBALL_DATA, 990003L)))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void impideDosIdentidadesDelMismoProveedorParaUnEquipo() {
         equipos.saveAndFlush(new EquipoEntity(
                 EQUIPO_ID,
-                990003L,
                 "Equipo unico",
                 "EU",
                 "EUN",
@@ -62,32 +85,18 @@ class SincronizacionRepositoryIntegrationTest extends PostgresTestSupport {
                 AHORA
         ));
 
-        UUID nuevoId = UUID.randomUUID();
+        var equipo = equipos.findById(EQUIPO_ID).orElseThrow();
+        identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
+                UUID.randomUUID(), equipo, ProveedorIdentidadExterna.FOOTBALL_DATA, 990004L));
 
-        var equipoRepetido = new EquipoEntity(
-                nuevoId,
-                990003L,
-                "Repetido",
-                "R",
-                "REP",
-                "Serie A",
-                null,
-                true,
-                2026L,
-                null,
-                null,
-                AHORA,
-                AHORA
-        );
-
-        assertThatThrownBy(() ->
-                equipos.saveAndFlush(equipoRepetido))
+        assertThatThrownBy(() -> identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
+                UUID.randomUUID(), equipo, ProveedorIdentidadExterna.FOOTBALL_DATA, 990005L)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void permiteInactivarYReactivarEquipos() {
-        equipos.saveAndFlush(new EquipoEntity(EQUIPO_ID, 990004L, "Equipo estado", "EE", "EST", "Serie A",
+        equipos.saveAndFlush(new EquipoEntity(EQUIPO_ID, "Equipo estado", "EE", "EST", "Serie A",
                 null, true, 2026L, null, null, AHORA, AHORA));
         jdbc.update("UPDATE equipos SET is_active = false, updated_at = ? WHERE id = ?",
                 java.sql.Timestamp.from(AHORA.plusSeconds(1)), EQUIPO_ID);

@@ -24,7 +24,6 @@ WITH ligas AS (
 )
 INSERT INTO equipos (
     id,
-    external_id,
     name,
     short_name,
     tla,
@@ -39,7 +38,6 @@ INSERT INTO equipos (
 )
 SELECT
     md5('performance-team-' || liga || '-' || equipo)::uuid,
-    NULL,
     CASE
         WHEN liga = 1 AND equipo = 1 THEN 'Real Madrid'
         WHEN liga = 1 AND equipo = 2 THEN U&'Atl\00E9tico de Madrid'

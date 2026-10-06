@@ -10,7 +10,9 @@ import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -37,12 +39,13 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
     @Autowired JdbcTemplate jdbc;
     @Autowired SincronizacionCatalogoService servicio;
     @Autowired EquipoRepository equipos;
+    @Autowired IdentidadExternaEquipoRepository identidadesEquipos;
     @Autowired JugadorRepository jugadores;
 
     @BeforeEach
     void limpiarFixturesExternos() {
-        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
-        jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
+        jdbc.update("DELETE FROM equipos WHERE id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("UPDATE equipos SET is_active = true");
         jdbc.update("UPDATE jugadores SET is_active = true");
     }
@@ -56,14 +59,15 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
         servicio.sincronizar();
 
         long equiposAntes = jdbc.queryForObject(
-                "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL", Long.class);
+                "SELECT count(*) FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA'", Long.class);
         long jugadoresAntes = jdbc.queryForObject(
                 "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA'", Long.class);
         long equiposActivosAntes = jdbc.queryForObject(
-                "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class);
+                "SELECT count(*) FROM identidades_externas_equipo i JOIN equipos e ON e.id = i.equipo_id "
+                        + "WHERE i.proveedor = 'FOOTBALL_DATA' AND e.is_active", Long.class);
         long jugadoresActivosAntes = jdbc.queryForObject(
                 "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA' AND j.is_active", Long.class);
-        UUID equipoIdAntes = equipos.findByIdExterno(600000L).orElseThrow().getId();
+        UUID equipoIdAntes = equipoPorExternalId(600000L).getId();
         UUID jugadorIdAntes = jugadorIdPorExternalId(700000L);
 
         assertThatThrownBy(servicio::sincronizar)
@@ -71,18 +75,19 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
                 .hasMessage("La respuesta del proveedor no forma un snapshot utilizable.");
 
         assertThat(jdbc.queryForObject(
-                "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL", Long.class))
+                "SELECT count(*) FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA'", Long.class))
                 .isEqualTo(equiposAntes);
         assertThat(jdbc.queryForObject(
                 "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA'", Long.class))
                 .isEqualTo(jugadoresAntes);
         assertThat(jdbc.queryForObject(
-                "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class))
+                "SELECT count(*) FROM identidades_externas_equipo i JOIN equipos e ON e.id = i.equipo_id "
+                        + "WHERE i.proveedor = 'FOOTBALL_DATA' AND e.is_active", Long.class))
                 .isEqualTo(equiposActivosAntes);
         assertThat(jdbc.queryForObject(
                 "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA' AND j.is_active", Long.class))
                 .isEqualTo(jugadoresActivosAntes);
-        assertThat(equipos.findByIdExterno(600000L)).get()
+        assertThat(equipoPorExternalId(600000L))
                 .satisfies(equipo -> {
                     assertThat(equipo.getId()).isEqualTo(equipoIdAntes);
                     assertThat(equipo.isActivo()).isTrue();
@@ -100,7 +105,7 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
     private long duplicados(String tabla) {
         String tablaIdentidad = "jugadores".equals(tabla)
                 ? "(SELECT external_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA') identidades"
-                : tabla;
+                : "(SELECT external_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA') identidades";
         return jdbc.queryForObject("""
                 SELECT count(*) FROM (
                     SELECT external_id
@@ -110,6 +115,17 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
                     HAVING count(*) > 1
                 ) duplicados
                 """.formatted(tablaIdentidad), Long.class);
+    }
+
+    private EquipoEntity equipoPorExternalId(long externalId) {
+        UUID equipoId = identidadPorExternalId(externalId).orElseThrow().getEquipo().getId();
+        return equipos.findById(equipoId).orElseThrow();
+    }
+
+    private java.util.Optional<com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity>
+            identidadPorExternalId(long externalId) {
+        return identidadesEquipos.findByProveedorAndExternalId(
+                ProveedorIdentidadExterna.FOOTBALL_DATA, externalId);
     }
 
     private UUID jugadorIdPorExternalId(long externalId) {

@@ -9,6 +9,7 @@ import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import java.time.Instant;
@@ -57,12 +58,13 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
     @Autowired JdbcTemplate jdbc;
     @Autowired SincronizacionCatalogoService servicio;
     @Autowired EquipoRepository equipos;
+    @Autowired IdentidadExternaEquipoRepository identidadesEquipos;
     @Autowired JugadorRepository jugadores;
 
     @BeforeEach
     void limpiarFixturesExternos() {
-        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
-        jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
+        jdbc.update("DELETE FROM equipos WHERE id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("UPDATE equipos SET is_active = true");
         jdbc.update("UPDATE jugadores SET is_active = true");
     }
@@ -75,48 +77,45 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
 
         servicio.sincronizar();
 
-        UUID equipoPersistenteId = equipos.findByIdExterno(EQUIPO_PERSISTENTE).orElseThrow().getId();
-        UUID equipoAusenteId = equipos.findByIdExterno(EQUIPO_AUSENTE).orElseThrow().getId();
+        UUID equipoPersistenteId = equipoPorExternalId(EQUIPO_PERSISTENTE).getId();
+        UUID equipoAusenteId = equipoPorExternalId(EQUIPO_AUSENTE).getId();
 
         servicio.sincronizar();
 
-        var equipoPersistente = equipos.findByIdExterno(EQUIPO_PERSISTENTE).orElseThrow();
+        var equipoPersistente = equipoPorExternalId(EQUIPO_PERSISTENTE);
         assertThat(equipoPersistente.getId()).isEqualTo(equipoPersistenteId);
         assertThat(equipoPersistente.isActivo()).isTrue();
         assertThat(equipoPersistente.getTemporadaExternaId()).isEqualTo(3101L);
         assertThat(equipoPersistente.getInicioTemporada()).isEqualTo(LocalDate.of(2026, 8, 1));
         assertThat(equipoPersistente.getFinTemporada()).isEqualTo(LocalDate.of(2027, 5, 31));
 
-        var equipoAusente = equipos.findByIdExterno(EQUIPO_AUSENTE).orElseThrow();
+        var equipoAusente = equipoPorExternalId(EQUIPO_AUSENTE);
         assertThat(equipoAusente.getId()).isEqualTo(equipoAusenteId);
         assertThat(equipoAusente.isActivo()).isFalse();
 
-        var equipoNuevo = equipos.findByIdExterno(EQUIPO_NUEVO).orElseThrow();
+        var equipoNuevo = equipoPorExternalId(EQUIPO_NUEVO);
         assertThat(equipoNuevo.isActivo()).isTrue();
         assertThat(equipoNuevo.getTemporadaExternaId()).isEqualTo(3101L);
         assertThat(equipoNuevo.getInicioTemporada()).isEqualTo(LocalDate.of(2026, 8, 1));
         assertThat(equipoNuevo.getFinTemporada()).isEqualTo(LocalDate.of(2027, 5, 31));
         assertThat(equipoNuevo.getId()).isNotEqualTo(equipoAusenteId);
 
-        assertThat(equipos.findAllByActivoTrue()).filteredOn(equipo -> equipo.getIdExterno() != null)
-                .hasSize(96);
+        assertThat(equiposFootballDataActivos()).hasSize(96);
         assertThat(duplicados("equipos")).isZero();
         assertThat(duplicados("jugadores")).isZero();
         assertThat(jugadores.findById(jugadorIdPorExternalId(JUGADOR_NUEVO))).get()
                 .extracting(JugadorEntity::isActivo).isEqualTo(true);
 
         for (Map.Entry<String, Temporada> entry : TEMPORADA_NUEVA.entrySet()) {
-            var activosDeLiga = equipos.findAllByActivoTrue().stream()
+            var activosDeLiga = equiposFootballDataActivos().stream()
                     .filter(equipo -> entry.getKey().equals(equipo.getLiga()))
-                    .filter(equipo -> equipo.getIdExterno() != null)
                     .toList();
             assertThat(activosDeLiga).isNotEmpty()
                     .allMatch(equipo -> equipo.getTemporadaExternaId().equals(entry.getValue().id()))
                     .allMatch(equipo -> equipo.getInicioTemporada().equals(entry.getValue().inicio()))
                     .allMatch(equipo -> equipo.getFinTemporada().equals(entry.getValue().fin()));
         }
-        assertThat(equipos.findAllByActivoTrue().stream()
-                .filter(equipo -> equipo.getIdExterno() != null)
+        assertThat(equiposFootballDataActivos().stream()
                 .map(EquipoEntity::getTemporadaExternaId)
                 .distinct()).hasSize(5);
     }
@@ -124,7 +123,7 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
     private long duplicados(String tabla) {
         String tablaIdentidad = "jugadores".equals(tabla)
                 ? "(SELECT external_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA') identidades"
-                : tabla;
+                : "(SELECT external_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA') identidades";
         return jdbc.queryForObject("""
                 SELECT count(*) FROM (
                     SELECT external_id
@@ -134,6 +133,19 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
                     HAVING count(*) > 1
                 ) duplicados
                 """.formatted(tablaIdentidad), Long.class);
+    }
+
+    private EquipoEntity equipoPorExternalId(long externalId) {
+        UUID equipoId = identidadesEquipos.findByProveedorAndExternalId(
+                ProveedorIdentidadExterna.FOOTBALL_DATA, externalId).orElseThrow().getEquipo().getId();
+        return equipos.findById(equipoId).orElseThrow();
+    }
+
+    private List<EquipoEntity> equiposFootballDataActivos() {
+        return identidadesEquipos.findAllByProveedor(ProveedorIdentidadExterna.FOOTBALL_DATA).stream()
+                .map(identidad -> equipos.findById(identidad.getEquipo().getId()).orElseThrow())
+                .filter(EquipoEntity::isActivo)
+                .toList();
     }
 
     private UUID jugadorIdPorExternalId(long externalId) {

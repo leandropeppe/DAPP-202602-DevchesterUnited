@@ -1,9 +1,9 @@
 TRUNCATE TABLE jugadores, equipos CASCADE;
 
-INSERT INTO equipos (id, external_id, name, short_name, tla, league, is_active, created_at, updated_at)
+INSERT INTO equipos (id, name, short_name, tla, league, is_active, created_at, updated_at)
 VALUES
-  ('40000000-0000-0000-0000-000000000001', NULL, 'Real Madrid', 'Real Madrid', 'RMA', 'LaLiga', TRUE, TIMESTAMPTZ '2026-01-01T00:00:00Z', TIMESTAMPTZ '2026-01-01T00:00:00Z'),
-  ('40000000-0000-0000-0000-000000000002', NULL, 'Atletico Madrid', 'Atletico', 'ATM', 'LaLiga', TRUE, TIMESTAMPTZ '2026-01-01T00:00:00Z', TIMESTAMPTZ '2026-01-01T00:00:00Z');
+  ('40000000-0000-0000-0000-000000000001', 'Real Madrid', 'Real Madrid', 'RMA', 'LaLiga', TRUE, TIMESTAMPTZ '2026-01-01T00:00:00Z', TIMESTAMPTZ '2026-01-01T00:00:00Z'),
+  ('40000000-0000-0000-0000-000000000002', 'Atletico Madrid', 'Atletico', 'ATM', 'LaLiga', TRUE, TIMESTAMPTZ '2026-01-01T00:00:00Z', TIMESTAMPTZ '2026-01-01T00:00:00Z');
 
 INSERT INTO jugadores (id, name, position, jersey_number, nationality, team_id, is_active, created_at, updated_at)
 SELECT

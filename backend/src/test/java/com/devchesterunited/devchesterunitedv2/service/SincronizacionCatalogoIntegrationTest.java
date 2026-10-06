@@ -44,8 +44,8 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
 
     @BeforeEach
     void limpiarFixturesExternos() {
-        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
-        jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
+        jdbc.update("DELETE FROM equipos WHERE id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("UPDATE equipos SET is_active = true");
         jdbc.update("UPDATE jugadores SET is_active = true");
     }
@@ -59,7 +59,7 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
 
         assertThat(resultado.equiposProcesados()).isEqualTo(96);
         assertThat(resultado.jugadoresProcesados()).isEqualTo(96);
-        var activos = equipos.findAllByActivoTrue().stream().filter(e -> e.getIdExterno() != null).toList();
+        var activos = equiposFootballDataActivos();
         assertThat(activos).hasSize(96);
         assertThat(activos.stream().filter(e -> e.getLiga().equals("Premier League")).count()).isEqualTo(20);
         assertThat(activos.stream().filter(e -> e.getLiga().equals("LaLiga")).count()).isEqualTo(20);
@@ -67,12 +67,11 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
         assertThat(activos.stream().filter(e -> e.getLiga().equals("Serie A")).count()).isEqualTo(20);
         assertThat(activos.stream().filter(e -> e.getLiga().equals("Ligue 1")).count()).isEqualTo(18);
         assertThat(jugadores.findAll()).filteredOn(j -> !j.isActivo()).isNotEmpty();
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class)).isEqualTo(96L);
-        assertThat(equipos.findAll()).filteredOn(equipo -> equipo.getIdExterno() == null)
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM identidades_externas_equipo i JOIN equipos e ON e.id = i.equipo_id "
+                + "WHERE i.proveedor = 'FOOTBALL_DATA' AND e.is_active", Long.class)).isEqualTo(96L);
+        assertThat(equipos.findAll()).filteredOn(equipo -> !identidadesEquipos.findByEquipo_IdAndProveedor(
+                equipo.getId(), ProveedorIdentidadExterna.FOOTBALL_DATA).isPresent())
                 .isNotEmpty().allMatch(EquipoEntity::isActivo);
-        assertThat(equipos.findAll()).filteredOn(equipo -> equipo.getIdExterno() == null)
-                .allMatch(equipo -> identidadesEquipos.findByEquipo_IdAndProveedor(
-                        equipo.getId(), ProveedorIdentidadExterna.FOOTBALL_DATA).isEmpty());
     }
 
     @Test
@@ -80,30 +79,32 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
         CatalogoSincronizado primero = snapshot(710000L, 810000L);
         when(adapter.sincronizar()).thenReturn(primero);
         servicio.sincronizar();
-        UUID equipoId = equipos.findByIdExterno(710000L).orElseThrow().getId();
+        UUID equipoId = equipoPorExternalId(710000L).getId();
         UUID jugadorId = jugadorIdPorExternalId(810000L);
-        jdbc.update("UPDATE equipos SET is_active = false WHERE external_id = 710000");
+        jdbc.update("UPDATE equipos SET is_active = false WHERE id = ?", equipoId);
         jdbc.update("UPDATE jugadores SET is_active = false WHERE id = ?", jugadorId);
 
         servicio.sincronizar();
 
-        assertThat(equipos.findByIdExterno(710000L).orElseThrow().getId()).isEqualTo(equipoId);
+        assertThat(equipoPorExternalId(710000L).getId()).isEqualTo(equipoId);
         assertThat(jugadorIdPorExternalId(810000L)).isEqualTo(jugadorId);
-        assertThat(equipos.findByIdExterno(710000L).orElseThrow().isActivo()).isTrue();
+        assertThat(equipoPorExternalId(710000L).isActivo()).isTrue();
         assertThat(jugadores.findById(jugadorIdPorExternalId(810000L)).orElseThrow().isActivo()).isTrue();
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM equipos WHERE external_id IS NOT NULL", Long.class)).isEqualTo(96L);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA'", Long.class)).isEqualTo(96L);
     }
 
     @Test
     void falloDelProveedorConservaElSnapshotAnterior() {
         when(adapter.sincronizar()).thenReturn(snapshot(720000L, 820000L));
         servicio.sincronizar();
-        long equiposAntes = jdbc.queryForObject("SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class);
+        long equiposAntes = jdbc.queryForObject("SELECT count(*) FROM identidades_externas_equipo i JOIN equipos e ON e.id = i.equipo_id "
+                + "WHERE i.proveedor = 'FOOTBALL_DATA' AND e.is_active", Long.class);
         long jugadoresAntes = jdbc.queryForObject("SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA' AND j.is_active", Long.class);
         when(adapter.sincronizar()).thenThrow(new FootballDataException("fallo simulado"));
 
         assertThatThrownBy(servicio::sincronizar).isInstanceOf(FootballDataException.class);
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class)).isEqualTo(equiposAntes);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM identidades_externas_equipo i JOIN equipos e ON e.id = i.equipo_id "
+                + "WHERE i.proveedor = 'FOOTBALL_DATA' AND e.is_active", Long.class)).isEqualTo(equiposAntes);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA' AND j.is_active", Long.class)).isEqualTo(jugadoresAntes);
     }
 
@@ -129,6 +130,19 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
 
     private UUID jugadorIdPorExternalId(long externalId) {
         return jdbc.queryForObject("SELECT jugador_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA' AND external_id = ?", UUID.class, externalId);
+    }
+
+    private EquipoEntity equipoPorExternalId(long externalId) {
+        UUID equipoId = identidadesEquipos.findByProveedorAndExternalId(
+                ProveedorIdentidadExterna.FOOTBALL_DATA, externalId).orElseThrow().getEquipo().getId();
+        return equipos.findById(equipoId).orElseThrow();
+    }
+
+    private List<EquipoEntity> equiposFootballDataActivos() {
+        return identidadesEquipos.findAllByProveedor(ProveedorIdentidadExterna.FOOTBALL_DATA).stream()
+                .map(identidad -> equipos.findById(identidad.getEquipo().getId()).orElseThrow())
+                .filter(EquipoEntity::isActivo)
+                .toList();
     }
 
     private static CatalogoSincronizado snapshot(long equipoBase, long jugadorBase) {

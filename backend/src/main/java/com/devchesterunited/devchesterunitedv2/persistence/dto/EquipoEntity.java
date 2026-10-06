@@ -12,7 +12,6 @@ import java.util.UUID;
 @Table(name = "equipos")
 public class EquipoEntity {
     @Id @Column(nullable = false) private UUID id;
-    @Column(name = "external_id") private Long idExterno;
     @Column(name = "name", nullable = false, length = 100) private String nombre;
     @Column(name = "short_name", length = 100) private String nombreCorto;
     @Column(name = "tla", length = 10) private String sigla;
@@ -27,16 +26,15 @@ public class EquipoEntity {
 
     protected EquipoEntity() { }
 
-    public EquipoEntity(UUID id, Long idExterno, String nombre, String nombreCorto, String sigla,
+    public EquipoEntity(UUID id, String nombre, String nombreCorto, String sigla,
             String liga, String escudoUrl, boolean activo, Long temporadaExternaId,
             LocalDate inicioTemporada, LocalDate finTemporada, Instant creadoEn, Instant actualizadoEn) {
-        this.id=id; this.idExterno=idExterno; this.nombre=nombre; this.nombreCorto=nombreCorto;
+        this.id=id; this.nombre=nombre; this.nombreCorto=nombreCorto;
         this.sigla=sigla; this.liga=liga; this.escudoUrl=escudoUrl; this.activo=activo;
         this.temporadaExternaId=temporadaExternaId; this.inicioTemporada=inicioTemporada;
         this.finTemporada=finTemporada; this.creadoEn=creadoEn; this.actualizadoEn=actualizadoEn;
     }
     public UUID getId() { return id; }
-    public Long getIdExterno() { return idExterno; }
     public String getNombre() { return nombre; }
     public String getNombreCorto() { return nombreCorto; }
     public String getSigla() { return sigla; }

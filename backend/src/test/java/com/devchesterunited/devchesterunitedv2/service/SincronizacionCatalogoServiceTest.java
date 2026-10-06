@@ -90,7 +90,7 @@ class SincronizacionCatalogoServiceTest {
         UUID uuidPersistido = UUID.fromString("70000000-0000-0000-0000-000000000001");
         Equipo equipo = snapshot.equipos().get(0);
         UUID uuidEquipoPersistido = UUID.fromString("71000000-0000-0000-0000-000000000001");
-        EquipoEntity equipoPersistido = new EquipoEntity(uuidEquipoPersistido, 1L, "Equipo previo", null,
+        EquipoEntity equipoPersistido = new EquipoEntity(uuidEquipoPersistido, "Equipo previo", null,
                 null, equipo.liga(), null, false, 2026L, null, null, AHORA.minusSeconds(120), AHORA.minusSeconds(60));
         IdentidadExternaEquipoEntity identidadEquipo = new IdentidadExternaEquipoEntity(
                 UUID.fromString("72000000-0000-0000-0000-000000000001"), equipoPersistido,
@@ -112,19 +112,18 @@ class SincronizacionCatalogoServiceTest {
 
         verify(jugadores).save(argThat(j -> j.getId().equals(uuidPersistido)));
         verify(jugadores).save(argThat(j -> j.getEquipoId().equals(uuidEquipoPersistido)));
-        verify(equipos).save(argThat(e -> e.getId().equals(uuidEquipoPersistido)
-                && e.getIdExterno().equals(1L)));
+        verify(equipos).save(argThat(e -> e.getId().equals(uuidEquipoPersistido)));
         verify(identidadesEquipos, never()).save(argThat(i -> i.getExternalId().equals(1L)));
         verify(identidades, never()).save(argThat(i -> i.getExternalId().equals(10001L)));
     }
 
     @Test
-    void rechazaInconsistenciaEntreIdentidadExternaYExternalIdLegacy() {
+    void noReasignaIdentidadExternaExistenteAOtroEquipo() {
         when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
         CatalogoSincronizado snapshot = snapshot();
         Equipo equipo = snapshot.equipos().get(0);
         UUID uuidEquipoPersistido = UUID.fromString("73000000-0000-0000-0000-000000000001");
-        EquipoEntity equipoPersistido = new EquipoEntity(uuidEquipoPersistido, 999L, "Equipo inconsistente",
+        EquipoEntity equipoPersistido = new EquipoEntity(uuidEquipoPersistido, "Equipo persistido",
                 null, null, equipo.liga(), null, true, 2026L, null, null, AHORA, AHORA);
         IdentidadExternaEquipoEntity identidadEquipo = new IdentidadExternaEquipoEntity(
                 UUID.fromString("74000000-0000-0000-0000-000000000001"), equipoPersistido,
@@ -133,12 +132,10 @@ class SincronizacionCatalogoServiceTest {
                 .thenReturn(List.of(identidadEquipo));
         when(adapter.sincronizar()).thenReturn(snapshot);
 
-        assertThatThrownBy(servicio::sincronizar)
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("no coincide")
-                .hasMessageContaining("identidad=1")
-                .hasMessageContaining("legacy=999");
-        verify(equipos, never()).save(any(EquipoEntity.class));
+        servicio.sincronizar();
+
+        verify(equipos).save(argThat(e -> e.getId().equals(uuidEquipoPersistido)));
+        verify(identidadesEquipos, never()).save(argThat(i -> i.getExternalId().equals(1L)));
     }
 
     @Test
@@ -146,7 +143,7 @@ class SincronizacionCatalogoServiceTest {
         when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
         CatalogoSincronizado snapshot = snapshot();
         UUID uuidEquipoAusente = UUID.fromString("75000000-0000-0000-0000-000000000001");
-        EquipoEntity equipoAusente = new EquipoEntity(uuidEquipoAusente, 999999L, "Equipo ausente",
+        EquipoEntity equipoAusente = new EquipoEntity(uuidEquipoAusente, "Equipo ausente",
                 null, null, "Premier League", null, true, 2026L, null, null, AHORA, AHORA);
         IdentidadExternaEquipoEntity identidadAusente = new IdentidadExternaEquipoEntity(
                 UUID.fromString("76000000-0000-0000-0000-000000000001"), equipoAusente,
@@ -156,8 +153,7 @@ class SincronizacionCatalogoServiceTest {
 
         servicio.sincronizar();
 
-        verify(equipos).save(argThat(e -> e.getId().equals(uuidEquipoAusente)
-                && e.getIdExterno().equals(999999L) && !e.isActivo()));
+        verify(equipos).save(argThat(e -> e.getId().equals(uuidEquipoAusente) && !e.isActivo()));
     }
 
     @Test
@@ -165,8 +161,6 @@ class SincronizacionCatalogoServiceTest {
         when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
         CatalogoSincronizado snapshot = snapshot();
         UUID uuidEquipoLegacy = UUID.fromString("77000000-0000-0000-0000-000000000001");
-        EquipoEntity equipoLegacy = new EquipoEntity(uuidEquipoLegacy, null, "Equipo legacy",
-                null, null, "Premier League", null, true, 2026L, null, null, AHORA, AHORA);
         when(adapter.sincronizar()).thenReturn(snapshot);
 
         servicio.sincronizar();

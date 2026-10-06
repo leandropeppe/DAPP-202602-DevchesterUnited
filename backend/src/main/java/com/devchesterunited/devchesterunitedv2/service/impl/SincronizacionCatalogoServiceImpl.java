@@ -138,15 +138,6 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             long externalId = snapshot.getIdentidadExternaEquipo(equipo.id()).externalId();
             IdentidadExternaEquipoEntity identidadExistente = identidadesExistentes.get(externalId);
             EquipoEntity anterior = identidadExistente == null ? null : identidadExistente.getEquipo();
-            if (identidadExistente != null
-                    && (anterior.getIdExterno() == null
-                    || anterior.getIdExterno().longValue() != identidadExistente.getExternalId())) {
-                throw new IllegalStateException(
-                        "La identidad externa del equipo " + anterior.getId()
-                                + " no coincide con su external_id legacy: identidad="
-                                + identidadExistente.getExternalId() + ", legacy="
-                                + anterior.getIdExterno());
-            }
             UUID id = anterior == null ? equipo.id() : anterior.getId();
 
             if (anterior == null) {
@@ -155,7 +146,6 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
             EquipoEntity persistido = equipos.save(new EquipoEntity(
                     id,
-                    externalId,
                     equipo.nombre(),
                     anterior == null ? null : anterior.getNombreCorto(),
                     anterior == null ? null : anterior.getSigla(),
@@ -260,7 +250,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
                 if (!equipo.isActivo()) {
                     continue;
                 }
-                equipos.save(new EquipoEntity(equipo.getId(), equipo.getIdExterno(), equipo.getNombre(), equipo.getNombreCorto(),
+                equipos.save(new EquipoEntity(equipo.getId(), equipo.getNombre(), equipo.getNombreCorto(),
                         equipo.getSigla(), equipo.getLiga(), equipo.getEscudoUrl(), false, equipo.getTemporadaExternaId(),
                         equipo.getInicioTemporada(), equipo.getFinTemporada(), equipo.getCreadoEn(), ahora));
             }
