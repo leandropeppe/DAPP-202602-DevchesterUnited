@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -99,7 +101,7 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
         assertThat(duplicados("equipos")).isZero();
         assertThat(duplicados("jugadores")).isZero();
         assertThat(jugadores.findById(jugadorIdPorExternalId(JUGADOR_NUEVO))).get()
-                .extracting(jugador -> jugador.isActivo()).isEqualTo(true);
+                .extracting(JugadorEntity::isActivo).isEqualTo(true);
 
         for (Map.Entry<String, Temporada> entry : TEMPORADA_NUEVA.entrySet()) {
             var activosDeLiga = equipos.findAllByActivoTrue().stream()
@@ -113,7 +115,7 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
         }
         assertThat(equipos.findAllByActivoTrue().stream()
                 .filter(equipo -> equipo.getIdExterno() != null)
-                .map(equipo -> equipo.getTemporadaExternaId())
+                .map(EquipoEntity::getTemporadaExternaId)
                 .distinct()).hasSize(5);
     }
 

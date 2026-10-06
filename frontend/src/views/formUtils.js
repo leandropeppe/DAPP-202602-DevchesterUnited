@@ -2,7 +2,10 @@ export function validateUsername (value) {
   const policy = (import.meta.env.VITE_USERNAME_POLICY || 'strict').toLowerCase()
   const min = Number(import.meta.env.VITE_USERNAME_MIN_LENGTH || 3)
   const max = Number(import.meta.env.VITE_USERNAME_MAX_LENGTH || 30)
-  if (value.length < min || value.length > max || /[\s\u0000-\u0008\u000E-\u001F\u007F-\u009F]/u.test(value)) return false
+  const hasWhitespace = /\s/u.test(value)
+  const hasControlCharacter = /[\u0000-\u0008\u000E-\u001F\u007F-\u009F]/u.test(value)
+
+  if (value.length < min || value.length > max || hasWhitespace || hasControlCharacter) return false
   return policy !== 'strict' || /^[A-Za-z0-9]+$/.test(value)
 }
 
@@ -11,8 +14,8 @@ export function usernameValidationMessage () {
   const min = Number(import.meta.env.VITE_USERNAME_MIN_LENGTH || 3)
   const max = Number(import.meta.env.VITE_USERNAME_MAX_LENGTH || 30)
   return policy === 'strict'
-    ? `El nombre de usuario debe tener entre ${min} y ${max} caracteres alfanuméricos.`
-    : `El nombre de usuario debe tener entre ${min} y ${max} caracteres y no contener espacios.`
+      ? `El nombre de usuario debe tener entre ${min} y ${max} caracteres alfanuméricos.`
+      : `El nombre de usuario debe tener entre ${min} y ${max} caracteres y no contener espacios.`
 }
 
 export function validateEmail (value) {
