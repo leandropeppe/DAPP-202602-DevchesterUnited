@@ -21,6 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -59,7 +62,7 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
         var equipoInicial = equipos.findByIdExterno(EQUIPO_AUSENTE).orElseThrow();
         UUID equipoIdInicial = equipoInicial.getId();
         List<UUID> jugadoresIdsIniciales = jugadores.findAllByEquipoId(equipoIdInicial).stream()
-                .map(jugador -> jugador.getId()).sorted().toList();
+                .map(JugadorEntity::getId).sorted().toList();
         assertThat(jugadoresIdsIniciales).hasSize(2);
         assertThat(jugadores.contar(null, "Equipo Original 0", null)).isEqualTo(2);
 
@@ -74,7 +77,7 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
         assertThat(jugadores.buscar(null, "Equipo Original 0", null, 0, 20)).isEmpty();
         assertThat(jugadores.contar(null, "Equipo Reemplazo", null)).isEqualTo(2);
         assertThat(equipos.findByIdExterno(EQUIPO_REEMPLAZO)).get()
-                .extracting(equipo -> equipo.isActivo()).isEqualTo(true);
+                .extracting(EquipoEntity::isActivo).isEqualTo(true);
         assertThat(activosExternos()).isEqualTo(96L);
 
         servicio.sincronizar();
@@ -84,14 +87,16 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
         assertThat(equipoReactivado.getId()).isEqualTo(equipoIdInicial);
         assertThat(equipoReactivado.getIdExterno()).isEqualTo(EQUIPO_AUSENTE);
         assertThat(jugadores.findAllByEquipoId(equipoIdInicial)).hasSize(2)
-                .allMatch(jugador -> jugador.isActivo())
-                .extracting(jugador -> jugador.getId())
+                .allMatch(JugadorEntity::isActivo)
+                .extracting(JugadorEntity::getId)
                 .containsExactlyInAnyOrderElementsOf(jugadoresIdsIniciales);
-        assertThat(jugadores.findAllById(List.of(jugadorIdPorExternalId(JUGADOR_AUSENTE_BASE), jugadorIdPorExternalId(JUGADOR_AUSENTE_BASE + 1))))
-                .hasSize(2).allMatch(jugador -> jugador.isActivo());
+        assertThat(jugadores.findAllById(List.of(
+                jugadorIdPorExternalId(JUGADOR_AUSENTE_BASE),
+                jugadorIdPorExternalId(JUGADOR_AUSENTE_BASE + 1))))
+                .hasSize(2).allMatch(JugadorEntity::isActivo);
         assertThat(jugadores.contar(null, "Equipo Original 0", null)).isEqualTo(2);
         assertThat(equipos.findByIdExterno(EQUIPO_REEMPLAZO)).get()
-                .extracting(equipo -> equipo.isActivo()).isEqualTo(false);
+                .extracting(EquipoEntity::isActivo).isEqualTo(false);
         assertThat(activosExternos()).isEqualTo(96L);
         assertThat(duplicadosExternalId()).isZero();
     }

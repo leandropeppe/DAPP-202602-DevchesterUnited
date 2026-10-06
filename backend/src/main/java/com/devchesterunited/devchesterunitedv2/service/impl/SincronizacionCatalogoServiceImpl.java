@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -214,7 +216,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     }
 
     private void inactivarAusentes(Set<Long> presentesEquipos,
-            Set<UUID> presentesJugadores, Instant ahora, boolean primerSnapshot) {
+                                   Set<UUID> presentesJugadores, Instant ahora, boolean primerSnapshot) {
         for (EquipoEntity equipo : equipos.findAll()) {
             if ((equipo.getIdExterno() == null && primerSnapshot)
                     || equipo.getIdExterno() != null && !presentesEquipos.contains(equipo.getIdExterno())) {
@@ -223,11 +225,11 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
                         equipo.getInicioTemporada(), equipo.getFinTemporada(), equipo.getCreadoEn(), ahora));
             }
         }
-        Set<UUID> jugadoresConIdentidadFootballData = new HashSet<>();
-        for (IdentidadExternaJugadorEntity identidad : identidades
-                .findAllByProveedor(ProveedorIdentidadExterna.FOOTBALL_DATA)) {
-            jugadoresConIdentidadFootballData.add(identidad.getJugador().getId());
-        }
+        Set<UUID> jugadoresConIdentidadFootballData = identidades
+                .findAllByProveedor(ProveedorIdentidadExterna.FOOTBALL_DATA)
+                .stream()
+                .map(identidad -> identidad.getJugador().getId())
+                .collect(Collectors.toSet());
         for (JugadorEntity jugador : jugadores.findAll()) {
             if ((!jugadoresConIdentidadFootballData.contains(jugador.getId()) && primerSnapshot)
                     || jugadoresConIdentidadFootballData.contains(jugador.getId())
