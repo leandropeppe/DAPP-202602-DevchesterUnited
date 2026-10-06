@@ -39,20 +39,20 @@ class FootballDataAdapterTest {
 
         var snapshot = adapter().sincronizar();
 
-        assertThat(snapshot.getEquipos()).hasSize(96);
-        assertThat(snapshot.getJugadores()).hasSize(96);
+        assertThat(snapshot.equipos()).hasSize(96);
+        assertThat(snapshot.jugadores()).hasSize(96);
         assertThat(rutas).containsExactly("/competitions/PL/teams", "/competitions/PD/teams",
                 "/competitions/BL1/teams", "/competitions/SA/teams", "/competitions/FL1/teams");
-        assertThat(snapshot.getJugadores().get(0).getIdExterno()).isNotNull();
-        assertThat(snapshot.getEquipos().get(0).getEscudoUrl()).isEqualTo(URI.create("https://img.example/10000.png"));
+        assertThat(snapshot.identidadesFootballData()).containsValue(60000L);
+        assertThat(snapshot.equipos().get(0).getEscudoUrl()).isEqualTo(URI.create("https://img.example/10000.png"));
     }
 
     @Test
     void mapeaPosicionesYAdmiteDorsalNulo() throws Exception {
         iniciar((exchange, codigo) -> responder(exchange, 200, payload(codigo, cantidad(codigo), true), "100"));
-        var jugadores = adapter().sincronizar().getJugadores();
+        var jugadores = adapter().sincronizar().jugadores();
         assertThat(jugadores).extracting(j -> j.getPosicion()).contains("Defender", "Midfielder", "Goalkeeper", "Forward");
-        assertThat(jugadores).anyMatch(j -> j.getDorsal() == 0 && j.getNombre().equals("Solo Nombre"));
+        assertThat(jugadores).anyMatch(j -> j.getDorsal() == null && j.getNombre().equals("Solo Nombre"));
     }
 
     private void assertSincronizacionFalla() {

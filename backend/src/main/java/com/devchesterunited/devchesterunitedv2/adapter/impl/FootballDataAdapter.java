@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.adapter.impl;
 
 import java.io.IOException;
 import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
+import com.devchesterunited.devchesterunitedv2.adapter.ProveedorCatalogo;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballPlayerDTO;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballSeasonDTO;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballTeamDTO;
@@ -32,7 +33,7 @@ import org.springframework.web.client.RestClientException;
 
 /** Adapter aislado para Football-Data.org; nunca expone sus DTOs al dominio. */
 @Component
-public class FootballDataAdapter {
+public class FootballDataAdapter implements ProveedorCatalogo {
     private static final URI BASE_PRODUCTIVA = URI.create("https://api.football-data.org/v4");
     private static final List<Liga> LIGAS = List.of(
             new Liga("PL", "Premier League", 20), new Liga("PD", "LaLiga", 20),
@@ -90,7 +91,8 @@ public class FootballDataAdapter {
             List<Equipo> equipos,
             List<Jugador> jugadores,
             Map<Long, UUID> equiposPorExterno,
-            Map<Long, String> jugadoresVistos) {
+            Map<Long, String> jugadoresVistos,
+            Map<UUID, Long> identidadesFootballData) {
 
         validarEquipo(equipoExterno);
 
@@ -123,7 +125,8 @@ public class FootballDataAdapter {
                     idEquipo,
                     idsEnEquipo,
                     jugadores,
-                    jugadoresVistos
+                    jugadoresVistos,
+                    identidadesFootballData
             );
         }
     }
@@ -133,7 +136,8 @@ public class FootballDataAdapter {
             UUID idEquipo,
             Set<Long> idsEnEquipo,
             List<Jugador> jugadores,
-            Map<Long, String> jugadoresVistos) {
+            Map<Long, String> jugadoresVistos,
+            Map<UUID, Long> identidadesFootballData) {
 
         validarJugador(jugador);
 
@@ -153,16 +157,17 @@ public class FootballDataAdapter {
         }
 
         if (previa == null) {
-            jugadores.add(Jugador.importado(
+            Jugador jugadorInterno = new Jugador(
                     UUID.randomUUID(),
-                    jugador.id(),
                     nombre(jugador),
                     idEquipo,
                     posicion(jugador.position()),
                     jugador.shirtNumber(),
                     jugador.nationality().trim(),
                     clock.instant()
-            ));
+            );
+            jugadores.add(jugadorInterno);
+            identidadesFootballData.put(jugadorInterno.getId(), jugador.id());
         }
     }
 
@@ -187,6 +192,7 @@ public class FootballDataAdapter {
         return builder.baseUrl(BASE_PRODUCTIVA.toString()).requestFactory(factory).build();
     }
 
+    @Override
     public CatalogoSincronizado sincronizar() {
         if (apiKey.isBlank()) throw new FootballDataException("La integracion externa no esta configurada.");
         Instant limite = clock.instant().plus(DEADLINE);
@@ -194,16 +200,18 @@ public class FootballDataAdapter {
         List<Jugador> jugadores = new ArrayList<>();
         Map<Long, UUID> equiposPorExterno = new HashMap<>();
         Map<Long, String> jugadoresVistos = new HashMap<>();
+        Map<UUID, Long> identidadesFootballData = new HashMap<>();
         for (int i = 0; i < LIGAS.size(); i++) {
             comprobarDeadline(limite);
             if (i > 0) dormirCadencia(limite);
             Liga liga = LIGAS.get(i);
             FootballTeamsResponseDTO respuesta = obtener(liga.codigo());
-            convertir(respuesta, liga, equipos, jugadores, equiposPorExterno, jugadoresVistos);
+            convertir(respuesta, liga, equipos, jugadores, equiposPorExterno, jugadoresVistos,
+                    identidadesFootballData);
         }
         comprobarDeadline(limite);
         try {
-            return new CatalogoSincronizado(equipos, jugadores);
+            return new CatalogoSincronizado(equipos, jugadores, identidadesFootballData);
         } catch (IllegalArgumentException e) {
             throw new FootballDataException("La respuesta del proveedor no forma un snapshot utilizable.", e);
         }
@@ -232,7 +240,8 @@ public class FootballDataAdapter {
             List<Equipo> equipos,
             List<Jugador> jugadores,
             Map<Long, UUID> equiposPorExterno,
-            Map<Long, String> jugadoresVistos) {
+            Map<Long, String> jugadoresVistos,
+            Map<UUID, Long> identidadesFootballData) {
 
         validarRespuesta(respuesta, liga);
 
@@ -246,7 +255,8 @@ public class FootballDataAdapter {
                     equipos,
                     jugadores,
                     equiposPorExterno,
-                    jugadoresVistos
+                    jugadoresVistos,
+                    identidadesFootballData
             );
         }
     }

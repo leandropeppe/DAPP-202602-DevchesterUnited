@@ -1,20 +1,24 @@
 package com.devchesterunited.devchesterunitedv2.service;
 
 import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
-import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.adapter.ProveedorCatalogo;
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.mapper.JugadorMapper;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
 import com.devchesterunited.devchesterunitedv2.service.impl.SincronizacionCatalogoServiceImpl;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,23 +35,28 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class SincronizacionCatalogoServiceTest {
     private static final Instant AHORA = Instant.parse("2026-09-16T12:00:00Z");
-    @Mock FootballDataAdapter adapter;
+    @Mock ProveedorCatalogo adapter;
     @Mock EquipoRepository equipos;
     @Mock JugadorRepository jugadores;
+    @Mock IdentidadExternaJugadorRepository identidades;
     @Mock UsuarioRepository usuarios;
     @Mock JdbcTemplate jdbc;
     private SincronizacionCatalogoServiceImpl servicio;
 
     @BeforeEach
     void preparar() {
-        servicio = new SincronizacionCatalogoServiceImpl(adapter, equipos, jugadores, usuarios, jdbc,
-                Clock.fixed(AHORA, java.time.ZoneOffset.UTC));
+        servicio = new SincronizacionCatalogoServiceImpl(adapter, equipos, jugadores, usuarios, identidades, jdbc,
+                Clock.fixed(AHORA, java.time.ZoneOffset.UTC), new JugadorMapper());
         lenient().when(equipos.findAllByIdExternoIn(anyList())).thenReturn(List.of());
-        lenient().when(jugadores.findAllByIdExternoIn(anyList())).thenReturn(List.of());
         lenient().when(equipos.findAll()).thenReturn(List.of());
         lenient().when(jugadores.findAll()).thenReturn(List.of());
+        lenient().when(identidades.findAllByProveedorAndExternalIdIn(any(), anyList())).thenReturn(List.of());
+        lenient().when(identidades.findAllByProveedor(any())).thenReturn(List.of());
         lenient().when(equipos.save(any(EquipoEntity.class))).thenAnswer(inv -> inv.getArgument(0));
         lenient().when(jugadores.save(any(JugadorEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(identidades.findByJugador_IdAndProveedor(any(), any())).thenReturn(java.util.Optional.empty());
+        lenient().when(identidades.save(any(IdentidadExternaJugadorEntity.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
     }
 
     @Test
@@ -63,6 +72,30 @@ class SincronizacionCatalogoServiceTest {
         assertThat(resultado.jugadoresCreados()).isEqualTo(96);
         verify(equipos).flush();
         verify(jugadores).flush();
+        verify(identidades, times(96)).save(any(IdentidadExternaJugadorEntity.class));
+    }
+
+    @Test
+    void resuelveJugadorExistenteDesdeIdentidadYConservaUuidInterno() {
+        when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
+        CatalogoSincronizado snapshot = snapshot();
+        UUID uuidPersistido = UUID.fromString("70000000-0000-0000-0000-000000000001");
+        Equipo equipo = snapshot.equipos().get(0);
+        JugadorEntity jugadorPersistido = new JugadorEntity(uuidPersistido, "Jugador previo",
+                equipo.getId(), "Forward", 9, "Argentina", false);
+        jugadorPersistido.conservarAuditoria(AHORA.minusSeconds(60), AHORA.minusSeconds(30));
+        IdentidadExternaJugadorEntity identidad = new IdentidadExternaJugadorEntity(
+                UUID.fromString("80000000-0000-0000-0000-000000000001"), jugadorPersistido,
+                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.FOOTBALL_DATA,
+                10001L);
+        when(identidades.findAllByProveedorAndExternalIdIn(any(), anyList())).thenReturn(List.of(identidad));
+        when(identidades.findAllByProveedor(any())).thenReturn(List.of(identidad));
+        when(adapter.sincronizar()).thenReturn(snapshot);
+
+        servicio.sincronizar();
+
+        verify(jugadores).save(argThat(j -> j.getId().equals(uuidPersistido)));
+        verify(identidades, never()).save(argThat(i -> i.getExternalId().equals(10001L)));
     }
 
     @Test
@@ -84,6 +117,7 @@ class SincronizacionCatalogoServiceTest {
     private static CatalogoSincronizado snapshot() {
         var equipos = new ArrayList<Equipo>();
         var jugadores = new ArrayList<Jugador>();
+        var ids = new HashMap<UUID, Long>();
         List<String> ligas = List.of("Premier League", "LaLiga", "Bundesliga", "Serie A", "Ligue 1");
         List<Integer> cantidades = List.of(20, 20, 18, 20, 18);
         long externo = 1;
@@ -91,10 +125,12 @@ class SincronizacionCatalogoServiceTest {
             UUID id = UUID.randomUUID();
             equipos.add(Equipo.importado(id, externo, "Equipo " + externo, "E", "E", ligas.get(i), null,
                     2026, null, null, AHORA));
-            jugadores.add(Jugador.importado(UUID.randomUUID(), 10000 + externo, "Jugador Apellido", id,
-                    "Forward", null, "Argentina", AHORA));
+            Jugador jugador = new Jugador(UUID.randomUUID(), "Jugador Apellido", id,
+                    "Forward", null, "Argentina", AHORA);
+            jugadores.add(jugador);
+            ids.put(jugador.getId(), 10000 + externo);
             externo++;
         }
-        return new CatalogoSincronizado(equipos, jugadores);
+        return new CatalogoSincronizado(equipos, jugadores, ids);
     }
 }

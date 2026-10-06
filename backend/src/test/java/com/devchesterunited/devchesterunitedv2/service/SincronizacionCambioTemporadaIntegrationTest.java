@@ -11,6 +11,7 @@ import com.devchesterunited.devchesterunitedv2.service.interfaces.Sincronizacion
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -20,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -55,7 +58,7 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
 
     @BeforeEach
     void limpiarFixturesExternos() {
-        jdbc.update("DELETE FROM jugadores WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
         jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
         jdbc.update("UPDATE equipos SET is_active = true");
         jdbc.update("UPDATE jugadores SET is_active = true");
@@ -96,8 +99,8 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
                 .hasSize(96);
         assertThat(duplicados("equipos")).isZero();
         assertThat(duplicados("jugadores")).isZero();
-        assertThat(jugadores.findByIdExterno(JUGADOR_NUEVO)).get()
-                .extracting(jugador -> jugador.isActivo()).isEqualTo(true);
+        assertThat(jugadores.findById(jugadorIdPorExternalId(JUGADOR_NUEVO))).get()
+                .extracting(JugadorEntity::isActivo).isEqualTo(true);
 
         for (Map.Entry<String, Temporada> entry : TEMPORADA_NUEVA.entrySet()) {
             var activosDeLiga = equipos.findAllByActivoTrue().stream()
@@ -111,11 +114,14 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
         }
         assertThat(equipos.findAllByActivoTrue().stream()
                 .filter(equipo -> equipo.getIdExterno() != null)
-                .map(equipo -> equipo.getTemporadaExternaId())
+                .map(EquipoEntity::getTemporadaExternaId)
                 .distinct()).hasSize(5);
     }
 
     private long duplicados(String tabla) {
+        String tablaIdentidad = "jugadores".equals(tabla)
+                ? "(SELECT external_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA') identidades"
+                : tabla;
         return jdbc.queryForObject("""
                 SELECT count(*) FROM (
                     SELECT external_id
@@ -124,7 +130,11 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
                     GROUP BY external_id
                     HAVING count(*) > 1
                 ) duplicados
-                """.formatted(tabla), Long.class);
+                """.formatted(tablaIdentidad), Long.class);
+    }
+
+    private UUID jugadorIdPorExternalId(long externalId) {
+        return jdbc.queryForObject("SELECT jugador_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA' AND external_id = ?", UUID.class, externalId);
     }
 
     private static CatalogoSincronizado snapshot(Map<String, Temporada> temporadas,
@@ -133,6 +143,7 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
         List<Integer> cantidades = List.of(20, 20, 18, 20, 18);
         List<Equipo> equiposSnapshot = new ArrayList<>();
         List<Jugador> jugadoresSnapshot = new ArrayList<>();
+        Map<UUID, Long> ids = new HashMap<>();
         int indice = 0;
         for (int liga = 0; liga < ligas.size(); liga++) {
             String nombreLiga = ligas.get(liga);
@@ -145,12 +156,14 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
                         reemplazo ? "Equipo Nuevo" : "Equipo " + indice, "E", "E", nombreLiga, null,
                         temporada.id(), temporada.inicio(), temporada.fin(), AHORA));
                 long idExternoJugador = reemplazo ? JUGADOR_NUEVO : JUGADOR_BASE + indice;
-                jugadoresSnapshot.add(Jugador.importado(UUID.randomUUID(), idExternoJugador,
-                        "Jugador " + idExternoJugador, equipoId, "Forward", null, "Argentina", AHORA));
+                Jugador jugadorInterno = new Jugador(UUID.randomUUID(), "Jugador " + idExternoJugador,
+                        equipoId, "Forward", null, "Argentina", AHORA);
+                jugadoresSnapshot.add(jugadorInterno);
+                ids.put(jugadorInterno.getId(), idExternoJugador);
                 indice++;
             }
         }
-        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot);
+        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids);
     }
 
     private record Temporada(Long id, LocalDate inicio, LocalDate fin) { }

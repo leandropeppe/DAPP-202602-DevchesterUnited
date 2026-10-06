@@ -32,9 +32,9 @@ class FootballDataAdapterNullPositionTest {
         var snapshot = new FootballDataAdapter(cliente, "test-key", mapper,
                 java.time.Clock.systemUTC(), duration -> { }).sincronizar();
 
-        assertThat(snapshot.getEquipos()).hasSize(96);
-        assertThat(snapshot.getJugadores()).anyMatch(j -> j.getPosicion() == null);
-        assertThat(snapshot.getJugadores()).extracting(j -> j.getNombre())
+        assertThat(snapshot.equipos()).hasSize(96);
+        assertThat(snapshot.jugadores()).anyMatch(j -> j.getPosicion() == null);
+        assertThat(snapshot.jugadores()).extracting(j -> j.getNombre())
                 .contains("Kepa Arrizabalaga", "Cristian Cásseres Jr.", "Pierre Emile Højbjerg");
     }
 

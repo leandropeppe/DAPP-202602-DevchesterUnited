@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorCatalogoProjection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -74,7 +74,8 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
     @ParameterizedTest
     @ValueSource(strings = {"%", "_", "!", "!%_", "O'Brien", "\"Azul\""})
     void simbolosYComillasSonLiteralesEnLiga(String filtro) {
-        jdbc.update("UPDATE jugadores SET league = ? WHERE id = ?", "Copa !%_ O'Brien \"Azul\"", id(5));
+        jdbc.update("UPDATE equipos e SET league = ? FROM jugadores j WHERE e.id = j.team_id AND j.id = ?",
+                "Copa !%_ O'Brien \"Azul\"", id(5));
         verificar(filtro, null, null, 5);
     }
 
@@ -88,6 +89,19 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
     void acentosSiguenSiendoSignificativos() {
         verificar(null, "ATLÉTICO", null, 2);
         verificar(null, "ATLETICO", null, 4);
+    }
+
+    @Test
+    void noConservaCopiaLegacyYResuelveDatosDesdeEquipo() {
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'jugadores' AND column_name IN ('league', 'team')", Integer.class)).isZero();
+        jdbc.update("UPDATE equipos e SET league = ?, name = ? FROM jugadores j WHERE e.id = j.team_id AND j.id = ?",
+                "Liga actualizada", "Equipo actualizado", id(1));
+
+        List<JugadorCatalogoProjection> resultado = repositorio.buscar("actualizada", "actualizado", null, 0, 100);
+
+        assertThat(ids(resultado)).containsExactly(id(1));
+        assertThat(resultado.get(0).getLiga()).isEqualTo("Liga actualizada");
+        assertThat(resultado.get(0).getEquipo()).isEqualTo("Equipo actualizado");
     }
 
     @Test
@@ -136,7 +150,8 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
     @Test
     void sqlRecibeParametrosEnlazadosEnBusquedaConteoYPaginacion() {
         String entrada = "x' OR '1'='1";
-        jdbc.update("UPDATE jugadores SET team = ? WHERE id = ?", entrada, id(5));
+        jdbc.update("UPDATE equipos e SET name = ? FROM jugadores j WHERE e.id = j.team_id AND j.id = ?",
+                entrada, id(5));
         captura.limpiar();
         // El texto sospechoso debe encontrar solo su fila literal, sin ampliar la búsqueda.
         assertThat(ids(repositorio.buscar("prueba", entrada, "keeper", 0, 7))).containsExactly(id(5));
@@ -159,7 +174,12 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
     }
 
     private void insertar(int numero, String liga, String equipo, String posicion) {
-        jdbc.update("INSERT INTO jugadores (id, name, league, team, position, jersey_number, nationality) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        jdbc.update("""
+                INSERT INTO equipos (id, name, league, is_active, created_at, updated_at)
+                VALUES ((md5(? || '::' || ?))::uuid, ?, ?, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, league = EXCLUDED.league, is_active = TRUE
+                """, liga, equipo, equipo, liga);
+        jdbc.update("INSERT INTO jugadores (id, name, team_id, position, jersey_number, nationality) VALUES (?, ?, (md5(? || '::' || ?))::uuid, ?, ?, ?)",
                 id(numero), "Nombre Apellido", liga, equipo, posicion, numero, "Argentina");
     }
 
@@ -167,8 +187,8 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
         return UUID.fromString("10000000-0000-0000-0000-" + String.format("%012d", numero));
     }
 
-    private static List<UUID> ids(List<JugadorEntity> jugadores) {
-        return jugadores.stream().map(JugadorEntity::getId).toList();
+    private static List<UUID> ids(List<JugadorCatalogoProjection> jugadores) {
+        return jugadores.stream().map(JugadorCatalogoProjection::getId).toList();
     }
 
     /** Observa SQL real; no sustituye conexiones, consultas ni resultados. */

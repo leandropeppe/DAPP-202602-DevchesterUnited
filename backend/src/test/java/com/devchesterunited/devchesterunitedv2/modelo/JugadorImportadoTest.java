@@ -11,18 +11,16 @@ class JugadorImportadoTest {
 
     @Test
     void admiteDorsalNuloYPosicionNula() {
-        var jugador = Jugador.importado(UUID.randomUUID(), 7L, "Nombre Completo", EQUIPO,
+        var jugador = new Jugador(UUID.randomUUID(), "Nombre Completo", EQUIPO,
                 null, null, "Argentina", AHORA);
-        assertThat(jugador.getIdExterno()).isEqualTo(7L);
         assertThat(jugador.getEquipoId()).isEqualTo(EQUIPO);
-        assertThat(jugador.getNombre()).isEqualTo("Nombre Completo");
-        assertThat(jugador.getDorsal()).isZero();
+        assertThat(jugador.getDorsal()).isNull();
         assertThat(jugador.isActivo()).isTrue();
     }
 
     @Test
     void desactivarYReactivarConservanIdentidadYPertenencia() {
-        var jugador = Jugador.importado(UUID.randomUUID(), 7L, "Nombre Apellido", EQUIPO,
+        var jugador = new Jugador(UUID.randomUUID(), "Nombre Apellido", EQUIPO,
                 "Defender", 99, "Argentina", AHORA);
         var desactivado = jugador.desactivar(AHORA.plusSeconds(1));
         var reactivado = desactivado.reactivar(AHORA.plusSeconds(2));
@@ -30,29 +28,27 @@ class JugadorImportadoTest {
         assertThat(reactivado.isActivo()).isTrue();
         assertThat(reactivado.getId()).isEqualTo(jugador.getId());
         assertThat(reactivado.getEquipoId()).isEqualTo(EQUIPO);
-        assertThat(reactivado.getIdExterno()).isEqualTo(7L);
+        assertThat(reactivado.getDorsal()).isEqualTo(99);
     }
 
     @Test
-    void rechazaIdentidadEquipoPosicionYNacionalidadInvalidos() {
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
-        UUID id3 = UUID.randomUUID();
-        UUID id4 = UUID.randomUUID();
+    void rechazaEquipoPosicionYNacionalidadInvalidos() {
+        UUID jugadorSinEquipo = UUID.randomUUID();
+        UUID jugadorConPosicionInvalida = UUID.randomUUID();
+        UUID jugadorConDorsalInvalido = UUID.randomUUID();
 
-        assertThatThrownBy(() -> Jugador.importado(id1, 0L, "N", EQUIPO,
+        assertThatThrownBy(() -> new Jugador(
+                jugadorSinEquipo, "N", null,
                 "Forward", null, "AR", AHORA))
                 .isInstanceOf(RuntimeException.class);
 
-        assertThatThrownBy(() -> Jugador.importado(id2, 1L, "N", null,
-                "Forward", null, "AR", AHORA))
-                .isInstanceOf(RuntimeException.class);
-
-        assertThatThrownBy(() -> Jugador.importado(id3, 1L, "N", EQUIPO,
+        assertThatThrownBy(() -> new Jugador(
+                jugadorConPosicionInvalida, "N", EQUIPO,
                 "Striker", null, "AR", AHORA))
                 .isInstanceOf(RuntimeException.class);
 
-        assertThatThrownBy(() -> Jugador.importado(id4, 1L, "N", EQUIPO,
+        assertThatThrownBy(() -> new Jugador(
+                jugadorConDorsalInvalido, "N", EQUIPO,
                 "Forward", 100, "AR", AHORA))
                 .isInstanceOf(RuntimeException.class);
     }

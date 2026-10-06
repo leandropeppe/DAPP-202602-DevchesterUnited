@@ -9,6 +9,7 @@ import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -49,7 +50,7 @@ class SecurityPolicyE2ETest extends PostgresTestSupport {
 
     @AfterEach
     void limpiarFixtures() {
-        jdbc.update("DELETE FROM jugadores WHERE external_id >= ?", EQUIPO_BASE);
+        jdbc.update("DELETE FROM jugadores WHERE id IN (SELECT jugador_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA' AND external_id >= ?)", EQUIPO_BASE);
         jdbc.update("DELETE FROM equipos WHERE external_id >= ?", EQUIPO_BASE);
         for (UUID usuario : usuarios) {
             jdbc.update("DELETE FROM usuarios WHERE id = ?", usuario);
@@ -164,9 +165,11 @@ class SecurityPolicyE2ETest extends PostgresTestSupport {
             UUID equipoId = UUID.randomUUID();
             equipos.add(Equipo.importado(equipoId, EQUIPO_BASE + i, "Equipo seguridad " + i,
                     "E", "E", ligas.get(liga), null, 2026, null, null, AHORA));
-            jugadores.add(Jugador.importado(UUID.randomUUID(), JUGADOR_BASE + i,
+            jugadores.add(new Jugador(UUID.randomUUID(),
                     "Jugador seguridad " + i, equipoId, "Forward", null, "Argentina", AHORA));
         }
-        return new CatalogoSincronizado(equipos, jugadores);
+        Map<UUID, Long> ids = new HashMap<>();
+        for (int i = 0; i < jugadores.size(); i++) ids.put(jugadores.get(i).getId(), JUGADOR_BASE + i);
+        return new CatalogoSincronizado(equipos, jugadores, ids);
     }
 }

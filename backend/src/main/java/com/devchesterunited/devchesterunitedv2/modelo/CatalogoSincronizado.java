@@ -9,19 +9,23 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /** Snapshot completo validado antes de cualquier mutacion de persistencia. */
-public final class CatalogoSincronizado {
+public record CatalogoSincronizado(
+        List<Equipo> equipos,
+        List<Jugador> jugadores,
+        Map<UUID, Long> identidadesFootballData) {
+
     private static final Map<String, Integer> CANTIDAD_POR_LIGA = Map.of(
             "Premier League", 20, "LaLiga", 20, "Bundesliga", 18, "Serie A", 20, "Ligue 1", 18);
-    private final List<Equipo> equipos;
-    private final List<Jugador> jugadores;
 
-    public CatalogoSincronizado(List<Equipo> equipos, List<Jugador> jugadores) {
-        this.equipos = List.copyOf(Objects.requireNonNull(equipos));
-        this.jugadores = List.copyOf(Objects.requireNonNull(jugadores));
-        validar();
+    public CatalogoSincronizado {
+        equipos = List.copyOf(Objects.requireNonNull(equipos));
+        jugadores = List.copyOf(Objects.requireNonNull(jugadores));
+        identidadesFootballData = Map.copyOf(Objects.requireNonNull(identidadesFootballData));
+        validar(equipos, jugadores, identidadesFootballData);
     }
 
-    private void validar() {
+    private static void validar(List<Equipo> equipos, List<Jugador> jugadores,
+            Map<UUID, Long> identidadesFootballData) {
         if (equipos.size() != 96) throw new IllegalArgumentException("El snapshot debe contener 96 equipos.");
         if (jugadores.isEmpty() || jugadores.size() > 10_000) {
             throw new IllegalArgumentException("El snapshot debe contener entre 1 y 10000 jugadores.");
@@ -34,8 +38,14 @@ public final class CatalogoSincronizado {
             if (encontrados != cantidad) throw new IllegalArgumentException("Cantidad de equipos invalida para " + liga + ".");
         });
         unicos(equipos.stream().map(Equipo::getIdExterno).toList(), "equipos");
-        if (jugadores.stream().anyMatch(j -> j.getIdExterno() == null)) throw new IllegalArgumentException("El snapshot contiene un jugador sin ID externo.");
-        unicos(jugadores.stream().map(Jugador::getIdExterno).toList(), "jugadores");
+        if (identidadesFootballData.size() != jugadores.size()
+                || jugadores.stream().anyMatch(j -> !identidadesFootballData.containsKey(j.getId()))) {
+            throw new IllegalArgumentException("El snapshot contiene un jugador sin ID externo.");
+        }
+        if (identidadesFootballData.values().stream().anyMatch(id -> id == null || id <= 0)) {
+            throw new IllegalArgumentException("El snapshot contiene un ID externo invalido.");
+        }
+        unicos(identidadesFootballData.values().stream().toList(), "jugadores");
         Set<UUID> equiposIds = equipos.stream().map(Equipo::getId).collect(Collectors.toSet());
         if (equiposIds.size() != equipos.size() || jugadores.stream().anyMatch(j -> j.getEquipoId() == null || !equiposIds.contains(j.getEquipoId()))) {
             throw new IllegalArgumentException("El snapshot contiene referencias de equipo invalidas.");
@@ -50,6 +60,5 @@ public final class CatalogoSincronizado {
         if (Set.copyOf(valores).size() != valores.size()) throw new IllegalArgumentException("Hay IDs externos duplicados de " + tipo + ".");
     }
 
-    public List<Equipo> getEquipos() { return equipos; }
-    public List<Jugador> getJugadores() { return jugadores; }
+    public long getExternalId(UUID jugadorId) { return identidadesFootballData.get(jugadorId); }
 }

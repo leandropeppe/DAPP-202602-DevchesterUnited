@@ -11,7 +11,9 @@ import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +38,7 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
 
     @BeforeEach
     void limpiarFixturesExternos() {
-        jdbc.update("DELETE FROM jugadores WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
         jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
         jdbc.update("UPDATE equipos SET is_active = true");
         jdbc.update("UPDATE jugadores SET is_active = true");
@@ -53,13 +55,13 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
         long equiposAntes = jdbc.queryForObject(
                 "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL", Long.class);
         long jugadoresAntes = jdbc.queryForObject(
-                "SELECT count(*) FROM jugadores WHERE external_id IS NOT NULL", Long.class);
+                "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA'", Long.class);
         long equiposActivosAntes = jdbc.queryForObject(
                 "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class);
         long jugadoresActivosAntes = jdbc.queryForObject(
-                "SELECT count(*) FROM jugadores WHERE external_id IS NOT NULL AND is_active", Long.class);
+                "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA' AND j.is_active", Long.class);
         UUID equipoIdAntes = equipos.findByIdExterno(600000L).orElseThrow().getId();
-        UUID jugadorIdAntes = jugadores.findByIdExterno(700000L).orElseThrow().getId();
+        UUID jugadorIdAntes = jugadorIdPorExternalId(700000L);
 
         assertThatThrownBy(servicio::sincronizar)
                 .isInstanceOf(FootballDataException.class)
@@ -69,20 +71,20 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
                 "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL", Long.class))
                 .isEqualTo(equiposAntes);
         assertThat(jdbc.queryForObject(
-                "SELECT count(*) FROM jugadores WHERE external_id IS NOT NULL", Long.class))
+                "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA'", Long.class))
                 .isEqualTo(jugadoresAntes);
         assertThat(jdbc.queryForObject(
                 "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class))
                 .isEqualTo(equiposActivosAntes);
         assertThat(jdbc.queryForObject(
-                "SELECT count(*) FROM jugadores WHERE external_id IS NOT NULL AND is_active", Long.class))
+                "SELECT count(*) FROM jugadores j JOIN identidades_externas_jugador i ON i.jugador_id = j.id WHERE i.proveedor = 'FOOTBALL_DATA' AND j.is_active", Long.class))
                 .isEqualTo(jugadoresActivosAntes);
         assertThat(equipos.findByIdExterno(600000L)).get()
                 .satisfies(equipo -> {
                     assertThat(equipo.getId()).isEqualTo(equipoIdAntes);
                     assertThat(equipo.isActivo()).isTrue();
                 });
-        assertThat(jugadores.findByIdExterno(700000L)).get()
+        assertThat(jugadores.findById(jugadorIdAntes)).get()
                 .satisfies(jugador -> {
                     assertThat(jugador.getId()).isEqualTo(jugadorIdAntes);
                     assertThat(jugador.isActivo()).isTrue();
@@ -93,6 +95,9 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
     }
 
     private long duplicados(String tabla) {
+        String tablaIdentidad = "jugadores".equals(tabla)
+                ? "(SELECT external_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA') identidades"
+                : tabla;
         return jdbc.queryForObject("""
                 SELECT count(*) FROM (
                     SELECT external_id
@@ -101,7 +106,11 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
                     GROUP BY external_id
                     HAVING count(*) > 1
                 ) duplicados
-                """.formatted(tabla), Long.class);
+                """.formatted(tablaIdentidad), Long.class);
+    }
+
+    private UUID jugadorIdPorExternalId(long externalId) {
+        return jdbc.queryForObject("SELECT jugador_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA' AND external_id = ?", UUID.class, externalId);
     }
 
     private static CatalogoSincronizado snapshot() {
@@ -109,6 +118,7 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
         List<Integer> cantidades = List.of(20, 20, 18, 20, 18);
         List<Equipo> equiposSnapshot = new ArrayList<>();
         List<Jugador> jugadoresSnapshot = new ArrayList<>();
+        Map<UUID, Long> ids = new HashMap<>();
         int indice = 0;
         for (int liga = 0; liga < ligas.size(); liga++) {
             for (int i = 0; i < cantidades.get(liga); i++) {
@@ -116,11 +126,13 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
                 equiposSnapshot.add(Equipo.importado(equipoId, 600000L + indice,
                         "Equipo " + indice, "E", "E", ligas.get(liga), null,
                         2026L, null, null, AHORA));
-                jugadoresSnapshot.add(Jugador.importado(UUID.randomUUID(), 700000L + indice,
-                        "Jugador " + indice, equipoId, "Forward", null, "Argentina", AHORA));
+                Jugador jugadorInterno = new Jugador(UUID.randomUUID(), "Jugador " + indice,
+                        equipoId, "Forward", null, "Argentina", AHORA);
+                jugadoresSnapshot.add(jugadorInterno);
+                ids.put(jugadorInterno.getId(), 700000L + indice);
                 indice++;
             }
         }
-        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot);
+        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids);
     }
 }

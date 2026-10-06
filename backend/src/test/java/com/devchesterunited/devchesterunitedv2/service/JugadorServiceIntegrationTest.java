@@ -215,7 +215,13 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
     }
 
     private void insertar(int numero, String nombre, String apellido, String liga, String equipo, String posicion, int dorsal, String nacionalidad) {
-        jdbc.update("INSERT INTO jugadores (id, name, league, team, position, jersey_number, nationality) VALUES (?, ?, ?, ?, ?, ?, ?)", id(numero), nombre + " " + apellido, liga, equipo, posicion, dorsal, nacionalidad);
+        jdbc.update("""
+                INSERT INTO equipos (id, name, league, is_active, created_at, updated_at)
+                VALUES ((md5(? || '::' || ?))::uuid, ?, ?, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, league = EXCLUDED.league, is_active = TRUE
+                """, liga, equipo, equipo, liga);
+        jdbc.update("INSERT INTO jugadores (id, name, team_id, position, jersey_number, nationality) VALUES (?, ?, (md5(? || '::' || ?))::uuid, ?, ?, ?)",
+                id(numero), nombre + " " + apellido, liga, equipo, posicion, dorsal, nacionalidad);
     }
 
     private static UUID id(int numero) {

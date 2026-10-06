@@ -10,7 +10,9 @@ import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +48,7 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
 
     @BeforeEach
     void prepararUsuario() {
-        jdbc.update("DELETE FROM jugadores WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
         jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
         jdbc.update("DELETE FROM usuarios WHERE id = ?", USUARIO);
         usuarios.save(new UsuarioEntity(USUARIO, "synce2euser", "synce2e@example.com", "$2a$12$" + "a".repeat(53), AHORA, AHORA));
@@ -55,7 +57,7 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
 
     @AfterEach
     void limpiarUsuario() {
-        jdbc.update("DELETE FROM jugadores WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
         jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
         jdbc.update("DELETE FROM usuarios WHERE id = ?", USUARIO);
     }
@@ -134,9 +136,11 @@ class CatalogoSyncE2ETest extends PostgresTestSupport {
             UUID equipoId = UUID.randomUUID();
             equipos.add(Equipo.importado(equipoId, equipoBase + i, "Equipo " + i, "E", "E", ligas.get(liga), null,
                     2026, null, null, AHORA));
-            jugadores.add(Jugador.importado(UUID.randomUUID(), jugadorBase + i, "Jugador " + i + " Apellido", equipoId,
+            jugadores.add(new Jugador(UUID.randomUUID(), "Jugador " + i + " Apellido", equipoId,
                     "Forward", null, "Argentina", AHORA));
         }
-        return new CatalogoSincronizado(equipos, jugadores);
+        Map<UUID, Long> ids = new HashMap<>();
+        for (int i = 0; i < jugadores.size(); i++) ids.put(jugadores.get(i).getId(), jugadorBase + i);
+        return new CatalogoSincronizado(equipos, jugadores, ids);
     }
 }

@@ -1,23 +1,32 @@
 package com.devchesterunited.devchesterunitedv2.service.impl;
 
-import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.adapter.ProveedorCatalogo;
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.mapper.JugadorMapper;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionPersistenciaException;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -29,21 +38,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogoService {
     private static final long LOCK_KEY_1 = 114644L;
     private static final long LOCK_KEY_2 = 1L;
-    private final FootballDataAdapter adapter;
+    private final ProveedorCatalogo adapter;
     private final EquipoRepository equipos;
     private final JugadorRepository jugadores;
+    private final IdentidadExternaJugadorRepository identidades;
     private final UsuarioRepository usuarios;
     private final JdbcTemplate jdbc;
     private final Clock clock;
+    private final JugadorMapper jugadorMapper;
 
-    public SincronizacionCatalogoServiceImpl(FootballDataAdapter adapter, EquipoRepository equipos,
-            JugadorRepository jugadores, UsuarioRepository usuarios, JdbcTemplate jdbc, Clock clock) {
+    public SincronizacionCatalogoServiceImpl(ProveedorCatalogo adapter, EquipoRepository equipos,
+            JugadorRepository jugadores, UsuarioRepository usuarios,
+            IdentidadExternaJugadorRepository identidades, JdbcTemplate jdbc, Clock clock,
+            JugadorMapper jugadorMapper) {
         this.adapter = adapter;
         this.equipos = equipos;
         this.jugadores = jugadores;
         this.usuarios = usuarios;
+        this.identidades = Objects.requireNonNull(identidades, "identidades es obligatoria");
         this.jdbc = jdbc;
         this.clock = clock;
+        this.jugadorMapper = Objects.requireNonNull(jugadorMapper, "jugadorMapper es obligatorio");
     }
 
     @Override
@@ -75,7 +90,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         Instant ahora = clock.instant();
 
         Map<Long, UUID> equiposSnapshot = new HashMap<>();
-        Map<Long, Jugador> jugadoresSnapshot = new HashMap<>();
+        Set<UUID> jugadoresSnapshot = new HashSet<>();
 
         int equiposCreados = guardarEquipos(snapshot, equiposSnapshot, ahora);
         int jugadoresCreados = guardarJugadores(snapshot, equiposSnapshot, jugadoresSnapshot, ahora);
@@ -85,18 +100,18 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
         inactivarAusentes(
                 equiposSnapshot.keySet(),
-                jugadoresSnapshot.keySet(),
+                jugadoresSnapshot,
                 ahora,
                 primerSnapshot
         );
 
         return new SincronizacionResultado(
-                snapshot.getEquipos().size(),
-                snapshot.getJugadores().size(),
+                snapshot.equipos().size(),
+                snapshot.jugadores().size(),
                 equiposCreados,
-                snapshot.getEquipos().size() - equiposCreados,
+                snapshot.equipos().size() - equiposCreados,
                 jugadoresCreados,
-                snapshot.getJugadores().size() - jugadoresCreados
+                snapshot.jugadores().size() - jugadoresCreados
         );
     }
 
@@ -108,7 +123,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         Map<Long, EquipoEntity> existentesEquipos = existentesEquipos(snapshot);
         int equiposCreados = 0;
 
-        for (Equipo equipo : snapshot.getEquipos()) {
+        for (Equipo equipo : snapshot.equipos()) {
             EquipoEntity anterior = existentesEquipos.get(equipo.getIdExterno());
 
             UUID id = anterior == null
@@ -144,67 +159,64 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     private int guardarJugadores(
             CatalogoSincronizado snapshot,
             Map<Long, UUID> equiposSnapshot,
-            Map<Long, Jugador> jugadoresSnapshot,
+            Set<UUID> jugadoresSnapshot,
             Instant ahora) {
 
-        Map<Long, JugadorEntity> existentesJugadores = new HashMap<>();
-
-        for (JugadorEntity jugador : jugadores.findAllByIdExternoIn(
-                snapshot.getJugadores().stream()
-                        .map(Jugador::getIdExterno)
-                        .toList())) {
-
-            existentesJugadores.put(jugador.getIdExterno(), jugador);
+        List<Long> externalIds = snapshot.jugadores().stream()
+                .map(jugador -> snapshot.getExternalId(jugador.getId()))
+                .toList();
+        Map<Long, IdentidadExternaJugadorEntity> identidadesPorExternalId = new HashMap<>();
+        for (IdentidadExternaJugadorEntity identidad : identidades
+                .findAllByProveedorAndExternalIdIn(ProveedorIdentidadExterna.FOOTBALL_DATA, externalIds)) {
+            identidadesPorExternalId.put(identidad.getExternalId(), identidad);
         }
 
         int jugadoresCreados = 0;
 
-        for (Jugador jugador : snapshot.getJugadores()) {
-            JugadorEntity anterior = existentesJugadores.get(jugador.getIdExterno());
-
-            UUID id = anterior == null
-                    ? jugador.getId()
-                    : anterior.getId();
+        for (Jugador jugador : snapshot.jugadores()) {
+            long externalId = snapshot.getExternalId(jugador.getId());
+            IdentidadExternaJugadorEntity identidadExistente = identidadesPorExternalId.get(externalId);
+            JugadorEntity anterior = identidadExistente == null ? null : identidadExistente.getJugador();
 
             if (anterior == null) {
                 jugadoresCreados++;
             }
 
-            jugadores.save(new JugadorEntity(
-                    id,
-                    jugador.getIdExterno(),
-                    jugador.getNombre(),
-                    equiposSnapshot.get(
-                            jugador.getEquipoId() == null
-                                    ? null
-                                    : equipoExterno(snapshot, jugador.getEquipoId())
-                    ),
-                    jugador.getPosicion(),
-                    jugador.getDorsal() == 0 ? null : jugador.getDorsal(),
-                    jugador.getNacionalidad(),
-                    true,
-                    anterior == null ? ahora : anterior.getCreadoEn(),
-                    ahora,
-                    equipoLiga(snapshot, jugador.getEquipoId()),
-                    equipoNombre(snapshot, jugador.getEquipoId())
-            ));
+            Equipo equipo = equipo(snapshot, jugador.getEquipoId());
+            UUID equipoIdPersistido = equiposSnapshot.get(equipo.getIdExterno());
+            JugadorEntity persistido = jugadores.save(
+                    jugadorMapper.toEntity(jugador, equipoIdPersistido, anterior, ahora));
 
-            jugadoresSnapshot.put(jugador.getIdExterno(), jugador);
+            guardarIdentidadFootballData(persistido, externalId, identidadExistente);
+
+            jugadoresSnapshot.add(persistido.getId());
         }
 
         return jugadoresCreados;
     }
 
+    private void guardarIdentidadFootballData(JugadorEntity jugador, long externalId,
+            IdentidadExternaJugadorEntity identidadExistente) {
+        if (identidadExistente == null) {
+            identidades.save(new IdentidadExternaJugadorEntity(
+                    UUID.randomUUID(), jugador, ProveedorIdentidadExterna.FOOTBALL_DATA, externalId));
+        }
+    }
+
     private Map<Long, EquipoEntity> existentesEquipos(CatalogoSincronizado snapshot) {
         Map<Long, EquipoEntity> resultado = new HashMap<>();
-        for (EquipoEntity equipo : equipos.findAllByIdExternoIn(snapshot.getEquipos().stream().map(Equipo::getIdExterno).toList())) {
+        for (EquipoEntity equipo : equipos.findAllByIdExternoIn(snapshot.equipos().stream().map(Equipo::getIdExterno).toList())) {
             resultado.put(equipo.getIdExterno(), equipo);
         }
         return resultado;
     }
 
+    private static Equipo equipo(CatalogoSincronizado snapshot, UUID id) {
+        return snapshot.equipos().stream().filter(e -> e.getId().equals(id)).findFirst().orElseThrow();
+    }
+
     private void inactivarAusentes(Set<Long> presentesEquipos,
-            Set<Long> presentesJugadores, Instant ahora, boolean primerSnapshot) {
+                                   Set<UUID> presentesJugadores, Instant ahora, boolean primerSnapshot) {
         for (EquipoEntity equipo : equipos.findAll()) {
             if ((equipo.getIdExterno() == null && primerSnapshot)
                     || equipo.getIdExterno() != null && !presentesEquipos.contains(equipo.getIdExterno())) {
@@ -213,26 +225,18 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
                         equipo.getInicioTemporada(), equipo.getFinTemporada(), equipo.getCreadoEn(), ahora));
             }
         }
+        Set<UUID> jugadoresConIdentidadFootballData = identidades
+                .findAllByProveedor(ProveedorIdentidadExterna.FOOTBALL_DATA)
+                .stream()
+                .map(identidad -> identidad.getJugador().getId())
+                .collect(Collectors.toSet());
         for (JugadorEntity jugador : jugadores.findAll()) {
-            if ((jugador.getIdExterno() == null && primerSnapshot)
-                    || jugador.getIdExterno() != null && !presentesJugadores.contains(jugador.getIdExterno())) {
-                jugadores.save(new JugadorEntity(jugador.getId(), jugador.getIdExterno(), jugador.getNombre(),
-                        jugador.getEquipoId(), jugador.getPosicion(), jugador.getNumeroCamiseta(), jugador.getNacionalidad(),
-                        false, jugador.getCreadoEn(), ahora, jugador.getLiga(), jugador.getEquipo()));
+            if ((!jugadoresConIdentidadFootballData.contains(jugador.getId()) && primerSnapshot)
+                    || jugadoresConIdentidadFootballData.contains(jugador.getId())
+                    && !presentesJugadores.contains(jugador.getId())) {
+                jugadores.save(jugadorMapper.toInactiveEntity(jugador, ahora));
             }
         }
     }
 
-    private static long equipoExterno(CatalogoSincronizado snapshot, UUID equipoId) {
-        return snapshot.getEquipos().stream().filter(e -> e.getId().equals(equipoId)).findFirst()
-                .map(Equipo::getIdExterno).orElseThrow();
-    }
-
-    private static String equipoLiga(CatalogoSincronizado snapshot, UUID id) {
-        return snapshot.getEquipos().stream().filter(e -> e.getId().equals(id)).findFirst().orElseThrow().getLiga();
-    }
-
-    private static String equipoNombre(CatalogoSincronizado snapshot, UUID id) {
-        return snapshot.getEquipos().stream().filter(e -> e.getId().equals(id)).findFirst().orElseThrow().getNombre();
-    }
 }
