@@ -6,10 +6,12 @@ import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.mapper.JugadorMapper;
@@ -40,6 +42,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     private static final long LOCK_KEY_2 = 1L;
     private final ProveedorCatalogo adapter;
     private final EquipoRepository equipos;
+    private final IdentidadExternaEquipoRepository identidadesEquipos;
     private final JugadorRepository jugadores;
     private final IdentidadExternaJugadorRepository identidades;
     private final UsuarioRepository usuarios;
@@ -48,11 +51,14 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     private final JugadorMapper jugadorMapper;
 
     public SincronizacionCatalogoServiceImpl(ProveedorCatalogo adapter, EquipoRepository equipos,
+            IdentidadExternaEquipoRepository identidadesEquipos,
             JugadorRepository jugadores, UsuarioRepository usuarios,
             IdentidadExternaJugadorRepository identidades, JdbcTemplate jdbc, Clock clock,
             JugadorMapper jugadorMapper) {
         this.adapter = adapter;
         this.equipos = equipos;
+        this.identidadesEquipos = Objects.requireNonNull(identidadesEquipos,
+                "identidadesEquipos es obligatoria");
         this.jugadores = jugadores;
         this.usuarios = usuarios;
         this.identidades = Objects.requireNonNull(identidades, "identidades es obligatoria");
@@ -89,7 +95,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     private SincronizacionResultado publicar(CatalogoSincronizado snapshot, boolean primerSnapshot) {
         Instant ahora = clock.instant();
 
-        Map<Long, UUID> equiposSnapshot = new HashMap<>();
+        Map<UUID, UUID> equiposSnapshot = new HashMap<>();
         Set<UUID> jugadoresSnapshot = new HashSet<>();
 
         int equiposCreados = guardarEquipos(snapshot, equiposSnapshot, ahora);
@@ -99,7 +105,8 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         jugadores.flush();
 
         inactivarAusentes(
-                equiposSnapshot.keySet(),
+                snapshot.identidadesExternasEquipos().stream()
+                        .map(identidad -> identidad.externalId()).collect(Collectors.toSet()),
                 jugadoresSnapshot,
                 ahora,
                 primerSnapshot
@@ -117,25 +124,32 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
     private int guardarEquipos(
             CatalogoSincronizado snapshot,
-            Map<Long, UUID> equiposSnapshot,
+            Map<UUID, UUID> equiposSnapshot,
             Instant ahora) {
 
-        Map<Long, EquipoEntity> existentesEquipos = existentesEquipos(snapshot);
+        Map<Long, IdentidadExternaEquipoEntity> identidadesExistentes = identidadesExistentes(snapshot);
         int equiposCreados = 0;
 
         for (Equipo equipo : snapshot.equipos()) {
-            long externalId = snapshot.getEquipoExternalId(equipo.id());
-            EquipoEntity anterior = existentesEquipos.get(externalId);
-
-            UUID id = anterior == null
-                    ? equipo.id()
-                    : anterior.getId();
+            long externalId = snapshot.getIdentidadExternaEquipo(equipo.id()).externalId();
+            IdentidadExternaEquipoEntity identidadExistente = identidadesExistentes.get(externalId);
+            EquipoEntity anterior = identidadExistente == null ? null : identidadExistente.getEquipo();
+            if (identidadExistente != null
+                    && (anterior.getIdExterno() == null
+                    || anterior.getIdExterno().longValue() != identidadExistente.getExternalId())) {
+                throw new IllegalStateException(
+                        "La identidad externa del equipo " + anterior.getId()
+                                + " no coincide con su external_id legacy: identidad="
+                                + identidadExistente.getExternalId() + ", legacy="
+                                + anterior.getIdExterno());
+            }
+            UUID id = anterior == null ? equipo.id() : anterior.getId();
 
             if (anterior == null) {
                 equiposCreados++;
             }
 
-            equipos.save(new EquipoEntity(
+            EquipoEntity persistido = equipos.save(new EquipoEntity(
                     id,
                     externalId,
                     equipo.nombre(),
@@ -151,7 +165,13 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
                     ahora
             ));
 
-            equiposSnapshot.put(externalId, id);
+            equiposSnapshot.put(equipo.id(), persistido.getId());
+
+            if (identidadExistente == null) {
+                identidadesEquipos.save(new IdentidadExternaEquipoEntity(
+                        UUID.randomUUID(), persistido,
+                        ProveedorIdentidadExterna.FOOTBALL_DATA, externalId));
+            }
         }
 
         return equiposCreados;
@@ -159,7 +179,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
     private int guardarJugadores(
             CatalogoSincronizado snapshot,
-            Map<Long, UUID> equiposSnapshot,
+            Map<UUID, UUID> equiposSnapshot,
             Set<UUID> jugadoresSnapshot,
             Instant ahora) {
 
@@ -184,7 +204,10 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             }
 
             Equipo equipo = equipo(snapshot, jugador.getEquipoId());
-            UUID equipoIdPersistido = equiposSnapshot.get(snapshot.getEquipoExternalId(equipo.id()));
+            UUID equipoIdPersistido = equiposSnapshot.get(equipo.id());
+            if (equipoIdPersistido == null) {
+                throw new IllegalStateException("No se pudo resolver el equipo local del jugador.");
+            }
             JugadorEntity persistido = jugadores.save(
                     jugadorMapper.toEntity(jugador, equipoIdPersistido, anterior, ahora));
 
@@ -204,11 +227,18 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         }
     }
 
-    private Map<Long, EquipoEntity> existentesEquipos(CatalogoSincronizado snapshot) {
-        Map<Long, EquipoEntity> resultado = new HashMap<>();
-        for (EquipoEntity equipo : equipos.findAllByIdExternoIn(snapshot.equipos().stream()
-                .map(equipo -> snapshot.getEquipoExternalId(equipo.id())).toList())) {
-            resultado.put(equipo.getIdExterno(), equipo);
+    private Map<Long, IdentidadExternaEquipoEntity> identidadesExistentes(
+            CatalogoSincronizado snapshot) {
+        Map<Long, IdentidadExternaEquipoEntity> resultado = new HashMap<>();
+        List<Long> externalIds = snapshot.identidadesExternasEquipos().stream()
+                .map(identidad -> identidad.externalId()).toList();
+        for (IdentidadExternaEquipoEntity identidad : identidadesEquipos
+                .findAllByProveedorAndExternalIdIn(
+                        ProveedorIdentidadExterna.FOOTBALL_DATA, externalIds)) {
+            if (identidad.getEquipo() == null || identidad.getEquipo().getId() == null) {
+                throw new IllegalStateException("La identidad externa de equipo no tiene equipo local valido.");
+            }
+            resultado.put(identidad.getExternalId(), identidad);
         }
         return resultado;
     }

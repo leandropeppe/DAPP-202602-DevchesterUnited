@@ -43,7 +43,12 @@ class FootballDataAdapterTest {
         assertThat(rutas).containsExactly("/competitions/PL/teams", "/competitions/PD/teams",
                 "/competitions/BL1/teams", "/competitions/SA/teams", "/competitions/FL1/teams");
         assertThat(snapshot.identidadesFootballData()).containsValue(60000L);
-        assertThat(snapshot.identidadesFootballDataEquipos()).containsValue(10000L);
+        assertThat(snapshot.identidadesExternasEquipos())
+                .anySatisfy(identidad -> {
+                    assertThat(identidad.proveedor()).isEqualTo(
+                            com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.FOOTBALL_DATA);
+                    assertThat(identidad.externalId()).isEqualTo(10000L);
+                });
     }
 
     @Test

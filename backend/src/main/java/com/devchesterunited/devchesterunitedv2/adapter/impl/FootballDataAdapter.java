@@ -9,7 +9,9 @@ import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballTeamDTO;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballTeamsResponseDTO;
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.IdentidadExternaEquipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
@@ -92,7 +94,7 @@ public class FootballDataAdapter implements ProveedorCatalogo {
             List<Equipo> equipos,
             List<Jugador> jugadores,
             Map<Long, UUID> equiposPorExterno,
-            Map<UUID, Long> identidadesFootballDataEquipos,
+            List<IdentidadExternaEquipo> identidadesExternasEquipos,
             Map<Long, String> jugadoresVistos,
             Map<UUID, Long> identidadesFootballData) {
 
@@ -113,7 +115,8 @@ public class FootballDataAdapter implements ProveedorCatalogo {
                         temporada.id(), temporada.startDate(), temporada.endDate()),
                 clock.instant()
         ));
-        identidadesFootballDataEquipos.put(idEquipo, equipoExterno.id());
+        identidadesExternasEquipos.add(new IdentidadExternaEquipo(
+                idEquipo, ProveedorIdentidadExterna.FOOTBALL_DATA, equipoExterno.id()));
 
         Set<Long> idsEnEquipo = new HashSet<>();
 
@@ -197,7 +200,7 @@ public class FootballDataAdapter implements ProveedorCatalogo {
         List<Equipo> equipos = new ArrayList<>();
         List<Jugador> jugadores = new ArrayList<>();
         Map<Long, UUID> equiposPorExterno = new HashMap<>();
-        Map<UUID, Long> identidadesFootballDataEquipos = new HashMap<>();
+        List<IdentidadExternaEquipo> identidadesExternasEquipos = new ArrayList<>();
         Map<Long, String> jugadoresVistos = new HashMap<>();
         Map<UUID, Long> identidadesFootballData = new HashMap<>();
         for (int i = 0; i < LIGAS.size(); i++) {
@@ -206,12 +209,12 @@ public class FootballDataAdapter implements ProveedorCatalogo {
             Liga liga = LIGAS.get(i);
             FootballTeamsResponseDTO respuesta = obtener(liga.codigo());
             convertir(respuesta, liga, equipos, jugadores, equiposPorExterno,
-                    identidadesFootballDataEquipos, jugadoresVistos, identidadesFootballData);
+                    identidadesExternasEquipos, jugadoresVistos, identidadesFootballData);
         }
         comprobarDeadline(limite);
         try {
             return new CatalogoSincronizado(equipos, jugadores, identidadesFootballData,
-                    identidadesFootballDataEquipos);
+                    identidadesExternasEquipos);
         } catch (IllegalArgumentException e) {
             throw new FootballDataException("La respuesta del proveedor no forma un snapshot utilizable.", e);
         }
@@ -240,7 +243,7 @@ public class FootballDataAdapter implements ProveedorCatalogo {
             List<Equipo> equipos,
             List<Jugador> jugadores,
             Map<Long, UUID> equiposPorExterno,
-            Map<UUID, Long> identidadesFootballDataEquipos,
+            List<IdentidadExternaEquipo> identidadesExternasEquipos,
             Map<Long, String> jugadoresVistos,
             Map<UUID, Long> identidadesFootballData) {
 
@@ -256,7 +259,7 @@ public class FootballDataAdapter implements ProveedorCatalogo {
                     equipos,
                     jugadores,
                     equiposPorExterno,
-                    identidadesFootballDataEquipos,
+                    identidadesExternasEquipos,
                     jugadoresVistos,
                     identidadesFootballData
             );

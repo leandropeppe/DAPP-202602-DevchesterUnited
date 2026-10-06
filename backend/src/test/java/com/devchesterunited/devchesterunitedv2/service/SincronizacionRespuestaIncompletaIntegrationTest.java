@@ -5,7 +5,9 @@ import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.IdentidadExternaEquipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
@@ -120,14 +122,15 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
         List<Equipo> equiposSnapshot = new ArrayList<>();
         List<Jugador> jugadoresSnapshot = new ArrayList<>();
         Map<UUID, Long> ids = new HashMap<>();
-        Map<UUID, Long> idsEquipos = new HashMap<>();
+        List<IdentidadExternaEquipo> identidadesEquipos = new ArrayList<>();
         int indice = 0;
         for (int liga = 0; liga < ligas.size(); liga++) {
             for (int i = 0; i < cantidades.get(liga); i++) {
                 UUID equipoId = UUID.randomUUID();
                 equiposSnapshot.add(Equipo.importado(equipoId, "Equipo " + indice, ligas.get(liga),
                         new TemporadaEquipo(2026L, null, null), AHORA));
-                idsEquipos.put(equipoId, 600000L + indice);
+                identidadesEquipos.add(new IdentidadExternaEquipo(
+                        equipoId, ProveedorIdentidadExterna.FOOTBALL_DATA, 600000L + indice));
                 Jugador jugadorInterno = new Jugador(UUID.randomUUID(), "Jugador " + indice,
                         equipoId, "Forward", null, "Argentina", AHORA);
                 jugadoresSnapshot.add(jugadorInterno);
@@ -135,6 +138,6 @@ class SincronizacionRespuestaIncompletaIntegrationTest extends PostgresTestSuppo
                 indice++;
             }
         }
-        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids, idsEquipos);
+        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids, identidadesEquipos);
     }
 }

@@ -13,7 +13,7 @@ public record CatalogoSincronizado(
         List<Equipo> equipos,
         List<Jugador> jugadores,
         Map<UUID, Long> identidadesFootballData,
-        Map<UUID, Long> identidadesFootballDataEquipos) {
+        List<IdentidadExternaEquipo> identidadesExternasEquipos) {
 
     private static final Map<String, Integer> CANTIDAD_POR_LIGA = Map.of(
             "Premier League", 20, "LaLiga", 20, "Bundesliga", 18, "Serie A", 20, "Ligue 1", 18);
@@ -22,20 +22,20 @@ public record CatalogoSincronizado(
         equipos = List.copyOf(Objects.requireNonNull(equipos));
         jugadores = List.copyOf(Objects.requireNonNull(jugadores));
         identidadesFootballData = Map.copyOf(Objects.requireNonNull(identidadesFootballData));
-        identidadesFootballDataEquipos = Map.copyOf(
-                Objects.requireNonNull(identidadesFootballDataEquipos));
-        validar(equipos, jugadores, identidadesFootballData, identidadesFootballDataEquipos);
+        identidadesExternasEquipos = List.copyOf(
+                Objects.requireNonNull(identidadesExternasEquipos));
+        validar(equipos, jugadores, identidadesFootballData, identidadesExternasEquipos);
     }
 
     private static void validar(List<Equipo> equipos, List<Jugador> jugadores,
             Map<UUID, Long> identidadesFootballData,
-            Map<UUID, Long> identidadesFootballDataEquipos) {
+            List<IdentidadExternaEquipo> identidadesExternasEquipos) {
         if (equipos.size() != 96) throw new IllegalArgumentException("El snapshot debe contener 96 equipos.");
         if (jugadores.isEmpty() || jugadores.size() > 10_000) {
             throw new IllegalArgumentException("El snapshot debe contener entre 1 y 10000 jugadores.");
         }
         if (equipos.stream().anyMatch(e -> !e.isActivo()
-                || !identidadesFootballDataEquipos.containsKey(e.id())
+                || identidadesExternasEquipos.stream().noneMatch(i -> i.equipoId().equals(e.id()))
                 || !CANTIDAD_POR_LIGA.containsKey(e.liga()))) {
             throw new IllegalArgumentException("El snapshot contiene una liga no soportada.");
         }
@@ -43,14 +43,18 @@ public record CatalogoSincronizado(
             long encontrados = equipos.stream().filter(e -> liga.equals(e.liga())).count();
             if (encontrados != cantidad) throw new IllegalArgumentException("Cantidad de equipos invalida para " + liga + ".");
         });
-        if (identidadesFootballDataEquipos.size() != equipos.size()
-                || identidadesFootballDataEquipos.values().stream().anyMatch(id -> id == null || id <= 0)) {
+        if (identidadesExternasEquipos.size() != equipos.size()
+                || identidadesExternasEquipos.stream().anyMatch(i -> i == null
+                        || i.proveedor() != ProveedorIdentidadExterna.FOOTBALL_DATA
+                        || i.externalId() <= 0)) {
             throw new IllegalArgumentException("El snapshot contiene un equipo sin ID externo valido.");
         }
-        if (equipos.stream().anyMatch(e -> !identidadesFootballDataEquipos.containsKey(e.id()))) {
+        if (identidadesExternasEquipos.stream().anyMatch(i -> equipos.stream()
+                .noneMatch(e -> e.id().equals(i.equipoId())))) {
             throw new IllegalArgumentException("El snapshot contiene un equipo sin identidad externa.");
         }
-        unicos(identidadesFootballDataEquipos.values().stream().toList(), "equipos");
+        unicos(identidadesExternasEquipos.stream()
+                .map(i -> i.proveedor() + "|" + i.externalId()).toList(), "equipos");
         if (identidadesFootballData.size() != jugadores.size()
                 || jugadores.stream().anyMatch(j -> !identidadesFootballData.containsKey(j.getId()))) {
             throw new IllegalArgumentException("El snapshot contiene un jugador sin ID externo.");
@@ -75,7 +79,11 @@ public record CatalogoSincronizado(
 
     public long getExternalId(UUID jugadorId) { return identidadesFootballData.get(jugadorId); }
 
-    public long getEquipoExternalId(UUID equipoId) {
-        return identidadesFootballDataEquipos.get(equipoId);
+    public IdentidadExternaEquipo getIdentidadExternaEquipo(UUID equipoId) {
+        return identidadesExternasEquipos.stream()
+                .filter(identidad -> identidad.equipoId().equals(equipoId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "El snapshot no contiene identidad externa para el equipo."));
     }
 }
