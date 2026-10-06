@@ -30,6 +30,14 @@ public record CatalogoSincronizado(
     private static void validar(List<Equipo> equipos, List<Jugador> jugadores,
             Map<UUID, Long> identidadesFootballData,
             List<IdentidadExternaEquipo> identidadesExternasEquipos) {
+        validarTamanosYDistribucion(equipos, jugadores, identidadesExternasEquipos);
+        validarIdentidadesEquipos(equipos, identidadesExternasEquipos);
+        validarIdentidadesJugadores(jugadores, identidadesFootballData);
+        validarReferenciasEquipo(equipos, jugadores);
+    }
+
+    private static void validarTamanosYDistribucion(List<Equipo> equipos, List<Jugador> jugadores,
+            List<IdentidadExternaEquipo> identidadesExternasEquipos) {
         if (equipos.size() != 96) throw new IllegalArgumentException("El snapshot debe contener 96 equipos.");
         if (jugadores.isEmpty() || jugadores.size() > 10_000) {
             throw new IllegalArgumentException("El snapshot debe contener entre 1 y 10000 jugadores.");
@@ -43,6 +51,10 @@ public record CatalogoSincronizado(
             long encontrados = equipos.stream().filter(e -> liga.equals(e.liga())).count();
             if (encontrados != cantidad) throw new IllegalArgumentException("Cantidad de equipos invalida para " + liga + ".");
         });
+    }
+
+    private static void validarIdentidadesEquipos(List<Equipo> equipos,
+            List<IdentidadExternaEquipo> identidadesExternasEquipos) {
         if (identidadesExternasEquipos.size() != equipos.size()
                 || identidadesExternasEquipos.stream().anyMatch(i -> i == null
                         || i.proveedor() != ProveedorIdentidadExterna.FOOTBALL_DATA
@@ -55,6 +67,10 @@ public record CatalogoSincronizado(
         }
         unicos(identidadesExternasEquipos.stream()
                 .map(i -> i.proveedor() + "|" + i.externalId()).toList(), "equipos");
+    }
+
+    private static void validarIdentidadesJugadores(List<Jugador> jugadores,
+            Map<UUID, Long> identidadesFootballData) {
         if (identidadesFootballData.size() != jugadores.size()
                 || jugadores.stream().anyMatch(j -> !identidadesFootballData.containsKey(j.getId()))) {
             throw new IllegalArgumentException("El snapshot contiene un jugador sin ID externo.");
@@ -63,6 +79,9 @@ public record CatalogoSincronizado(
             throw new IllegalArgumentException("El snapshot contiene un ID externo invalido.");
         }
         unicos(identidadesFootballData.values().stream().toList(), "jugadores");
+    }
+
+    private static void validarReferenciasEquipo(List<Equipo> equipos, List<Jugador> jugadores) {
         Set<UUID> equiposIds = equipos.stream().map(Equipo::id).collect(Collectors.toSet());
         if (equiposIds.size() != equipos.size() || jugadores.stream().anyMatch(j -> j.getEquipoId() == null || !equiposIds.contains(j.getEquipoId()))) {
             throw new IllegalArgumentException("El snapshot contiene referencias de equipo invalidas.");

@@ -135,40 +135,50 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         int equiposCreados = 0;
 
         for (Equipo equipo : snapshot.equipos()) {
-            long externalId = snapshot.getIdentidadExternaEquipo(equipo.id()).externalId();
-            IdentidadExternaEquipoEntity identidadExistente = identidadesExistentes.get(externalId);
-            EquipoEntity anterior = identidadExistente == null ? null : identidadExistente.getEquipo();
-            UUID id = anterior == null ? equipo.id() : anterior.getId();
-
-            if (anterior == null) {
+            if (guardarEquipo(equipo, snapshot, identidadesExistentes, equiposSnapshot, ahora)) {
                 equiposCreados++;
-            }
-
-            EquipoEntity persistido = equipos.save(new EquipoEntity(
-                    id,
-                    equipo.nombre(),
-                    anterior == null ? null : anterior.getNombreCorto(),
-                    anterior == null ? null : anterior.getSigla(),
-                    equipo.liga(),
-                    anterior == null ? null : anterior.getEscudoUrl(),
-                    true,
-                    equipo.temporada().temporadaExternaId(),
-                    equipo.temporada().inicio(),
-                    equipo.temporada().fin(),
-                    anterior == null ? ahora : anterior.getCreadoEn(),
-                    ahora
-            ));
-
-            equiposSnapshot.put(equipo.id(), persistido.getId());
-
-            if (identidadExistente == null) {
-                identidadesEquipos.save(new IdentidadExternaEquipoEntity(
-                        UUID.randomUUID(), persistido,
-                        ProveedorIdentidadExterna.FOOTBALL_DATA, externalId));
             }
         }
 
         return equiposCreados;
+    }
+
+    private boolean guardarEquipo(
+            Equipo equipo,
+            CatalogoSincronizado snapshot,
+            Map<Long, IdentidadExternaEquipoEntity> identidadesExistentes,
+            Map<UUID, UUID> equiposSnapshot,
+            Instant ahora) {
+        long externalId = snapshot.getIdentidadExternaEquipo(equipo.id()).externalId();
+        IdentidadExternaEquipoEntity identidadExistente = identidadesExistentes.get(externalId);
+        EquipoEntity anterior = identidadExistente == null ? null : identidadExistente.getEquipo();
+        UUID id = anterior == null ? equipo.id() : anterior.getId();
+        boolean equipoNuevo = anterior == null;
+
+        EquipoEntity persistido = equipos.save(new EquipoEntity(
+                id,
+                equipo.nombre(),
+                anterior == null ? null : anterior.getNombreCorto(),
+                anterior == null ? null : anterior.getSigla(),
+                equipo.liga(),
+                anterior == null ? null : anterior.getEscudoUrl(),
+                true,
+                equipo.temporada().temporadaExternaId(),
+                equipo.temporada().inicio(),
+                equipo.temporada().fin(),
+                anterior == null ? ahora : anterior.getCreadoEn(),
+                ahora
+        ));
+
+        equiposSnapshot.put(equipo.id(), persistido.getId());
+
+        if (identidadExistente == null) {
+            identidadesEquipos.save(new IdentidadExternaEquipoEntity(
+                    UUID.randomUUID(), persistido,
+                    ProveedorIdentidadExterna.FOOTBALL_DATA, externalId));
+        }
+
+        return equipoNuevo;
     }
 
     private int guardarJugadores(

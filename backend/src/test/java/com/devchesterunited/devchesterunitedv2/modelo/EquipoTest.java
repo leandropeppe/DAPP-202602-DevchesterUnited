@@ -34,15 +34,26 @@ class EquipoTest {
 
     @Test
     void rechazaIdentidadYCamposObligatoriosInvalidos() {
+        EstadoEquipo estadoValido = EstadoEquipo.nuevo(AHORA);
         assertThatThrownBy(() -> new Equipo(null, "Club", "LaLiga",
-                EstadoEquipo.nuevo(AHORA), TEMPORADA)).isInstanceOf(NullPointerException.class);
-        assertThatThrownBy(() -> Equipo.importado(UUID.randomUUID(), "", "LaLiga", TEMPORADA, AHORA))
+                estadoValido, TEMPORADA)).isInstanceOf(NullPointerException.class);
+
+        UUID idNombreVacio = UUID.randomUUID();
+        assertThatThrownBy(() -> Equipo.importado(idNombreVacio, "", "LaLiga", TEMPORADA, AHORA))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> Equipo.importado(UUID.randomUUID(), "a".repeat(101), "LaLiga", TEMPORADA, AHORA))
+
+        UUID idNombreLargo = UUID.randomUUID();
+        String nombreLargo = "a".repeat(101);
+        assertThatThrownBy(() -> Equipo.importado(idNombreLargo, nombreLargo, "LaLiga", TEMPORADA, AHORA))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> Equipo.importado(UUID.randomUUID(), "Club", "", TEMPORADA, AHORA))
+
+        UUID idLigaVacia = UUID.randomUUID();
+        assertThatThrownBy(() -> Equipo.importado(idLigaVacia, "Club", "", TEMPORADA, AHORA))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> Equipo.importado(UUID.randomUUID(), "Club", "a".repeat(101), TEMPORADA, AHORA))
+
+        UUID idLigaLarga = UUID.randomUUID();
+        String ligaLarga = "a".repeat(101);
+        assertThatThrownBy(() -> Equipo.importado(idLigaLarga, "Club", ligaLarga, TEMPORADA, AHORA))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -50,9 +61,14 @@ class EquipoTest {
     void validaTemporada() {
         assertThatThrownBy(() -> new TemporadaEquipo(0L, null, null))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new TemporadaEquipo(2026L, LocalDate.of(2026, 8, 1), null))
+
+        LocalDate inicioTemporada = LocalDate.of(2026, 8, 1);
+        assertThatThrownBy(() -> new TemporadaEquipo(2026L, inicioTemporada, null))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new TemporadaEquipo(2026L, LocalDate.of(2027, 1, 1), LocalDate.of(2026, 1, 1)))
+
+        LocalDate inicioPosterior = LocalDate.of(2027, 1, 1);
+        LocalDate finAnterior = LocalDate.of(2026, 1, 1);
+        assertThatThrownBy(() -> new TemporadaEquipo(2026L, inicioPosterior, finAnterior))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(new TemporadaEquipo(null, null, null)).isNotNull();
     }
@@ -63,7 +79,9 @@ class EquipoTest {
                 .isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> new EstadoEquipo(true, AHORA, null))
                 .isInstanceOf(NullPointerException.class);
-        assertThatThrownBy(() -> new EstadoEquipo(true, AHORA, AHORA.minusSeconds(1)))
+
+        Instant actualizadoAnterior = AHORA.minusSeconds(1);
+        assertThatThrownBy(() -> new EstadoEquipo(true, AHORA, actualizadoAnterior))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

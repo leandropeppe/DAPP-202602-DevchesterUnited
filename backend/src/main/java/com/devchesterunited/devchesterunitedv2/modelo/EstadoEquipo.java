@@ -7,8 +7,8 @@ import java.util.Objects;
 public record EstadoEquipo(boolean activo, Instant creadoEn, Instant actualizadoEn) {
 
     public EstadoEquipo {
-        creadoEn = Objects.requireNonNull(creadoEn, "La fecha de creacion es obligatoria.");
-        actualizadoEn = Objects.requireNonNull(actualizadoEn,
+        Objects.requireNonNull(creadoEn, "La fecha de creacion es obligatoria.");
+        Objects.requireNonNull(actualizadoEn,
                 "La fecha de actualizacion es obligatoria.");
         if (actualizadoEn.isBefore(creadoEn)) {
             throw new IllegalArgumentException(

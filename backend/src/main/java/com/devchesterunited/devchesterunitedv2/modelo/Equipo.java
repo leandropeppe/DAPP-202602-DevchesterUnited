@@ -13,11 +13,11 @@ public record Equipo(
         TemporadaEquipo temporada) {
 
     public Equipo {
-        id = Objects.requireNonNull(id, "El identificador del equipo es obligatorio.");
+        Objects.requireNonNull(id, "El identificador del equipo es obligatorio.");
         nombre = texto(nombre, "nombre", 100);
         liga = texto(liga, "liga", 100);
-        estado = Objects.requireNonNull(estado, "El estado del equipo es obligatorio.");
-        temporada = Objects.requireNonNull(temporada, "La temporada del equipo es obligatoria.");
+        Objects.requireNonNull(estado, "El estado del equipo es obligatorio.");
+        Objects.requireNonNull(temporada, "La temporada del equipo es obligatoria.");
     }
 
     public static Equipo importado(UUID id, String nombre, String liga,
