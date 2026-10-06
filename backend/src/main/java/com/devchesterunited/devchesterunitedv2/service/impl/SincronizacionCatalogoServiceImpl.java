@@ -76,8 +76,10 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
         try {
             CatalogoSincronizado snapshot = adapter.sincronizar();
-            boolean primerSnapshot = equipos.findAll().stream().noneMatch(e -> e.getIdExterno() != null);
-            return publicar(snapshot, primerSnapshot);
+            List<IdentidadExternaEquipoEntity> identidadesFootballData =
+                    identidadesEquipos.findAllByProveedor(ProveedorIdentidadExterna.FOOTBALL_DATA);
+            boolean primerSnapshot = identidadesFootballData.isEmpty();
+            return publicar(snapshot, primerSnapshot, identidadesFootballData);
         } catch (com.devchesterunited.devchesterunitedv2.adapter.FootballDataException exception) {
             throw exception;
         } catch (DataAccessException exception) {
@@ -92,7 +94,8 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         }
     }
 
-    private SincronizacionResultado publicar(CatalogoSincronizado snapshot, boolean primerSnapshot) {
+    private SincronizacionResultado publicar(CatalogoSincronizado snapshot, boolean primerSnapshot,
+            List<IdentidadExternaEquipoEntity> identidadesFootballData) {
         Instant ahora = clock.instant();
 
         Map<UUID, UUID> equiposSnapshot = new HashMap<>();
@@ -109,7 +112,8 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
                         .map(identidad -> identidad.externalId()).collect(Collectors.toSet()),
                 jugadoresSnapshot,
                 ahora,
-                primerSnapshot
+                primerSnapshot,
+                identidadesFootballData
         );
 
         return new SincronizacionResultado(
@@ -248,10 +252,14 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     }
 
     private void inactivarAusentes(Set<Long> presentesEquipos,
-                                   Set<UUID> presentesJugadores, Instant ahora, boolean primerSnapshot) {
-        for (EquipoEntity equipo : equipos.findAll()) {
-            if ((equipo.getIdExterno() == null && primerSnapshot)
-                    || equipo.getIdExterno() != null && !presentesEquipos.contains(equipo.getIdExterno())) {
+                                   Set<UUID> presentesJugadores, Instant ahora, boolean primerSnapshot,
+                                   List<IdentidadExternaEquipoEntity> identidadesFootballData) {
+        for (IdentidadExternaEquipoEntity identidad : identidadesFootballData) {
+            if (!presentesEquipos.contains(identidad.getExternalId())) {
+                EquipoEntity equipo = identidad.getEquipo();
+                if (!equipo.isActivo()) {
+                    continue;
+                }
                 equipos.save(new EquipoEntity(equipo.getId(), equipo.getIdExterno(), equipo.getNombre(), equipo.getNombreCorto(),
                         equipo.getSigla(), equipo.getLiga(), equipo.getEscudoUrl(), false, equipo.getTemporadaExternaId(),
                         equipo.getInicioTemporada(), equipo.getFinTemporada(), equipo.getCreadoEn(), ahora));

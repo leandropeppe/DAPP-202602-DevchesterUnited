@@ -10,6 +10,8 @@ import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import java.time.Instant;
@@ -37,6 +39,7 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
     @Autowired JdbcTemplate jdbc;
     @Autowired SincronizacionCatalogoService servicio;
     @Autowired EquipoRepository equipos;
+    @Autowired IdentidadExternaEquipoRepository identidadesEquipos;
     @Autowired JugadorRepository jugadores;
 
     @BeforeEach
@@ -48,7 +51,7 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
     }
 
     @Test
-    void snapshotValidoPublica96EquiposDistribuidosYDesactivaDemo() {
+    void snapshotValidoPublica96EquiposDistribuidosYConservaDemoSinIdentidad() {
         CatalogoSincronizado snapshot = snapshot(700000L, 800000L);
         when(adapter.sincronizar()).thenReturn(snapshot);
 
@@ -65,6 +68,11 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
         assertThat(activos.stream().filter(e -> e.getLiga().equals("Ligue 1")).count()).isEqualTo(18);
         assertThat(jugadores.findAll()).filteredOn(j -> !j.isActivo()).isNotEmpty();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class)).isEqualTo(96L);
+        assertThat(equipos.findAll()).filteredOn(equipo -> equipo.getIdExterno() == null)
+                .isNotEmpty().allMatch(EquipoEntity::isActivo);
+        assertThat(equipos.findAll()).filteredOn(equipo -> equipo.getIdExterno() == null)
+                .allMatch(equipo -> identidadesEquipos.findByEquipo_IdAndProveedor(
+                        equipo.getId(), ProveedorIdentidadExterna.FOOTBALL_DATA).isEmpty());
     }
 
     @Test

@@ -54,6 +54,7 @@ class SincronizacionCatalogoServiceTest {
         servicio = new SincronizacionCatalogoServiceImpl(adapter, equipos, identidadesEquipos, jugadores, usuarios, identidades, jdbc,
                 Clock.fixed(AHORA, java.time.ZoneOffset.UTC), new JugadorMapper());
         lenient().when(identidadesEquipos.findAllByProveedorAndExternalIdIn(any(), anyList())).thenReturn(List.of());
+        lenient().when(identidadesEquipos.findAllByProveedor(any())).thenReturn(List.of());
         lenient().when(equipos.findAll()).thenReturn(List.of());
         lenient().when(jugadores.findAll()).thenReturn(List.of());
         lenient().when(identidades.findAllByProveedorAndExternalIdIn(any(), anyList())).thenReturn(List.of());
@@ -138,6 +139,40 @@ class SincronizacionCatalogoServiceTest {
                 .hasMessageContaining("identidad=1")
                 .hasMessageContaining("legacy=999");
         verify(equipos, never()).save(any(EquipoEntity.class));
+    }
+
+    @Test
+    void inactivaEquipoConIdentidadFootballDataAusenteDelSnapshot() {
+        when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
+        CatalogoSincronizado snapshot = snapshot();
+        UUID uuidEquipoAusente = UUID.fromString("75000000-0000-0000-0000-000000000001");
+        EquipoEntity equipoAusente = new EquipoEntity(uuidEquipoAusente, 999999L, "Equipo ausente",
+                null, null, "Premier League", null, true, 2026L, null, null, AHORA, AHORA);
+        IdentidadExternaEquipoEntity identidadAusente = new IdentidadExternaEquipoEntity(
+                UUID.fromString("76000000-0000-0000-0000-000000000001"), equipoAusente,
+                ProveedorIdentidadExterna.FOOTBALL_DATA, 999999L);
+        when(identidadesEquipos.findAllByProveedor(any())).thenReturn(List.of(identidadAusente));
+        when(adapter.sincronizar()).thenReturn(snapshot);
+
+        servicio.sincronizar();
+
+        verify(equipos).save(argThat(e -> e.getId().equals(uuidEquipoAusente)
+                && e.getIdExterno().equals(999999L) && !e.isActivo()));
+    }
+
+    @Test
+    void conservaActivoEquipoSinIdentidadFootballDataAunqueNoEsteEnSnapshot() {
+        when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
+        CatalogoSincronizado snapshot = snapshot();
+        UUID uuidEquipoLegacy = UUID.fromString("77000000-0000-0000-0000-000000000001");
+        EquipoEntity equipoLegacy = new EquipoEntity(uuidEquipoLegacy, null, "Equipo legacy",
+                null, null, "Premier League", null, true, 2026L, null, null, AHORA, AHORA);
+        when(adapter.sincronizar()).thenReturn(snapshot);
+
+        servicio.sincronizar();
+
+        verify(equipos, never()).save(argThat(e -> e.getId().equals(uuidEquipoLegacy)
+                && !e.isActivo()));
     }
 
     @Test
