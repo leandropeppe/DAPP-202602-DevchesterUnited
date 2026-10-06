@@ -10,6 +10,7 @@ import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballTeamsResponse
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.time.Clock;
@@ -91,6 +92,7 @@ public class FootballDataAdapter implements ProveedorCatalogo {
             List<Equipo> equipos,
             List<Jugador> jugadores,
             Map<Long, UUID> equiposPorExterno,
+            Map<UUID, Long> identidadesFootballDataEquipos,
             Map<Long, String> jugadoresVistos,
             Map<UUID, Long> identidadesFootballData) {
 
@@ -105,17 +107,13 @@ public class FootballDataAdapter implements ProveedorCatalogo {
 
         equipos.add(Equipo.importado(
                 idEquipo,
-                equipoExterno.id(),
                 equipoExterno.name(),
-                equipoExterno.shortName(),
-                equipoExterno.tla(),
                 liga.nombre(),
-                uriHttps(equipoExterno.crest()),
-                temporada.id(),
-                temporada.startDate(),
-                temporada.endDate(),
+                new TemporadaEquipo(
+                        temporada.id(), temporada.startDate(), temporada.endDate()),
                 clock.instant()
         ));
+        identidadesFootballDataEquipos.put(idEquipo, equipoExterno.id());
 
         Set<Long> idsEnEquipo = new HashSet<>();
 
@@ -199,6 +197,7 @@ public class FootballDataAdapter implements ProveedorCatalogo {
         List<Equipo> equipos = new ArrayList<>();
         List<Jugador> jugadores = new ArrayList<>();
         Map<Long, UUID> equiposPorExterno = new HashMap<>();
+        Map<UUID, Long> identidadesFootballDataEquipos = new HashMap<>();
         Map<Long, String> jugadoresVistos = new HashMap<>();
         Map<UUID, Long> identidadesFootballData = new HashMap<>();
         for (int i = 0; i < LIGAS.size(); i++) {
@@ -206,12 +205,13 @@ public class FootballDataAdapter implements ProveedorCatalogo {
             if (i > 0) dormirCadencia(limite);
             Liga liga = LIGAS.get(i);
             FootballTeamsResponseDTO respuesta = obtener(liga.codigo());
-            convertir(respuesta, liga, equipos, jugadores, equiposPorExterno, jugadoresVistos,
-                    identidadesFootballData);
+            convertir(respuesta, liga, equipos, jugadores, equiposPorExterno,
+                    identidadesFootballDataEquipos, jugadoresVistos, identidadesFootballData);
         }
         comprobarDeadline(limite);
         try {
-            return new CatalogoSincronizado(equipos, jugadores, identidadesFootballData);
+            return new CatalogoSincronizado(equipos, jugadores, identidadesFootballData,
+                    identidadesFootballDataEquipos);
         } catch (IllegalArgumentException e) {
             throw new FootballDataException("La respuesta del proveedor no forma un snapshot utilizable.", e);
         }
@@ -240,6 +240,7 @@ public class FootballDataAdapter implements ProveedorCatalogo {
             List<Equipo> equipos,
             List<Jugador> jugadores,
             Map<Long, UUID> equiposPorExterno,
+            Map<UUID, Long> identidadesFootballDataEquipos,
             Map<Long, String> jugadoresVistos,
             Map<UUID, Long> identidadesFootballData) {
 
@@ -255,6 +256,7 @@ public class FootballDataAdapter implements ProveedorCatalogo {
                     equipos,
                     jugadores,
                     equiposPorExterno,
+                    identidadesFootballDataEquipos,
                     jugadoresVistos,
                     identidadesFootballData
             );
@@ -298,12 +300,6 @@ public class FootballDataAdapter implements ProveedorCatalogo {
 
     private static String firma(FootballPlayerDTO j, UUID equipo) {
         return equipo + "|" + j.name() + "|" + j.shirtNumber() + "|" + j.nationality() + "|" + j.position();
-    }
-
-    private static URI uriHttps(String crest) {
-        if (crest == null || crest.isBlank()) return null;
-        try { URI uri = URI.create(crest.trim()); return "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null ? uri : null; }
-        catch (IllegalArgumentException e) { return null; }
     }
 
     private void dormirCadencia(Instant limite) {

@@ -122,10 +122,11 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         int equiposCreados = 0;
 
         for (Equipo equipo : snapshot.equipos()) {
-            EquipoEntity anterior = existentesEquipos.get(equipo.getIdExterno());
+            long externalId = snapshot.getEquipoExternalId(equipo.id());
+            EquipoEntity anterior = existentesEquipos.get(externalId);
 
             UUID id = anterior == null
-                    ? equipo.getId()
+                    ? equipo.id()
                     : anterior.getId();
 
             if (anterior == null) {
@@ -134,21 +135,21 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
             equipos.save(new EquipoEntity(
                     id,
-                    equipo.getIdExterno(),
-                    equipo.getNombre(),
-                    equipo.getNombreCorto(),
-                    equipo.getSigla(),
-                    equipo.getLiga(),
-                    equipo.getEscudoUrl() == null ? null : equipo.getEscudoUrl().toString(),
+                    externalId,
+                    equipo.nombre(),
+                    anterior == null ? null : anterior.getNombreCorto(),
+                    anterior == null ? null : anterior.getSigla(),
+                    equipo.liga(),
+                    anterior == null ? null : anterior.getEscudoUrl(),
                     true,
-                    equipo.getTemporadaExternaId(),
-                    equipo.getInicioTemporada(),
-                    equipo.getFinTemporada(),
+                    equipo.temporada().temporadaExternaId(),
+                    equipo.temporada().inicio(),
+                    equipo.temporada().fin(),
                     anterior == null ? ahora : anterior.getCreadoEn(),
                     ahora
             ));
 
-            equiposSnapshot.put(equipo.getIdExterno(), id);
+            equiposSnapshot.put(externalId, id);
         }
 
         return equiposCreados;
@@ -181,7 +182,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             }
 
             Equipo equipo = equipo(snapshot, jugador.getEquipoId());
-            UUID equipoIdPersistido = equiposSnapshot.get(equipo.getIdExterno());
+            UUID equipoIdPersistido = equiposSnapshot.get(snapshot.getEquipoExternalId(equipo.id()));
             JugadorEntity persistido = jugadores.save(
                     jugadorMapper.toEntity(jugador, equipoIdPersistido, anterior, ahora));
 
@@ -203,14 +204,15 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
     private Map<Long, EquipoEntity> existentesEquipos(CatalogoSincronizado snapshot) {
         Map<Long, EquipoEntity> resultado = new HashMap<>();
-        for (EquipoEntity equipo : equipos.findAllByIdExternoIn(snapshot.equipos().stream().map(Equipo::getIdExterno).toList())) {
+        for (EquipoEntity equipo : equipos.findAllByIdExternoIn(snapshot.equipos().stream()
+                .map(equipo -> snapshot.getEquipoExternalId(equipo.id())).toList())) {
             resultado.put(equipo.getIdExterno(), equipo);
         }
         return resultado;
     }
 
     private static Equipo equipo(CatalogoSincronizado snapshot, UUID id) {
-        return snapshot.equipos().stream().filter(e -> e.getId().equals(id)).findFirst().orElseThrow();
+        return snapshot.equipos().stream().filter(e -> e.id().equals(id)).findFirst().orElseThrow();
     }
 
     private void inactivarAusentes(Set<Long> presentesEquipos,

@@ -7,6 +7,7 @@ import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -160,16 +161,18 @@ class SecurityPolicyE2ETest extends PostgresTestSupport {
         List<String> ligas = List.of("Premier League", "LaLiga", "Bundesliga", "Serie A", "Ligue 1");
         List<Equipo> equipos = new ArrayList<>();
         List<Jugador> jugadores = new ArrayList<>();
+        Map<UUID, Long> idsEquipos = new HashMap<>();
         for (int i = 0; i < 96; i++) {
             int liga = i < 20 ? 0 : i < 40 ? 1 : i < 58 ? 2 : i < 78 ? 3 : 4;
             UUID equipoId = UUID.randomUUID();
-            equipos.add(Equipo.importado(equipoId, EQUIPO_BASE + i, "Equipo seguridad " + i,
-                    "E", "E", ligas.get(liga), null, 2026, null, null, AHORA));
+            equipos.add(Equipo.importado(equipoId, "Equipo seguridad " + i, ligas.get(liga),
+                    new TemporadaEquipo(2026L, null, null), AHORA));
+            idsEquipos.put(equipoId, EQUIPO_BASE + i);
             jugadores.add(new Jugador(UUID.randomUUID(),
                     "Jugador seguridad " + i, equipoId, "Forward", null, "Argentina", AHORA));
         }
         Map<UUID, Long> ids = new HashMap<>();
         for (int i = 0; i < jugadores.size(); i++) ids.put(jugadores.get(i).getId(), JUGADOR_BASE + i);
-        return new CatalogoSincronizado(equipos, jugadores, ids);
+        return new CatalogoSincronizado(equipos, jugadores, ids, idsEquipos);
     }
 }

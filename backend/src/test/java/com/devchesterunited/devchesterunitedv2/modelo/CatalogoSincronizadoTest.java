@@ -17,12 +17,13 @@ class CatalogoSincronizadoTest {
     @Test
     void aceptaSnapshotCompletoConPertenenciaValida() {
         var datos = datos();
-        var snapshot = new CatalogoSincronizado(datos.equipos, datos.jugadores, datos.ids);
+        var snapshot = new CatalogoSincronizado(datos.equipos, datos.jugadores, datos.ids, datos.idsEquipos);
         assertThat(snapshot.equipos()).hasSize(96);
         assertThat(snapshot.jugadores()).hasSize(96);
         assertThat(snapshot.equipos()).isUnmodifiable();
         assertThat(snapshot.jugadores()).isUnmodifiable();
         assertThat(snapshot.identidadesFootballData()).isUnmodifiable();
+        assertThat(snapshot.identidadesFootballDataEquipos()).isUnmodifiable();
     }
 
     @Test
@@ -31,24 +32,29 @@ class CatalogoSincronizadoTest {
         var equipos = new ArrayList<>(datos.equipos);
         var jugadores = new ArrayList<>(datos.jugadores);
         var ids = new HashMap<>(datos.ids);
+        var idsEquipos = new HashMap<>(datos.idsEquipos);
 
-        var snapshot = new CatalogoSincronizado(equipos, jugadores, ids);
+        var snapshot = new CatalogoSincronizado(equipos, jugadores, ids, idsEquipos);
 
         int cantidadEquipos = snapshot.equipos().size();
         int cantidadJugadores = snapshot.jugadores().size();
         int cantidadIds = snapshot.identidadesFootballData().size();
+        int cantidadIdsEquipos = snapshot.identidadesFootballDataEquipos().size();
 
         equipos.clear();
         jugadores.clear();
         ids.clear();
+        idsEquipos.clear();
 
         assertThat(snapshot.equipos()).hasSize(cantidadEquipos);
         assertThat(snapshot.jugadores()).hasSize(cantidadJugadores);
         assertThat(snapshot.identidadesFootballData()).hasSize(cantidadIds);
+        assertThat(snapshot.identidadesFootballDataEquipos()).hasSize(cantidadIdsEquipos);
 
         var equiposSnapshot = snapshot.equipos();
         var jugadoresSnapshot = snapshot.jugadores();
         var idsSnapshot = snapshot.identidadesFootballData();
+        var idsEquiposSnapshot = snapshot.identidadesFootballDataEquipos();
 
         assertThatThrownBy(equiposSnapshot::clear)
                 .isInstanceOf(UnsupportedOperationException.class);
@@ -58,15 +64,22 @@ class CatalogoSincronizadoTest {
 
         assertThatThrownBy(idsSnapshot::clear)
                 .isInstanceOf(UnsupportedOperationException.class);
+
+        assertThatThrownBy(idsEquiposSnapshot::clear)
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
     void rechazaCantidadLigaDuplicadosYReferenciasExternasInvalidas() {
         var datos = datos();
         var demasiados = new ArrayList<>(datos.equipos);
-        demasiados.set(0, Equipo.importado(UUID.randomUUID(), 9999, "Otro", "O", "OTR", "LaLiga", null,
-                2026, null, null, AHORA));
-        assertThatThrownBy(() -> new CatalogoSincronizado(demasiados, datos.jugadores, datos.ids))
+        UUID equipoInvalido = UUID.randomUUID();
+        demasiados.set(0, Equipo.importado(equipoInvalido, "Otro", "LaLiga",
+                new TemporadaEquipo(2026L, null, null), AHORA));
+        var idsEquipos = new HashMap<>(datos.idsEquipos);
+        idsEquipos.remove(datos.equipos.get(0).id());
+        idsEquipos.put(equipoInvalido, 9999L);
+        assertThatThrownBy(() -> new CatalogoSincronizado(demasiados, datos.jugadores, datos.ids, idsEquipos))
                 .isInstanceOf(IllegalArgumentException.class);
 
         var jugadores = new ArrayList<>(datos.jugadores);
@@ -74,7 +87,7 @@ class CatalogoSincronizadoTest {
                 datos.jugadores.get(0).getEquipoId(), "Forward", null, "AR", AHORA));
         var ids = new HashMap<>(datos.ids);
         ids.put(jugadores.get(0).getId(), ids.get(datos.jugadores.get(1).getId()));
-        assertThatThrownBy(() -> new CatalogoSincronizado(datos.equipos, jugadores, ids))
+        assertThatThrownBy(() -> new CatalogoSincronizado(datos.equipos, jugadores, ids, datos.idsEquipos))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -82,20 +95,24 @@ class CatalogoSincronizadoTest {
         var equipos = new ArrayList<Equipo>();
         var jugadores = new ArrayList<Jugador>();
         var ids = new HashMap<UUID, Long>();
+        var idsEquipos = new HashMap<UUID, Long>();
         long externo = 1;
         for (int i = 0; i < LIGAS.size(); i++) {
             for (int j = 0; j < CANTIDADES.get(i); j++) {
                 UUID id = UUID.randomUUID();
-                equipos.add(Equipo.importado(id, externo++, "Equipo " + externo, "E", "E", LIGAS.get(i), null,
-                        2026, null, null, AHORA));
+                long idExternoEquipo = externo++;
+                equipos.add(Equipo.importado(id, "Equipo " + externo, LIGAS.get(i),
+                        new TemporadaEquipo(2026L, null, null), AHORA));
+                idsEquipos.put(id, idExternoEquipo);
                 Jugador jugador = new Jugador(UUID.randomUUID(), "Jugador", id,
                         "Forward", null, "Argentina", AHORA);
                 jugadores.add(jugador);
                 ids.put(jugador.getId(), 10_000 + externo);
             }
         }
-        return new Datos(equipos, jugadores, ids);
+        return new Datos(equipos, jugadores, ids, idsEquipos);
     }
 
-    private record Datos(List<Equipo> equipos, List<Jugador> jugadores, Map<UUID, Long> ids) { }
+    private record Datos(List<Equipo> equipos, List<Jugador> jugadores,
+            Map<UUID, Long> ids, Map<UUID, Long> idsEquipos) { }
 }

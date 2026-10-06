@@ -6,6 +6,7 @@ import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
@@ -126,18 +127,20 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
         var equipos = new ArrayList<Equipo>();
         var jugadores = new ArrayList<Jugador>();
         var ids = new HashMap<UUID, Long>();
+        var idsEquipos = new HashMap<UUID, Long>();
         int indice = 0;
         for (int liga = 0; liga < ligas.size(); liga++) for (int i = 0; i < cantidades.get(liga); i++) {
             UUID equipoId = UUID.randomUUID();
-            equipos.add(Equipo.importado(equipoId, equipoBase + indice, "Equipo " + indice, "E", "E", ligas.get(liga), null,
-                    2026, null, null, AHORA));
+            equipos.add(Equipo.importado(equipoId, "Equipo " + indice, ligas.get(liga),
+                    new TemporadaEquipo(2026L, null, null), AHORA));
+            idsEquipos.put(equipoId, equipoBase + indice);
             Jugador jugador = new Jugador(UUID.randomUUID(), "Jugador " + indice + " Apellido",
                     equipoId, "Forward", indice % 2 == 0 ? null : 9, "Argentina", AHORA);
             jugadores.add(jugador);
             ids.put(jugador.getId(), jugadorBase + indice);
             indice++;
         }
-        return new CatalogoSincronizado(equipos, jugadores, ids);
+        return new CatalogoSincronizado(equipos, jugadores, ids, idsEquipos);
     }
 
 }

@@ -5,6 +5,7 @@ import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
@@ -142,6 +143,7 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
         List<Equipo> equiposSnapshot = new ArrayList<>();
         List<Jugador> jugadoresSnapshot = new ArrayList<>();
         Map<UUID, Long> ids = new HashMap<>();
+        Map<UUID, Long> idsEquipos = new HashMap<>();
         int indice = 0;
         for (int liga = 0; liga < ligas.size(); liga++) {
             String nombreLiga = ligas.get(liga);
@@ -150,9 +152,10 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
                 boolean reemplazo = reemplazarEquipoAusente && indice == 0;
                 long idExternoEquipo = reemplazo ? EQUIPO_NUEVO : EQUIPO_AUSENTE + indice;
                 UUID equipoId = UUID.randomUUID();
-                equiposSnapshot.add(Equipo.importado(equipoId, idExternoEquipo,
-                        reemplazo ? "Equipo Nuevo" : "Equipo " + indice, "E", "E", nombreLiga, null,
-                        temporada.id(), temporada.inicio(), temporada.fin(), AHORA));
+                equiposSnapshot.add(Equipo.importado(equipoId,
+                        reemplazo ? "Equipo Nuevo" : "Equipo " + indice, nombreLiga,
+                        new TemporadaEquipo(temporada.id(), temporada.inicio(), temporada.fin()), AHORA));
+                idsEquipos.put(equipoId, idExternoEquipo);
                 long idExternoJugador = reemplazo ? JUGADOR_NUEVO : JUGADOR_BASE + indice;
                 Jugador jugadorInterno = new Jugador(UUID.randomUUID(), "Jugador " + idExternoJugador,
                         equipoId, "Forward", null, "Argentina", AHORA);
@@ -161,7 +164,7 @@ class SincronizacionCambioTemporadaIntegrationTest extends PostgresTestSupport {
                 indice++;
             }
         }
-        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids);
+        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids, idsEquipos);
     }
 
     private record Temporada(Long id, LocalDate inicio, LocalDate fin) { }

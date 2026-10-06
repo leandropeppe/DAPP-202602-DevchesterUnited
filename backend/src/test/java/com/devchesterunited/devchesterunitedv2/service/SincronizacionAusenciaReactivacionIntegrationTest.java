@@ -5,6 +5,7 @@ import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
@@ -123,6 +124,7 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
         List<Equipo> equiposSnapshot = new ArrayList<>();
         List<Jugador> jugadoresSnapshot = new ArrayList<>();
         Map<UUID, Long> ids = new HashMap<>();
+        Map<UUID, Long> idsEquipos = new HashMap<>();
         int indice = 0;
         for (int liga = 0; liga < ligas.size(); liga++) {
             for (int i = 0; i < cantidades.get(liga); i++) {
@@ -130,9 +132,10 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
                 long idExternoEquipo = reemplazo ? EQUIPO_REEMPLAZO : EQUIPO_AUSENTE + indice;
                 String nombreEquipo = reemplazo ? "Equipo Reemplazo" : "Equipo Original " + indice;
                 UUID equipoId = UUID.randomUUID();
-                equiposSnapshot.add(Equipo.importado(equipoId, idExternoEquipo, nombreEquipo, "E", "E",
-                        ligas.get(liga), null, 2026L, LocalDate.of(2026, 8, 1),
-                        LocalDate.of(2027, 5, 31), AHORA));
+                equiposSnapshot.add(Equipo.importado(equipoId, nombreEquipo, ligas.get(liga),
+                        new TemporadaEquipo(2026L, LocalDate.of(2026, 8, 1),
+                                LocalDate.of(2027, 5, 31)), AHORA));
+                idsEquipos.put(equipoId, idExternoEquipo);
                 for (int jugador = 0; jugador < 2; jugador++) {
                     long idExternoJugador = reemplazo
                             ? JUGADOR_REEMPLAZO_BASE + jugador
@@ -145,6 +148,6 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
                 indice++;
             }
         }
-        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids);
+        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids, idsEquipos);
     }
 }

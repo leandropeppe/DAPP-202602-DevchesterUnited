@@ -6,7 +6,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -44,7 +43,7 @@ class FootballDataAdapterTest {
         assertThat(rutas).containsExactly("/competitions/PL/teams", "/competitions/PD/teams",
                 "/competitions/BL1/teams", "/competitions/SA/teams", "/competitions/FL1/teams");
         assertThat(snapshot.identidadesFootballData()).containsValue(60000L);
-        assertThat(snapshot.equipos().get(0).getEscudoUrl()).isEqualTo(URI.create("https://img.example/10000.png"));
+        assertThat(snapshot.identidadesFootballDataEquipos()).containsValue(10000L);
     }
 
     @Test

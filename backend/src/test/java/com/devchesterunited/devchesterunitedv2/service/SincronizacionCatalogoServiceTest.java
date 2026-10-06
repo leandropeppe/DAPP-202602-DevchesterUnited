@@ -5,6 +5,7 @@ import com.devchesterunited.devchesterunitedv2.adapter.ProveedorCatalogo;
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
@@ -82,7 +83,7 @@ class SincronizacionCatalogoServiceTest {
         UUID uuidPersistido = UUID.fromString("70000000-0000-0000-0000-000000000001");
         Equipo equipo = snapshot.equipos().get(0);
         JugadorEntity jugadorPersistido = new JugadorEntity(uuidPersistido, "Jugador previo",
-                equipo.getId(), "Forward", 9, "Argentina", false);
+                equipo.id(), "Forward", 9, "Argentina", false);
         jugadorPersistido.conservarAuditoria(AHORA.minusSeconds(60), AHORA.minusSeconds(30));
         IdentidadExternaJugadorEntity identidad = new IdentidadExternaJugadorEntity(
                 UUID.fromString("80000000-0000-0000-0000-000000000001"), jugadorPersistido,
@@ -118,19 +119,21 @@ class SincronizacionCatalogoServiceTest {
         var equipos = new ArrayList<Equipo>();
         var jugadores = new ArrayList<Jugador>();
         var ids = new HashMap<UUID, Long>();
+        var idsEquipos = new HashMap<UUID, Long>();
         List<String> ligas = List.of("Premier League", "LaLiga", "Bundesliga", "Serie A", "Ligue 1");
         List<Integer> cantidades = List.of(20, 20, 18, 20, 18);
         long externo = 1;
         for (int i = 0; i < ligas.size(); i++) for (int j = 0; j < cantidades.get(i); j++) {
             UUID id = UUID.randomUUID();
-            equipos.add(Equipo.importado(id, externo, "Equipo " + externo, "E", "E", ligas.get(i), null,
-                    2026, null, null, AHORA));
+            equipos.add(Equipo.importado(id, "Equipo " + externo, ligas.get(i),
+                    new TemporadaEquipo(2026L, null, null), AHORA));
+            idsEquipos.put(id, externo);
             Jugador jugador = new Jugador(UUID.randomUUID(), "Jugador Apellido", id,
                     "Forward", null, "Argentina", AHORA);
             jugadores.add(jugador);
             ids.put(jugador.getId(), 10000 + externo);
             externo++;
         }
-        return new CatalogoSincronizado(equipos, jugadores, ids);
+        return new CatalogoSincronizado(equipos, jugadores, ids, idsEquipos);
     }
 }
