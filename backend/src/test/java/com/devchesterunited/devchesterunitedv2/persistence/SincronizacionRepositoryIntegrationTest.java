@@ -32,9 +32,10 @@ class SincronizacionRepositoryIntegrationTest extends PostgresTestSupport {
 
     @Test
     void persisteEquipoJugadorAsociadoYAdmiteDorsalNulo() {
-        EquipoEntity equipo = equipos.saveAndFlush(new EquipoEntity(EQUIPO_ID, "Equipo importado", "EI", "EIM", "LaLiga",
-                "https://img.example/equipo.png", true, 2026L, LocalDate.of(2026, 8, 1),
-                LocalDate.of(2027, 5, 31), AHORA, AHORA));
+        EquipoEntity equipo = equipos.saveAndFlush(EquipoEntity.builder().id(EQUIPO_ID).nombre("Equipo importado")
+                .nombreCorto("EI").sigla("EIM").liga("LaLiga").escudoUrl("https://img.example/equipo.png")
+                .activo(true).temporadaExternaId(2026L).inicioTemporada(LocalDate.of(2026, 8, 1))
+                .finTemporada(LocalDate.of(2027, 5, 31)).creadoEn(AHORA).actualizadoEn(AHORA).build());
         identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
                 UUID.randomUUID(), equipo, ProveedorIdentidadExterna.FOOTBALL_DATA, 990001L));
         JugadorEntity jugador = new JugadorEntity(JUGADOR_ID, "Nombre Apellido", EQUIPO_ID, "Forward", null,
@@ -52,52 +53,48 @@ class SincronizacionRepositoryIntegrationTest extends PostgresTestSupport {
 
     @Test
     void impideIdentidadesExternasDuplicadasPorProveedorYExternalId() {
-        EquipoEntity equipo = equipos.saveAndFlush(new EquipoEntity(
-                EQUIPO_ID, "Equipo unico", "EU", "EUN", "Serie A", null, true,
-                2026L, null, null, AHORA, AHORA));
+        EquipoEntity equipo = equipos.saveAndFlush(EquipoEntity.builder().id(EQUIPO_ID).nombre("Equipo unico")
+                .nombreCorto("EU").sigla("EUN").liga("Serie A").escudoUrl(null).activo(true)
+                .temporadaExternaId(2026L).inicioTemporada(null).finTemporada(null)
+                .creadoEn(AHORA).actualizadoEn(AHORA).build());
         identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
                 UUID.randomUUID(), equipo, ProveedorIdentidadExterna.FOOTBALL_DATA, 990003L));
 
         UUID nuevoId = UUID.randomUUID();
-        var equipoRepetido = equipos.saveAndFlush(new EquipoEntity(
-                nuevoId, "Repetido", "R", "REP", "Serie A", null, true,
-                2026L, null, null, AHORA, AHORA));
+        var equipoRepetido = equipos.saveAndFlush(EquipoEntity.builder().id(nuevoId).nombre("Repetido")
+                .nombreCorto("R").sigla("REP").liga("Serie A").escudoUrl(null).activo(true)
+                .temporadaExternaId(2026L).inicioTemporada(null).finTemporada(null)
+                .creadoEn(AHORA).actualizadoEn(AHORA).build());
 
-        assertThatThrownBy(() -> identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
-                UUID.randomUUID(), equipoRepetido, ProveedorIdentidadExterna.FOOTBALL_DATA, 990003L)))
+        IdentidadExternaEquipoEntity identidadDuplicada = new IdentidadExternaEquipoEntity(
+                UUID.randomUUID(), equipoRepetido, ProveedorIdentidadExterna.FOOTBALL_DATA, 990003L);
+        assertThatThrownBy(() -> identidadesEquipos.saveAndFlush(identidadDuplicada))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void impideDosIdentidadesDelMismoProveedorParaUnEquipo() {
-        equipos.saveAndFlush(new EquipoEntity(
-                EQUIPO_ID,
-                "Equipo unico",
-                "EU",
-                "EUN",
-                "Serie A",
-                null,
-                true,
-                2026L,
-                null,
-                null,
-                AHORA,
-                AHORA
-        ));
+        equipos.saveAndFlush(EquipoEntity.builder().id(EQUIPO_ID).nombre("Equipo unico")
+                .nombreCorto("EU").sigla("EUN").liga("Serie A").escudoUrl(null).activo(true)
+                .temporadaExternaId(2026L).inicioTemporada(null).finTemporada(null)
+                .creadoEn(AHORA).actualizadoEn(AHORA).build());
 
         var equipo = equipos.findById(EQUIPO_ID).orElseThrow();
         identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
                 UUID.randomUUID(), equipo, ProveedorIdentidadExterna.FOOTBALL_DATA, 990004L));
 
-        assertThatThrownBy(() -> identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
-                UUID.randomUUID(), equipo, ProveedorIdentidadExterna.FOOTBALL_DATA, 990005L)))
+        IdentidadExternaEquipoEntity identidadSegundoProveedor = new IdentidadExternaEquipoEntity(
+                UUID.randomUUID(), equipo, ProveedorIdentidadExterna.FOOTBALL_DATA, 990005L);
+        assertThatThrownBy(() -> identidadesEquipos.saveAndFlush(identidadSegundoProveedor))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void permiteInactivarYReactivarEquipos() {
-        equipos.saveAndFlush(new EquipoEntity(EQUIPO_ID, "Equipo estado", "EE", "EST", "Serie A",
-                null, true, 2026L, null, null, AHORA, AHORA));
+        equipos.saveAndFlush(EquipoEntity.builder().id(EQUIPO_ID).nombre("Equipo estado")
+                .nombreCorto("EE").sigla("EST").liga("Serie A").escudoUrl(null).activo(true)
+                .temporadaExternaId(2026L).inicioTemporada(null).finTemporada(null)
+                .creadoEn(AHORA).actualizadoEn(AHORA).build());
         jdbc.update("UPDATE equipos SET is_active = false, updated_at = ? WHERE id = ?",
                 java.sql.Timestamp.from(AHORA.plusSeconds(1)), EQUIPO_ID);
         entityManager.clear();

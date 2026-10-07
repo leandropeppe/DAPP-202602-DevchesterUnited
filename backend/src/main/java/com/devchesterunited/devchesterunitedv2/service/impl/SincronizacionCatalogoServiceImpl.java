@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.service.impl;
 import com.devchesterunited.devchesterunitedv2.adapter.ProveedorCatalogo;
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.IdentidadExternaEquipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
@@ -109,7 +110,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
         inactivarAusentes(
                 snapshot.identidadesExternasEquipos().stream()
-                        .map(identidad -> identidad.externalId()).collect(Collectors.toSet()),
+                        .map(IdentidadExternaEquipo::externalId).collect(Collectors.toSet()),
                 jugadoresSnapshot,
                 ahora,
                 primerSnapshot,
@@ -155,20 +156,20 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         UUID id = anterior == null ? equipo.id() : anterior.getId();
         boolean equipoNuevo = anterior == null;
 
-        EquipoEntity persistido = equipos.save(new EquipoEntity(
-                id,
-                equipo.nombre(),
-                anterior == null ? null : anterior.getNombreCorto(),
-                anterior == null ? null : anterior.getSigla(),
-                equipo.liga(),
-                anterior == null ? null : anterior.getEscudoUrl(),
-                true,
-                equipo.temporada().temporadaExternaId(),
-                equipo.temporada().inicio(),
-                equipo.temporada().fin(),
-                anterior == null ? ahora : anterior.getCreadoEn(),
-                ahora
-        ));
+        EquipoEntity persistido = equipos.save(EquipoEntity.builder()
+                .id(id)
+                .nombre(equipo.nombre())
+                .nombreCorto(anterior == null ? null : anterior.getNombreCorto())
+                .sigla(anterior == null ? null : anterior.getSigla())
+                .liga(equipo.liga())
+                .escudoUrl(anterior == null ? null : anterior.getEscudoUrl())
+                .activo(true)
+                .temporadaExternaId(equipo.temporada().temporadaExternaId())
+                .inicioTemporada(equipo.temporada().inicio())
+                .finTemporada(equipo.temporada().fin())
+                .creadoEn(anterior == null ? ahora : anterior.getCreadoEn())
+                .actualizadoEn(ahora)
+                .build());
 
         equiposSnapshot.put(equipo.id(), persistido.getId());
 
@@ -235,7 +236,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             CatalogoSincronizado snapshot) {
         Map<Long, IdentidadExternaEquipoEntity> resultado = new HashMap<>();
         List<Long> externalIds = snapshot.identidadesExternasEquipos().stream()
-                .map(identidad -> identidad.externalId()).toList();
+                .map(IdentidadExternaEquipo::externalId).toList();
         for (IdentidadExternaEquipoEntity identidad : identidadesEquipos
                 .findAllByProveedorAndExternalIdIn(
                         ProveedorIdentidadExterna.FOOTBALL_DATA, externalIds)) {
@@ -260,9 +261,20 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
                 if (!equipo.isActivo()) {
                     continue;
                 }
-                equipos.save(new EquipoEntity(equipo.getId(), equipo.getNombre(), equipo.getNombreCorto(),
-                        equipo.getSigla(), equipo.getLiga(), equipo.getEscudoUrl(), false, equipo.getTemporadaExternaId(),
-                        equipo.getInicioTemporada(), equipo.getFinTemporada(), equipo.getCreadoEn(), ahora));
+                equipos.save(EquipoEntity.builder()
+                        .id(equipo.getId())
+                        .nombre(equipo.getNombre())
+                        .nombreCorto(equipo.getNombreCorto())
+                        .sigla(equipo.getSigla())
+                        .liga(equipo.getLiga())
+                        .escudoUrl(equipo.getEscudoUrl())
+                        .activo(false)
+                        .temporadaExternaId(equipo.getTemporadaExternaId())
+                        .inicioTemporada(equipo.getInicioTemporada())
+                        .finTemporada(equipo.getFinTemporada())
+                        .creadoEn(equipo.getCreadoEn())
+                        .actualizadoEn(ahora)
+                        .build());
             }
         }
         Set<UUID> jugadoresConIdentidadFootballData = identidades

@@ -26,13 +26,65 @@ public class EquipoEntity {
 
     protected EquipoEntity() { }
 
-    public EquipoEntity(UUID id, String nombre, String nombreCorto, String sigla,
-            String liga, String escudoUrl, boolean activo, Long temporadaExternaId,
-            LocalDate inicioTemporada, LocalDate finTemporada, Instant creadoEn, Instant actualizadoEn) {
-        this.id=id; this.nombre=nombre; this.nombreCorto=nombreCorto;
-        this.sigla=sigla; this.liga=liga; this.escudoUrl=escudoUrl; this.activo=activo;
-        this.temporadaExternaId=temporadaExternaId; this.inicioTemporada=inicioTemporada;
-        this.finTemporada=finTemporada; this.creadoEn=creadoEn; this.actualizadoEn=actualizadoEn;
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder {
+        private UUID id;
+        private String nombre;
+        private String nombreCorto;
+        private String sigla;
+        private String liga;
+        private String escudoUrl;
+        private boolean activo;
+        private Long temporadaExternaId;
+        private LocalDate inicioTemporada;
+        private LocalDate finTemporada;
+        private Instant creadoEn;
+        private Instant actualizadoEn;
+
+        public Builder id(UUID id) { this.id = id; return this; }
+        public Builder nombre(String nombre) { this.nombre = nombre; return this; }
+        public Builder nombreCorto(String nombreCorto) { this.nombreCorto = nombreCorto; return this; }
+        public Builder sigla(String sigla) { this.sigla = sigla; return this; }
+        public Builder liga(String liga) { this.liga = liga; return this; }
+        public Builder escudoUrl(String escudoUrl) { this.escudoUrl = escudoUrl; return this; }
+        public Builder activo(boolean activo) { this.activo = activo; return this; }
+        public Builder temporadaExternaId(Long temporadaExternaId) {
+            this.temporadaExternaId = temporadaExternaId;
+            return this;
+        }
+        public Builder inicioTemporada(LocalDate inicioTemporada) {
+            this.inicioTemporada = inicioTemporada;
+            return this;
+        }
+        public Builder finTemporada(LocalDate finTemporada) {
+            this.finTemporada = finTemporada;
+            return this;
+        }
+        public Builder creadoEn(Instant creadoEn) { this.creadoEn = creadoEn; return this; }
+        public Builder actualizadoEn(Instant actualizadoEn) {
+            this.actualizadoEn = actualizadoEn;
+            return this;
+        }
+
+        public EquipoEntity build() {
+            EquipoEntity equipo = new EquipoEntity();
+            equipo.id = id;
+            equipo.nombre = nombre;
+            equipo.nombreCorto = nombreCorto;
+            equipo.sigla = sigla;
+            equipo.liga = liga;
+            equipo.escudoUrl = escudoUrl;
+            equipo.activo = activo;
+            equipo.temporadaExternaId = temporadaExternaId;
+            equipo.inicioTemporada = inicioTemporada;
+            equipo.finTemporada = finTemporada;
+            equipo.creadoEn = creadoEn;
+            equipo.actualizadoEn = actualizadoEn;
+            return equipo;
+        }
     }
     public UUID getId() { return id; }
     public String getNombre() { return nombre; }

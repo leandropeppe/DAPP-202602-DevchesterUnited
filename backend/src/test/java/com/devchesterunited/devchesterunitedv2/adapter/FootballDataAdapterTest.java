@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.adapter;
 
 import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -55,7 +56,7 @@ class FootballDataAdapterTest {
     void mapeaPosicionesYAdmiteDorsalNulo() throws Exception {
         iniciar((exchange, codigo) -> responder(exchange, 200, payload(codigo, cantidad(codigo), true), "100"));
         var jugadores = adapter().sincronizar().jugadores();
-        assertThat(jugadores).extracting(j -> j.getPosicion()).contains("Defender", "Midfielder", "Goalkeeper", "Forward");
+        assertThat(jugadores).extracting(Jugador::getPosicion).contains("Defender", "Midfielder", "Goalkeeper", "Forward");
         assertThat(jugadores).anyMatch(j -> j.getDorsal() == null && j.getNombre().equals("Solo Nombre"));
     }
 

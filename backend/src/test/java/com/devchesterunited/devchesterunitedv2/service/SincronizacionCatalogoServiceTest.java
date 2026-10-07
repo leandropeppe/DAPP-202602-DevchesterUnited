@@ -90,8 +90,10 @@ class SincronizacionCatalogoServiceTest {
         UUID uuidPersistido = UUID.fromString("70000000-0000-0000-0000-000000000001");
         Equipo equipo = snapshot.equipos().get(0);
         UUID uuidEquipoPersistido = UUID.fromString("71000000-0000-0000-0000-000000000001");
-        EquipoEntity equipoPersistido = new EquipoEntity(uuidEquipoPersistido, "Equipo previo", null,
-                null, equipo.liga(), null, false, 2026L, null, null, AHORA.minusSeconds(120), AHORA.minusSeconds(60));
+        EquipoEntity equipoPersistido = EquipoEntity.builder().id(uuidEquipoPersistido).nombre("Equipo previo")
+                .nombreCorto(null).sigla(null).liga(equipo.liga()).escudoUrl(null).activo(false)
+                .temporadaExternaId(2026L).inicioTemporada(null).finTemporada(null)
+                .creadoEn(AHORA.minusSeconds(120)).actualizadoEn(AHORA.minusSeconds(60)).build();
         IdentidadExternaEquipoEntity identidadEquipo = new IdentidadExternaEquipoEntity(
                 UUID.fromString("72000000-0000-0000-0000-000000000001"), equipoPersistido,
                 ProveedorIdentidadExterna.FOOTBALL_DATA, 1L);
@@ -123,8 +125,10 @@ class SincronizacionCatalogoServiceTest {
         CatalogoSincronizado snapshot = snapshot();
         Equipo equipo = snapshot.equipos().get(0);
         UUID uuidEquipoPersistido = UUID.fromString("73000000-0000-0000-0000-000000000001");
-        EquipoEntity equipoPersistido = new EquipoEntity(uuidEquipoPersistido, "Equipo persistido",
-                null, null, equipo.liga(), null, true, 2026L, null, null, AHORA, AHORA);
+        EquipoEntity equipoPersistido = EquipoEntity.builder().id(uuidEquipoPersistido).nombre("Equipo persistido")
+                .nombreCorto(null).sigla(null).liga(equipo.liga()).escudoUrl(null).activo(true)
+                .temporadaExternaId(2026L).inicioTemporada(null).finTemporada(null)
+                .creadoEn(AHORA).actualizadoEn(AHORA).build();
         IdentidadExternaEquipoEntity identidadEquipo = new IdentidadExternaEquipoEntity(
                 UUID.fromString("74000000-0000-0000-0000-000000000001"), equipoPersistido,
                 ProveedorIdentidadExterna.FOOTBALL_DATA, 1L);
@@ -143,8 +147,10 @@ class SincronizacionCatalogoServiceTest {
         when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
         CatalogoSincronizado snapshot = snapshot();
         UUID uuidEquipoAusente = UUID.fromString("75000000-0000-0000-0000-000000000001");
-        EquipoEntity equipoAusente = new EquipoEntity(uuidEquipoAusente, "Equipo ausente",
-                null, null, "Premier League", null, true, 2026L, null, null, AHORA, AHORA);
+        EquipoEntity equipoAusente = EquipoEntity.builder().id(uuidEquipoAusente).nombre("Equipo ausente")
+                .nombreCorto(null).sigla(null).liga("Premier League").escudoUrl(null).activo(true)
+                .temporadaExternaId(2026L).inicioTemporada(null).finTemporada(null)
+                .creadoEn(AHORA).actualizadoEn(AHORA).build();
         IdentidadExternaEquipoEntity identidadAusente = new IdentidadExternaEquipoEntity(
                 UUID.fromString("76000000-0000-0000-0000-000000000001"), equipoAusente,
                 ProveedorIdentidadExterna.FOOTBALL_DATA, 999999L);
