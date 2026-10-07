@@ -1,91 +1,59 @@
-# Modelo de Datos: Estadísticas de Jugadores
+# Modelo de datos: estadísticas y vinculación de identidades
 
-## Agregado de dominio: `EstadisticasJugador`
+## EstadisticasJugador
 
-Representa la fotografía normalizada de estadísticas asociada a un `Jugador` existente. Su identidad funcional es `jugadorId`; no crea una identidad de jugador alternativa.
+Fotografía vigente asociada por jugador_id al Jugador local. Contiene posición, minutos, valoración, goles, asistencias, tiros, pases clave, regates, tackles, tarjetas amarillas y rojas. Las métricas individuales ausentes permanecen NULL; no se crean Jugador ni Equipo alternativos.
 
-### Componentes
+## Representaciones normalizadas del puerto
 
-| Componente | Datos | Reglas |
-|---|---|---|
-| `Participacion` | `apps`, `minsPlayed` | Valores no negativos; cada dato puede estar ausente si la fuente no lo informa. |
-| `EstadisticasOfensivas` | `goals`, `assists`, `shotsPerGame`, `keyPassPerGame`, `dribbleWonPerGame` | Conteos no negativos; promedios no negativos; ausencia explícita permitida. |
-| `EstadisticasDefensivas` | `tacklePerGame` | Promedio no negativo; ausencia explícita permitida. |
-| `Disciplina` | `yellowCard`, `redCard` | Conteos no negativos; ausencia explícita permitida. |
-| `ValoracionGeneral` | `rating` | Valor decimal no negativo y dentro del rango aceptado por la fuente cuando esté informado. |
+El puerto ProveedorEstadisticasJugador atraviesa solo value objects internos, no DTOs:
 
-Los grupos evitan constructores de más de siete parámetros y mantienen cohesión conceptual. No se copiarán campos externos que no estén requeridos por el spec.
+- PaginaEstadisticasJugador: competición, familia, número/tamaño de página, total esperado y registros.
+- RegistroEstadisticasJugador: playerId externo, nombre normalizado, posición normalizada opcional, nacionalidad opcional, teamId externo opcional, nombre de equipo opcional y métricas de la familia.
+- CompeticionEstadistica y FamiliaEstadistica: vocabularios internos controlados.
 
-## Entidad persistida publicada
+Los atributos de nombre/equipo/posición/nacionalidad son hints transitorios para el primer enrolamiento. No son identidad persistente.
 
-### `jugador_estadisticas`
+## Persistencia publicada
 
-| Campo conceptual | Persistencia | Regla |
-|---|---|---|
-| Identidad del registro | UUID local | Clave primaria propia del registro. |
-| Jugador asociado | UUID `jugador_id` | FK a `jugadores.id`, NOT NULL, UNIQUE. |
-| Participación | `apps`, `mins_played` | Nullable individualmente, no negativos cuando presentes. |
-| Ofensiva | `goals`, `assists`, `shots_per_game`, `key_pass_per_game`, `dribble_won_per_game` | Nullable por métrica; validaciones de dominio. |
-| Defensiva | `tackle_per_game` | Nullable; no negativo cuando presente. |
-| Disciplina | `yellow_card`, `red_card` | Nullable; no negativos cuando presentes. |
-| Valoración | `rating` | Nullable; validación de rango. |
-| Contexto de edición vigente | referencia interna de edición/sincronización | Permite saber qué fotografía se publicó sin convertir el `stageId` en identidad universal de liga. |
-| Auditoría | `created_at`, `updated_at` | Fechas coherentes y actualizadas en la promoción. |
+jugador_estadisticas tendrá una fila por jugador_id, FK a jugadores(id), UNIQUE, métricas normalizadas, referencia de ejecución y auditoría. Se actualiza por upsert dentro de la promoción.
 
-La relación se resuelve por `jugador_id`; no se agrega otra fila por cada familia de estadísticas. El identificador externo del jugador permanece en la entidad `Jugador` existente.
+## Ejecución y staging técnico
 
-## Entidades técnicas de staging
+estadisticas_sync contiene UUID, estado INICIADA/RECIBIENDO/VALIDADA/PUBLICADA/FALLIDA, timestamps, competiciones/familias esperadas y error sanitizado.
 
-### `estadisticas_sync`
+estadisticas_sync_staging contiene sync_id, competición, playerId WhoScored, teamId WhoScored cuando exista, jugador_id y equipo_id locales resueltos cuando estén disponibles, hints normalizados, métricas consolidadas y marcas de familias. La clave evita repetir una misma identidad por ejecución, competición y jugador.
 
-Representa una ejecución aislada: identificador, estado, inicio, finalización, competencias esperadas, familias esperadas y motivo de error técnico si la ejecución falla. No es visible para las consultas de negocio.
+El staging no es visible para consultas de negocio. Las identidades nuevas no se consideran publicadas hasta la promoción.
 
-Estados: `INICIADA`, `RECIBIENDO`, `VALIDADA`, `PUBLICADA`, `FALLIDA`.
+## Identidades
 
-### `estadisticas_sync_staging`
+Las relaciones persistentes son:
 
-Contiene una fila normalizada por `sync_id`, competición y `playerId`, con los grupos de métricas consolidados progresivamente y marcas de familia recibida.
+IdentidadExternaJugador(WHOSCORED, playerId) -> Jugador local
 
-Restricciones:
+IdentidadExternaEquipo(WHOSCORED, teamId) -> Equipo local
 
-- clave única `(sync_id, competicion, player_id)`;
-- `player_id` positivo;
-- valores numéricos no negativos cuando estén presentes;
-- marca independiente para `all`, `offensive` y `defensive`;
-- no se publica mientras `sync_id` no esté `VALIDADA`;
-- los reintentos de una misma página son idempotentes mediante la misma clave.
+Se reutilizan las entidades y restricciones únicas existentes. No se crea una tabla de matching ni se reintroducen external_id en jugadores/equipos.
 
-El staging permite descartar una ejecución incompleta sin tocar `jugador_estadisticas`.
+## Reglas de enrolamiento
 
-## Correspondencia de identidad de fuente
+Equipo: comparar nombre canónico exacto, restringido por liga/competición cuando exista. Nombre corto o sigla solo son evidencia adicional comparable, nunca clave.
 
-El modelo no presupone que `Jugador.external_id` y `WhoScored.playerId` sean el mismo identificador: el código actual utiliza `Jugador.external_id` para el proveedor del catálogo. Si la validación de la implementación confirma namespaces distintos, se agregará una tabla técnica de correspondencias con:
+Jugador: primero resolver equipo; después comparar nombre canónico exacto dentro del equipo. Posición y nacionalidad solo desempatan si están presentes en ambas fuentes y son compatibles. No se usa similitud difusa, dorsal ni ID de Football-Data.
 
-- `jugador_id` como FK a `jugadores`;
-- `fuente` como namespace de integración;
-- `identificador_externo` como `playerId` de la fuente;
-- unicidad por `(fuente, identificador_externo)` y por `(fuente, jugador_id)`.
+Cero candidatos, múltiples candidatos o evidencia insuficiente producen identidad no resuelta y bloquean la publicación completa. Una coincidencia única permite crear la identidad WHOSCORED durante la promoción.
 
-La tabla no reemplaza ni duplica `Jugador`. Una identidad no correspondida impide la promoción de la sincronización; no se hará matching silencioso por nombre o equipo.
+## Transacción y estados
 
-## Relaciones
+INICIADA -> RECIBIENDO -> VALIDADA -> PUBLICADA
 
-```text
-Jugador 1 ───── 0..1 EstadisticasJugador
-Jugador 1 ───── N    EstadisticasSyncStaging (durante una sincronización)
-EstadisticasSync 1 ─ N EstadisticasSyncStaging
-```
+INICIADA/RECIBIENDO/VALIDADA -> FALLIDA ante error.
 
-## Reglas de consolidación
+La promoción de estadísticas, identidades nuevas y estado PUBLICADA ocurre en una transacción. Si falla, todo revierte y el snapshot anterior permanece visible.
 
-1. El `playerId` es la clave de unión entre las tres familias externas.
-2. Cada familia puede aportar métricas nulas individualmente, pero debe tener una respuesta y secuencia de páginas válida para el conjunto esperado.
-3. Antes de promover, todos los `playerId` deben resolverse contra un único `Jugador` local mediante `idExterno`.
-4. Un jugador repetido con valores incompatibles, una familia incompleta o una referencia local inexistente invalida toda la ejecución.
-5. La promoción actualiza la fila existente por `jugador_id` o crea una sola fila si todavía no existe.
+## Migraciones y repositorios
 
-## Migraciones previstas
+Se agregan migraciones posteriores a V14 para jugador_estadisticas, estadisticas_sync y estadisticas_sync_staging.
 
-- Nueva migración posterior a las existentes para `jugador_estadisticas`, con FK, unicidad, índices y restricciones numéricas.
-- Nueva migración posterior para `estadisticas_sync` y `estadisticas_sync_staging`, con índices por ejecución, competición y jugador.
-- No se modifica la tabla ni la entidad conceptual `jugadores`, salvo usar su clave externa e índice existente de `external_id`.
+Se agregan repositories para estadísticas, ejecuciones y staging. Se amplían los repositories existentes de identidad solo si hace falta obtener candidatos en lote. La búsqueda de candidatos puede agregarse a JugadorRepository y EquipoRepository; no se crea un repository paralelo de matching.

@@ -1,59 +1,41 @@
-# Contrato de sincronización de estadísticas de jugadores
+# Contratos internos de sincronización
 
-## Caso de uso administrativo
+No se agrega endpoint HTTP. El contrato define el puerto entre Service y Adapter y las consultas de persistencia necesarias para enrolamiento inicial.
 
-Se incorpora un disparador administrativo para ejecutar una sincronización completa de estadísticas. El contrato debe documentarse con OpenAPI y respetar la autenticación administrativa ya existente.
+## Puerto ProveedorEstadisticasJugador
 
-### Solicitud
+Vive en adapter. Solicita una página por CompeticionEstadistica, FamiliaEstadistica, número de página y tamaño de lote.
 
-- Método: `POST`
-- Ruta propuesta: `/api/v1/player-statistics/sync`
-- Cuerpo: ausente
-- Parámetros de WhoScored: no forman parte del contrato público.
+Devuelve PaginaEstadisticasJugador con:
 
-### Respuesta exitosa
+- metadata de paginación;
+- competición y familia internas;
+- registros RegistroEstadisticasJugador.
 
-Código `200 OK`, con una respuesta envolvente consistente con los contratos existentes y un resumen que incluya como mínimo:
+Cada registro contiene playerId externo, nombre normalizado, posición y nacionalidad opcionales, teamId y nombre de equipo opcionales, y las métricas de su familia. Estos tipos son value objects internos; no son DTOs HTTP ni representan Jugador o Equipo.
 
-- competiciones procesadas;
-- jugadores considerados;
-- estadísticas creadas;
-- estadísticas actualizadas;
-- identificador/fecha de la última sincronización publicada, sin exponer detalles internos del proveedor.
+## Responsabilidad del Adapter
 
-La respuesta solo se entrega después de la promoción atómica. No se devuelve éxito si el staging quedó incompleto.
+Traducir DTOs WhoScored a esos value objects, validar HTTP, cuerpo, límites, timeout, familias y metadata. Los DTOs, rutas, stage IDs, nombres de campos JSON, headers y errores del proveedor permanecen dentro de Adapter.
 
-### Errores públicos
+No resuelve identidades locales, no escribe repositorios y no ejecuta matching.
 
-| Código | Situación | Comportamiento |
-|---|---|---|
-| `400` | Solicitud con cuerpo o formato no permitido | No inicia la sincronización. |
-| `401` | Credencial ausente, inválida o usuario inexistente | No consulta al proveedor. |
-| `409` | Otra sincronización de estadísticas en curso | No consulta al proveedor ni modifica estadísticas. |
-| `503` | WhoScored indisponible, timeout, respuesta inválida, cuota no disponible o persistencia no disponible | Conserva el último estado local válido. |
-| `500` | Error inesperado | No expone detalles del proveedor; conserva el estado publicado si la promoción no terminó. |
+## Responsabilidad del Service
 
-Los mensajes de error son propios de la aplicación y no incluyen URL, parámetros, cuerpo JSON, credenciales ni mensajes internos de WhoScored.
+1. Resolver identidades WHOSCORED persistidas.
+2. Para identidades ausentes, ejecutar el enrolamiento conservador:
+   - equipos por nombre canónico exacto y contexto de competición;
+   - jugadores por equipo, nombre canónico exacto y evidencia compatible de posición/nacionalidad.
+3. Persistir las identidades nuevas únicamente junto con la promoción.
+4. Rechazar cero, múltiples o insuficientes candidatos.
+5. Consolidar familias, escribir staging y promover estadísticas atómicamente.
 
-## Contrato interno del proveedor
+## Repositorios necesarios
 
-La interfaz interna de proveedor debe permitir solicitar una página por:
+Se reutilizan IdentidadExternaJugadorRepository e IdentidadExternaEquipoRepository para resolver y persistir identidades. Se usan JugadorRepository y EquipoRepository para obtener candidatos activos, preferentemente en lote y restringidos por equipo/liga/nombre. Se agregan repositories únicamente para EstadisticasJugador, EstadisticasSync y EstadisticasSyncStaging.
 
-- competición soportada;
-- familia `general`, `ofensiva` o `defensiva` de la representación interna;
-- número de página;
-- tamaño de lote configurado.
+No se agrega un repository de matching ni una tabla de correspondencias.
 
-Debe devolver una página normalizada con:
+## Errores
 
-- jugadores estadísticos identificados por `playerId`;
-- métricas de la familia solicitada;
-- metadata de paginación necesaria para continuar o validar completitud.
-
-La interfaz no debe mencionar URL, nombres de parámetros, `stageId`, JSON, clases DTO externas ni detalles de transporte. La traducción de `summary/all`, `summary/offensive` y `summary/defensive` ocurre exclusivamente dentro del Adapter.
-
-## Compatibilidad
-
-- No se cambia el contrato de consulta pública del catálogo de jugadores.
-- No se agregan estadísticas al frontend en esta feature.
-- El nuevo contrato administrativo se registrará en OpenAPI v3 y se probará con MockMvc.
+Una respuesta inválida, timeout, paginación incompleta, identidad no resuelta o fallo de persistencia marca la ejecución como fallida y evita la promoción. No se exponen detalles HTTP ni se modifica el último snapshot válido.

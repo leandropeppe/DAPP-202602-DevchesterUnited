@@ -15,6 +15,7 @@ import org.springframework.data.repository.query.Param;
  */
 public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
     java.util.List<JugadorEntity> findAllByEquipoId(UUID equipoId);
+    java.util.List<JugadorEntity> findAllByEquipoIdAndActivoTrue(UUID equipoId);
     // Escapar primero ! para no volver a escapar los ! introducidos para % y _.
     // Los casts también permiten a PostgreSQL resolver el tipo de parámetros nulos.
     String FROM_Y_FILTROS = """
