@@ -10,13 +10,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
 
-/** Administra el ciclo de vida de una ejecución sin exponer detalles del proveedor. */
-@Service
 /**
+ * Administra el ciclo de vida de una ejecución sin exponer detalles del proveedor.
+ *
  * Cada transición técnica se confirma en una transacción independiente y corta.
  * El orquestador no mantiene una transacción durante HTTP ni staging; la única
  * transacción que incluye datos de negocio y PUBLICADA es la promoción atómica.
  */
+@Service
 public class EstadisticasSyncService {
     private final EstadisticasSyncRepository ejecuciones;
     private final Clock clock;

@@ -126,11 +126,11 @@ description: "Tareas de implementación para la sincronización de estadísticas
 
 **Purpose**: Validar el resultado completo contra Constitución, quickstart y calidad del proyecto.
 
-- [ ] T044 [P] Revisar que ningún DTO, URL, stage ID, parámetro HTTP o error interno de WhoScored cruce Adapter en backend/src/main/java/com/devchesterunited/devchesterunitedv2/
-- [ ] T045 [P] Revisar que no se hayan reintroducido external_id ni creado representaciones alternativas o tabla de matching en backend/src/main/java/ y backend/src/main/resources/db/migration/
-- [ ] T046 [P] Añadir o ajustar documentación JavaDoc de los puertos, value objects, resolvers y estados en backend/src/main/java/com/devchesterunited/devchesterunitedv2/
-- [ ] T047 Ejecutar la validación completa definida en specs/002-player-statistics-sync/quickstart.md desde backend/ y corregir únicamente fallos introducidos por la feature
-- [ ] T048 Ejecutar compilación y suite completa con backend/gradlew.bat test --no-daemon --console=plain y verificar que todos los tests existentes permanecen intactos
+- [X] T044 [P] Revisar que ningún DTO, URL, stage ID, parámetro HTTP o error interno de WhoScored cruce Adapter en backend/src/main/java/com/devchesterunited/devchesterunitedv2/
+- [X] T045 [P] Revisar que no se hayan reintroducido external_id ni creado representaciones alternativas o tabla de matching en backend/src/main/java/ y backend/src/main/resources/db/migration/
+- [X] T046 [P] Añadir o ajustar documentación JavaDoc de los puertos, value objects, resolvers y estados en backend/src/main/java/com/devchesterunited/devchesterunitedv2/
+- [X] T047 Ejecutar la validación completa definida en specs/002-player-statistics-sync/quickstart.md desde backend/ y corregir únicamente fallos introducidos por la feature
+- [X] T048 Ejecutar compilación y suite completa con backend/gradlew.bat test --no-daemon --console=plain y verificar que todos los tests existentes permanecen intactos
 
 ---
 

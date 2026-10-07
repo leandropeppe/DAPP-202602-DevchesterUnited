@@ -2,7 +2,11 @@ package com.devchesterunited.devchesterunitedv2.modelo;
 
 import java.util.Objects;
 
-/** Registro normalizado que cruza el puerto estadístico sin exponer WhoScored. */
+/**
+ * Registro normalizado que cruza el puerto estadístico sin exponer el contrato
+ * externo. Su identidad y métricas son datos normalizados; las hints de
+ * identidad siguen siendo transitorias hasta una promoción exitosa.
+ */
 public record RegistroEstadisticasJugador(
         IdentidadEstadisticaJugador identidad,
         FamiliaEstadistica familia,

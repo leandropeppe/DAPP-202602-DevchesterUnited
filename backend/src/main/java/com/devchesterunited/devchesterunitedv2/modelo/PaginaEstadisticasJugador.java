@@ -3,7 +3,13 @@ package com.devchesterunited.devchesterunitedv2.modelo;
 import java.util.List;
 import java.util.Objects;
 
-/** Página normalizada con metadata suficiente para validar completitud. */
+/**
+ * Página normalizada con metadata suficiente para validar completitud.
+ *
+ * La metadata es interna al puerto: permite al servicio detectar páginas
+ * repetidas, incompletas o incompatibles sin conocer la forma de paginación del
+ * proveedor que originó la respuesta.
+ */
 public record PaginaEstadisticasJugador(
         CompeticionEstadistica competicion,
         FamiliaEstadistica familia,

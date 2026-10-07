@@ -14,7 +14,11 @@ import java.util.Locale;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
-/** Resolución conservadora de equipos; nunca crea ni persiste durante el staging. */
+/**
+ * Resolución conservadora de equipos; nunca crea ni persiste durante el
+ * staging. Solo una coincidencia canónica exacta dentro de la competición
+ * permite devolver una identidad candidata para la promoción atómica.
+ */
 @Service
 public class IdentidadEquipoResolver {
     private final EquipoRepository equipos;

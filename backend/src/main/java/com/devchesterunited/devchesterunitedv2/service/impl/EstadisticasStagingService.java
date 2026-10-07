@@ -15,7 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
 import com.devchesterunited.devchesterunitedv2.service.exception.IdentidadEstadisticaNoResueltaException;
 
-/** Escribe páginas en transacciones cortas; no publica identidades ni estadísticas. */
+/**
+ * Escribe páginas en transacciones cortas; no publica identidades ni
+ * estadísticas. El staging es técnico y aislado por {@code syncId}, y solo la
+ * promoción posterior puede convertirlo en el snapshot visible para negocio.
+ */
 @Service
 public class EstadisticasStagingService {
     private final EstadisticasSyncRepository ejecuciones;

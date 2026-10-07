@@ -8,7 +8,6 @@ import com.devchesterunited.devchesterunitedv2.service.exception.IdentidadEstadi
 import com.devchesterunited.devchesterunitedv2.service.exception.EstadisticasProveedorException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionPersistenciaException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEstadisticasException;
-import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsException;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionEstadisticasJugadorService;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,7 +36,7 @@ public class SincronizacionEstadisticasJugadorServiceImpl
     public SincronizacionEstadisticasJugadorServiceImpl(ProveedorEstadisticasJugador proveedor,
             IdentidadJugadorResolver jugadores,
             EstadisticasStagingService staging, EstadisticasPromocionService promocion,
-            EstadisticasSyncLock lock, @Value("${whoscored.page-size:50}") int tamanoLote,
+            EstadisticasSyncLock lock, @Value("${estadisticas.page-size:50}") int tamanoLote,
             EstadisticasSyncService ciclo) {
         this.proveedor = proveedor;
         this.jugadores = jugadores;
@@ -107,9 +106,6 @@ public class SincronizacionEstadisticasJugadorServiceImpl
                 || exception instanceof SincronizacionEstadisticasException) {
             return exception;
         }
-        if (exception instanceof WhoScoredStatisticsException) {
-            return new EstadisticasProveedorException("El proveedor estadístico no entregó una respuesta válida.");
-        }
         if (exception instanceof org.springframework.dao.DataAccessException) {
             return new SincronizacionPersistenciaException(exception);
         }
@@ -128,7 +124,7 @@ public class SincronizacionEstadisticasJugadorServiceImpl
         int recibidos = 0;
         Set<Integer> paginasRecibidas = new HashSet<>();
         do {
-            var page = proveedor.obtenerPagina(competicion, familia, pagina, tamanoLote);
+            var page = obtenerPagina(competicion, familia, pagina);
             if (page.competicion() != competicion || page.familia() != familia
                     || page.paginaActual() != pagina || !paginasRecibidas.add(page.paginaActual())) {
                 throw new IllegalStateException("La fuente devolvió una página inconsistente.");
@@ -162,5 +158,15 @@ public class SincronizacionEstadisticasJugadorServiceImpl
             throw new IllegalStateException("La fuente no entregó todos los registros esperados.");
         }
         combinacionesCompletas.add(competicion.name() + ":" + familia.name());
+    }
+
+    private com.devchesterunited.devchesterunitedv2.modelo.PaginaEstadisticasJugador obtenerPagina(
+            CompeticionEstadistica competicion, FamiliaEstadistica familia, int pagina) {
+        try {
+            return proveedor.obtenerPagina(competicion, familia, pagina, tamanoLote);
+        } catch (RuntimeException exception) {
+            throw new EstadisticasProveedorException(
+                    "El proveedor estadístico no entregó una respuesta válida.");
+        }
     }
 }

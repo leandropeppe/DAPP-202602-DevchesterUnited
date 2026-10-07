@@ -7,7 +7,14 @@ import java.util.Optional;
 import javax.sql.DataSource;
 import org.springframework.stereotype.Component;
 
-/** Advisory lock de sesión; la misma conexión adquiere y libera el lock. */
+/**
+ * Advisory lock de sesión para serializar sincronizaciones.
+ *
+ * PostgreSQL asocia el lock a la sesión, por lo que el {@link Handle} conserva
+ * la misma {@link Connection} para liberarlo. Devolverla al pool antes de
+ * {@code close()} rompería la exclusión y dejaría la siguiente sincronización
+ * expuesta a concurrencia indebida.
+ */
 @Component
 public class EstadisticasSyncLock {
     private static final long LOCK_KEY_1 = 114644L;

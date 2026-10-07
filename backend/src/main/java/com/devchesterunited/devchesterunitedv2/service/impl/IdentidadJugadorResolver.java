@@ -11,7 +11,12 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
-/** Resolución de jugadores por equipo resuelto y nombre canónico exacto. */
+/**
+ * Resolución conservadora de jugadores por identidad namespaced persistida o,
+ * si no existe, por equipo resuelto, nombre canónico exacto y evidencia
+ * compatible. Cero, múltiples o insuficientes candidatos se rechazan; una
+ * nueva identidad solo se entrega como candidata para la promoción atómica.
+ */
 @Service
 public class IdentidadJugadorResolver {
     private final JugadorRepository jugadores;

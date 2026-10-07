@@ -20,7 +20,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Promoción atómica de la fotografía y de las identidades nuevas. No conoce el Adapter. */
+/**
+ * Promoción atómica de la fotografía y de las identidades nuevas.
+ *
+ * Consume únicamente staging validado y confirma estadísticas, identidades
+ * nuevas y estado {@code PUBLICADA} en la misma transacción; un fallo revierte
+ * toda la publicación y conserva el snapshot anterior.
+ */
 @Service
 public class EstadisticasPromocionService {
     private final EstadisticasJugadorRepository estadisticas;
