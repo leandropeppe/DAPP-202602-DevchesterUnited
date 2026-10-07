@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.HashSet;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -35,12 +37,14 @@ public class SincronizacionEstadisticasJugadorServiceImpl
     private final EstadisticasSyncLock lock;
     private final Clock clock;
     private final int tamanoLote;
+    private final ConsolidadorEstadisticasJugador consolidador;
 
     public SincronizacionEstadisticasJugadorServiceImpl(ProveedorEstadisticasJugador proveedor,
             IdentidadJugadorResolver jugadores, EstadisticasSyncRepository ejecuciones,
             EstadisticasJugadorRepository estadisticas, EstadisticasStagingService staging,
             EstadisticasPromocionService promocion, EstadisticasSyncLock lock, Clock clock,
-            @Value("${whoscored.page-size:50}") int tamanoLote) {
+            @Value("${whoscored.page-size:50}") int tamanoLote,
+            ConsolidadorEstadisticasJugador consolidador) {
         this.proveedor = proveedor;
         this.jugadores = jugadores;
         this.ejecuciones = ejecuciones;
@@ -50,12 +54,14 @@ public class SincronizacionEstadisticasJugadorServiceImpl
         this.lock = lock;
         this.clock = clock;
         this.tamanoLote = tamanoLote;
+        this.consolidador = consolidador;
     }
 
     @Override
     public void sincronizar() {
+        UUID syncId = null;
         try (var ignored = lock.tryAcquire().orElseThrow(SincronizacionEnCursoException::new)) {
-            UUID syncId = UUID.randomUUID();
+            syncId = UUID.randomUUID();
             staging.registrarInicio(new EstadisticasSyncEntity(syncId, EstadoEstadisticasSync.INICIADA,
                     Instant.now(clock)));
             staging.cambiarEstado(syncId, EstadoEstadisticasSync.RECIBIENDO, Instant.now(clock));
@@ -66,17 +72,29 @@ public class SincronizacionEstadisticasJugadorServiceImpl
                 for (FamiliaEstadistica familia : FamiliaEstadistica.values()) {
                     int pagina = 1;
                     Integer totalPaginas = null;
+                    Integer totalResultados = null;
+                    Integer tamanoPagina = null;
+                    int recibidos = 0;
+                    Set<Integer> paginasRecibidas = new HashSet<>();
                     do {
                         var page = proveedor.obtenerPagina(competicion, familia, pagina, tamanoLote);
                         if (page.competicion() != competicion || page.familia() != familia
                                 || page.paginaActual() != pagina) {
                             throw new IllegalStateException("La fuente devolvió una página inconsistente.");
                         }
+                        if (!paginasRecibidas.add(page.paginaActual())) {
+                            throw new IllegalStateException("La fuente repitió una página.");
+                        }
                         if (totalPaginas == null) {
                             totalPaginas = page.totalPaginas();
-                        } else if (totalPaginas != page.totalPaginas()) {
+                            totalResultados = page.totalResultados();
+                            tamanoPagina = page.tamanoPagina();
+                        } else if (totalPaginas != page.totalPaginas()
+                                || totalResultados != page.totalResultados()
+                                || tamanoPagina != page.tamanoPagina()) {
                             throw new IllegalStateException("La fuente devolviÃ³ metadata de paginaciÃ³n inestable.");
                         }
+                        recibidos += page.registros().size();
                         var loteStaging = new ArrayList<EstadisticasStagingService.Entrada>();
                         for (var registro : page.registros()) {
                             var identidad = jugadores.resolver(registro.identidad(), competicion);
@@ -92,12 +110,24 @@ public class SincronizacionEstadisticasJugadorServiceImpl
                         staging.escribirLote(syncId, competicion.name(), loteStaging);
                         pagina++;
                     } while (pagina <= totalPaginas);
+                    if (paginasRecibidas.size() != totalPaginas || recibidos != totalResultados) {
+                        throw new IllegalStateException("La fuente no entregó todos los registros esperados.");
+                    }
                     combinacionesCompletas.add(competicion.name() + ":" + familia.name());
                 }
             }
             staging.cambiarEstado(syncId, EstadoEstadisticasSync.VALIDADA, Instant.now(clock));
             validarStaging(syncId, combinacionesCompletas);
             promocion.promover(syncId, nuevasJugadores.values(), nuevosEquipos.values(), Map.of());
+        } catch (RuntimeException exception) {
+            if (syncId != null) {
+                try {
+                    staging.cambiarEstado(syncId, EstadoEstadisticasSync.FALLIDA, Instant.now(clock));
+                } catch (RuntimeException ignored) {
+                    // La gestión completa del error técnico y limpieza queda en US3.
+                }
+            }
+            throw exception;
         }
     }
 

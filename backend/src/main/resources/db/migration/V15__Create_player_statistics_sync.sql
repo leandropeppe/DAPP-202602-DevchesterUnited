@@ -48,6 +48,10 @@ CREATE TABLE estadisticas_sync (
     )
 );
 
+ALTER TABLE jugador_estadisticas
+    ADD CONSTRAINT fk_jugador_estadisticas_sync
+    FOREIGN KEY (sync_id) REFERENCES estadisticas_sync(id);
+
 CREATE TABLE estadisticas_sync_staging (
     id UUID PRIMARY KEY,
     sync_id UUID NOT NULL,

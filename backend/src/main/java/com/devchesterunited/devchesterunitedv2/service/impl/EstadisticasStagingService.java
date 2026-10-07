@@ -20,11 +20,14 @@ import com.devchesterunited.devchesterunitedv2.service.exception.IdentidadEstadi
 public class EstadisticasStagingService {
     private final EstadisticasSyncRepository ejecuciones;
     private final EstadisticasSyncStagingRepository staging;
+    private final ConsolidadorEstadisticasJugador consolidador;
 
     public EstadisticasStagingService(EstadisticasSyncRepository ejecuciones,
-            EstadisticasSyncStagingRepository staging) {
+            EstadisticasSyncStagingRepository staging,
+            ConsolidadorEstadisticasJugador consolidador) {
         this.ejecuciones = ejecuciones;
         this.staging = staging;
+        this.consolidador = consolidador;
     }
 
     @Transactional
@@ -49,9 +52,14 @@ public class EstadisticasStagingService {
                 syncId, competicion, identidad.playerId())
                 .orElseGet(() -> new EstadisticasSyncStagingEntity(UUID.randomUUID(), syncId,
                         competicion, identidad.playerId(), identidad.nombre()));
-        var m = registro.metricas();
+        var m = consolidador.conservar(
+                new com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador(
+                        entity.getMinutosJugados(), entity.getGoles(), entity.getAsistencias(), entity.getTiros(),
+                        entity.getPasesClave(), entity.getRegates(), entity.getTackles(), entity.getValoracion(),
+                        entity.getTarjetasAmarillas(), entity.getTarjetasRojas()), registro.metricas());
+        String posicion = identidad.posicion() != null ? identidad.posicion() : entity.getPosicion();
         entity.aplicar(jugadorId, equipoId, identidad.teamId(), identidad.nombreEquipo(),
-                identidad.posicion(), identidad.nacionalidad(), registro.familia().name(),
+                posicion, identidad.nacionalidad(), registro.familia().name(),
                 m.minutosJugados(), m.goles(), m.asistencias(), m.tiros(), m.pasesClave(),
                 m.regates(), m.tackles(), m.valoracion(), m.tarjetasAmarillas(), m.tarjetasRojas());
         staging.save(entity);

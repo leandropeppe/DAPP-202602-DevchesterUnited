@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class IdentidadJugadorResolverTest {
@@ -55,6 +57,56 @@ class IdentidadJugadorResolverTest {
         var b = new JugadorEntity(UUID.randomUUID(), "Juan Perez", teamId, "Forward", 10, "Argentina", true);
         when(jugadores.findAllByEquipoIdAndActivoTrue(teamId)).thenReturn(List.of(a, b));
         assertThatThrownBy(() -> resolver().resolver(hint(), CompeticionEstadistica.LA_LIGA))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void usaIdentidadPersistidaSinMatchingYRespetaNamespaceWhoscored() {
+        UUID teamId = UUID.randomUUID();
+        var player = new JugadorEntity(UUID.randomUUID(), "Juan Perez", teamId,
+                "Forward", 9, "Argentina", true);
+        when(identidades.findByProveedorAndExternalId(
+                eq(com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED), eq(44L)))
+                .thenReturn(java.util.Optional.of(new com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity(
+                        UUID.randomUUID(), player,
+                        com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 44L)));
+
+        assertThat(resolver().resolver(hint(), CompeticionEstadistica.LA_LIGA).jugadorId())
+                .isEqualTo(player.getId());
+        verify(equipos, org.mockito.Mockito.never()).resolver(any(), any());
+        verify(identidades).findByProveedorAndExternalId(
+                eq(com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED), eq(44L));
+    }
+
+    @Test
+    void rechazaEvidenciaDePosicionONacionalidadIncompatible() {
+        UUID teamId = UUID.randomUUID();
+        when(identidades.findByProveedorAndExternalId(any(), any())).thenReturn(java.util.Optional.empty());
+        when(equipos.resolver(any(), any())).thenReturn(new IdentidadEquipoResolver.Resultado(teamId, null));
+        when(jugadores.findAllByEquipoIdAndActivoTrue(teamId)).thenReturn(List.of(
+                new JugadorEntity(UUID.randomUUID(), "Juan Perez", teamId, "Defender", 9, "Argentina", true)));
+
+        assertThatThrownBy(() -> resolver().resolver(new IdentidadEstadisticaJugador(
+                44, "Juan Perez", "Forward", "Argentina", 7L, "Equipo"), CompeticionEstadistica.LA_LIGA))
+                .isInstanceOf(RuntimeException.class);
+        when(jugadores.findAllByEquipoIdAndActivoTrue(teamId)).thenReturn(List.of(
+                new JugadorEntity(UUID.randomUUID(), "Juan Perez", teamId, "Forward", 9, "Brasil", true)));
+        assertThatThrownBy(() -> resolver().resolver(new IdentidadEstadisticaJugador(
+                44, "Juan Perez", "Forward", "Argentina", 7L, "Equipo"), CompeticionEstadistica.LA_LIGA))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void noUsaDorsalNiOrdenParaResolverAmbiguedad() {
+        UUID teamId = UUID.randomUUID();
+        when(identidades.findByProveedorAndExternalId(any(), any())).thenReturn(java.util.Optional.empty());
+        when(equipos.resolver(any(), any())).thenReturn(new IdentidadEquipoResolver.Resultado(teamId, null));
+        when(jugadores.findAllByEquipoIdAndActivoTrue(teamId)).thenReturn(List.of(
+                new JugadorEntity(UUID.randomUUID(), "Juan Perez", teamId, "Forward", 9, "Argentina", true),
+                new JugadorEntity(UUID.randomUUID(), "Juan Perez", teamId, "Forward", 10, "Argentina", true)));
+
+        assertThatThrownBy(() -> resolver().resolver(new IdentidadEstadisticaJugador(
+                44, "Juan Perez", "Forward", "Argentina", 7L, "Equipo"), CompeticionEstadistica.LA_LIGA))
                 .isInstanceOf(RuntimeException.class);
     }
 

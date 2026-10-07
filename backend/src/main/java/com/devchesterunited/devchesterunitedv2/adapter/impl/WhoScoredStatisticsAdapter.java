@@ -1,5 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.adapter.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.devchesterunited.devchesterunitedv2.adapter.ProveedorEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsException;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.WhoScoredStatisticsResponseDTO;
@@ -9,10 +10,11 @@ import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugado
 import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.PaginaEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador;
-import java.math.BigDecimal;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -25,21 +27,32 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
     private final String baseUrl;
     private final String apiKey;
     private final int maxResponseBytes;
+    private final ObjectMapper objectMapper;
 
     @Autowired
     public WhoScoredStatisticsAdapter(RestClient.Builder builder,
             org.springframework.core.env.Environment environment) {
         this(builder, environment.getProperty("whoscored.base-url", ""),
                 environment.getProperty("whoscored.api-key", ""),
-                environment.getProperty("whoscored.max-response-bytes", Integer.class, 10_485_760));
+                environment.getProperty("whoscored.max-response-bytes", Integer.class, 10_485_760),
+                new ObjectMapper());
     }
 
     public WhoScoredStatisticsAdapter(RestClient.Builder builder, String baseUrl,
             String apiKey, int maxResponseBytes) {
+        this(builder, baseUrl, apiKey, maxResponseBytes, new ObjectMapper());
+    }
+
+    WhoScoredStatisticsAdapter(RestClient.Builder builder, String baseUrl,
+            String apiKey, int maxResponseBytes, ObjectMapper objectMapper) {
         this.baseUrl = Objects.requireNonNull(baseUrl).replaceAll("/+$", "");
         this.client = this.baseUrl.isBlank() ? builder.build() : builder.baseUrl(this.baseUrl).build();
         this.apiKey = apiKey == null ? "" : apiKey;
+        if (maxResponseBytes < 1) {
+            throw new IllegalArgumentException("El límite de respuesta debe ser positivo.");
+        }
         this.maxResponseBytes = maxResponseBytes;
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     @Override
@@ -59,19 +72,42 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
                             .queryParam("page", pagina)
                             .queryParam("pageSize", tamano).build())
                     .headers(headers -> {
-                        if (!apiKey.isBlank()) headers.setBearerAuth(apiKey);
+                        if (!apiKey.isBlank()) {
+                            headers.setBearerAuth(apiKey);
+                        }
                     })
-                    .retrieve()
-                    .onStatus(HttpStatusCode::isError, (request, responseResult) -> {
-                        throw new WhoScoredStatisticsException("WhoScored devolvió una respuesta no exitosa.");
-                    })
-                    .body(WhoScoredStatisticsResponseDTO.class);
+                    .exchange((request, responseResult) -> {
+                        if (responseResult.getStatusCode().isError()) {
+                            throw new WhoScoredStatisticsException("WhoScored devolvió una respuesta no exitosa.");
+                        }
+                        try {
+                            return objectMapper.readValue(leerLimitado(responseResult.getBody()),
+                                    WhoScoredStatisticsResponseDTO.class);
+                        } catch (IOException exception) {
+                            throw new WhoScoredStatisticsException("La respuesta de WhoScored no es un JSON válido.", exception);
+                        }
+                    });
             return traducir(response, competicion, familia, pagina, tamano);
         } catch (WhoScoredStatisticsException exception) {
             throw exception;
         } catch (RestClientException | IllegalArgumentException exception) {
             throw new WhoScoredStatisticsException("No se pudo obtener una página válida de WhoScored.", exception);
         }
+    }
+
+    private byte[] leerLimitado(InputStream body) throws IOException {
+        byte[] buffer = new byte[8192];
+        int total = 0;
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        int leidos;
+        while ((leidos = body.read(buffer)) != -1) {
+            total += leidos;
+            if (total > maxResponseBytes) {
+                throw new WhoScoredStatisticsException("La respuesta de WhoScored supera el límite configurado.");
+            }
+            result.write(buffer, 0, leidos);
+        }
+        return result.toByteArray();
     }
 
     private PaginaEstadisticasJugador traducir(WhoScoredStatisticsResponseDTO response,
@@ -82,7 +118,8 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
                 || response.players() == null || response.page() != requestedPage
                 || response.pageSize() != requestedSize || response.totalPages() < requestedPage
                 || response.totalPages() < 1 || response.totalResults() < 0
-                || response.players().size() > requestedSize) {
+                || response.players().size() > requestedSize
+                || response.totalResults() < response.players().size()) {
             throw new WhoScoredStatisticsException("La metadata de paginación de WhoScored es inválida.");
         }
         List<RegistroEstadisticasJugador> registros = response.players().stream()
@@ -96,6 +133,11 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         if (player == null || player.playerId() == null || player.playerId() <= 0
                 || player.name() == null || player.name().isBlank()) {
             throw new WhoScoredStatisticsException("WhoScored no proporcionó identidad suficiente del jugador.");
+        }
+        boolean teamIdAbsent = player.teamId() == null;
+        boolean teamNameAbsent = player.teamName() == null || player.teamName().isBlank();
+        if (teamIdAbsent != teamNameAbsent) {
+            throw new WhoScoredStatisticsException("WhoScored proporcionó hints de equipo inconsistentes.");
         }
         var identidad = new IdentidadEstadisticaJugador(player.playerId(), normalizar(player.name()),
                 normalizarOpcional(player.position()), normalizarOpcional(player.nationality()),

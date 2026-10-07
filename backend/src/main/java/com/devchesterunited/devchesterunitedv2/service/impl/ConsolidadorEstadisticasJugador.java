@@ -5,9 +5,16 @@ import com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugado
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
 
 /** Consolida familias sin convertir ausencias en ceros ni completar datos. */
+@Component
 public class ConsolidadorEstadisticasJugador {
+    public MetricasEstadisticasJugador conservar(MetricasEstadisticasJugador anterior,
+            MetricasEstadisticasJugador nueva) {
+        return Acumulado.conservarInformacion(anterior, nueva);
+    }
+
     public Resultado consolidar(Iterable<RegistroResuelto> registros) {
         Map<UUID, Acumulado> acumulados = new java.util.LinkedHashMap<>();
         for (RegistroResuelto registro : registros) {
@@ -33,7 +40,7 @@ public class ConsolidadorEstadisticasJugador {
             familias.merge(familia, metricas, Acumulado::conservarInformacion);
         }
 
-        private static MetricasEstadisticasJugador conservarInformacion(
+        public static MetricasEstadisticasJugador conservarInformacion(
                 MetricasEstadisticasJugador anterior, MetricasEstadisticasJugador nueva) {
             return new MetricasEstadisticasJugador(
                     elegir(anterior.minutosJugados(), nueva.minutosJugados()),
@@ -47,6 +54,7 @@ public class ConsolidadorEstadisticasJugador {
                     elegir(anterior.tarjetasAmarillas(), nueva.tarjetasAmarillas()),
                     elegir(anterior.tarjetasRojas(), nueva.tarjetasRojas()));
         }
+
 
         private static <T> T elegir(T anterior, T nueva) {
             return nueva != null ? nueva : anterior;

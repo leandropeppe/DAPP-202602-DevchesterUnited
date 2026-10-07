@@ -57,6 +57,48 @@ class WhoScoredStatisticsAdapterTest {
                 .hasMessageContaining("no exitosa");
     }
 
+    @Test
+    void rechazaJsonInvalidoYCuerpoQueSuperaElLimite() throws Exception {
+        iniciar(200, "{no-json}");
+        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
+                FamiliaEstadistica.GENERAL, 1, 2))
+                .isInstanceOf(WhoScoredStatisticsException.class);
+
+        server.stop(0);
+        iniciar(200, "x".repeat(101));
+        assertThatThrownBy(() -> new WhoScoredStatisticsAdapter(RestClient.builder(), baseUrl(), "test", 100)
+                .obtenerPagina(CompeticionEstadistica.SERIE_A, FamiliaEstadistica.GENERAL, 1, 2))
+                .isInstanceOf(WhoScoredStatisticsException.class)
+                .hasMessageContaining("límite");
+    }
+
+    @Test
+    void rechazaCamposObligatoriosValoresInvalidosYHintsInconsistentes() throws Exception {
+        iniciar(200, "{\"page\":1,\"pageSize\":2,\"totalPages\":1,\"totalResults\":1,\"players\":["
+                + "{\"playerId\":7,\"name\":\"Ana\",\"teamId\":8,\"teamName\":null,\"goals\":1}]}");
+        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
+                FamiliaEstadistica.GENERAL, 1, 2)).isInstanceOf(WhoScoredStatisticsException.class);
+
+        server.stop(0);
+        iniciar(200, "{\"page\":1,\"pageSize\":2,\"totalPages\":1,\"totalResults\":1,\"players\":["
+                + "{\"playerId\":7,\"name\":\"Ana\",\"teamId\":8,\"teamName\":\"A\",\"goals\":-1}]}");
+        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
+                FamiliaEstadistica.GENERAL, 1, 2)).isInstanceOf(WhoScoredStatisticsException.class);
+    }
+
+    @Test
+    void rechazaMetadataContradictoriaYPaginaFueraDeRango() throws Exception {
+        iniciar(200, "{\"page\":1,\"pageSize\":2,\"totalPages\":1,\"totalResults\":0,\"players\":["
+                + "{\"playerId\":7,\"name\":\"Ana\"}]}");
+        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
+                FamiliaEstadistica.GENERAL, 1, 2)).isInstanceOf(WhoScoredStatisticsException.class);
+
+        server.stop(0);
+        iniciar(200, "{\"page\":2,\"pageSize\":2,\"totalPages\":1,\"totalResults\":0,\"players\":[]}");
+        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
+                FamiliaEstadistica.GENERAL, 2, 2)).isInstanceOf(WhoScoredStatisticsException.class);
+    }
+
     private WhoScoredStatisticsAdapter adapter() {
         return new WhoScoredStatisticsAdapter(RestClient.builder(), baseUrl(), "test", 1_000_000);
     }

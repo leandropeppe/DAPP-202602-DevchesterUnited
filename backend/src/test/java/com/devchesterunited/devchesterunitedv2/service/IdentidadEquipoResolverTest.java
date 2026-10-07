@@ -18,6 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class IdentidadEquipoResolverTest {
@@ -52,6 +54,20 @@ class IdentidadEquipoResolverTest {
         var noHint = new IdentidadEstadisticaJugador(9, "Jugador", null, null, 10L, null);
         assertThatThrownBy(() -> resolver().resolver(noHint, CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
+    }
+
+    @Test
+    void usaIdentidadWhoscoredPersistidaYNoElMatchingLocal() {
+        var equipo = equipo("Arsenal FC");
+        when(identidades.findByProveedorAndExternalId(
+                eq(com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED), eq(10L)))
+                .thenReturn(java.util.Optional.of(new com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity(
+                        UUID.randomUUID(), equipo,
+                        com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 10L)));
+
+        assertThat(resolver().resolver(hintEquipo("Otro nombre"), CompeticionEstadistica.PREMIER_LEAGUE)
+                .equipoId()).isEqualTo(equipo.getId());
+        verify(equipos, org.mockito.Mockito.never()).findAllByActivoTrueAndLigaIgnoreCase("Premier League");
     }
 
     private IdentidadEquipoResolver resolver() { return new IdentidadEquipoResolver(equipos, identidades); }

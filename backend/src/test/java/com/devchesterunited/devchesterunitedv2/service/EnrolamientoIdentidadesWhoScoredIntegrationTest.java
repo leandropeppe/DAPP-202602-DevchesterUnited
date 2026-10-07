@@ -35,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -86,11 +88,15 @@ class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSuppor
         configurarFuente(false);
         servicio.sincronizar();
 
-        assertThat(estadisticas.count()).isEqualTo(5);
-        assertThat(identidadesJugadores.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED)).hasSize(5);
+        assertThat(estadisticas.count()).isEqualTo(7);
+        assertThat(identidadesJugadores.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED)).hasSize(7);
         assertThat(identidadesEquipos.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED)).hasSize(5);
         assertThat(ejecuciones.findAllByEstado(com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync.PUBLICADA))
                 .isNotEmpty();
+        verify(proveedor, times(30)).obtenerPagina(any(), any(), any(Integer.class), any(Integer.class));
+        assertThat(estadisticas.findAll()).hasSize(7)
+                .anySatisfy(stat -> assertThat(stat.getMinutosJugados()).isEqualTo(90))
+                .anySatisfy(stat -> assertThat(stat.getMinutosJugados()).isEqualTo(120));
     }
 
     @Test
@@ -100,6 +106,11 @@ class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSuppor
         assertThat(estadisticas.count()).isZero();
         assertThat(identidadesJugadores.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED)).isEmpty();
         assertThat(identidadesEquipos.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED)).isEmpty();
+        var ejecucionesFallidas = ejecuciones.findAllByEstado(
+                com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync.FALLIDA);
+        assertThat(ejecucionesFallidas).isNotEmpty();
+        assertThat(ejecucionesFallidas.stream().anyMatch(e -> !staging.findAllBySyncId(e.getId()).isEmpty()))
+                .isTrue();
     }
 
     private void configurarFuente(boolean falla) {
@@ -112,6 +123,12 @@ class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSuppor
                     "Forward", null, "Argentina", true);
             jugadores.save(player);
             fixturePlayers.add(player.getId());
+            if (i < 2) {
+                var segundo = new JugadorEntity(UUID.randomUUID(), "Jugador " + i + " B", equipo.getId(),
+                        "Midfielder", null, "Argentina", true);
+                jugadores.save(segundo);
+                fixturePlayers.add(segundo.getId());
+            }
         }
         when(proveedor.obtenerPagina(any(), any(), any(Integer.class), any(Integer.class)))
                 .thenAnswer(invocation -> {
@@ -123,14 +140,29 @@ class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSuppor
                         throw new IllegalStateException("fallo controlado");
                     }
                     int index = competicion.ordinal();
-                    var registro = new RegistroEstadisticasJugador(
+                    var primero = new RegistroEstadisticasJugador(
                             new IdentidadEstadisticaJugador(10_000L + index, "Jugador " + index,
                                     "Forward", "Argentina", 20_000L + index,
                                     nombreLiga(competicion)), familia,
                             new MetricasEstadisticasJugador(90, 1, 2, BigDecimal.ONE, BigDecimal.TWO,
                                     BigDecimal.ONE, BigDecimal.ONE, BigDecimal.valueOf(7), 0, 0));
-                    var registros = pagina == 1 ? List.of(registro) : List.<RegistroEstadisticasJugador>of();
-                    return new PaginaEstadisticasJugador(competicion, familia, pagina, 50, 2, 1, registros);
+                    var segundo = new RegistroEstadisticasJugador(
+                            new IdentidadEstadisticaJugador(30_000L + index, "Jugador " + index + " B",
+                                    "Midfielder", "Argentina", 20_000L + index,
+                                    nombreLiga(competicion)), familia,
+                            new MetricasEstadisticasJugador(120, 3, 4, BigDecimal.TEN, BigDecimal.valueOf(6),
+                                    BigDecimal.valueOf(2), BigDecimal.valueOf(3), BigDecimal.valueOf(8), 1, 0));
+                    List<RegistroEstadisticasJugador> registros;
+                    if (index == 0) {
+                        registros = pagina == 1 ? List.of(primero)
+                                : pagina == 2 ? List.of(segundo) : List.of();
+                    } else if (index == 1) {
+                        registros = pagina == 1 ? List.of(primero, segundo) : List.of();
+                    } else {
+                        registros = pagina == 1 ? List.of(primero) : List.of();
+                    }
+                    int total = index < 2 ? 2 : 1;
+                    return new PaginaEstadisticasJugador(competicion, familia, pagina, 50, 2, total, registros);
                 });
     }
 
