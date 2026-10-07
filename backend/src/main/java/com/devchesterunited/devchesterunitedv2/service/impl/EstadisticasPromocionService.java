@@ -51,10 +51,16 @@ public class EstadisticasPromocionService {
         if (ejecucion.getEstado() != EstadoEstadisticasSync.VALIDADA) {
             throw new IllegalStateException("La ejecución no está validada para promoción.");
         }
-        nuevosEquipos.forEach(identity -> equipos.save(new com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity(
-                UUID.randomUUID(), identity.equipo(), ProveedorIdentidadExterna.WHOSCORED, identity.externalId())));
-        nuevasJugadores.forEach(identity -> jugadores.save(new com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity(
-                UUID.randomUUID(), identity.jugador(), ProveedorIdentidadExterna.WHOSCORED, identity.externalId())));
+        nuevosEquipos.forEach(identity -> equipos.findByProveedorAndExternalId(
+                ProveedorIdentidadExterna.WHOSCORED, identity.externalId()).orElseGet(() ->
+                equipos.save(new com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity(
+                        UUID.randomUUID(), identity.equipo(), ProveedorIdentidadExterna.WHOSCORED,
+                        identity.externalId()))));
+        nuevasJugadores.forEach(identity -> jugadores.findByProveedorAndExternalId(
+                ProveedorIdentidadExterna.WHOSCORED, identity.externalId()).orElseGet(() ->
+                jugadores.save(new com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity(
+                        UUID.randomUUID(), identity.jugador(), ProveedorIdentidadExterna.WHOSCORED,
+                        identity.externalId()))));
         int page = 0;
         Page<EstadisticasSyncStagingEntity> lote;
         do {
@@ -66,11 +72,9 @@ public class EstadisticasPromocionService {
                                 row.getTiros(), row.getPasesClave(), row.getRegates(), row.getTackles(),
                                 row.getValoracion(), row.getTarjetasAmarillas(), row.getTarjetasRojas(),
                                 syncId, now, now));
-                if (!entity.getSyncId().equals(syncId)) {
-                    entity.actualizar(row.getPosicion(), row.getMinutosJugados(), row.getGoles(), row.getAsistencias(),
-                            row.getTiros(), row.getPasesClave(), row.getRegates(), row.getTackles(),
-                            row.getValoracion(), row.getTarjetasAmarillas(), row.getTarjetasRojas(), syncId, now);
-                }
+                entity.actualizar(row.getPosicion(), row.getMinutosJugados(), row.getGoles(), row.getAsistencias(),
+                        row.getTiros(), row.getPasesClave(), row.getRegates(), row.getTackles(),
+                        row.getValoracion(), row.getTarjetasAmarillas(), row.getTarjetasRojas(), syncId, now);
                 estadisticas.save(entity);
             }
         } while (lote.hasNext());

@@ -82,16 +82,16 @@ description: "Tareas de implementación para la sincronización de estadísticas
 
 ### Tests for User Story 2
 
-- [ ] T028 [P] [US2] Crear pruebas unitarias de idempotencia y consolidación repetida en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/ConsolidadorEstadisticasJugadorIdempotenciaTest.java
-- [ ] T029 [P] [US2] Crear prueba de integración de resolución por identidad persistida en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/IdentidadPersistidaWhoScoredIntegrationTest.java verificando que no se repita matching
-- [ ] T030 [P] [US2] Crear prueba de integración de upsert y actualización de métricas en backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/EstadisticasJugadorUpsertIntegrationTest.java
+- [X] T028 [P] [US2] Crear pruebas unitarias de idempotencia y consolidación repetida en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/ConsolidadorEstadisticasJugadorIdempotenciaTest.java
+- [X] T029 [P] [US2] Crear prueba de integración de resolución por identidad persistida en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/IdentidadPersistidaWhoScoredIntegrationTest.java verificando que no se repita matching
+- [X] T030 [P] [US2] Crear prueba de integración de upsert y actualización de métricas en backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/EstadisticasJugadorUpsertIntegrationTest.java
 
 ### Implementation for User Story 2
 
-- [ ] T031 [US2] Implementar la reutilización prioritaria de identidades WHOSCORED persistidas en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/ResolucionIdentidadesEstadisticas.java antes de ejecutar matching inicial
-- [ ] T032 [US2] Reforzar el upsert idempotente de jugador_estadisticas por jugador_id para ejecuciones repetidas en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/EstadisticasPromocionService.java sin crear filas nuevas para jugadores existentes
-- [ ] T033 [US2] Aplicar las restricciones y operaciones de persistencia para evitar duplicados de identidades y estadísticas durante reintentos en backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/
-- [ ] T034 [US2] Verificar y consolidar la actualización de las familias general, ofensiva y defensiva en una única fotografía por jugador durante ejecuciones repetidas en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/ConsolidadorEstadisticasJugador.java
+- [X] T031 [US2] Implementar la reutilización prioritaria de identidades WHOSCORED persistidas en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/IdentidadJugadorResolver.java antes de ejecutar matching inicial
+- [X] T032 [US2] Reforzar el upsert idempotente de jugador_estadisticas por jugador_id para ejecuciones repetidas en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/EstadisticasPromocionService.java sin crear filas nuevas para jugadores existentes
+- [X] T033 [US2] Aplicar las restricciones y operaciones de persistencia para evitar duplicados de identidades y estadísticas durante reintentos en backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/
+- [X] T034 [US2] Verificar y consolidar la actualización de las familias general, ofensiva y defensiva en una única fotografía por jugador durante ejecuciones repetidas en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/ConsolidadorEstadisticasJugador.java
 
 **Checkpoint**: las ejecuciones repetidas son idempotentes y las modificaciones válidas actualizan el estado sin duplicados.
 
