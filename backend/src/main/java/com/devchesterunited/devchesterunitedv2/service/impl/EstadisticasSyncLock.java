@@ -1,12 +1,13 @@
 package com.devchesterunited.devchesterunitedv2.service.impl;
 
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
 import javax.sql.DataSource;
 import org.springframework.stereotype.Component;
 
-/** Advisory lock de sesión; no mantiene una transacción abierta durante la red. */
+/** Advisory lock de sesión; la misma conexión adquiere y libera el lock. */
 @Component
 public class EstadisticasSyncLock {
     private static final long LOCK_KEY_1 = 114644L;
@@ -18,8 +19,9 @@ public class EstadisticasSyncLock {
     }
 
     public Optional<Handle> tryAcquire() {
+        Connection connection = null;
         try {
-            Connection connection = dataSource.getConnection();
+            connection = dataSource.getConnection();
             boolean acquired;
             try (var statement = connection.prepareStatement(
                     "SELECT pg_try_advisory_lock(?::integer, ?::integer)")) {
@@ -34,18 +36,31 @@ public class EstadisticasSyncLock {
                 connection.close();
                 return Optional.empty();
             }
-            return Optional.of(new Handle(connection));
+            return Optional.of(new Handle(connection, dataSource));
         } catch (SQLException exception) {
+            closeAfterAcquireFailure(connection);
             throw new IllegalStateException("No fue posible adquirir el lock estadistico.", exception);
+        }
+    }
+
+    private static void closeAfterAcquireFailure(Connection connection) {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException ignored) {
+                // No ocultar el error original de adquisición.
+            }
         }
     }
 
     public static final class Handle implements AutoCloseable {
         private final Connection connection;
+        private final DataSource dataSource;
         private boolean closed;
 
-        private Handle(Connection connection) {
+        private Handle(Connection connection, DataSource dataSource) {
             this.connection = connection;
+            this.dataSource = dataSource;
         }
 
         @Override
@@ -53,21 +68,62 @@ public class EstadisticasSyncLock {
             if (closed) {
                 return;
             }
+            closed = true;
+            IllegalStateException failure = null;
+            boolean unlockConfirmed = false;
             try (var statement = connection.prepareStatement(
                     "SELECT pg_advisory_unlock(?::integer, ?::integer)")) {
                 statement.setLong(1, LOCK_KEY_1);
                 statement.setLong(2, LOCK_KEY_2);
-                statement.executeQuery().close();
+                try (var result = statement.executeQuery()) {
+                    result.next();
+                    unlockConfirmed = result.getBoolean(1);
+                }
+                if (!unlockConfirmed) {
+                    failure = new IllegalStateException(
+                            "No fue posible confirmar la liberación del lock estadistico.");
+                }
             } catch (SQLException exception) {
-                throw new IllegalStateException("No fue posible liberar el lock estadistico.", exception);
+                failure = new IllegalStateException("No fue posible liberar el lock estadistico.", exception);
             } finally {
-                closed = true;
-                try {
-                    connection.close();
-                } catch (SQLException exception) {
-                    throw new IllegalStateException("No fue posible cerrar la conexión del lock estadistico.", exception);
+                if (!unlockConfirmed) {
+                    invalidarConexion(failure);
+                } else {
+                    failure = closeConnection(failure);
                 }
             }
+            if (failure != null) {
+                throw failure;
+            }
+        }
+
+        private void invalidarConexion(IllegalStateException failure) {
+            try {
+                if (dataSource instanceof HikariDataSource hikari) {
+                    hikari.evictConnection(connection);
+                } else {
+                    connection.abort(Runnable::run);
+                }
+            } catch (RuntimeException | SQLException invalidationFailure) {
+                if (failure != null) {
+                    failure.addSuppressed(invalidationFailure);
+                }
+            }
+            closeConnection(failure);
+        }
+
+        private IllegalStateException closeConnection(IllegalStateException failure) {
+            try {
+                connection.close();
+            } catch (SQLException closeFailure) {
+                if (failure != null) {
+                    failure.addSuppressed(closeFailure);
+                } else {
+                    failure = new IllegalStateException(
+                            "No fue posible cerrar la conexion del lock estadistico.", closeFailure);
+                }
+            }
+            return failure;
         }
     }
 }

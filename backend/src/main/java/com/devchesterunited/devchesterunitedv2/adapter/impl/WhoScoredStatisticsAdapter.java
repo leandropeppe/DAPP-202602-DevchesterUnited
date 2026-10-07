@@ -77,6 +77,9 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
                         }
                     })
                     .exchange((request, responseResult) -> {
+                        if (responseResult.getStatusCode().value() == 429) {
+                            throw new WhoScoredStatisticsException("El proveedor estadístico alcanzó su cuota.");
+                        }
                         if (responseResult.getStatusCode().isError()) {
                             throw new WhoScoredStatisticsException("WhoScored devolvió una respuesta no exitosa.");
                         }

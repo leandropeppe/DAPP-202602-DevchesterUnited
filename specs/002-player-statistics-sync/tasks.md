@@ -105,18 +105,18 @@ description: "Tareas de implementación para la sincronización de estadísticas
 
 ### Tests for User Story 3
 
-- [ ] T035 [P] [US3] Crear pruebas del Adapter para HTTP no exitoso, timeout, JSON inválido, cuota y metadata incompleta en backend/src/test/java/com/devchesterunited/devchesterunitedv2/adapter/WhoScoredStatisticsAdapterFailureTest.java
-- [ ] T036 [P] [US3] Crear prueba de integración de identidad no resuelta y evidencia ambigua en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/SincronizacionIdentidadNoResueltaIntegrationTest.java
-- [ ] T037 [P] [US3] Crear prueba de integración de rollback de promoción y conservación del snapshot anterior en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/SincronizacionEstadisticasAtomicidadIntegrationTest.java
-- [ ] T038 [P] [US3] Crear prueba de concurrencia de sincronizaciones en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/SincronizacionEstadisticasConcurrenciaIntegrationTest.java usando PostgreSQL/Testcontainers
+- [X] T035 [P] [US3] Crear pruebas del Adapter para HTTP no exitoso, timeout, JSON inválido, cuota y metadata incompleta en backend/src/test/java/com/devchesterunited/devchesterunitedv2/adapter/WhoScoredStatisticsAdapterFailureTest.java
+- [X] T036 [P] [US3] Crear prueba de integración de identidad no resuelta y evidencia ambigua en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/SincronizacionIdentidadNoResueltaIntegrationTest.java
+- [X] T037 [P] [US3] Crear prueba de integración de rollback de promoción y conservación del snapshot anterior en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/SincronizacionEstadisticasAtomicidadIntegrationTest.java
+- [X] T038 [P] [US3] Crear prueba de concurrencia de sincronizaciones en backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/SincronizacionEstadisticasConcurrenciaIntegrationTest.java usando PostgreSQL/Testcontainers
 
 ### Implementation for User Story 3
 
-- [ ] T039 [US3] Implementar estados de ejecución, errores sanitizados y limpieza/marcado de staging fallido en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/EstadisticasSyncService.java
-- [ ] T040 [US3] Endurecer la promoción transaccional de estadísticas, identidades WHOSCORED nuevas y estado de ejecución ante errores de persistencia en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/EstadisticasPromocionService.java
-- [ ] T041 [US3] Garantizar rollback ante fallo de persistencia y conservación del snapshot anterior en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/SincronizacionEstadisticasJugadorServiceImpl.java
-- [ ] T042 [US3] Traducir errores de Adapter, matching y persistencia a excepciones de aplicación sin filtrar detalles de WhoScored en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/exception/ y backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/
-- [ ] T043 [US3] Integrar la exclusión de concurrencia y liberación segura en finally en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/SincronizacionEstadisticasJugadorServiceImpl.java
+- [X] T039 [US3] Implementar estados de ejecución, errores sanitizados y limpieza/marcado de staging fallido en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/EstadisticasSyncService.java
+- [X] T040 [US3] Endurecer la promoción transaccional de estadísticas, identidades WHOSCORED nuevas y estado de ejecución ante errores de persistencia en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/EstadisticasPromocionService.java
+- [X] T041 [US3] Garantizar rollback ante fallo de persistencia y conservación del snapshot anterior en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/SincronizacionEstadisticasJugadorServiceImpl.java
+- [X] T042 [US3] Traducir errores de Adapter, matching y persistencia a excepciones de aplicación sin filtrar detalles de WhoScored en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/exception/ y backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/
+- [X] T043 [US3] Integrar la exclusión de concurrencia y liberación segura en finally en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/SincronizacionEstadisticasJugadorServiceImpl.java
 
 **Checkpoint**: cualquier fallo conserva el último estado válido y una segunda sincronización concurrente no publica ni consulta de forma indebida.
 

@@ -45,4 +45,8 @@ public class EstadisticasSyncEntity {
         this.finalizadaAt = finalizadaEn;
         this.errorTecnico = error;
     }
+
+    public void marcarFallida(Instant finalizadaEn, String errorSanitizado) {
+        cambiarEstado(EstadoEstadisticasSync.FALLIDA, finalizadaEn, errorSanitizado);
+    }
 }

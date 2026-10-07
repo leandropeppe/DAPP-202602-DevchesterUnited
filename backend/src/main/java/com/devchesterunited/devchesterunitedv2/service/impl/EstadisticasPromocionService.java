@@ -41,7 +41,7 @@ public class EstadisticasPromocionService {
         this.clock = clock;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void promover(UUID syncId, Collection<IdentidadJugadorResolver.NuevaIdentidad> nuevasJugadores,
             Collection<IdentidadEquipoResolver.NuevaIdentidad> nuevosEquipos,
             Map<UUID, EstadisticasJugadorEntity> ignored) {
