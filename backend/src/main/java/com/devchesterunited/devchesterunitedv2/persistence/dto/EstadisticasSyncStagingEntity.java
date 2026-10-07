@@ -79,4 +79,40 @@ public class EstadisticasSyncStagingEntity {
     public boolean isFamiliaGeneralRecibida() { return familiaGeneralRecibida; }
     public boolean isFamiliaOfensivaRecibida() { return familiaOfensivaRecibida; }
     public boolean isFamiliaDefensivaRecibida() { return familiaDefensivaRecibida; }
+    public Integer getMinutosJugados() { return minutosJugados; }
+    public Integer getGoles() { return goles; }
+    public Integer getAsistencias() { return asistencias; }
+    public BigDecimal getTiros() { return tiros; }
+    public BigDecimal getPasesClave() { return pasesClave; }
+    public BigDecimal getRegates() { return regates; }
+    public BigDecimal getTackles() { return tackles; }
+    public BigDecimal getValoracion() { return valoracion; }
+    public Integer getTarjetasAmarillas() { return tarjetasAmarillas; }
+    public Integer getTarjetasRojas() { return tarjetasRojas; }
+
+    public void aplicar(UUID jugadorId, UUID equipoId, Long teamId, String nombreEquipo,
+            String posicion, String nacionalidad, String familia,
+            Integer minutos, Integer goles, Integer asistencias, BigDecimal tiros,
+            BigDecimal pasesClave, BigDecimal regates, BigDecimal tackles, BigDecimal valoracion,
+            Integer amarillas, Integer rojas) {
+        this.jugadorId = jugadorId;
+        this.equipoId = equipoId;
+        this.whoscoredTeamId = teamId;
+        this.nombreEquipo = nombreEquipo;
+        this.posicion = posicion;
+        this.nacionalidad = nacionalidad;
+        if ("GENERAL".equals(familia)) this.familiaGeneralRecibida = true;
+        if ("OFENSIVA".equals(familia)) this.familiaOfensivaRecibida = true;
+        if ("DEFENSIVA".equals(familia)) this.familiaDefensivaRecibida = true;
+        if (minutos != null) this.minutosJugados = minutos;
+        if (goles != null) this.goles = goles;
+        if (asistencias != null) this.asistencias = asistencias;
+        if (tiros != null) this.tiros = tiros;
+        if (pasesClave != null) this.pasesClave = pasesClave;
+        if (regates != null) this.regates = regates;
+        if (tackles != null) this.tackles = tackles;
+        if (valoracion != null) this.valoracion = valoracion;
+        if (amarillas != null) this.tarjetasAmarillas = amarillas;
+        if (rojas != null) this.tarjetasRojas = rojas;
+    }
 }

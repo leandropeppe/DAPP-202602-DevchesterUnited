@@ -39,4 +39,10 @@ public class EstadisticasSyncEntity {
     public Instant getIniciadaAt() { return iniciadaAt; }
     public Instant getFinalizadaAt() { return finalizadaAt; }
     public String getErrorTecnico() { return errorTecnico; }
+
+    public void cambiarEstado(EstadoEstadisticasSync nuevoEstado, Instant finalizadaEn, String error) {
+        this.estado = nuevoEstado;
+        this.finalizadaAt = finalizadaEn;
+        this.errorTecnico = error;
+    }
 }

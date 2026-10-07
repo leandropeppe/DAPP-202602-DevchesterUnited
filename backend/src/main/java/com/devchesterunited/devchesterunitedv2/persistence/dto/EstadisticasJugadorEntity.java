@@ -83,4 +83,23 @@ public class EstadisticasJugadorEntity {
     public UUID getSyncId() { return syncId; }
     public Instant getCreadoEn() { return creadoEn; }
     public Instant getActualizadoEn() { return actualizadoEn; }
+
+    public void actualizar(String nuevaPosicion, Integer minutos, Integer goles, Integer asistencias,
+            BigDecimal nuevosTiros, BigDecimal nuevosPasesClave, BigDecimal nuevosRegates,
+            BigDecimal nuevosTackles, BigDecimal nuevaValoracion, Integer nuevasAmarillas,
+            Integer nuevasRojas, UUID nuevaSync, Instant ahora) {
+        this.posicion = nuevaPosicion;
+        this.minutosJugados = minutos;
+        this.goles = goles;
+        this.asistencias = asistencias;
+        this.tiros = nuevosTiros;
+        this.pasesClave = nuevosPasesClave;
+        this.regates = nuevosRegates;
+        this.tackles = nuevosTackles;
+        this.valoracion = nuevaValoracion;
+        this.tarjetasAmarillas = nuevasAmarillas;
+        this.tarjetasRojas = nuevasRojas;
+        this.syncId = nuevaSync;
+        this.actualizadoEn = ahora;
+    }
 }
