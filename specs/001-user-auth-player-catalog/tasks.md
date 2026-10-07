@@ -15,7 +15,7 @@ description: "Tareas de implementación de autenticación y catálogo de jugador
 - Las pruebas son obligatorias por la Constitución y por la corrección C1 ya autorizada. Escribir pruebas antes de implementar la historia, observar fallo esperado y ejecutarlas nuevamente al cerrar. Fallos de compilación por componentes aún ausentes no acreditan la validación funcional final.
 - No modificar ni borrar tests existentes sin un «SÍ» explícito. Agregar archivos nuevos y soporte de configuración para preservar `src/test/java/com/devchesterunited/devchesterunitedv2/DevchesterUnitedV2ApplicationTests.java`.
 - Mantener Java 21, JUnit 5, PostgreSQL real/Testcontainers, unitarias sin Spring, E2E MockMvc solo en controller, casos felices y borde y documentación/errores en español.
- - Nota histórica de regeneración: esta versión reemplazó los IDs del borrador anterior, cuyo estado inicial era pendiente. El estado vigente se detalla en la sección final: T001–T079, T081–T084, T086 y T089–T098 están completadas según la evidencia registrada; permanecen pendientes T080 y T088.
+ - Nota histórica de regeneración: esta versión reemplazó los IDs del borrador anterior, cuyo estado inicial era pendiente. El estado vigente se detalla en la sección final: T001–T079, T081–T085, T087 y T089–T098 están completadas según la evidencia registrada. T086 está completada como documentación de bloqueo externo, no como aceptación exitosa del proveedor. Permanecen pendientes T080 y T088.
 
 ## Fase 1: Preparación compartida
 
@@ -113,7 +113,7 @@ T024–T033 permanecen marcadas como completadas porque describen trabajo ya rea
 ---
 ## Continuación pendiente después de T050
 
-T001–T050 son historial completado y validado según specs/001-user-auth-player-catalog/validation.md. No se vuelven a generar tareas de US1, US2 ni US3. Las tareas siguientes son nuevas, permanecen pendientes y usan la estructura futura backend/ y frontend/.
+T001–T050 son historial completado y validado según specs/001-user-auth-player-catalog/validation.md. No se vuelven a generar tareas de US1, US2 ni US3. Las tareas siguientes fueron incorporadas con la estructura backend/ y frontend/; su estado vigente se detalla en la sección final y solo T080 y T088 permanecen pendientes.
 
 ## Fase 7: Reorganización estructural del monorepo
 
@@ -195,8 +195,8 @@ T050 completada → Monorepo T051–T056 → US4 T057–T069 → US5 T070–T078
 - T051–T069: [x] reorganización y US4 completadas, respaldadas por validation.md.
 - T070–T078: [x] US5 implementada, validada y cerrada.
 - T094–T098: [x] corrección constitucional C1 completada, respaldada por validation.md.
- - T080 y T088: [ ] gates finales pendientes. T079, T081–T087 están completadas; T086 queda cerrada como bloqueo externo documentado.
-- La suite histórica de 363 tests se conserva como regresión. La evidencia posterior registra backend/frontend, CI y la ejecución correcta de Postman; performance, OpenAPI final, quickstart, aceptación externa y SonarCloud siguen requiriendo gates específicos.
+  - T080 y T088: [ ] gates finales pendientes. T079, T081–T085 y T087 están completadas. T086 está documentada como bloqueo externo; no acredita aceptación exitosa del proveedor.
+- La suite histórica de 363 tests se conserva como regresión. La evidencia posterior registra backend/frontend, OpenAPI, quickstart, CI, SonarCloud y la ejecución correcta de Postman; permanecen pendientes las mediciones de performance y el cierre del DoD, mientras la aceptación externa continúa bloqueada por falta de credenciales.
 ## Cierre del bloque US5 (2026-09-17)
 
 El bloque US5 quedó completado según la evidencia posterior: E2E aislado, fixture sintético, verificaciones estructurales y de secretos, Vitest, build, preview, Playwright y regresión conjunta backend/frontend están registrados en `validation.md` (backend 391 tests, Vitest, `verify:frontend`, build y Playwright PASSED). La cifra no fue reejecutada en esta actualización documental.
@@ -207,13 +207,16 @@ El bloque US5 quedó completado según la evidencia posterior: E2E aislado, fixt
 |---|---|---|
 | Implementado y verificado históricamente | US1–US5, JWT, API Key, rotación/concurrencia, catálogo público, sync local, frontend y CI | Evidencia en `validation.md`; no se reejecuta aquí |
 | Bloqueado por dependencia externa | Integración externa real sin credencial/proveedor habilitado | T086 |
-| Entrega actual | Mediciones, Postman, quickstart, flujo final y DoD | T080, T082, T085, T087, T088 |
+| Entrega actual | Mediciones y cierre DoD | T080, T088 |
+| Evidencia completada | Postman, quickstart y flujo final | T082, T085, T087 |
 | Requisito futuro | No asignado: los documentos no fundamentan Entrega 2 o 3 | Decisión pendiente del equipo |
 | Corrección constitucional C1 | Dependencia Service → DTOs de Controller | Resuelta en T094–T098 |
 
 ### Registro de tareas históricas reemplazadas
 
 Las tareas `T035`, `T038`, `T042`, `T049`, `T062` y `T067` conservan identificadores y estado para preservar el historial, pero describen políticas anteriores. No deben utilizarse para inferir la aceptación vigente. Sus reemplazos documentales son: catálogo público en `T089`, autorización administrativa por API Key en `T090–T091`, y validación frontend sin dependencia de API Key en `T092`. La rotación, revocación, unicidad y concurrencia de API Keys descritas en `T024–T037` siguen siendo requisitos vigentes.
+
+Las tareas `T042`, `T062` y `T067` deben interpretarse como **históricas y no vigentes**: sus políticas fueron reemplazadas por `T089–T092` y no deben reutilizarse para implementar el comportamiento actual.
 
 ## Fase 11: Corrección constitucional C1 — separación Service/Controller
 
