@@ -2,11 +2,14 @@ package com.devchesterunited.devchesterunitedv2.controller;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -39,6 +42,7 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
 
     @Autowired MockMvc mvc;
     @Autowired EquipoRepository equipos;
+    @Autowired IdentidadExternaEquipoRepository identidadesEquipos;
     @Autowired JugadorRepository jugadores;
     @Autowired UsuarioRepository usuarios;
 
@@ -48,9 +52,13 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
 
         usuarios.saveAndFlush(new UsuarioEntity(USUARIO, "missingcredentialuser",
                 "missingcredential@example.com", "$2a$12$" + "a".repeat(53), AHORA, AHORA));
-        equipos.saveAndFlush(new EquipoEntity(EQUIPO, 700001L, "Equipo Persistido", "EP", "EP",
-                "LaLiga", null, true, 2518L, LocalDate.of(2026, 8, 16),
-                LocalDate.of(2027, 5, 30), AHORA, AHORA));
+        EquipoEntity equipoPersistido = equipos.saveAndFlush(EquipoEntity.builder().id(EQUIPO)
+                .nombre("Equipo Persistido").nombreCorto("EP").sigla("EP").liga("LaLiga")
+                .escudoUrl(null).activo(true).temporadaExternaId(2518L)
+                .inicioTemporada(LocalDate.of(2026, 8, 16)).finTemporada(LocalDate.of(2027, 5, 30))
+                .creadoEn(AHORA).actualizadoEn(AHORA).build());
+        identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
+                UUID.randomUUID(), equipoPersistido, ProveedorIdentidadExterna.FOOTBALL_DATA, 700001L));
         JugadorEntity jugador = new JugadorEntity(JUGADOR, "Jugador Persistido", EQUIPO,
                 "Forward", null, "Argentina", true);
         jugador.conservarAuditoria(AHORA, AHORA);
@@ -70,7 +78,8 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
 
         Set<UUID> equiposPropios = new HashSet<>();
         equipos.findById(EQUIPO).ifPresent(equipo -> equiposPropios.add(equipo.getId()));
-        equipos.findByIdExterno(700001L).ifPresent(equipo -> equiposPropios.add(equipo.getId()));
+        identidadesEquipos.findByProveedorAndExternalId(ProveedorIdentidadExterna.FOOTBALL_DATA, 700001L)
+                .ifPresent(identidad -> equiposPropios.add(identidad.getEquipo().getId()));
         equipos.deleteAllById(equiposPropios);
         equipos.flush();
 
@@ -88,9 +97,10 @@ class CatalogoSyncMissingCredentialE2ETest extends PostgresTestSupport {
                 .andExpect(jsonPath("$.message").value("No fue posible sincronizar el catalogo con el proveedor externo"));
 
         assertThat(equipos.findById(EQUIPO)).get().satisfies(equipo -> {
-            assertThat(equipo.getIdExterno()).isEqualTo(700001L);
             assertThat(equipo.isActivo()).isTrue();
         });
+        assertThat(identidadesEquipos.findByProveedorAndExternalId(
+                ProveedorIdentidadExterna.FOOTBALL_DATA, 700001L)).isPresent();
         assertThat(jugadores.findById(JUGADOR)).get().satisfies(jugador -> {
             assertThat(jugador.isActivo()).isTrue();
         });

@@ -4,8 +4,12 @@ import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.IdentidadExternaEquipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import java.time.Instant;
@@ -40,12 +44,13 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
     @Autowired JdbcTemplate jdbc;
     @Autowired SincronizacionCatalogoService servicio;
     @Autowired EquipoRepository equipos;
+    @Autowired IdentidadExternaEquipoRepository identidadesEquipos;
     @Autowired JugadorRepository jugadores;
 
     @BeforeEach
     void limpiarFixturesExternos() {
-        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT id FROM equipos WHERE external_id IS NOT NULL)");
-        jdbc.update("DELETE FROM equipos WHERE external_id IS NOT NULL");
+        jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
+        jdbc.update("DELETE FROM equipos WHERE id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("UPDATE equipos SET is_active = true");
         jdbc.update("UPDATE jugadores SET is_active = true");
     }
@@ -59,7 +64,7 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
 
         servicio.sincronizar();
 
-        var equipoInicial = equipos.findByIdExterno(EQUIPO_AUSENTE).orElseThrow();
+        var equipoInicial = equipoPorExternalId(EQUIPO_AUSENTE);
         UUID equipoIdInicial = equipoInicial.getId();
         List<UUID> jugadoresIdsIniciales = jugadores.findAllByEquipoId(equipoIdInicial).stream()
                 .map(JugadorEntity::getId).sorted().toList();
@@ -68,7 +73,7 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
 
         servicio.sincronizar();
 
-        var equipoAusente = equipos.findByIdExterno(EQUIPO_AUSENTE).orElseThrow();
+        var equipoAusente = equipoPorExternalId(EQUIPO_AUSENTE);
         assertThat(equipoAusente.isActivo()).isFalse();
         assertThat(equipoAusente.getId()).isEqualTo(equipoIdInicial);
         assertThat(jugadores.findAllByEquipoId(equipoIdInicial))
@@ -76,16 +81,16 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
         assertThat(jugadores.contar(null, "Equipo Original 0", null)).isZero();
         assertThat(jugadores.buscar(null, "Equipo Original 0", null, 0, 20)).isEmpty();
         assertThat(jugadores.contar(null, "Equipo Reemplazo", null)).isEqualTo(2);
-        assertThat(equipos.findByIdExterno(EQUIPO_REEMPLAZO)).get()
-                .extracting(EquipoEntity::isActivo).isEqualTo(true);
+        assertThat(equipoPorExternalId(EQUIPO_REEMPLAZO).isActivo()).isTrue();
         assertThat(activosExternos()).isEqualTo(96L);
 
         servicio.sincronizar();
 
-        var equipoReactivado = equipos.findByIdExterno(EQUIPO_AUSENTE).orElseThrow();
+        var equipoReactivado = equipoPorExternalId(EQUIPO_AUSENTE);
         assertThat(equipoReactivado.isActivo()).isTrue();
         assertThat(equipoReactivado.getId()).isEqualTo(equipoIdInicial);
-        assertThat(equipoReactivado.getIdExterno()).isEqualTo(EQUIPO_AUSENTE);
+        assertThat(identidadPorExternalId(EQUIPO_AUSENTE).orElseThrow().getExternalId())
+                .isEqualTo(EQUIPO_AUSENTE);
         assertThat(jugadores.findAllByEquipoId(equipoIdInicial)).hasSize(2)
                 .allMatch(JugadorEntity::isActivo)
                 .extracting(JugadorEntity::getId)
@@ -95,15 +100,26 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
                 jugadorIdPorExternalId(JUGADOR_AUSENTE_BASE + 1))))
                 .hasSize(2).allMatch(JugadorEntity::isActivo);
         assertThat(jugadores.contar(null, "Equipo Original 0", null)).isEqualTo(2);
-        assertThat(equipos.findByIdExterno(EQUIPO_REEMPLAZO)).get()
-                .extracting(EquipoEntity::isActivo).isEqualTo(false);
+        assertThat(equipoPorExternalId(EQUIPO_REEMPLAZO).isActivo()).isFalse();
         assertThat(activosExternos()).isEqualTo(96L);
         assertThat(duplicadosExternalId()).isZero();
     }
 
     private long activosExternos() {
         return jdbc.queryForObject(
-                "SELECT count(*) FROM equipos WHERE external_id IS NOT NULL AND is_active", Long.class);
+                "SELECT count(*) FROM equipos e JOIN identidades_externas_equipo i ON i.equipo_id = e.id "
+                        + "WHERE i.proveedor = 'FOOTBALL_DATA' AND e.is_active", Long.class);
+    }
+
+    private EquipoEntity equipoPorExternalId(long externalId) {
+        UUID equipoId = identidadPorExternalId(externalId).orElseThrow().getEquipo().getId();
+        return equipos.findById(equipoId).orElseThrow();
+    }
+
+    private java.util.Optional<com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity>
+            identidadPorExternalId(long externalId) {
+        return identidadesEquipos.findByProveedorAndExternalId(
+                ProveedorIdentidadExterna.FOOTBALL_DATA, externalId);
     }
 
     private long duplicadosExternalId() {
@@ -128,6 +144,7 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
         List<Equipo> equiposSnapshot = new ArrayList<>();
         List<Jugador> jugadoresSnapshot = new ArrayList<>();
         Map<UUID, Long> ids = new HashMap<>();
+        List<IdentidadExternaEquipo> identidadesEquipos = new ArrayList<>();
         int indice = 0;
         for (int liga = 0; liga < ligas.size(); liga++) {
             for (int i = 0; i < cantidades.get(liga); i++) {
@@ -135,9 +152,11 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
                 long idExternoEquipo = reemplazo ? EQUIPO_REEMPLAZO : EQUIPO_AUSENTE + indice;
                 String nombreEquipo = reemplazo ? "Equipo Reemplazo" : "Equipo Original " + indice;
                 UUID equipoId = UUID.randomUUID();
-                equiposSnapshot.add(Equipo.importado(equipoId, idExternoEquipo, nombreEquipo, "E", "E",
-                        ligas.get(liga), null, 2026L, LocalDate.of(2026, 8, 1),
-                        LocalDate.of(2027, 5, 31), AHORA));
+                equiposSnapshot.add(Equipo.importado(equipoId, nombreEquipo, ligas.get(liga),
+                        new TemporadaEquipo(2026L, LocalDate.of(2026, 8, 1),
+                                LocalDate.of(2027, 5, 31)), AHORA));
+                identidadesEquipos.add(new IdentidadExternaEquipo(
+                        equipoId, ProveedorIdentidadExterna.FOOTBALL_DATA, idExternoEquipo));
                 for (int jugador = 0; jugador < 2; jugador++) {
                     long idExternoJugador = reemplazo
                             ? JUGADOR_REEMPLAZO_BASE + jugador
@@ -150,6 +169,6 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
                 indice++;
             }
         }
-        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids);
+        return new CatalogoSincronizado(equiposSnapshot, jugadoresSnapshot, ids, identidadesEquipos);
     }
 }

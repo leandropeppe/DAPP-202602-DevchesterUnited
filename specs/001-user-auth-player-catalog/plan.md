@@ -239,4 +239,4 @@ La dependencia Service → DTOs de Controller queda eliminada por la corrección
 Ejecutar `$speckit-tasks` sobre este diseño conservando T001–T050 y la evidencia histórica. Agregar tareas US4/US5 y actualizar el alcance de T051–T061: fixture de rendimiento normalizado, cinco endpoints, frontend y aceptación externa. Incluir la revisión/autorización de cambios concretos de fixtures antes de editar tests existentes. Este comando termina en fase 1: no genera tareas, código, migraciones ni cambios de tests.
 ## Cierre de ejecución US5 (2026-09-17)
 
- T075–T078 están implementadas y validadas según la evidencia registrada. T079 y T081–T085, T087 también están completadas. Permanecen pendientes T080, T086 y T088.
+ T075–T078 están implementadas y validadas según la evidencia registrada. T079 y T081–T085, T087 también están completadas. Permanecen pendientes T080 y T088. T086 queda cerrada como bloqueo externo documentado; la aceptación real del proveedor no fue posible por falta de credenciales.

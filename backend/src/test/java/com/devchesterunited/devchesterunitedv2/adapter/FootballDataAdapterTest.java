@@ -1,12 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.adapter;
 
 import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -44,14 +44,19 @@ class FootballDataAdapterTest {
         assertThat(rutas).containsExactly("/competitions/PL/teams", "/competitions/PD/teams",
                 "/competitions/BL1/teams", "/competitions/SA/teams", "/competitions/FL1/teams");
         assertThat(snapshot.identidadesFootballData()).containsValue(60000L);
-        assertThat(snapshot.equipos().get(0).getEscudoUrl()).isEqualTo(URI.create("https://img.example/10000.png"));
+        assertThat(snapshot.identidadesExternasEquipos())
+                .anySatisfy(identidad -> {
+                    assertThat(identidad.proveedor()).isEqualTo(
+                            com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.FOOTBALL_DATA);
+                    assertThat(identidad.externalId()).isEqualTo(10000L);
+                });
     }
 
     @Test
     void mapeaPosicionesYAdmiteDorsalNulo() throws Exception {
         iniciar((exchange, codigo) -> responder(exchange, 200, payload(codigo, cantidad(codigo), true), "100"));
         var jugadores = adapter().sincronizar().jugadores();
-        assertThat(jugadores).extracting(j -> j.getPosicion()).contains("Defender", "Midfielder", "Goalkeeper", "Forward");
+        assertThat(jugadores).extracting(Jugador::getPosicion).contains("Defender", "Midfielder", "Goalkeeper", "Forward");
         assertThat(jugadores).anyMatch(j -> j.getDorsal() == null && j.getNombre().equals("Solo Nombre"));
     }
 

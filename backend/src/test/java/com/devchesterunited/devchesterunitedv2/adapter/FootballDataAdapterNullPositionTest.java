@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.adapter;
 
 import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -34,7 +35,7 @@ class FootballDataAdapterNullPositionTest {
 
         assertThat(snapshot.equipos()).hasSize(96);
         assertThat(snapshot.jugadores()).anyMatch(j -> j.getPosicion() == null);
-        assertThat(snapshot.jugadores()).extracting(j -> j.getNombre())
+        assertThat(snapshot.jugadores()).extracting(Jugador::getNombre)
                 .contains("Kepa Arrizabalaga", "Cristian Cásseres Jr.", "Pierre Emile Højbjerg");
     }
 

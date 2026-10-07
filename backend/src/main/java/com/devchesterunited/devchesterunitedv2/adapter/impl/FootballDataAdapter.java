@@ -9,7 +9,10 @@ import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballTeamDTO;
 import com.devchesterunited.devchesterunitedv2.adapter.dto.FootballTeamsResponseDTO;
 import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.IdentidadExternaEquipo;
 import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URI;
 import java.time.Clock;
@@ -88,34 +91,27 @@ public class FootballDataAdapter implements ProveedorCatalogo {
             FootballTeamDTO equipoExterno,
             Liga liga,
             FootballSeasonDTO temporada,
-            List<Equipo> equipos,
-            List<Jugador> jugadores,
-            Map<Long, UUID> equiposPorExterno,
-            Map<Long, String> jugadoresVistos,
-            Map<UUID, Long> identidadesFootballData) {
+            ConversionContext contexto) {
 
         validarEquipo(equipoExterno);
 
-        if (equiposPorExterno.containsKey(equipoExterno.id())) {
+        if (contexto.equiposPorExterno().containsKey(equipoExterno.id())) {
             throw new FootballDataException("El proveedor repitio un equipo.");
         }
 
         UUID idEquipo = UUID.randomUUID();
-        equiposPorExterno.put(equipoExterno.id(), idEquipo);
+        contexto.equiposPorExterno().put(equipoExterno.id(), idEquipo);
 
-        equipos.add(Equipo.importado(
+        contexto.equipos().add(Equipo.importado(
                 idEquipo,
-                equipoExterno.id(),
                 equipoExterno.name(),
-                equipoExterno.shortName(),
-                equipoExterno.tla(),
                 liga.nombre(),
-                uriHttps(equipoExterno.crest()),
-                temporada.id(),
-                temporada.startDate(),
-                temporada.endDate(),
+                new TemporadaEquipo(
+                        temporada.id(), temporada.startDate(), temporada.endDate()),
                 clock.instant()
         ));
+        contexto.identidadesExternasEquipos().add(new IdentidadExternaEquipo(
+                idEquipo, ProveedorIdentidadExterna.FOOTBALL_DATA, equipoExterno.id()));
 
         Set<Long> idsEnEquipo = new HashSet<>();
 
@@ -124,9 +120,9 @@ public class FootballDataAdapter implements ProveedorCatalogo {
                     jugador,
                     idEquipo,
                     idsEnEquipo,
-                    jugadores,
-                    jugadoresVistos,
-                    identidadesFootballData
+                    contexto.jugadores(),
+                    contexto.jugadoresVistos(),
+                    contexto.identidadesFootballData()
             );
         }
     }
@@ -199,19 +195,23 @@ public class FootballDataAdapter implements ProveedorCatalogo {
         List<Equipo> equipos = new ArrayList<>();
         List<Jugador> jugadores = new ArrayList<>();
         Map<Long, UUID> equiposPorExterno = new HashMap<>();
+        List<IdentidadExternaEquipo> identidadesExternasEquipos = new ArrayList<>();
         Map<Long, String> jugadoresVistos = new HashMap<>();
         Map<UUID, Long> identidadesFootballData = new HashMap<>();
+        ConversionContext contexto = new ConversionContext(
+                equipos, jugadores, equiposPorExterno, identidadesExternasEquipos,
+                jugadoresVistos, identidadesFootballData);
         for (int i = 0; i < LIGAS.size(); i++) {
             comprobarDeadline(limite);
             if (i > 0) dormirCadencia(limite);
             Liga liga = LIGAS.get(i);
             FootballTeamsResponseDTO respuesta = obtener(liga.codigo());
-            convertir(respuesta, liga, equipos, jugadores, equiposPorExterno, jugadoresVistos,
-                    identidadesFootballData);
+            convertir(respuesta, liga, contexto);
         }
         comprobarDeadline(limite);
         try {
-            return new CatalogoSincronizado(equipos, jugadores, identidadesFootballData);
+            return new CatalogoSincronizado(equipos, jugadores, identidadesFootballData,
+                    identidadesExternasEquipos);
         } catch (IllegalArgumentException e) {
             throw new FootballDataException("La respuesta del proveedor no forma un snapshot utilizable.", e);
         }
@@ -237,11 +237,7 @@ public class FootballDataAdapter implements ProveedorCatalogo {
     private void convertir(
             FootballTeamsResponseDTO respuesta,
             Liga liga,
-            List<Equipo> equipos,
-            List<Jugador> jugadores,
-            Map<Long, UUID> equiposPorExterno,
-            Map<Long, String> jugadoresVistos,
-            Map<UUID, Long> identidadesFootballData) {
+            ConversionContext contexto) {
 
         validarRespuesta(respuesta, liga);
 
@@ -252,11 +248,7 @@ public class FootballDataAdapter implements ProveedorCatalogo {
                     equipoExterno,
                     liga,
                     temporada,
-                    equipos,
-                    jugadores,
-                    equiposPorExterno,
-                    jugadoresVistos,
-                    identidadesFootballData
+                    contexto
             );
         }
     }
@@ -300,12 +292,6 @@ public class FootballDataAdapter implements ProveedorCatalogo {
         return equipo + "|" + j.name() + "|" + j.shirtNumber() + "|" + j.nationality() + "|" + j.position();
     }
 
-    private static URI uriHttps(String crest) {
-        if (crest == null || crest.isBlank()) return null;
-        try { URI uri = URI.create(crest.trim()); return "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null ? uri : null; }
-        catch (IllegalArgumentException e) { return null; }
-    }
-
     private void dormirCadencia(Instant limite) {
         comprobarDeadline(limite);
         try { sleeper.sleep(CADENCIA); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new FootballDataException("La sincronizacion fue interrumpida.", e); }
@@ -316,5 +302,12 @@ public class FootballDataAdapter implements ProveedorCatalogo {
         if (disponible != null) { try { if (Long.parseLong(disponible) <= 0) throw new FootballDataException("La cuota del proveedor no esta disponible."); } catch (NumberFormatException e) { throw new FootballDataException("La cuota del proveedor es invalida."); } }
     }
     @FunctionalInterface public interface Sleeper { void sleep(Duration duration) throws InterruptedException; }
+    private record ConversionContext(
+            List<Equipo> equipos,
+            List<Jugador> jugadores,
+            Map<Long, UUID> equiposPorExterno,
+            List<IdentidadExternaEquipo> identidadesExternasEquipos,
+            Map<Long, String> jugadoresVistos,
+            Map<UUID, Long> identidadesFootballData) { }
     private record Liga(String codigo, String nombre, int cantidad) { }
 }
