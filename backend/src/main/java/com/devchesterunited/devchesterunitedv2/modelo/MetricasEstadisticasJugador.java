@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.modelo;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /** Métricas normalizadas de una familia estadística. Los null representan ausencia legítima. */
 public record MetricasEstadisticasJugador(
@@ -16,6 +17,11 @@ public record MetricasEstadisticasJugador(
         Integer tarjetasRojas) {
 
     public MetricasEstadisticasJugador {
+        tiros = normalizarDecimal(tiros);
+        pasesClave = normalizarDecimal(pasesClave);
+        regates = normalizarDecimal(regates);
+        tackles = normalizarDecimal(tackles);
+        valoracion = normalizarDecimal(valoracion);
         validarNoNegativo(minutosJugados, "minutosJugados");
         validarNoNegativo(goles, "goles");
         validarNoNegativo(asistencias, "asistencias");
@@ -26,6 +32,10 @@ public record MetricasEstadisticasJugador(
         validarNoNegativo(valoracion, "valoracion");
         validarNoNegativo(tarjetasAmarillas, "tarjetasAmarillas");
         validarNoNegativo(tarjetasRojas, "tarjetasRojas");
+    }
+
+    private static BigDecimal normalizarDecimal(BigDecimal valor) {
+        return valor == null ? null : valor.setScale(2, RoundingMode.HALF_UP);
     }
 
     private static void validarNoNegativo(Number valor, String campo) {

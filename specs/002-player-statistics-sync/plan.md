@@ -1,88 +1,107 @@
-# Plan de implementación: Sincronización de estadísticas de jugadores
+# Plan de implementacion: Sincronizacion de estadisticas de jugadores
 
-**Branch**: 002-player-statistics-sync | **Fecha**: 2026-10-07 | **Spec**: spec.md
+**Branch**: 002-player-statistics-sync | **Fecha**: 2026-10-10 | **Spec**: spec.md
 
 ## Resumen
 
-La feature sincroniza una fotografía vigente de estadísticas hacia Jugador local existente. WhoScored se consume mediante ProveedorEstadisticasJugador; ProveedorCatalogo continúa siendo exclusivamente el puerto del catálogo Football-Data.
+La feature sincroniza una fotografia vigente de estadisticas hacia Jugador
+local existente. WhoScored se consume mediante `ProveedorEstadisticasJugador`;
+`ProveedorCatalogo` continua siendo exclusivamente el puerto del catalogo
+Football-Data.
 
-La sincronización obtiene y valida páginas fuera de la transacción final, conserva lotes en staging técnico y publica estadísticas e identidades WHOSCORED nuevas mediante una única promoción atómica. El staging es necesario para memoria acotada, red fuera de transacción y consistencia global.
+El puerto representa una adquisicion completa por competicion. El Adapter
+realiza las tres adquisiciones internas de WhoScored, las valida, traduce y
+consolida por `playerId`. El Service recibe un unico snapshot normalizado por
+competicion y no conoce familias del proveedor, Selenium ni paginacion.
 
-## Contexto actual
+El contrato ficticio anterior `GET /statistics` con `competition`, `family`,
+`page`, `pageSize` y Bearer API key queda **superseded**.
 
-- Jugador y Equipo no tienen campos legacy de identificación externa.
-- IdentidadExternaJugador/Equipo y sus repositories son la fuente persistente de identidad por proveedor.
-- ProveedorIdentidadExterna.WHOSCORED ya existe.
-- Jugador actual expone nombre, posición, nacionalidad y equipoId; Equipo expone nombre y liga.
-- El catálogo Football-Data entrega nombre, posición, nacionalidad y equipo para jugadores, y nombre/liga/nombre corto/sigla para equipos.
-- No se modifica JugadorMapper para transportar estadísticas.
+## Flujo arquitectonico
 
-El contrato WhoScored aún no existe en el código. El Adapter deberá entregar los hints normalizados definidos en contracts. Si una respuesta no contiene evidencia suficiente para vinculación, el Service no inventará una regla.
+1. El Service adquiere exclusion y crea una ejecucion `INICIADA`.
+2. El Adapter crea una unica sesion WebDriver para la sincronizacion completa.
+3. Para cada competicion el Adapter adquiere `summary/all`, `summary/offensive` y `summary/defensive`.
+4. El Adapter valida cada JSON y exige respuesta completa en una pagina.
+5. El Adapter consolida las tres familias por `playerId` y devuelve un snapshot completo.
+6. El Service resuelve identidades persistidas o ejecuta enrolamiento conservador.
+7. El Service consolida/escribe staging mediante transacciones cortas.
+8. Se validan las cinco competiciones antes de marcar la ejecucion como `VALIDADA`.
+9. Una transaccion promueve estadisticas, identidades nuevas y `PUBLICADA`.
+10. El Adapter cierra WebDriver incluso ante excepciones y el Service libera la exclusion.
 
-## Flujo arquitectónico
+El cierre de WebDriver, la navegacion y cualquier futura paginacion son
+responsabilidad del Adapter/infraestructura. El Service no modifica su contrato
+si la paginacion futura se encapsula dentro del Adapter.
 
-1. El Service adquiere exclusión y crea una ejecución INICIADA.
-2. El Adapter solicita páginas de las cinco competiciones y familias.
-3. El Adapter valida transporte, respuesta y paginación, y devuelve value objects internos.
-4. El Service primero intenta resolver playerId/teamId por identidades WHOSCORED persistidas.
-5. Para cada identidad ausente ejecuta la fase de enrolamiento inicial controlado.
-6. Valida y consolida familias por playerId.
-7. Escribe cada lote en staging mediante transacciones cortas.
-8. Marca la ejecución VALIDADA solo con las cinco competiciones completas.
-9. Una transacción breve promueve estadísticas, persiste identidades WHOSCORED nuevas y marca PUBLICADA.
-10. Libera exclusión.
+## Adquisicion y completitud
 
-## Fase explícita de enrolamiento inicial
+Endpoint real: `/statisticsfeed/1/getplayerstatistics`.
 
-### Equipos
+Parametros comunes: `statsAccumulationType=0`, `isCurrent=true`, `sortBy=Rating`,
+`field=Overall`, `isMinApp=true` y un `numberOfPlayersToPick` suficientemente
+alto. El valor 350 fue validado manualmente, pero no es una garantia universal.
 
-Si falta IdentidadExternaEquipo WHOSCORED, se obtienen candidatos locales activos de la liga/competición. Se compara nombre canónico exacto: trim, case-fold, espacios Unicode normalizados y comparación exacta. La liga restringe el conjunto cuando está disponible. Nombre corto o sigla solo pueden aportar evidencia adicional comparable; nunca son identidad persistente.
+La primera implementacion no pagina. Se acepta solo metadata coherente con una
+respuesta completa en una pagina:
 
-Solo un candidato inequívoco puede vincularse. Cero candidatos, múltiples candidatos, liga ausente cuando sea necesaria o datos insuficientes dejan el teamId no resuelto.
+- `currentPage == 1`;
+- `totalPages == 1`;
+- `players.size == totalResults`;
+- sin contradicciones entre metadata y contenido.
 
-### Jugadores
+Si se incumple, el Adapter traduce el problema a error de proveedor. No se
+publica staging parcial y se conserva el snapshot anterior. Una futura
+paginacion permanece dentro del Adapter.
 
-Si falta IdentidadExternaJugador WHOSCORED, primero se resuelve el equipo. Luego se buscan candidatos locales activos de ese equipo con nombre canónico exacto. Posición normalizada y nacionalidad solo filtran/desempatan cuando ambas fuentes las informan y son compatibles. Se acepta solo un candidato final.
+## Configuracion de infraestructura
 
-No se usa similitud difusa, dorsal, orden de aparición ni el ID de Football-Data. Los atributos de matching son evidencia transitoria, no claves persistentes.
+Los pares no pertenecen al dominio:
 
-Las nuevas identidades se escriben como IdentidadExternaJugador/Equipo con proveedor WHOSCORED y se publican en la misma transacción que las estadísticas. Sincronizaciones posteriores resuelven exclusivamente por identidad persistida.
+- Premier League: `tournamentOptions=2`, `stageId=25544`.
+- La Liga: `tournamentOptions=4`, `stageId=25662`.
+- Serie A: `tournamentOptions=5`, `stageId=25518`.
+- Bundesliga: `tournamentOptions=3`, `stageId=25666`.
+- Ligue 1: `tournamentOptions=22`, `stageId=25554`.
 
-## Resultados no resolubles
+`isCurrent=true` puede utilizarse como filtro del proveedor, pero no es la
+unica fuente para identificar temporada.
 
-Cero coincidencias, múltiples coincidencias o evidencia insuficiente producen identidad no resuelta/ambigua. Si es requerida, la sincronización completa falla, no promociona staging ni identidades nuevas y conserva el último snapshot válido.
+## Resolucion, staging y atomicidad
 
-## Staging y atomicidad
+Se conservan la resolucion de equipos y jugadores, las identidades namespaced,
+la consolidacion, el staging, el upsert, la idempotencia, el rollback, la
+conservacion del snapshot anterior y la exclusion concurrente.
 
-El staging contiene ejecución, competición, playerId/teamId externos, hints normalizados, UUID locales resueltos, métricas consolidadas y marcas de familias. No representa Jugador/Equipo ni es visible para negocio.
+JSON invalido, metadata incoherente, estructura inesperada, navegacion fallida,
+bloqueo del proveedor o adquisicion incompleta abortan la sincronizacion. Los
+detalles se sanitizan y no se implementan stealth, evasiones ni bypass.
 
-Se escribe después de validar cada página/lote. Una página intermedia fallida marca la ejecución FALLIDA y no toca lo publicado. La promoción de estadísticas, identidades nuevas y estado PUBLICADA es una sola transacción; cualquier error hace rollback.
+## Mapeo de metricas
 
-## Estructura prevista
-
-backend/src/main/java/com/devchesterunited/devchesterunitedv2/
-- adapter/dto: DTOs exclusivos de WhoScored
-- adapter/impl/WhoScoredStatisticsAdapter.java
-- adapter/ProveedorEstadisticasJugador.java
-- modelo: estadísticas y value objects normalizados
-- persistence/dto: entidades publicadas y staging
-- persistence: repositories
-- service/impl y service/interfaces: orquestación
-
-No se agregan DTOs públicos, representaciones alternativas de Jugador/Equipo, tablas de matching ni endpoint HTTP.
+Se persisten solamente las metricas ya existentes en el dominio. La precedencia
+canonica es Summary para minutos, goles, asistencias, tiros, valoracion y
+tarjetas; Offensive para pases clave y regates; Defensive para tackles. Una
+familia secundaria no sobrescribe la fuente canonica. Los mapeos detallados se
+encuentran en `research.md`; `posicion` queda pendiente porque no aparece en el
+JSON real documentado y su ausencia no bloquea la adquisicion.
 
 ## Constitution Check
 
-- Adapter encapsula WhoScored; Service orquesta; Modelo permanece independiente.
-- Identidad persistente por IdentidadExternaJugador/Equipo, nunca por atributos de matching.
-- Red separada de transacción de promoción.
-- Staging justificado por atomicidad y volumen.
-- Errores de proveedor, matching o persistencia conservan el snapshot anterior.
-- Tests cubren matching 0/1/múltiples, enrolamiento, idempotencia, fallos y rollback sin Internet.
+- Selenium, JSON, IDs de infraestructura y errores del proveedor quedan en Adapter.
+- Service depende de un puerto y recibe un snapshot completo por competicion.
+- Modelo permanece independiente de infraestructura.
+- Una unica sesion WebDriver se cierra ante exito o excepcion.
+- Tests no consumen WhoScored real ni requieren credenciales reales.
+- Adquisicion y promocion permanecen separadas.
+- Fallos no dejan actualizaciones parciales visibles.
 
-## Complejidad justificada
+No se detecta incompatibilidad con la Constitution.
 
-| Elemento | Motivo |
-|---|---|
-| Staging persistido | Necesario para no acumular todas las páginas y mantener publicación atómica. |
-| Fase de enrolamiento | Necesaria porque los IDs Football-Data y WhoScored no se presuponen equivalentes y el catálogo actual puede carecer de identidad WHOSCORED. |
+## Decisiones superseded
+
+- `GET /statistics` como endpoint de adquisicion.
+- `competition`, `family`, `page` y `pageSize` como contrato externo.
+- Bearer API key como mecanismo documentado.
+- Familias separadas consumidas por el Service.
+- Paginacion controlada por el Service.

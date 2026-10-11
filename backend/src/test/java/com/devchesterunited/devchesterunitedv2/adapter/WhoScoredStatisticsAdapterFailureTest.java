@@ -1,91 +1,155 @@
-package com.devchesterunited.devchesterunitedv2.adapter;
+package com.devchesterunited.devchesterunitedv2.adapter.impl;
 
-import com.devchesterunited.devchesterunitedv2.adapter.impl.WhoScoredStatisticsAdapter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.devchesterunited.devchesterunitedv2.adapter.WebDriverFactory;
+import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsConfiguration;
+import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsConfiguration.CompetitionParameters;
+import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsException;
 import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica;
-import com.sun.net.httpserver.HttpServer;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import org.junit.jupiter.api.AfterEach;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.WebDriverException;
 import org.springframework.web.client.RestClient;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
 
 class WhoScoredStatisticsAdapterFailureTest {
-    private HttpServer server;
+    @Test
+    void rechazaMetadataContractualIncompletaSinSnapshotParcial() throws IOException {
+        WebDriver driver = mock(WebDriver.class);
+        WebElement body = mock(WebElement.class);
+        WebDriverFactory factory = mock(WebDriverFactory.class);
+        when(factory.create()).thenReturn(driver);
+        when(driver.findElement(any(By.class))).thenReturn(body);
+        when(body.getDomProperty("textContent")).thenReturn(fixture("summary-invalid-total-pages.json"));
 
-    @AfterEach
-    void detener() {
-        if (server != null) {
-            server.stop(0);
-        }
+        assertThatThrownBy(() -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
+                .isInstanceOf(WhoScoredStatisticsException.class);
+
+        verify(driver).get(any(String.class));
+        verify(driver).quit();
     }
 
     @Test
-    void traduceCuotaSinFiltrarDetallesDelProveedor() throws Exception {
-        iniciar(429, "{\"internalQuotaId\":\"secret\"}");
+    void traduceFalloDeNavegacionSinExponerDetallesYSesierraElDriver() {
+        WebDriver driver = mock(WebDriver.class);
+        WebDriverFactory factory = mock(WebDriverFactory.class);
+        when(factory.create()).thenReturn(driver);
+        doThrow(new WebDriverException(
+                "https://whoscored.test/private?stageId=25544&tournamentOptions=2 token=secret"))
+                .when(driver).get(any(String.class));
 
-        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
-                FamiliaEstadistica.GENERAL, 1, 10))
+
+        var error = org.assertj.core.api.Assertions.catchThrowable(
+                () -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE));
+
+        assertThat(error).isInstanceOf(WhoScoredStatisticsException.class);
+        assertThat(error.getMessage()).contains("No se pudo leer el JSON de statisticsfeed.")
+                .doesNotContain("whoscored.test", "stageId", "tournamentOptions", "secret");
+        verify(driver).quit();
+    }
+
+    @Test
+    void traduceFalloControladoAlEsperarElBodyYSesierraElDriver() {
+        WebDriver driver = mock(WebDriver.class);
+        WebDriverFactory factory = mock(WebDriverFactory.class);
+        when(factory.create()).thenReturn(driver);
+        doThrow(new WebDriverException("internal wait detail"))
+                .when(driver).findElement(any(By.class));
+
+        var error = org.assertj.core.api.Assertions.catchThrowable(
+                () -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE));
+
+        assertThat(error).isInstanceOf(WhoScoredStatisticsException.class);
+        assertThat(error.getMessage()).isEqualTo("No se pudo leer el JSON de statisticsfeed.")
+                .doesNotContain("internal wait detail");
+        verify(driver).quit();
+    }
+
+    @Test
+    void rechazaBodyVacioSinCrearSnapshotParcial() {
+        WebDriver driver = mock(WebDriver.class);
+        WebElement body = mock(WebElement.class);
+        WebDriverFactory factory = mock(WebDriverFactory.class);
+        when(factory.create()).thenReturn(driver);
+        when(driver.findElement(any(By.class))).thenReturn(body);
+        when(body.getDomProperty("textContent")).thenReturn("   ");
+
+        assertThatThrownBy(() -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(WhoScoredStatisticsException.class)
-                .hasMessageContaining("cuota")
-                .hasMessageNotContaining("secret");
+                .hasMessage("WhoScored devolvio un body vacio.");
+        verify(driver).quit();
     }
 
     @Test
-    void traduceTimeoutComoFalloControlado() throws Exception {
-        server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        server.createContext("/statistics", exchange -> {
-            try {
-                Thread.sleep(250);
-            } catch (InterruptedException interrupted) {
-                Thread.currentThread().interrupt();
-            }
-            exchange.close();
-        });
-        server.start();
-        var factory = new SimpleClientHttpRequestFactory();
-        factory.setReadTimeout(25);
-        var cliente = new WhoScoredStatisticsAdapter(RestClient.builder()
-                .requestFactory(factory), url(), "test", 10_000);
+    void rechazaJsonMalformadoSinExponerElCuerpoDelProveedor() {
+        WebDriver driver = mock(WebDriver.class);
+        WebElement body = mock(WebElement.class);
+        WebDriverFactory factory = mock(WebDriverFactory.class);
+        when(factory.create()).thenReturn(driver);
+        when(driver.findElement(any(By.class))).thenReturn(body);
+        when(body.getDomProperty("textContent")).thenReturn("{\"privateToken\":\"secret\", malformed");
 
-        assertThatThrownBy(() -> cliente.obtenerPagina(CompeticionEstadistica.SERIE_A,
-                FamiliaEstadistica.GENERAL, 1, 10))
-                .isInstanceOf(WhoScoredStatisticsException.class);
+        var error = org.assertj.core.api.Assertions.catchThrowable(
+                () -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE));
+
+        assertThat(error).isInstanceOf(WhoScoredStatisticsException.class);
+        assertThat(error.getMessage()).isEqualTo("No se pudo leer el JSON de statisticsfeed.")
+                .doesNotContain("privateToken", "secret", "malformed");
+        verify(driver).quit();
     }
 
     @Test
-    void rechazaJsonInvalidoYMetadataIncompleta() throws Exception {
-        iniciar(200, "not-json");
-        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
-                FamiliaEstadistica.GENERAL, 1, 10))
-                .isInstanceOf(WhoScoredStatisticsException.class);
+    void falloDeUnaFamiliaAbortaLaAdquisicionSinSnapshotParcial() throws IOException {
+        WebDriver driver = mock(WebDriver.class);
+        WebElement body = mock(WebElement.class);
+        WebDriverFactory factory = mock(WebDriverFactory.class);
+        when(factory.create()).thenReturn(driver);
+        when(driver.findElement(any(By.class))).thenReturn(body);
+        when(body.getDomProperty("textContent")).thenReturn(fixture("summary-all.json"), "not-json");
 
-        server.stop(0);
-        iniciar(200, "{\"page\":1,\"pageSize\":10,\"totalPages\":2,\"players\":[]}");
-        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
-                FamiliaEstadistica.GENERAL, 1, 10))
+        assertThatThrownBy(() -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(WhoScoredStatisticsException.class);
+        verify(driver, times(2)).get(any(String.class));
+        verify(driver).quit();
     }
 
-    private WhoScoredStatisticsAdapter adapter() {
-        return new WhoScoredStatisticsAdapter(RestClient.builder(), url(), "test", 10_000);
+    private WhoScoredStatisticsAdapter adapter(WebDriverFactory factory) {
+        var configuration = new WhoScoredStatisticsConfiguration();
+        configuration.setEndpoint("/statisticsfeed/1/getplayerstatistics");
+        configuration.setStatsAccumulationType(0);
+        configuration.setCurrent(true);
+        configuration.setSortBy("Rating");
+        configuration.setField("Overall");
+        configuration.setMinApp(true);
+        configuration.setNumberOfPlayersToPick(350);
+        var pair = new CompetitionParameters();
+        pair.setTournamentOptions(2);
+        pair.setStageId(25544);
+        configuration.setCompetitions(Map.of("premier-league", pair));
+        return new WhoScoredStatisticsAdapter(RestClient.builder(), "https://www.whoscored.com", "", 1_000_000,
+                new ObjectMapper(), factory, configuration);
     }
 
-    private void iniciar(int status, String body) throws Exception {
-        server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        server.createContext("/statistics", exchange -> {
-            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(status, bytes.length);
-            try (var output = exchange.getResponseBody()) {
-                output.write(bytes);
+    private String fixture(String name) throws IOException {
+        String path = "/fixtures/whoscored/" + name;
+        try (InputStream input = getClass().getResourceAsStream(path)) {
+            if (input == null) {
+                throw new AssertionError("Missing fixture " + name);
             }
-        });
-        server.start();
-    }
-
-    private String url() {
-        return "http://127.0.0.1:" + server.getAddress().getPort();
+            return new String(input.readAllBytes());
+        }
     }
 }

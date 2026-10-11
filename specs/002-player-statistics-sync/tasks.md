@@ -13,6 +13,11 @@ description: "Tareas de implementación para la sincronización de estadísticas
 
 **Scope**: no se agrega endpoint HTTP, no se modifican ni eliminan tests existentes y no se reintroducen campos legacy ni representaciones alternativas de Jugador/Equipo.
 
+**Estado historico**: T001-T048 representan la implementacion del diseño
+anterior en el commit e886221. Las tareas que dependian del contrato HTTP
+ficticio quedan identificadas como **superseded** por la nueva etapa de
+adquisicion; se conservan para trazabilidad y no se borran.
+
 ## Phase 1: Setup (Shared Infrastructure)
 
 **Purpose**: Preparar configuración y convenciones para la integración estadística sin modificar todavía el comportamiento publicado.
@@ -144,6 +149,7 @@ description: "Tareas de implementación para la sincronización de estadísticas
 - User Story 2: depende de los componentes de publicación de US1, aunque sus pruebas de idempotencia pueden prepararse en paralelo después de Foundational.
 - User Story 3: depende de staging/promoción de US1 y del upsert de US2 para probar rollback completo.
 - Polish: depende de las historias implementadas.
+- Phase 7 (rediseño statisticsfeed): depende de Phase 2 y de las garantías de staging/promoción de US1-US3; T049-T051 preceden a T052-T054, T055-T056 validan el Adapter, T057 adapta el Service y T058-T060 cierran la validación.
 
 ### User Story Dependencies
 
@@ -159,6 +165,7 @@ description: "Tareas de implementación para la sincronización de estadísticas
 - T019, T022 y T023 pueden prepararse en paralelo si se respetan sus archivos separados; T023 depende conceptualmente de la resolución de equipos.
 - T028-T030 y T035-T038 son grupos de pruebas paralelizables.
 - T044-T046 son revisiones independientes.
+- En Phase 7, T049-T051 pueden prepararse en paralelo; T052 precede a T053-T054; T055-T056 pueden ejecutarse en paralelo despues del contrato del Adapter; T057 depende de T049-T054.
 
 ## Parallel Example: User Story 1
 
@@ -187,6 +194,43 @@ Luego se implementan T019-T026 respetando las dependencias de cada componente y 
 3. Upsert e idempotencia.
 4. Rollback, conservación del snapshot y concurrencia.
 5. Validación completa y calidad.
+
+## Phase 7: Rediseño de adquisición statisticsfeed
+
+**Purpose**: Reemplazar el mecanismo HTTP ficticio por la adquisición real
+validada mediante Selenium, sin modificar las garantías funcionales de la
+sincronización.
+
+**Estado**: completada y validada.
+
+### Trazabilidad de tareas superseded
+
+- T019, T020 y T021 quedan superseded por T049-T054: describían DTOs y
+  paginación del contrato HTTP ficticio.
+- T035 queda superseded por T055-T057: describía fallos HTTP del mecanismo
+  anterior; sus garantías funcionales se conservan y se trasladan a Selenium,
+  JSON controlado y validación de completitud.
+- T044 queda superseded por T058: la revisión debe adaptarse a Selenium,
+  statisticsfeed y sus detalles encapsulados.
+- T002 conserva su intención de configuración de infraestructura, pero los
+  parámetros del proveedor deben revisarse conforme al nuevo Adapter.
+
+### Nuevas tareas
+
+- [X] T049 [P] [US1] Definir el contrato interno evolucionado de `ProveedorEstadisticasJugador` para adquirir un snapshot completo por competición, consolidado por playerId y sin exponer familias, páginas, pageSize, stageId, tournamentOptions, Selenium ni DTOs externos en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/ProveedorEstadisticasJugador.java, backend/src/main/java/com/devchesterunited/devchesterunitedv2/modelo/SnapshotEstadisticasJugador.java, backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/SincronizacionEstadisticasJugadorServiceImpl.java, backend/src/test/java/com/devchesterunited/devchesterunitedv2/modelo/SnapshotEstadisticasJugadorTest.java y specs/002-player-statistics-sync/contracts/player-statistics-sync.md
+- [X] T050 [P] [US1] Definir la configuración interna de las cinco parejas tournamentOptions/stageId y los parámetros comunes de statisticsfeed exclusivamente dentro de backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/ y backend/src/main/resources/application.properties
+- [X] T051 [P] [US1] Crear los DTOs/fixtures internos para las respuestas reales de summary/all, summary/offensive y summary/defensive, manteniéndolos dentro de backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/dto/ y sin agregar métricas de dominio fuera de FR-003/FR-004
+- [X] T052 [US1] Implementar la creación, reutilización y cierre garantizado de una única sesión WebDriver por sincronización completa, incluyendo cierre ante excepciones, en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/impl/ y backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/
+- [X] T053 [US1] Implementar la navegación Selenium al endpoint /statisticsfeed/1/getplayerstatistics, lectura del JSON del body, adquisición de las tres familias, traducción y consolidación por playerId dentro de backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/impl/WhoScoredStatisticsAdapter.java sin llamadas desde Service
+- [X] T054 [US1] Implementar la validación sin paginación de currentPage == 1, totalPages == 1, players.size == totalResults y ausencia de contradicciones en metadata, con fallo controlado ante respuesta incompleta en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/impl/
+- [X] T055 [P] [US1] Reemplazar las pruebas acopladas al JSON ficticio por pruebas con JSON controlado, fixtures y fakes que cubran las tres familias, metadata válida e inválida y traducción en backend/src/test/java/com/devchesterunited/devchesterunitedv2/adapter/
+- [X] T056 [P] [US3] Cubrir fallos de Selenium, body inválido, metadata inconsistente, adquisición incompleta y errores sanitizados sin conectividad real en backend/src/test/java/com/devchesterunited/devchesterunitedv2/adapter/ y backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/
+- [X] T057 [US1] Adaptar el flujo del Service para consumir un snapshot completo por competición, validar las cinco competiciones antes de staging validado y eliminar su conocimiento de familias y paginación del proveedor en backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/
+- [X] T058 [P] [US3] Revisar que URLs, stage IDs, tournamentOptions, Selenium, nombres JSON y errores del proveedor permanezcan confinados al Adapter en backend/src/main/java/com/devchesterunited/devchesterunitedv2/
+- [X] T059 [US1] Verificar con fixtures que las métricas persistidas continúan limitadas a FR-003/FR-004 aunque WhoScored entregue campos adicionales en backend/src/test/java/com/devchesterunited/devchesterunitedv2/adapter/ y backend/src/test/java/com/devchesterunited/devchesterunitedv2/modelo/
+- [X] T060 [US3] Ejecutar la validación manual diagnóstica con una única sesión WebDriver para las cinco competiciones, registrar completitud y cierre ante excepción sin incorporar navegación real a la suite automatizada en specs/002-player-statistics-sync/quickstart.md
+
+---
 
 ## Notes
 

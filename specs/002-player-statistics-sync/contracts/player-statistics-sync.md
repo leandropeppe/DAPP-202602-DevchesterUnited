@@ -1,41 +1,68 @@
-# Contratos internos de sincronización
+# Contratos internos de sincronizacion
 
-No se agrega endpoint HTTP. El contrato define el puerto entre Service y Adapter y las consultas de persistencia necesarias para enrolamiento inicial.
+No se agrega endpoint HTTP. El contrato define el puerto entre Service y
+Adapter y las consultas de persistencia necesarias para enrolamiento.
 
 ## Puerto ProveedorEstadisticasJugador
 
-Vive en adapter. Solicita una página por CompeticionEstadistica, FamiliaEstadistica, número de página y tamaño de lote.
+El puerto expone conceptualmente una operacion de adquisicion completa por
+`CompeticionEstadistica`. Devuelve un snapshot completo y normalizado de esa
+competicion, con registros consolidados por `playerId`.
 
-Devuelve PaginaEstadisticasJugador con:
+El Service no consume lotes separados por familia y no conoce
+`summary/all`, `summary/offensive` ni `summary/defensive`. Tampoco recibe
+`page`, `pageSize`, `stageId`, `tournamentOptions`, URLs, Selenium o parametros
+HTTP.
 
-- metadata de paginación;
-- competición y familia internas;
-- registros RegistroEstadisticasJugador.
+El snapshot contiene:
 
-Cada registro contiene playerId externo, nombre normalizado, posición y nacionalidad opcionales, teamId y nombre de equipo opcionales, y las métricas de su familia. Estos tipos son value objects internos; no son DTOs HTTP ni representan Jugador o Equipo.
+- competicion interna;
+- registros `RegistroEstadisticasJugador` consolidados;
+- metricas internas existentes;
+- metadata interna de completitud, si es necesaria, sin modelar el transporte.
 
 ## Responsabilidad del Adapter
 
-Traducir DTOs WhoScored a esos value objects, validar HTTP, cuerpo, límites, timeout, familias y metadata. Los DTOs, rutas, stage IDs, nombres de campos JSON, headers y errores del proveedor permanecen dentro de Adapter.
+Para cada competicion, el Adapter:
 
-No resuelve identidades locales, no escribe repositorios y no ejecuta matching.
+1. Reutiliza la unica sesion WebDriver de la sincronizacion completa.
+2. Adquiere `summary/all`, `summary/offensive` y `summary/defensive`.
+3. Valida cada respuesta y traduce el JSON real.
+4. Exige `currentPage == 1`, `totalPages == 1`, `players.size == totalResults` y metadata coherente.
+5. Consolida las tres familias por `playerId`.
+6. Devuelve el snapshot completo o un error de proveedor.
+
+La consolidacion aplica precedencia fija: Summary para minutos, goles,
+asistencias, tiros, valoracion y tarjetas; Offensive para pases clave y
+regates; Defensive para tackles. Una familia secundaria no sobrescribe la
+fuente canonica. Puede validarse coherencia de valores redundantes sin agregar
+metricas al dominio. `posicion` es opcional y no bloquea por ausencia.
+
+La primera implementacion no pagina. Si `totalPages > 1`, la respuesta es
+incompleta o la metadata contradice el contenido, falla de forma controlada.
+Una futura paginacion debe quedar dentro del Adapter sin modificar este
+contrato.
+
+El Adapter crea y cierra WebDriver, con cierre garantizado ante excepciones.
+No realiza matching local ni escribe repositories.
 
 ## Responsabilidad del Service
 
 1. Resolver identidades WHOSCORED persistidas.
-2. Para identidades ausentes, ejecutar el enrolamiento conservador:
-   - equipos por nombre canónico exacto y contexto de competición;
-   - jugadores por equipo, nombre canónico exacto y evidencia compatible de posición/nacionalidad.
-3. Persistir las identidades nuevas únicamente junto con la promoción.
-4. Rechazar cero, múltiples o insuficientes candidatos.
-5. Consolidar familias, escribir staging y promover estadísticas atómicamente.
+2. Ejecutar enrolamiento conservador para identidades ausentes.
+3. Persistir identidades nuevas solo junto con la promocion.
+4. Consolidar o validar el flujo interno sin conocer familias del proveedor.
+5. Escribir staging y promover estadisticas atomicamente.
 
-## Repositorios necesarios
+Ante error de proveedor, JSON invalido, metadata incoherente, navegacion fallida,
+bloqueo o adquisicion incompleta, aborta la sincronizacion y conserva el ultimo
+snapshot valido.
 
-Se reutilizan IdentidadExternaJugadorRepository e IdentidadExternaEquipoRepository para resolver y persistir identidades. Se usan JugadorRepository y EquipoRepository para obtener candidatos activos, preferentemente en lote y restringidos por equipo/liga/nombre. Se agregan repositories únicamente para EstadisticasJugador, EstadisticasSync y EstadisticasSyncStaging.
+## Repositorios y pruebas
 
-No se agrega un repository de matching ni una tabla de correspondencias.
+Se reutilizan repositories de identidades, jugadores y equipos, y los
+repositories de estadisticas, ejecuciones y staging. No se agrega tabla de
+matching.
 
-## Errores
-
-Una respuesta inválida, timeout, paginación incompleta, identidad no resuelta o fallo de persistencia marca la ejecución como fallida y evita la promoción. No se exponen detalles HTTP ni se modifica el último snapshot válido.
+Los tests automatizados usan JSON controlado, fixtures, fakes o mocks. No se
+consume WhoScored real. No se implementan stealth, evasiones ni bypass.

@@ -27,10 +27,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Answers;
 
 @SpringBootTest
 class EstadisticasJugadorUpsertIntegrationTest extends PostgresTestSupport {
-    @MockBean private ProveedorEstadisticasJugador proveedor;
+    @MockBean(answer = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
     @Autowired private SincronizacionEstadisticasJugadorService servicio;
     @Autowired private EstadisticasJugadorRepository estadisticas;
     @Autowired private EstadisticasSyncRepository sincronizaciones;

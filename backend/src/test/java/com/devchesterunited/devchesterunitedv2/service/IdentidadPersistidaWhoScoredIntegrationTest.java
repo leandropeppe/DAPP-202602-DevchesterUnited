@@ -41,11 +41,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Answers;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 class IdentidadPersistidaWhoScoredIntegrationTest extends PostgresTestSupport {
-    @MockBean private ProveedorEstadisticasJugador proveedor;
+    @MockBean(answer = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
     @Autowired private IdentidadJugadorResolver resolver;
     @Autowired private SincronizacionEstadisticasJugadorService servicio;
     @Autowired private JugadorRepository jugadores;

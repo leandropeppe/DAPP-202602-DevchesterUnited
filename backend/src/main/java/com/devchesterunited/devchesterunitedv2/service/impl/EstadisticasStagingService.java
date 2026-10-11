@@ -8,6 +8,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncS
 import java.util.UUID;
 import java.util.Set;
 import java.util.List;
+import java.util.HashSet;
 import com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync;
 import java.time.Instant;
 import org.springframework.stereotype.Service;
@@ -103,6 +104,33 @@ public class EstadisticasStagingService {
                 throw new IdentidadEstadisticaNoResueltaException(
                         "La ejecucion no completo las competiciones y familias requeridas.");
             }
+        }
+    }
+
+    /** Valida staging producido por snapshots completos, sin depender de familias del proveedor. */
+    public void validarCompeticionesCompletas(UUID syncId, Set<String> competicionesEsperadas) {
+        if (competicionesEsperadas == null || competicionesEsperadas.isEmpty()) {
+            throw new IdentidadEstadisticaNoResueltaException(
+                    "La ejecucion no contiene competiciones completas.");
+        }
+        Set<String> competicionesRecibidas = new HashSet<>();
+        long total = 0;
+        int page = 0;
+        org.springframework.data.domain.Page<EstadisticasSyncStagingEntity> lote;
+        do {
+            lote = staging.findAllBySyncId(syncId, PageRequest.of(page++, 100));
+            total += lote.getNumberOfElements();
+            for (var row : lote.getContent()) {
+                if (row.getJugadorId() == null) {
+                    throw new IdentidadEstadisticaNoResueltaException(
+                            "La ejecucion contiene identidades sin resolver.");
+                }
+                competicionesRecibidas.add(row.getCompeticion());
+            }
+        } while (lote.hasNext());
+        if (total == 0 || !competicionesRecibidas.equals(competicionesEsperadas)) {
+            throw new IdentidadEstadisticaNoResueltaException(
+                    "La ejecucion no completo las competiciones requeridas.");
         }
     }
 

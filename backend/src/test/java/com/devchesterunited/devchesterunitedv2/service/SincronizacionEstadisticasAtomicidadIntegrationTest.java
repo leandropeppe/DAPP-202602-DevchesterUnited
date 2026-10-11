@@ -30,6 +30,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Answers;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.doThrow;
 @SpringBootTest
 @ActiveProfiles("test")
 class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSupport {
-    @MockBean private ProveedorEstadisticasJugador proveedor;
+    @MockBean(answer = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
     @Autowired private SincronizacionEstadisticasJugadorService servicio;
     @Autowired private EquipoRepository equipos;
     @Autowired private JugadorRepository jugadores;

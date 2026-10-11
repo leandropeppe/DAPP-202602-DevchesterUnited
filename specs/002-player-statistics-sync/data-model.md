@@ -1,59 +1,94 @@
-# Modelo de datos: estadísticas y vinculación de identidades
+# Modelo de datos: estadisticas y vinculacion de identidades
 
 ## EstadisticasJugador
 
-Fotografía vigente asociada por jugador_id al Jugador local. Contiene posición, minutos, valoración, goles, asistencias, tiros, pases clave, regates, tackles, tarjetas amarillas y rojas. Las métricas individuales ausentes permanecen NULL; no se crean Jugador ni Equipo alternativos.
+Fotografia vigente asociada por `jugador_id` al Jugador local. Los campos
+existentes son: posicion, minutos jugados, goles, asistencias, tiros, pases
+clave, regates, tackles, valoracion, tarjetas amarillas y tarjetas rojas.
 
-## Representaciones normalizadas del puerto
+Las metricas individuales ausentes permanecen `NULL`. No se crean Jugador ni
+Equipo alternativos y no se agregan metricas solo porque WhoScored las devuelva.
+Las métricas estadísticas decimales normalizadas por Devchester se representan
+con escala exacta de 2 decimales y redondeo `RoundingMode.HALF_UP`; la
+precisión adicional entregada por los proveedores externos no forma parte de
+la representación normalizada del dominio. Actualmente son decimales
+`tiros`, `pasesClave`, `regates`, `tackles` y `valoracion`; los minutos, goles,
+asistencias y tarjetas conservan su representación entera.
 
-El puerto ProveedorEstadisticasJugador atraviesa solo value objects internos, no DTOs:
+## Snapshot normalizado por competicion
 
-- PaginaEstadisticasJugador: competición, familia, número/tamaño de página, total esperado y registros.
-- RegistroEstadisticasJugador: playerId externo, nombre normalizado, posición normalizada opcional, nacionalidad opcional, teamId externo opcional, nombre de equipo opcional y métricas de la familia.
-- CompeticionEstadistica y FamiliaEstadistica: vocabularios internos controlados.
+El puerto entrega un snapshot completo de una competicion, no lotes separados
+por familia. El snapshot contiene registros consolidados por `playerId` y las
+metricas internas disponibles. Las familias `summary/all`,
+`summary/offensive` y `summary/defensive` son internas al Adapter.
 
-Los atributos de nombre/equipo/posición/nacionalidad son hints transitorios para el primer enrolamiento. No son identidad persistente.
+El snapshot solo puede considerarse completo si el Adapter valida cada una de
+las tres respuestas y la metadata de cada respuesta representa una pagina
+completa:
+
+- `currentPage == 1`;
+- `totalPages == 1`;
+- `players.size == totalResults`;
+- metadata sin contradicciones.
+
+Si no se cumple, la ejecucion falla y el snapshot no entra en staging validado.
+
+## Mapeo de metricas existente
+
+| Metrica interna | Campo real WhoScored | Familia de origen |
+|---|---|---|
+| `minutosJugados` | `minsPlayed` | Summary, Offensive o Defensive |
+| `goles` | `goal` | Summary u Offensive |
+| `asistencias` | `assistTotal` | Summary u Offensive |
+| `tiros` | `shotsPerGame` | Summary u Offensive |
+| `pasesClave` | `keyPassPerGame` | Offensive |
+| `regates` | `dribbleWonPerGame` | Offensive |
+| `tackles` | `tacklePerGame` | Defensive |
+| `valoracion` | `rating` | Summary |
+| `tarjetasAmarillas` | `yellowCard` | Summary |
+| `tarjetasRojas` | `redCard` | Summary |
+| `posicion` | No documentado en el JSON disponible | Pendiente |
+
+No se mapean al dominio `aerialWonPerGame`, `manOfTheMatch`,
+`foulGivenPerGame`, `offsideGivenPerGame`, `dispossessedPerGame`,
+`turnoverPerGame`, `interceptionPerGame`, `foulsPerGame`, `offsideWonPerGame`,
+`clearancePerGame`, `wasDribbledPerGame`, `outfielderBlockPerGame` ni
+`goalOwn`. `goalOwn` no sustituye `goles`.
+
+La precedencia de consolidacion es fija: Summary es canonica para minutos,
+goles, asistencias, tiros, valoracion y tarjetas; Offensive es canonica para
+pases clave y regates; Defensive es canonica para tackles. Una familia
+secundaria no sobrescribe el valor canonico. La coherencia entre valores
+redundantes puede validarse sin agregar metricas de dominio. `posicion` es
+opcional y su ausencia no bloquea la adquisicion.
 
 ## Persistencia publicada
 
-jugador_estadisticas tendrá una fila por jugador_id, FK a jugadores(id), UNIQUE, métricas normalizadas, referencia de ejecución y auditoría. Se actualiza por upsert dentro de la promoción.
+`jugador_estadisticas` mantiene una fila por `jugador_id`, FK a jugadores,
+unicidad, metricas normalizadas, referencia de ejecucion y auditoria. Se
+actualiza por upsert dentro de la promocion.
 
-## Ejecución y staging técnico
+## Ejecucion y staging
 
-estadisticas_sync contiene UUID, estado INICIADA/RECIBIENDO/VALIDADA/PUBLICADA/FALLIDA, timestamps, competiciones/familias esperadas y error sanitizado.
+`estadisticas_sync` mantiene los estados `INICIADA`, `RECIBIENDO`, `VALIDADA`,
+`PUBLICADA` y `FALLIDA`, timestamps y error sanitizado.
 
-estadisticas_sync_staging contiene sync_id, competición, playerId WhoScored, teamId WhoScored cuando exista, jugador_id y equipo_id locales resueltos cuando estén disponibles, hints normalizados, métricas consolidadas y marcas de familias. La clave evita repetir una misma identidad por ejecución, competición y jugador.
+`estadisticas_sync_staging` mantiene ejecucion, competicion, IDs externos,
+identidades locales, hints normalizados, metricas consolidadas y marcas de
+familias. El staging no es visible para negocio.
 
-El staging no es visible para consultas de negocio. Las identidades nuevas no se consideran publicadas hasta la promoción.
+## Identidades y detalles fuera del modelo
 
-## Identidades
+`IdentidadExternaJugador(WHOSCORED, playerId)` referencia Jugador local y
+`IdentidadExternaEquipo(WHOSCORED, teamId)` referencia Equipo local.
 
-Las relaciones persistentes son:
+`stageId`, `tournamentOptions`, `category`, `subcategory`, Selenium, WebDriver,
+rutas, cookies, headers, limites y tamanos de adquisicion son detalles del
+Adapter. No forman parte del dominio ni del contrato del Service.
 
-IdentidadExternaJugador(WHOSCORED, playerId) -> Jugador local
+## Atomicidad
 
-IdentidadExternaEquipo(WHOSCORED, teamId) -> Equipo local
-
-Se reutilizan las entidades y restricciones únicas existentes. No se crea una tabla de matching ni se reintroducen external_id en jugadores/equipos.
-
-## Reglas de enrolamiento
-
-Equipo: comparar nombre canónico exacto, restringido por liga/competición cuando exista. Nombre corto o sigla solo son evidencia adicional comparable, nunca clave.
-
-Jugador: primero resolver equipo; después comparar nombre canónico exacto dentro del equipo. Posición y nacionalidad solo desempatan si están presentes en ambas fuentes y son compatibles. No se usa similitud difusa, dorsal ni ID de Football-Data.
-
-Cero candidatos, múltiples candidatos o evidencia insuficiente producen identidad no resuelta y bloquean la publicación completa. Una coincidencia única permite crear la identidad WHOSCORED durante la promoción.
-
-## Transacción y estados
-
-INICIADA -> RECIBIENDO -> VALIDADA -> PUBLICADA
-
-INICIADA/RECIBIENDO/VALIDADA -> FALLIDA ante error.
-
-La promoción de estadísticas, identidades nuevas y estado PUBLICADA ocurre en una transacción. Si falla, todo revierte y el snapshot anterior permanece visible.
-
-## Migraciones y repositorios
-
-Se agregan migraciones posteriores a V14 para jugador_estadisticas, estadisticas_sync y estadisticas_sync_staging.
-
-Se agregan repositories para estadísticas, ejecuciones y staging. Se amplían los repositories existentes de identidad solo si hace falta obtener candidatos en lote. La búsqueda de candidatos puede agregarse a JugadorRepository y EquipoRepository; no se crea un repository paralelo de matching.
+La adquisicion se ejecuta fuera de la transaccion de promocion. Una respuesta
+invalida, incompleta o bloqueada no publica staging parcial. Si falla la
+promocion, las identidades nuevas y las estadisticas revierten y el snapshot
+anterior permanece visible.

@@ -119,3 +119,24 @@ Como responsable de la plataforma, quiero que una sincronización fallida no exp
 - Compra, venta o cualquier funcionalidad de mercado.
 - Presentación de estadísticas en el frontend, salvo que una historia funcional posterior la requiera explícitamente.
 - Exposición de nuevos contratos públicos o definición de detalles técnicos del mecanismo de obtención.
+# Mecanismo de adquisicion vigente (actualizacion tecnica)
+
+La adquisicion real validada de WhoScored se realiza mediante Selenium
+navegando a `/statisticsfeed/1/getplayerstatistics`, cuyo body devuelve JSON.
+Esta decision no modifica el alcance funcional ni las garantias de identidad,
+idempotencia, atomicidad, staging, rollback y persistencia local.
+
+Para cada competicion deben adquirirse las familias `summary/all`,
+`summary/offensive` y `summary/defensive`. La adquisicion concreta, la
+validacion de metadata, cualquier paginacion y la traduccion a estructuras
+internas pertenecen al Adapter. El Service no conoce Selenium, JSON, URLs,
+stage IDs, tournamentOptions ni parametros HTTP.
+
+La implementacion debe validar completitud de cada respuesta. Un resultado con
+`totalPages > 1` o `players.size != totalResults` no puede considerarse completo
+silenciosamente. `numberOfPlayersToPick=350` fue solo un valor de validacion
+manual y no es una garantia universal ni una cantidad fija del dominio.
+
+El contrato ficticio `GET /statistics` con `competition`, `family`, `page`,
+`pageSize` y Bearer API key queda **superseded**. No se agrega un endpoint
+publico ni se agregan al dominio los IDs de infraestructura de las competiciones.

@@ -30,6 +30,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Answers;
 import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.times;
 @SpringBootTest
 @ActiveProfiles("test")
 class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSupport {
-    @MockBean private ProveedorEstadisticasJugador proveedor;
+    @MockBean(answer = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
     @org.springframework.beans.factory.annotation.Autowired private SincronizacionEstadisticasJugadorService servicio;
     @org.springframework.beans.factory.annotation.Autowired private EquipoRepository equipos;
     @org.springframework.beans.factory.annotation.Autowired private JugadorRepository jugadores;
@@ -109,7 +110,7 @@ class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSuppor
         var ejecucionesFallidas = ejecuciones.findAllByEstado(
                 com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync.FALLIDA);
         assertThat(ejecucionesFallidas).isNotEmpty();
-        assertThat(ejecucionesFallidas.stream().anyMatch(e -> !staging.findAllBySyncId(e.getId()).isEmpty()))
+        assertThat(ejecucionesFallidas.stream().allMatch(e -> staging.findAllBySyncId(e.getId()).isEmpty()))
                 .isTrue();
     }
 

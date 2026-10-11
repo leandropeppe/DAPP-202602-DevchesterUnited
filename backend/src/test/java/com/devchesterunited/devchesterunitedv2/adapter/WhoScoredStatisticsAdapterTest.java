@@ -1,118 +1,114 @@
-package com.devchesterunited.devchesterunitedv2.adapter;
+package com.devchesterunited.devchesterunitedv2.adapter.impl;
 
-import com.devchesterunited.devchesterunitedv2.adapter.impl.WhoScoredStatisticsAdapter;
-import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.net.httpserver.HttpServer;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import org.junit.jupiter.api.AfterEach;
+import com.devchesterunited.devchesterunitedv2.adapter.WebDriverFactory;
+import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsConfiguration;
+import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsConfiguration.CompetitionParameters;
+import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.springframework.web.client.RestClient;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class WhoScoredStatisticsAdapterTest {
-    private HttpServer server;
-
-    @AfterEach
-    void stop() { if (server != null) server.stop(0); }
-
     @Test
-    void traduceFamiliaYMetadataDesdeServidorLocalControlado() throws Exception {
-        iniciar(200, """
-                {"page":2,"pageSize":2,"totalPages":3,"totalResults":5,"players":[
-                 {"playerId":77,"name":"  Ana   Pérez ","position":"Midfielder","nationality":"Argentina",
-                  "teamId":88,"teamName":" Equipo A ","minutesPlayed":90,"goals":2,"assists":1,
-                  "shots":3.5,"keyPasses":4,"dribbles":5,"tackles":null,"rating":7.2,
-                  "yellowCards":1,"redCards":0}]}""");
+    void traduceLasTresFamiliasRealesYConsolidaElSnapshot() throws IOException {
+        WebDriver driver = mock(WebDriver.class);
+        WebElement body = mock(WebElement.class);
+        WebDriverFactory factory = mock(WebDriverFactory.class);
+        when(factory.create()).thenReturn(driver);
+        when(driver.findElement(any(By.class))).thenReturn(body);
+        when(body.getDomProperty("textContent")).thenReturn(
+                fixture("summary-all.json"),
+                fixture("summary-offensive.json"),
+                fixture("summary-defensive.json"));
 
-        var page = adapter().obtenerPagina(CompeticionEstadistica.PREMIER_LEAGUE,
-                FamiliaEstadistica.OFENSIVA, 2, 2);
+        var snapshot = adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE);
 
-        assertThat(page.totalPaginas()).isEqualTo(3);
-        assertThat(page.registros()).singleElement().satisfies(registro -> {
-            assertThat(registro.identidad().playerId()).isEqualTo(77);
-            assertThat(registro.identidad().nombre()).isEqualTo("Ana Pérez");
-            assertThat(registro.familia()).isEqualTo(FamiliaEstadistica.OFENSIVA);
-            assertThat(registro.metricas().tackles()).isNull();
+        assertThat(snapshot.registros()).singleElement().satisfies(registro -> {
+            assertThat(registro.identidad().playerId()).isEqualTo(101);
+            assertThat(registro.identidad().teamId()).isEqualTo(201);
+            assertThat(registro.identidad().posicion()).isNull();
+            assertThat(registro.metricas().minutosJugados()).isEqualTo(900);
+            assertThat(registro.metricas().goles()).isEqualTo(8);
+            assertThat(registro.metricas().asistencias()).isEqualTo(4);
+            assertThat(registro.metricas().tiros()).hasToString("2.40");
+            assertThat(registro.metricas().valoracion()).hasToString("7.20");
+            assertThat(registro.metricas().pasesClave()).hasToString("1.70");
+            assertThat(registro.metricas().regates()).hasToString("2.10");
+            assertThat(registro.metricas().tackles()).hasToString("1.90");
+            assertThat(registro.metricas().tarjetasAmarillas()).isEqualTo(1);
+            assertThat(registro.metricas().tarjetasRojas()).isEqualTo(0);
         });
+        verify(factory).create();
+        verify(driver, times(3)).get(any(String.class));
+        verify(driver).quit();
     }
 
     @Test
-    void rechazaMetadataIncompatibleSinExponerDetallesHttp() throws Exception {
-        iniciar(200, "{" + "\"page\":1,\"pageSize\":2,\"totalPages\":1,\"totalResults\":0,\"players\":[]}");
-        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.LA_LIGA,
-                FamiliaEstadistica.GENERAL, 2, 2))
-                .isInstanceOf(WhoScoredStatisticsException.class);
-    }
+    void ignoraCamposAdicionalesSinAmpliarLasMetricasDelSnapshot() throws IOException {
+        WebDriver driver = mock(WebDriver.class);
+        WebElement body = mock(WebElement.class);
+        WebDriverFactory factory = mock(WebDriverFactory.class);
+        when(factory.create()).thenReturn(driver);
+        when(driver.findElement(any(By.class))).thenReturn(body);
+        when(body.getDomProperty("textContent")).thenReturn(
+                fixture("summary-all-with-extra-fields.json"),
+                fixture("summary-offensive.json"),
+                fixture("summary-defensive.json"));
 
-    @Test
-    void traduceRespuestaHttpNoExitosa() throws Exception {
-        iniciar(503, "{}");
-        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
-                FamiliaEstadistica.DEFENSIVA, 1, 2))
-                .isInstanceOf(WhoScoredStatisticsException.class)
-                .hasMessageContaining("no exitosa");
-    }
+        var snapshot = adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE);
 
-    @Test
-    void rechazaJsonInvalidoYCuerpoQueSuperaElLimite() throws Exception {
-        iniciar(200, "{no-json}");
-        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
-                FamiliaEstadistica.GENERAL, 1, 2))
-                .isInstanceOf(WhoScoredStatisticsException.class);
-
-        server.stop(0);
-        iniciar(200, "x".repeat(101));
-        assertThatThrownBy(() -> new WhoScoredStatisticsAdapter(RestClient.builder(), baseUrl(), "test", 100)
-                .obtenerPagina(CompeticionEstadistica.SERIE_A, FamiliaEstadistica.GENERAL, 1, 2))
-                .isInstanceOf(WhoScoredStatisticsException.class)
-                .hasMessageContaining("límite");
-    }
-
-    @Test
-    void rechazaCamposObligatoriosValoresInvalidosYHintsInconsistentes() throws Exception {
-        iniciar(200, "{\"page\":1,\"pageSize\":2,\"totalPages\":1,\"totalResults\":1,\"players\":["
-                + "{\"playerId\":7,\"name\":\"Ana\",\"teamId\":8,\"teamName\":null,\"goals\":1}]}");
-        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
-                FamiliaEstadistica.GENERAL, 1, 2)).isInstanceOf(WhoScoredStatisticsException.class);
-
-        server.stop(0);
-        iniciar(200, "{\"page\":1,\"pageSize\":2,\"totalPages\":1,\"totalResults\":1,\"players\":["
-                + "{\"playerId\":7,\"name\":\"Ana\",\"teamId\":8,\"teamName\":\"A\",\"goals\":-1}]}");
-        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
-                FamiliaEstadistica.GENERAL, 1, 2)).isInstanceOf(WhoScoredStatisticsException.class);
-    }
-
-    @Test
-    void rechazaMetadataContradictoriaYPaginaFueraDeRango() throws Exception {
-        iniciar(200, "{\"page\":1,\"pageSize\":2,\"totalPages\":1,\"totalResults\":0,\"players\":["
-                + "{\"playerId\":7,\"name\":\"Ana\"}]}");
-        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
-                FamiliaEstadistica.GENERAL, 1, 2)).isInstanceOf(WhoScoredStatisticsException.class);
-
-        server.stop(0);
-        iniciar(200, "{\"page\":2,\"pageSize\":2,\"totalPages\":1,\"totalResults\":0,\"players\":[]}");
-        assertThatThrownBy(() -> adapter().obtenerPagina(CompeticionEstadistica.SERIE_A,
-                FamiliaEstadistica.GENERAL, 2, 2)).isInstanceOf(WhoScoredStatisticsException.class);
-    }
-
-    private WhoScoredStatisticsAdapter adapter() {
-        return new WhoScoredStatisticsAdapter(RestClient.builder(), baseUrl(), "test", 1_000_000);
-    }
-
-    private void iniciar(int status, String body) throws Exception {
-        server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        server.createContext("/statistics", exchange -> {
-            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
-            exchange.sendResponseHeaders(status, bytes.length);
-            try (var output = exchange.getResponseBody()) { output.write(bytes); }
+        assertThat(snapshot.registros()).singleElement().satisfies(registro -> {
+            assertThat(registro.identidad().posicion()).isNull();
+            assertThat(registro.metricas().minutosJugados()).isEqualTo(900);
+            assertThat(registro.metricas().goles()).isEqualTo(8);
+            assertThat(registro.metricas().asistencias()).isEqualTo(4);
+            assertThat(registro.metricas().tiros()).hasToString("2.40");
+            assertThat(registro.metricas().pasesClave()).hasToString("1.70");
+            assertThat(registro.metricas().regates()).hasToString("2.10");
+            assertThat(registro.metricas().tackles()).hasToString("1.90");
+            assertThat(registro.metricas().valoracion()).hasToString("7.20");
+            assertThat(registro.metricas().tarjetasAmarillas()).isEqualTo(1);
+            assertThat(registro.metricas().tarjetasRojas()).isEqualTo(0);
         });
-        server.start();
+        verify(driver, times(3)).get(any(String.class));
+        verify(driver).quit();
     }
 
-    private String baseUrl() { return "http://127.0.0.1:" + server.getAddress().getPort(); }
+    private WhoScoredStatisticsAdapter adapter(WebDriverFactory factory) {
+        var configuration = new WhoScoredStatisticsConfiguration();
+        configuration.setEndpoint("/statisticsfeed/1/getplayerstatistics");
+        configuration.setStatsAccumulationType(0);
+        configuration.setCurrent(true);
+        configuration.setSortBy("Rating");
+        configuration.setField("Overall");
+        configuration.setMinApp(true);
+        configuration.setNumberOfPlayersToPick(350);
+        var pair = new CompetitionParameters();
+        pair.setTournamentOptions(2);
+        pair.setStageId(25544);
+        configuration.setCompetitions(Map.of("premier-league", pair));
+        return new WhoScoredStatisticsAdapter(RestClient.builder(), "https://www.whoscored.com", "", 1_000_000,
+                new ObjectMapper(), factory, configuration);
+    }
+
+    private String fixture(String name) throws IOException {
+        String path = "/fixtures/whoscored/" + name;
+        try (InputStream input = getClass().getResourceAsStream(path)) {
+            assertThat(input).as("fixture %s", name).isNotNull();
+            return new String(input.readAllBytes());
+        }
+    }
 }
