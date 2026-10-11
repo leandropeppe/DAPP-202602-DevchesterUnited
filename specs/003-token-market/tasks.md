@@ -1,271 +1,271 @@
 ---
 
-description: "Task list for Token Market implementation"
+description: "Lista de tareas para la implementación de Token Market"
 ---
 
-# Tasks: Token Market
+# Tareas: Token Market
 
-**Input**: Design documents from `specs/003-token-market/`
+**Entrada**: Documentos de diseño de `specs/003-token-market/`
 
-**Prerequisites**: `spec.md`, `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, `contracts/market-api.md`, and `contracts/quote-contract.md`.
+**Prerrequisitos**: `spec.md`, `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, `contracts/market-api.md` y `contracts/quote-contract.md`.
 
-**Scope**: Implement only Token Market. Do not modify `specs/001-user-auth-player-catalog`, `specs/002-player-statistics-sync`, or files belonging to the remote statistics branch. Player Statistics Sync and Player Valuation are integration dependencies, not implementation targets of this feature.
+**Alcance**: Implementar únicamente Token Market. No modificar `specs/001-user-auth-player-catalog`, `specs/002-player-statistics-sync` ni archivos pertenecientes a la rama remota de estadísticas. Player Statistics Sync y Player Valuation son dependencias de integración, no objetivos de implementación de esta feature.
 
-**Path convention**: Existing backend package root is `backend/src/main/java/com/devchesterunited/devchesterunitedv2/` with `configuration`, `modelo`, `persistence`, `service`, `controller`, and `adapter`. Existing frontend directories are `frontend/src/api`, `components`, `session`, `styles`, and `views`. Application configuration is `backend/src/main/resources/application.properties`.
+**Convención de rutas**: La raíz de paquetes existente del backend es `backend/src/main/java/com/devchesterunited/devchesterunitedv2/` con `configuration`, `modelo`, `persistence`, `service`, `controller` y `adapter`. Los directorios existentes del frontend son `frontend/src/api`, `components`, `session`, `styles` y `views`. La configuración de la aplicación está en `backend/src/main/resources/application.properties`.
 
-**Tests**: Tests are included because Specify and the approved Plan require unit, MockMvc, PostgreSQL/Testcontainers, frontend, concurrency, idempotency, and demonstration verification.
+**Pruebas**: Se incluyen pruebas porque Specify y el Plan aprobado requieren verificación unitaria, MockMvc, PostgreSQL/Testcontainers, frontend, concurrencia, idempotencia y demostración.
 
-## Phase 1: Setup
+## Fase 1: Preparación
 
-**Purpose**: Establish the Token Market implementation surface without changing approved features or configuration conventions.
+**Propósito**: Establecer la superficie de implementación de Token Market sin cambiar features aprobadas ni convenciones de configuración.
 
-- [ ] T001 Verify that the active branch is `feature/token-market` and read/confirm the approved inputs in `specs/003-token-market/spec.md`, `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, and `contracts/`; do not write, register, or modify any approved document.
-- [ ] T002 [P] Inventory existing authentication, player, repository, service, controller, frontend API, and test conventions in `backend/src/main/java/com/devchesterunited/devchesterunitedv2/` and `frontend/src/` without modifying their feature ownership.
-- [ ] T003 [P] Define the Token Market package/file map under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/modelo/`, `persistence/`, `service/`, `controller/`, `adapter/`, and `configuration/`, preserving the verified repository conventions.
-- [ ] T004 [P] Define the frontend Token Market file map under `frontend/src/api/`, `frontend/src/views/`, and `frontend/src/components/`, reusing existing session and HTTP conventions.
+- [ ] T001 Verificar que la rama activa sea `feature/token-market` y leer/confirmar las entradas aprobadas en `specs/003-token-market/spec.md`, `plan.md`, `research.md`, `data-model.md`, `quickstart.md` y `contracts/`; no escribir, registrar ni modificar ningún documento aprobado.
+- [ ] T002 [P] Inventariar las convenciones existentes de autenticación, jugadores, repositorios, servicios, controladores, API del frontend y pruebas en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/` y `frontend/src/`, sin modificar la responsabilidad de sus features.
+- [ ] T003 [P] Definir el mapa de paquetes/archivos de Token Market bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/modelo/`, `persistence/`, `service/`, `controller/`, `adapter/` y `configuration/`, preservando las convenciones verificadas del repositorio.
+- [ ] T004 [P] Definir el mapa de archivos de Token Market del frontend bajo `frontend/src/api/`, `frontend/src/views/` y `frontend/src/components/`, reutilizando las convenciones existentes de sesión y HTTP.
 
-## Phase 2: Foundational Persistence and Contracts
+## Fase 2: Persistencia y contratos fundacionales
 
-**Purpose**: Create the database and domain foundations required by every market story.
+**Propósito**: Crear las bases de datos y de dominio requeridas por todas las historias del mercado.
 
-**Migration coordination gate**: V16 is provisional. Do not create the migration until the final V15 from Player Statistics Sync has been reconciled with this branch. Do not modify the statistics branch.
+**Puerta de coordinación de migraciones**: V16 es provisional. No crear la migración hasta reconciliar la V15 final de Player Statistics Sync con esta rama. No modificar la rama de estadísticas.
 
-- [ ] T005 Confirm the definitive integration/order of Player Statistics Sync V15 against the current sequence under `backend/src/main/resources/db/migration/`; if V15 is absent, conflicting, or unresolved, stop as an explicit blocker and request coordination approval without fetch, checkout, merge, rebase, or modification of that feature.
-- [ ] T006 Create the provisional Token Market migration at `backend/src/main/resources/db/migration/V16__create_token_market.sql` only after T005 confirms that V15 is definitively integrated and V16 is the next available version; if that confirmation is unavailable, do not create V16, and do not merge, checkout, rebase, or modify the statistics feature.
-- [ ] T007 [P] Add persistence entities for market state, internal superuser/counterparty, credit accounts, initial grants, token issuance/inventory, and user holdings under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/dto/`.
-- [ ] T008 [P] Add persistence entities for quote versions/heads, idempotency requests, confirmed transactions, credit/token movements, and rejection audit under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/dto/`.
-- [ ] T009 [P] Add repositories with uniqueness, non-negative, one-time, and player/user ownership queries under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/`.
-- [ ] T010 Add persistence mappers/DTOs for Token Market records under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/mapper/` and `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/dto/`, without duplicating `Jugador` or statistics persistence.
-- [ ] T011 Add domain value validation and market exceptions under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/modelo/exception/` and `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/exception/` for invalid quantities, inactive players, unavailable quotes, insufficient balances, market-not-ready, idempotency conflict, and stale requests.
-- [ ] T012 [P] Add unit tests for database/domain invariants and monetary/token validation under `backend/src/test/java/com/devchesterunited/devchesterunitedv2/modelo/` and `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T013 Configure only the existing PostgreSQL/Flyway test conventions needed by Token Market in `backend/src/test/resources/` and verify that the application continues to use `backend/src/main/resources/application.properties`; do not introduce YAML configuration.
-- [ ] T014 Add the shared internal quote publication boundary and DTOs under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/`, `service/dto/`, and `adapter/`, including immutable quote identity/version, validity, publication time, price, player identity, and optional strategy reference.
-- [ ] T015 Add contract-level tests for the quote publication/consumption boundary under `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`, proving that initial and future quote versions use one source of truth and that quote versions are immutable.
+- [ ] T005 Confirmar la integración/orden definitivos de Player Statistics Sync V15 frente a la secuencia actual bajo `backend/src/main/resources/db/migration/`; si V15 está ausente, entra en conflicto o no está resuelta, detenerse ante un bloqueo explícito y solicitar aprobación de coordinación sin fetch, checkout, merge, rebase ni modificación de esa feature.
+- [ ] T006 Crear la migración provisional de Token Market en `backend/src/main/resources/db/migration/V16__create_token_market.sql` únicamente después de que T005 confirme que V15 está integrada definitivamente y V16 es la siguiente versión disponible; si esa confirmación no existe, no crear V16 ni hacer merge, checkout, rebase o modificación de la feature de estadísticas.
+- [ ] T007 [P] Agregar entidades de persistencia para estado del mercado, superusuario/contraparte interna, cuentas de créditos, asignaciones iniciales, emisión/inventario de tokens y tenencias de usuarios bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/dto/`.
+- [ ] T008 [P] Agregar entidades de persistencia para versiones/cabeceras de cotizaciones, solicitudes de idempotencia, transacciones confirmadas, movimientos de créditos/tokens y auditoría de rechazos bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/dto/`.
+- [ ] T009 [P] Agregar repositorios con consultas de unicidad, no negatividad, ejecución única y pertenencia por jugador/usuario bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/`.
+- [ ] T010 Agregar mappers/DTOs de persistencia para registros de Token Market bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/mapper/` y `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/dto/`, sin duplicar la persistencia de `Jugador` ni de estadísticas.
+- [ ] T011 Agregar validación de valores de dominio y excepciones del mercado bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/modelo/exception/` y `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/exception/` para cantidades inválidas, jugadores inactivos, cotizaciones no disponibles, saldos insuficientes, mercado no listo, conflicto de idempotencia y solicitudes obsoletas.
+- [ ] T012 [P] Agregar pruebas unitarias de invariantes de base de datos/dominio y validación monetaria/de tokens bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/modelo/` y `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [ ] T013 Configurar únicamente las convenciones existentes de pruebas PostgreSQL/Flyway necesarias para Token Market en `backend/src/test/resources/` y verificar que la aplicación continúe usando `backend/src/main/resources/application.properties`; no introducir configuración YAML.
+- [ ] T014 Agregar el límite compartido de publicación interna de cotizaciones y sus DTOs bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/`, `service/dto/` y `adapter/`, incluyendo identidad/versión inmutable de cotización, vigencia, fecha de publicación, precio, identidad del jugador y referencia opcional de estrategia.
+- [ ] T015 Agregar pruebas a nivel de contrato para el límite de publicación/consumo de cotizaciones bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`, demostrando que las versiones iniciales y futuras usan una única fuente de verdad y que las versiones son inmutables.
 
-**Checkpoint**: Persistence constraints, shared quote boundary, and test infrastructure are ready; no user story may bypass these invariants.
+**Punto de control**: Las restricciones de persistencia, el límite compartido de cotizaciones y la infraestructura de pruebas están listos; ninguna historia de usuario puede omitir estas invariantes.
 
-## Phase 3: User Story 1 - Inicializar el mercado de forma segura (P1)
+## Fase 3: Historia de usuario 1 - Inicializar el mercado de forma segura (P1)
 
-**Goal**: Automatically initialize the protected superuser, finite reserve, one-time user credits, eligible-player emissions, and initial quotes without public intervention.
+**Objetivo**: Inicializar automáticamente el superusuario protegido, la reserva finita, los créditos únicos de usuarios, las emisiones de jugadores elegibles y las cotizaciones iniciales sin intervención pública.
 
-**Independent test**: Repeated startup and activation scenarios produce one superuser, one 1,000-credit grant per user, exactly 100 issued tokens per eligible player, and no trading while initialization is incomplete.
+**Prueba independiente**: Los escenarios de inicio y activación repetidos producen un superusuario, una asignación de 1.000 créditos por usuario, exactamente 100 tokens emitidos por jugador elegible y ninguna operación mientras la inicialización esté incompleta.
 
-### Tests for User Story 1
+### Pruebas para la historia de usuario 1
 
-- [ ] T016 [P] [US1] Add unit tests for initialization state transitions, configured reserve, one-time grants, one-time emissions, inactive-player activation, and retry recovery in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T017 [P] [US1] Add PostgreSQL/Testcontainers tests for singleton superuser, grant uniqueness, issuance uniqueness, exactly 100 tokens, non-negative balances, and restart idempotency in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
+- [ ] T016 [P] [US1] Agregar pruebas unitarias para transiciones del estado de inicialización, reserva configurada, asignaciones únicas, emisiones únicas, activación de jugadores inactivos y recuperación mediante reintentos en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [ ] T017 [P] [US1] Agregar pruebas PostgreSQL/Testcontainers para superusuario singleton, unicidad de asignaciones, unicidad de emisiones, exactamente 100 tokens, saldos no negativos e idempotencia tras reinicio en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
 
-### Implementation for User Story 1
+### Implementación para la historia de usuario 1
 
-- [ ] T018 Create initialization/state persistence repositories and lock queries in `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/` using the singleton market-state row and deterministic transaction semantics.
-- [ ] T019 Implement `MarketInitializationService` under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/` to create/verify the protected superuser, apply the configured 1,000,000-credit default before first initialization, and never reset an initialized reserve.
-- [ ] T020 Implement the automatic application-readiness coordinator under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/` or `service/config/`, with retryable `INITIALIZING`, `FAILED`, and `READY` transitions and no public endpoint.
-- [ ] T021 Implement the idempotent initial-credit grant for existing users and the post-registration grant hook under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, using the unique grant marker and preventing authentication from depending on successful market startup.
-- [ ] T022 Implement one-time issuance/allocation for active players and first activation under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, referencing the existing stable player identity and active-state contract without modifying Player Statistics Sync.
-- [ ] T023 Implement initial quote seeding through the real shared publication adapter exposed by `QuotePublicationPort.publishInitialQuote` at 1.00 credit with non-expiring validity under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/` and `service/interfaces/`, only after T014–T015 define/verify the contract and T039–T040 implement/verify its persistence and publication service; do not create a parallel price table.
-- [ ] T024 Implement initialization recovery so a failed or interrupted run resumes missing grants, emissions, and initial quotes, leaves trading disabled until complete, and preserves existing successful steps under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
-- [ ] T025 Add initialization and activation integration tests covering four users, active/inactive players, restart, failure recovery, and independent operation of authentication in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/` and `persistence/`.
+- [ ] T018 Crear repositorios de persistencia y consultas de locks para inicialización/estado en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/`, usando la fila singleton de estado del mercado y semántica transaccional determinista.
+- [ ] T019 Implementar `MarketInitializationService` bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/` para crear/verificar el superusuario protegido, aplicar el valor por defecto configurado de 1.000.000 de créditos antes de la primera inicialización y nunca restablecer una reserva inicializada.
+- [ ] T020 Implementar el coordinador automático de disponibilidad de la aplicación bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/` o `service/config/`, con transiciones reintentables `INITIALIZING`, `FAILED` y `READY`, y sin endpoint público.
+- [ ] T021 Implementar la asignación idempotente de créditos iniciales para usuarios existentes y el hook de asignación posterior al registro bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, usando el marcador de asignación único y evitando que la autenticación dependa del inicio exitoso del mercado.
+- [ ] T022 Implementar la emisión/asignación única para jugadores activos y para la primera activación bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, referenciando la identidad estable existente del jugador y el contrato de estado activo sin modificar Player Statistics Sync.
+- [ ] T023 Implementar la siembra de cotizaciones iniciales mediante el adaptador real de publicación compartida expuesto por `QuotePublicationPort.publishInitialQuote` a 1.00 crédito con vigencia no expirable bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/` y `service/interfaces/`, solo después de que T014–T015 definan/verifiquen el contrato y T039–T040 implementen/verifiquen su servicio de persistencia y publicación; no crear una tabla de precios paralela.
+- [ ] T024 Implementar la recuperación de inicialización para que una ejecución fallida o interrumpida reanude asignaciones, emisiones y cotizaciones iniciales faltantes, mantenga las operaciones deshabilitadas hasta completar y preserve los pasos exitosos existentes bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
+- [ ] T025 Agregar pruebas de integración de inicialización y activación que cubran cuatro usuarios, jugadores activos/inactivos, reinicio, recuperación ante fallos y operación independiente de la autenticación en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/` y `persistence/`.
 
-**Checkpoint**: Market initialization is automatic, idempotent, recoverable, and cannot duplicate identities, credits, quotes, or token emissions.
+**Punto de control**: La inicialización del mercado es automática, idempotente y recuperable, y no puede duplicar identidades, créditos, cotizaciones ni emisiones de tokens.
 
-## Phase 4: User Story 2 - Consultar el estado operativo del mercado (P1)
+## Fase 4: Historia de usuario 2 - Consultar el estado operativo del mercado (P1)
 
-**Goal**: Expose market readiness and operable-player information without exposing internal operations or another user's data.
+**Objetivo**: Exponer la disponibilidad del mercado y la información de jugadores operables sin exponer operaciones internas ni datos de otro usuario.
 
-**Independent test**: A user can see only active players with current quote/token availability; incomplete initialization and missing/stale quotes are represented correctly.
+**Prueba independiente**: Un usuario solo puede ver jugadores activos con disponibilidad actual de cotización/tokens; la inicialización incompleta y las cotizaciones ausentes/obsoletas se representan correctamente.
 
-- [ ] T026 [P] [US2] Add unit tests for shared/exclusive market-state barriers, state epochs, inactive-player handling, missing quotes, and historical-price labeling in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T027 [P] [US2] Add MockMvc security tests for unauthenticated access, authenticated market listing, and exclusion of internal superuser operations in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
-- [ ] T028 Implement market-state and player-availability services under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/` using shared state locks for normal reads and the stable player active-state contract.
-- [ ] T029 Implement balance and market-player DTOs under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` and service DTOs under `service/dto/`, reusing existing pagination and response conventions.
-- [ ] T030 Implement the balance and market-player read endpoints in `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/`, including current quote, historical marker, tokens available, and market readiness semantics from `contracts/market-api.md`.
-- [ ] T031 Add OpenAPI/error-handler documentation for market-not-ready, missing quote, inactive player, and authorization errors through `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/exceptionhandler/` and the market controller.
+- [ ] T026 [P] [US2] Agregar pruebas unitarias para barreras compartidas/exclusivas del estado del mercado, épocas de estado, manejo de jugadores inactivos, cotizaciones ausentes y marcado de precios históricos en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [ ] T027 [P] [US2] Agregar pruebas de seguridad MockMvc para acceso no autenticado, listado autenticado del mercado y exclusión de operaciones del superusuario interno en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
+- [ ] T028 Implementar servicios de estado del mercado y disponibilidad de jugadores bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, usando locks compartidos de estado para lecturas normales y el contrato estable de estado activo del jugador.
+- [ ] T029 Implementar DTOs de saldo y jugador de mercado bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y DTOs de servicio bajo `service/dto/`, reutilizando las convenciones existentes de paginación y respuestas.
+- [ ] T030 Implementar los endpoints de lectura de saldo y jugadores del mercado en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/`, incluyendo cotización actual, marcador histórico, tokens disponibles y semántica de disponibilidad del mercado de `contracts/market-api.md`.
+- [ ] T031 Agregar documentación OpenAPI y del manejador de errores para mercado no listo, cotización ausente, jugador inactivo y errores de autorización mediante `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/exceptionhandler/` y el controlador del mercado.
 
-**Checkpoint**: Read-only market information is authenticated, scoped, and consistent with initialization and player state.
+**Punto de control**: La información de solo lectura del mercado está autenticada, delimitada y es consistente con la inicialización y el estado del jugador.
 
-## Phase 5: User Story 7 - Recuperar solicitudes idempotentes y concurrentes (P1)
+## Fase 5: Historia de usuario 7 - Recuperar solicitudes idempotentes y concurrentes (P1)
 
-**Goal**: Ensure repeated, concurrent, timed-out, and recovered operations cannot duplicate transfers.
+**Objetivo**: Garantizar que las operaciones repetidas, concurrentes, agotadas por timeout y recuperadas no dupliquen transferencias.
 
-**Independent test**: Two backend instances using the same key yield one result; rollback leaves no movements; a later retry recovers or safely re-executes a durable `PROCESSING` request.
+**Prueba independiente**: Dos instancias del backend que usan la misma clave producen un resultado; el rollback no deja movimientos; un reintento posterior recupera o vuelve a ejecutar de forma segura una solicitud `PROCESSING` durable.
 
-- [ ] T032 [P] [US7] Add unit tests for same-key identical requests, conflicting parameters, `PROCESSING`, `CONFIRMED`, `REJECTED`, rollback, and lost-response state handling in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T033 Add PostgreSQL/Testcontainers concurrency tests for transaction-scoped advisory locks, request-row ownership, process failure simulation, timeout/pending recovery, and absence of duplicate movements in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
-- [ ] T034 Implement idempotency claim, normalized-parameter hash, execution token, status transitions, stored result, and recovery queries under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/` and `service/impl/`.
-- [ ] T035 Implement the PostgreSQL transaction-scoped advisory-lock executor and row-lock coordination in `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, ensuring a second executor returns pending while the first transaction is active.
-- [ ] T036 Implement operation-status/recovery DTOs and endpoint in `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` and `controller/`, returning stored results only after commit and never presenting pending/uncertain requests as confirmed trades.
+- [ ] T032 [P] [US7] Agregar pruebas unitarias para solicitudes idénticas con la misma clave, parámetros conflictivos, `PROCESSING`, `CONFIRMED`, `REJECTED`, rollback y manejo de respuestas perdidas en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [ ] T033 Agregar pruebas de concurrencia PostgreSQL/Testcontainers para locks advisory con alcance transaccional, propiedad de la fila de solicitud, simulación de caída del proceso, recuperación de timeout/pendiente y ausencia de movimientos duplicados en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
+- [ ] T034 Implementar la reclamación de idempotencia, hash de parámetros normalizados, token de ejecución, transiciones de estado, resultado almacenado y consultas de recuperación bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/` y `service/impl/`.
+- [ ] T035 Implementar el ejecutor de locks advisory con alcance transaccional de PostgreSQL y la coordinación de locks de filas en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, garantizando que un segundo ejecutor devuelva pendiente mientras la primera transacción esté activa.
+- [ ] T036 Implementar DTOs y endpoint de estado/recuperación de operaciones en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y `controller/`, devolviendo resultados almacenados solo después del commit y sin presentar solicitudes pendientes/inciertas como compraventas confirmadas.
 
-**Checkpoint**: Idempotency and recovery are safe across concurrent backend instances and technical failures.
+**Punto de control**: La idempotencia y la recuperación son seguras entre instancias concurrentes del backend y ante fallos técnicos.
 
-## Phase 6: User Story 8 - Operar con cotizaciones publicadas (P1)
+## Fase 6: Historia de usuario 8 - Operar con cotizaciones publicadas (P1)
 
-**Goal**: Consume one immutable/versioned quote source and coordinate exact-version validation with future Player Valuation.
+**Objetivo**: Consumir una única fuente de cotizaciones inmutable/versionada y coordinar la validación de versión exacta con la futura Player Valuation.
 
-**Independent test**: Initial quotes operate before Player Valuation exists; replacements, invalidations, expiry, and concurrent publication reject stale accepted versions without substituting prices.
+**Prueba independiente**: Las cotizaciones iniciales operan antes de que exista Player Valuation; los reemplazos, invalidaciones, vencimientos y publicaciones concurrentes rechazan versiones aceptadas obsoletas sin sustituir precios.
 
-- [ ] T037 [P] [US8] Add unit tests for immutable quote versions, current-head replacement, explicit invalidation, non-expiring initial quote, dynamic validity policy, and exact-version acceptance in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T038 Add PostgreSQL/Testcontainers tests for concurrent quote publication/invalidation versus market validation and the single-source-of-truth constraint in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
-- [ ] T039 Implement quote version/head persistence and repositories under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/`, distinguishing immutable versions from the per-player current quote reference/state.
-- [ ] T040 Implement the internal quote publication/consumption services under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/` and `service/interfaces/`, with initial seeding and future dynamic publication sharing the same source.
-- [ ] T041 Implement exact quote validation in the market operation service under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, rejecting replaced, invalidated, expired, or absent versions without automatic substitution.
-- [ ] T042 Add the Player Valuation integration seam and contract tests under `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`, documenting that valuation owns strategy/calculation/history while Token Market only consumes and records references.
+- [ ] T037 [P] [US8] Agregar pruebas unitarias para versiones inmutables de cotización, reemplazo de la cabecera actual, invalidación explícita, cotización inicial no expirable, política de vigencia dinámica y aceptación de versión exacta en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [ ] T038 Agregar pruebas PostgreSQL/Testcontainers para publicación/invalidación concurrente de cotizaciones frente a la validación del mercado y la restricción de fuente única de verdad en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
+- [ ] T039 Implementar persistencia y repositorios de versiones/cabeceras de cotizaciones bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/`, distinguiendo versiones inmutables de la referencia/estado de la cotización actual por jugador.
+- [ ] T040 Implementar servicios internos de publicación/consumo de cotizaciones bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/` y `service/interfaces/`, compartiendo la misma fuente para la siembra inicial y la publicación dinámica futura.
+- [ ] T041 Implementar la validación exacta de cotizaciones en el servicio de operaciones de mercado bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, rechazando versiones reemplazadas, invalidadas, vencidas o ausentes sin sustitución automática.
+- [ ] T042 Agregar el punto de integración con Player Valuation y pruebas de contrato bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`, documentando que valoración es responsable de estrategia/cálculo/histórico mientras Token Market solo consume y registra referencias.
 
-**Checkpoint**: Token Market has one quote source, no valuation algorithm, and exact-version execution semantics.
+**Punto de control**: Token Market tiene una única fuente de cotizaciones, ningún algoritmo de valoración y semántica de ejecución con versión exacta.
 
-## Phase 7: User Story 3 - Comprar tokens de un jugador activo (P1)
+## Fase 7: Historia de usuario 3 - Comprar tokens de un jugador activo (P1)
 
-**Goal**: Execute an all-or-nothing authenticated purchase against the superuser.
+**Objetivo**: Ejecutar una compra autenticada, todo o nada, contra el superusuario.
 
-**Independent test**: A valid purchase transfers credits/tokens, updates weighted acquisition cost, and records one confirmed transaction; every validation failure performs no partial mutation.
+**Prueba independiente**: Una compra válida transfiere créditos/tokens, actualiza el costo de adquisición ponderado y registra una transacción confirmada; cada fallo de validación no realiza mutaciones parciales.
 
-- [ ] T043 [P] [US3] Add service tests for purchase validation, integer quantity, active player, inventory, user balance, exact quote, and all-or-nothing behavior in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T044 Add PostgreSQL/Testcontainers tests for concurrent purchases, superuser inventory exhaustion, user double-spend prevention, deterministic lock order, and atomic movement/history commit in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
-- [ ] T045 Implement credit/token movement records and atomic account/holding update services under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/` and repositories under `persistence/`.
-- [ ] T046 Implement purchase orchestration with lock order idempotency → market state → player state → quote head → user balance → superuser balance → inventory → holding under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
-- [ ] T047 Add purchase request/response DTOs with `Idempotency-Key`, exact quote identity/version, positive integer quantity, and validation under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/`.
-- [ ] T048 Add the authenticated purchase endpoint and error mapping under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/`, deriving the user only from the validated JWT.
-- [ ] T049 Add MockMvc tests for successful purchase, missing/stale quote, inactive player, insufficient credits/inventory, invalid key, and cross-user account-selection attempts under `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
+- [ ] T043 [P] [US3] Agregar pruebas de servicio para validación de compra, cantidad entera, jugador activo, inventario, saldo del usuario, cotización exacta y comportamiento todo o nada en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [ ] T044 Agregar pruebas PostgreSQL/Testcontainers para compras concurrentes, agotamiento del inventario del superusuario, prevención del doble gasto del usuario, orden determinista de locks y commit atómico de movimientos/historial en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
+- [ ] T045 Implementar registros de movimientos de créditos/tokens y servicios atómicos de actualización de cuentas/tenencias bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/` y repositorios bajo `persistence/`.
+- [ ] T046 Implementar la orquestación de compras con el orden de locks idempotencia → estado del mercado → estado del jugador → cabecera de cotización → saldo del usuario → saldo del superusuario → inventario → tenencia bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
+- [ ] T047 Agregar DTOs de solicitud/respuesta de compra con `Idempotency-Key`, identidad/versión exacta de cotización, cantidad entera positiva y validación bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/`.
+- [ ] T048 Agregar el endpoint autenticado de compra y el mapeo de errores bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/`, obteniendo el usuario únicamente del JWT validado.
+- [ ] T049 Agregar pruebas MockMvc para compra exitosa, cotización ausente/obsoleta, jugador inactivo, créditos/inventario insuficientes, clave inválida e intentos de seleccionar la cuenta de otro usuario bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
 
-**Checkpoint**: Purchase is immediate, atomic, quote-versioned, idempotent, and limited to the superuser counterparty.
+**Punto de control**: La compra es inmediata, atómica, versionada por cotización, idempotente y limitada a la contraparte superusuario.
 
-## Phase 8: User Story 4 - Vender tokens de un jugador activo (P1)
+## Fase 8: Historia de usuario 4 - Vender tokens de un jugador activo (P1)
 
-**Goal**: Execute an all-or-nothing authenticated sale against the finite superuser reserve.
+**Objetivo**: Ejecutar una venta autenticada, todo o nada, contra la reserva finita del superusuario.
 
-**Independent test**: A valid sale transfers tokens to the superuser and credits to the user, updates remaining weighted cost and realized P/L, and never partially executes.
+**Prueba independiente**: Una venta válida transfiere tokens al superusuario y créditos al usuario, actualiza el costo ponderado restante y la ganancia/pérdida realizada, y nunca se ejecuta parcialmente.
 
-- [ ] T050 [P] [US4] Add service tests for sale validation, user holdings, reserve sufficiency, partial sale cost allocation, final-position closure, exact quote, and all-or-nothing behavior in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T051 Add PostgreSQL/Testcontainers tests for concurrent sales competing for one holding and the finite superuser reserve, proving no negative balance, oversell, or partial movement in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
-- [ ] T052 Implement sale orchestration using the same deterministic lock order and idempotency executor as purchase under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
-- [ ] T053 Implement weighted-average cost reduction, realized gain/loss, final-position zeroing, and movement/history persistence under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
-- [ ] T054 Add sale request/response DTOs and authenticated sale endpoint under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` and `controller/`, reusing the exact quote and JWT ownership rules.
-- [ ] T055 Add MockMvc tests for partial sale, final sale, insufficient holding/reserve, inactive player, stale quote, idempotent retry, and cross-user access rejection under `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
+- [ ] T050 [P] [US4] Agregar pruebas de servicio para validación de venta, tenencias del usuario, suficiencia de reserva, asignación de costo de venta parcial, cierre de posición final, cotización exacta y comportamiento todo o nada en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [ ] T051 Agregar pruebas PostgreSQL/Testcontainers para ventas concurrentes que compiten por una tenencia y la reserva finita del superusuario, demostrando ausencia de saldo negativo, sobreventa o movimiento parcial en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
+- [ ] T052 Implementar la orquestación de ventas usando el mismo orden determinista de locks y ejecutor de idempotencia que la compra bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
+- [ ] T053 Implementar la reducción de costo mediante promedio ponderado, ganancia/pérdida realizada, puesta en cero de la posición final y persistencia de movimientos/historial bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
+- [ ] T054 Agregar DTOs de solicitud/respuesta de venta y endpoint autenticado de venta bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y `controller/`, reutilizando las reglas exactas de cotización y pertenencia JWT.
+- [ ] T055 Agregar pruebas MockMvc para venta parcial, venta final, tenencia/reserva insuficientes, jugador inactivo, cotización obsoleta, reintento idempotente y rechazo de acceso entre usuarios bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
 
-**Checkpoint**: Sale is atomic, finite-reserve constrained, weighted-cost aware, and auditable.
+**Punto de control**: La venta es atómica, está limitada por la reserva finita, contempla el costo ponderado y es auditable.
 
-## Phase 9: User Story 5 - Consultar el portfolio y la rentabilidad (P2)
+## Fase 9: Historia de usuario 5 - Consultar el portfolio y la rentabilidad (P2)
 
-**Goal**: Show only open positions of the authenticated user with complete realized/unrealized accounting semantics.
+**Objetivo**: Mostrar únicamente posiciones abiertas del usuario autenticado con semántica contable completa de resultados realizados/no realizados.
 
-**Independent test**: Portfolio shows weighted average and current value for open positions, preserves realized P/L after closure, and marks missing current quotes without presenting incomplete totals as current.
+**Prueba independiente**: El portfolio muestra promedio ponderado y valor actual de las posiciones abiertas, conserva P/L realizado después del cierre y marca cotizaciones actuales ausentes sin presentar totales incompletos como actuales.
 
-- [ ] T056 [P] [US5] Add unit tests for weighted-average portfolio values, realized P/L after closed positions, unrealized P/L, historical quote display, missing quote handling, and combined-result completeness in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T057 Implement portfolio aggregation and valuation services under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, using current valid quotes only for current value and retaining realized aggregates independently of open holdings.
-- [ ] T058 Add portfolio DTOs under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` and service DTOs under `service/dto/`, including open positions, costs, quote status, realized/unrealized P/L, and completeness indicators.
-- [ ] T059 Add the authenticated portfolio endpoint under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/` and MockMvc isolation tests under `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
+- [ ] T056 [P] [US5] Agregar pruebas unitarias para valores de portfolio con promedio ponderado, P/L realizado tras cerrar posiciones, P/L no realizado, presentación de cotización histórica, manejo de cotización ausente y completitud del resultado combinado en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [ ] T057 Implementar servicios de agregación y valoración del portfolio bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, usando cotizaciones vigentes actuales solo para el valor actual y conservando agregados realizados independientemente de las tenencias abiertas.
+- [ ] T058 Agregar DTOs de portfolio bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y DTOs de servicio bajo `service/dto/`, incluyendo posiciones abiertas, costos, estado de cotización, P/L realizado/no realizado e indicadores de completitud.
+- [ ] T059 Agregar el endpoint autenticado de portfolio bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/` y pruebas de aislamiento MockMvc bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
 
-**Checkpoint**: Portfolio is personal, accurate after partial/full sales, and explicit about historical or unavailable prices.
+**Punto de control**: El portfolio es personal, preciso después de ventas parciales/completas y explícito respecto de precios históricos o no disponibles.
 
-## Phase 10: User Story 6 - Consultar transacciones confirmadas y auditoría (P2)
+## Fase 10: Historia de usuario 6 - Consultar transacciones confirmadas y auditoría (P2)
 
-**Goal**: Provide immutable personal confirmed history and a separate restricted rejection audit.
+**Objetivo**: Proporcionar un historial personal confirmado e inmutable y una auditoría separada y restringida de rechazos.
 
-**Independent test**: Users see only their own confirmed trades newest-first with filters/pagination; rejected attempts and pending requests never appear as confirmed transactions.
+**Prueba independiente**: Los usuarios solo ven sus propias operaciones confirmadas, de la más reciente a la más antigua, con filtros/paginación; los intentos rechazados y las solicitudes pendientes nunca aparecen como transacciones confirmadas.
 
-- [ ] T060 [P] [US6] Add repository/service tests for immutable transaction snapshots, descending order, player/type/date filters, pagination, rejection separation, and user isolation in `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/` and `persistence/`.
-- [ ] T061 Implement immutable confirmed transaction persistence and query services under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/` and `service/impl/`, including player-name snapshot, quote version, counterparty, idempotency reference, and realized P/L.
-- [ ] T062 Implement separate internal rejection-audit persistence and restricted service under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/` and `service/impl/`, excluding credentials, JWTs, and sensitive payloads.
-- [ ] T063 Add transaction-history DTOs, filter/pagination validation, and authenticated personal-history endpoint under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` and `controller/`.
-- [ ] T064 Add MockMvc tests for confirmed-only history, filters, pagination, newest-first ordering, rejection exclusion, pending exclusion, and cross-user access denial under `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
+- [ ] T060 [P] [US6] Agregar pruebas de repositorio/servicio para snapshots inmutables de transacciones, orden descendente, filtros por jugador/tipo/fecha, paginación, separación de rechazos y aislamiento de usuarios en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/` y `persistence/`.
+- [ ] T061 Implementar persistencia inmutable y servicios de consulta de transacciones confirmadas bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/` y `service/impl/`, incluyendo snapshot del nombre del jugador, versión de cotización, contraparte, referencia de idempotencia y P/L realizado.
+- [ ] T062 Implementar persistencia separada de auditoría interna de rechazos y servicio restringido bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/` y `service/impl/`, excluyendo credenciales, JWT y payloads sensibles.
+- [ ] T063 Agregar DTOs del historial de transacciones, validación de filtros/paginación y endpoint autenticado del historial personal bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y `controller/`.
+- [ ] T064 Agregar pruebas MockMvc de historial solo confirmado, filtros, paginación, orden más reciente primero, exclusión de rechazos, exclusión de pendientes y denegación de acceso entre usuarios bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
 
-**Checkpoint**: Confirmed history is immutable and personal; rejection audit is separate and internal.
+**Punto de control**: El historial confirmado es inmutable y personal; la auditoría de rechazos es separada e interna.
 
-## Phase 11: User Story 9 - Utilizar la interfaz mínima del mercado (P2)
+## Fase 11: Historia de usuario 9 - Utilizar la interfaz mínima del mercado (P2)
 
-**Goal**: Provide the minimum market, balance, trading, portfolio, history, and operation-recovery experience without moving business logic into React.
+**Objetivo**: Proporcionar la experiencia mínima de mercado, saldo, operaciones, portfolio, historial y recuperación de operaciones sin trasladar lógica de negocio a React.
 
-**Independent test**: An authenticated user can complete the market flow and distinguish loading, rejection, missing/historical quote, pending, and uncertain states.
+**Prueba independiente**: Un usuario autenticado puede completar el flujo del mercado y distinguir estados de carga, rechazo, cotización ausente/histórica, pendiente e incierto.
 
-- [ ] T065 [P] [US9] Add typed market API client functions under `frontend/src/api/` for balance, players/quotes, purchase, sale, operation recovery, portfolio, and transaction history.
-- [ ] T066 [P] [US9] Add reusable loading, error, stale-quote, pending, and uncertain-operation components under `frontend/src/components/`.
-- [ ] T067 [P] [US9] Add market/player listing and balance view under `frontend/src/views/`, reusing `frontend/src/session/` authentication state and existing styles.
-- [ ] T068 [P] [US9] Add buy/sell confirmation views under `frontend/src/views/` and `frontend/src/components/`, displaying accepted quote version, quantity, total, and rejection state.
-- [ ] T069 [P] [US9] Add portfolio and history views with filters/pagination under `frontend/src/views/` and `frontend/src/components/`, showing historical prices and realized results after position closure.
-- [ ] T070 [US9] Add frontend unit tests for API/client mapping and all market states in `frontend/tests/market-api.test.js` and `frontend/tests/market-views.test.jsx`, using the existing Vitest configuration in `frontend/vite.config.js`; Vitest is already declared in `frontend/package.json`, so do not install or modify dependencies.
-- [ ] T071 [US9] Add Playwright flow coverage in `frontend/e2e/token-market.spec.js` for balance, market listing, purchase, sale, portfolio, history, pending recovery, and user isolation, using the existing `frontend/playwright.config.js` `testDir: './e2e'`; Playwright is already declared in `frontend/package.json`, so do not install or modify dependencies.
+- [ ] T065 [P] [US9] Agregar funciones tipadas del cliente API del mercado bajo `frontend/src/api/` para saldo, jugadores/cotizaciones, compra, venta, recuperación de operaciones, portfolio e historial de transacciones.
+- [ ] T066 [P] [US9] Agregar componentes reutilizables de carga, error, cotización obsoleta, pendiente y operación incierta bajo `frontend/src/components/`.
+- [ ] T067 [P] [US9] Agregar vistas de listado de mercado/jugadores y saldo bajo `frontend/src/views/`, reutilizando el estado de autenticación de `frontend/src/session/` y los estilos existentes.
+- [ ] T068 [P] [US9] Agregar vistas de confirmación de compra/venta bajo `frontend/src/views/` y `frontend/src/components/`, mostrando versión de cotización aceptada, cantidad, total y estado de rechazo.
+- [ ] T069 [P] [US9] Agregar vistas de portfolio e historial con filtros/paginación bajo `frontend/src/views/` y `frontend/src/components/`, mostrando precios históricos y resultados realizados después del cierre de posiciones.
+- [ ] T070 [US9] Agregar pruebas unitarias frontend para mapeo de API/cliente y todos los estados del mercado en `frontend/tests/market-api.test.js` y `frontend/tests/market-views.test.jsx`, usando la configuración Vitest existente en `frontend/vite.config.js`; Vitest ya está declarado en `frontend/package.json`, por lo que no instalar ni modificar dependencias.
+- [ ] T071 [US9] Agregar cobertura del flujo Playwright en `frontend/e2e/token-market.spec.js` para saldo, listado del mercado, compra, venta, portfolio, historial, recuperación de pendientes y aislamiento de usuarios, usando `testDir: './e2e'` de `frontend/playwright.config.js`; Playwright ya está declarado en `frontend/package.json`, por lo que no instalar ni modificar dependencias.
 
-**Checkpoint**: The minimum UI is functional and delegates all ownership, pricing, and validation decisions to the backend.
+**Punto de control**: La UI mínima es funcional y delega todas las decisiones de pertenencia, precios y validación al backend.
 
-## Phase 12: User Story 10 - Verificar el escenario reproducible de demostración (P3)
+## Fase 12: Historia de usuario 10 - Verificar el escenario reproducible de demostración (P3)
 
-**Goal**: Reproduce the four-user/five-player controlled demonstration and separately verify future real integrations.
+**Objetivo**: Reproducir la demostración controlada de cuatro usuarios/cinco jugadores y verificar por separado las futuras integraciones reales.
 
-**Independent test**: Controlled fixtures produce comparable portfolios, later quote changes, sales, realized/unrealized results, and personal histories without mixing with real data.
+**Prueba independiente**: Los fixtures controlados producen portfolios comparables, cambios posteriores de cotización, ventas, resultados realizados/no realizados e historiales personales sin mezclarse con datos reales.
 
-- [ ] T072 [P] [US10] Define isolated test-only fixture builders for four users and five players under `backend/src/test/java/com/devchesterunited/devchesterunitedv2/` and/or `backend/src/test/resources/`, clearly marking data as demonstration-only.
-- [ ] T073 [US10] Add the reproducible controlled demonstration test for initial quotes, purchases, later different quote versions, portfolio comparison, sales, realized/unrealized results, closed positions, and histories under `backend/src/test/java/com/devchesterunited/devchesterunitedv2/`.
-- [ ] T074 [P] [US10] Add frontend demonstration data/loading coverage under `frontend/tests/market-demo.test.jsx` without inserting fixture data into production APIs or real catalog data.
-- [ ] T075 [P] [US10] Add a separate, later integration-verification scenario under `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/` that runs only when both real Player Statistics Sync and Player Valuation are available, consumes their outputs, and never implements scraping, statistics persistence, or price calculation in Token Market; this task must not block T073 or independent Token Market validation.
+- [ ] T072 [P] [US10] Definir builders de fixtures aislados y exclusivos de pruebas para cuatro usuarios y cinco jugadores bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/` y/o `backend/src/test/resources/`, marcando claramente los datos como exclusivos de demostración.
+- [ ] T073 [US10] Agregar la prueba reproducible de demostración controlada para cotizaciones iniciales, compras, versiones posteriores diferentes, comparación de portfolios, ventas, resultados realizados/no realizados, posiciones cerradas e historiales bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/`.
+- [ ] T074 [P] [US10] Agregar cobertura de datos/carga de demostración frontend bajo `frontend/tests/market-demo.test.jsx` sin insertar fixtures en APIs de producción ni datos del catálogo real.
+- [ ] T075 [P] [US10] Agregar un escenario posterior y separado de verificación de integración bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/` que se ejecute solo cuando estén disponibles Player Statistics Sync y Player Valuation reales, consuma sus salidas y nunca implemente scraping, persistencia de estadísticas ni cálculo de precios en Token Market; esta tarea no debe bloquear T073 ni la validación independiente de Token Market.
 
-**Checkpoint**: Controlled demonstration and real cross-feature verification are explicitly separated.
+**Punto de control**: La demostración controlada y la verificación real entre features están explícitamente separadas.
 
-## Phase 13: Polish and Cross-Cutting Verification
+## Fase 13: Pulido y verificación transversal
 
-**Purpose**: Validate all acceptance criteria and integration boundaries before implementation handoff.
+**Propósito**: Validar todos los criterios de aceptación y límites de integración antes de entregar la implementación.
 
-- [ ] T076 [P] Run the complete backend unit, MockMvc, PostgreSQL/Testcontainers, and frontend test suites through the repository's existing Gradle/npm commands; do not execute database migrations against non-test databases.
-- [ ] T077 [P] Verify the 52 functional requirements and 11 success criteria from `specs/003-token-market/spec.md` against implementation tests and record any unmet criterion in the implementation issue tracker.
-- [ ] T078 [P] Verify OpenAPI/security behavior and confirm all private queries derive identity from JWT rather than client-supplied user identifiers under `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/`, `controller/`, and frontend API usage.
-- [ ] T079 Verify that no Token Market file implements WhoScored scraping, statistics synchronization, valuation strategies, rankings, or a second price source; review `backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/` and quote persistence boundaries.
-- [ ] T080 Verify Flyway ordering under `backend/src/main/resources/db/migration/` and V16 coordination after Player Statistics Sync integration is explicitly resolved; update only the Token Market migration if V16 is confirmed, never modify the statistics branch.
-- [ ] T081 Run the `quickstart.md` validation sequence using isolated PostgreSQL/Testcontainers and record atomicity, concurrency, idempotency, issuance, portfolio, history, and demonstration evidence.
+- [ ] T076 [P] Ejecutar las suites completas de pruebas unitarias backend, MockMvc, PostgreSQL/Testcontainers y frontend mediante los comandos Gradle/npm existentes del repositorio; no ejecutar migraciones de base de datos contra bases no destinadas a pruebas.
+- [ ] T077 [P] Verificar los 52 requisitos funcionales y los 11 criterios de éxito de `specs/003-token-market/spec.md` frente a las pruebas de implementación y registrar cualquier criterio incumplido en el issue tracker de implementación.
+- [ ] T078 [P] Verificar el comportamiento OpenAPI/de seguridad y confirmar que todas las consultas privadas obtienen la identidad del JWT en lugar de identificadores proporcionados por el cliente bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/`, `controller/` y el uso de la API del frontend.
+- [ ] T079 Verificar que ningún archivo de Token Market implemente scraping de WhoScored, sincronización de estadísticas, estrategias de valoración, rankings ni una segunda fuente de precios; revisar `backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/` y los límites de persistencia de cotizaciones.
+- [ ] T080 Verificar el orden de Flyway bajo `backend/src/main/resources/db/migration/` y la coordinación de V16 después de resolver explícitamente la integración de Player Statistics Sync; actualizar únicamente la migración de Token Market si V16 está confirmada, nunca modificar la rama de estadísticas.
+- [ ] T081 Ejecutar la secuencia de validación de `quickstart.md` usando PostgreSQL/Testcontainers aislado y registrar evidencia de atomicidad, concurrencia, idempotencia, emisión, portfolio, historial y demostración.
 
-## Dependencies and Execution Order
+## Dependencias y orden de ejecución
 
-### Phase dependencies
+### Dependencias entre fases
 
-- Phase 1 is independent and must precede implementation.
-- Phase 2 blocks every user story. T005 is an external coordination gate before T006; T006 must not be implemented with an assumed V16 conflict.
-- US1 depends on Phase 2 and establishes market initialization, grants, issuance, and initial quotes. Its quote-seeding task T023 is additionally gated by the shared quote chain T014 → T015 → T039 → T040; the other initialization work can proceed independently.
-- US2 depends on US1 state semantics but can develop its read DTOs/tests in parallel after the foundational model exists.
-- US7 depends on Phase 2. US8 must execute its contract tasks T014–T015 before persistence/publication tasks T039–T040. T023 then consumes the verified real publication adapter; US8's dynamic publication work can continue independently afterward.
-- US3 depends on US1, US2, US7, and US8.
-- US4 depends on US3's movement/accounting infrastructure and US7/US8.
-- US5 depends on US3 and US4 transaction/holding accounting.
-- US6 depends on US3/US4 confirmed transaction and rejection records.
-- US9 depends on the backend contracts for US2–US7 and can begin API-client work in parallel once DTO shapes are stable.
-- US10 depends on US1–US8 for the controlled demonstration; its real integration verification additionally depends on Player Statistics Sync and Player Valuation availability.
-- Phase 13 depends on all selected stories and on the V15/V16 coordination decision.
+- La Fase 1 es independiente y debe preceder a la implementación.
+- La Fase 2 bloquea todas las historias de usuario. T005 es una puerta de coordinación externa antes de T006; T006 no debe implementarse suponiendo que no existe conflicto con V16.
+- US1 depende de la Fase 2 y establece la inicialización del mercado, las asignaciones, la emisión y las cotizaciones iniciales. Su tarea de siembra de cotizaciones T023 está además condicionada por la cadena compartida T014 → T015 → T039 → T040; el resto de la inicialización puede avanzar de forma independiente.
+- US2 depende de la semántica de estado de US1, pero puede desarrollar sus DTOs/pruebas de lectura en paralelo una vez que exista el modelo fundacional.
+- US7 depende de la Fase 2. US8 debe ejecutar sus tareas de contrato T014–T015 antes de las tareas de persistencia/publicación T039–T040. T023 consume luego el adaptador real de publicación verificado; el trabajo de publicación dinámica de US8 puede continuar de forma independiente después.
+- US3 depende de US1, US2, US7 y US8.
+- US4 depende de la infraestructura de movimientos/contabilidad de US3 y de US7/US8.
+- US5 depende de la contabilidad de transacciones/tenencias de US3 y US4.
+- US6 depende de los registros de transacciones confirmadas y rechazos de US3/US4.
+- US9 depende de los contratos backend de US2–US7 y puede iniciar el trabajo del cliente API en paralelo cuando las formas de los DTO estén estables.
+- US10 depende de US1–US8 para la demostración controlada; su verificación de integración real depende además de la disponibilidad de Player Statistics Sync y Player Valuation.
+- La Fase 13 depende de todas las historias seleccionadas y de la decisión de coordinación V15/V16.
 
-### Critical path
+### Camino crítico
 
 `T005 → T006 → T007–T015 → T039–T040 → T018–T024 (US1 quote seeding) → T034–T042 (US7/US8) → T045–T055 (US3/US4) → T057–T064 (US5/US6) → T073 → T076–T081`.
 
-The external gates on the critical path are final V15 coordination, the stable player active-state contract, and the shared quote publication boundary with Player Valuation.
+Las puertas externas del camino crítico son la coordinación final de V15, el contrato estable de estado activo del jugador y el límite compartido de publicación de cotizaciones con Player Valuation.
 
-### Parallel execution opportunities
+### Oportunidades de ejecución en paralelo
 
-- T002–T004 can run in parallel during Setup.
-- T007–T009, T012, and the preparation of T014 can run in parallel after the migration coordination shape is known, provided they do not edit the same file. T015 follows T014.
-- T039–T040 can proceed after T014–T015 and must complete before T023; T023 is not parallelizable with that quote chain.
-- US1 unit/database tests and initialization service design can be split by file after the foundational model exists.
-- US2 read contracts, US7 idempotency, and US8 quote-version work can proceed in parallel after Phase 2; integration checkpoints remain ordered.
-- Purchase and sale tests can be prepared in parallel, while shared movement/accounting implementation is coordinated before merging.
-- Portfolio, history, frontend, and controlled-fixture work can proceed in parallel after the corresponding backend contracts stabilize.
-- T073/T074 and all independent Token Market validation can complete without T075. Cross-feature integration T075 is parallelizable only after both Player Statistics Sync and Player Valuation are actually available and remains externally blocked until then.
+- T002–T004 pueden ejecutarse en paralelo durante la Preparación.
+- T007–T009, T012 y la preparación de T014 pueden ejecutarse en paralelo después de conocer la forma de coordinación de migraciones, siempre que no editen el mismo archivo. T015 sigue a T014.
+- T039–T040 pueden avanzar después de T014–T015 y deben completarse antes de T023; T023 no puede ejecutarse en paralelo con esa cadena de cotizaciones.
+- Las pruebas unitarias/de base de datos de US1 y el diseño del servicio de inicialización pueden dividirse por archivo una vez que exista el modelo fundacional.
+- Los contratos de lectura de US2, la idempotencia de US7 y el trabajo de versiones de cotización de US8 pueden avanzar en paralelo después de la Fase 2; los puntos de control de integración mantienen su orden.
+- Las pruebas de compra y venta pueden prepararse en paralelo, mientras la implementación compartida de movimientos/contabilidad se coordina antes de integrarse.
+- El trabajo de portfolio, historial, frontend y fixtures controlados puede avanzar en paralelo después de estabilizar los contratos backend correspondientes.
+- T073/T074 y toda validación independiente de Token Market pueden completarse sin T075. La integración entre features T075 puede ejecutarse en paralelo únicamente después de que Player Statistics Sync y Player Valuation estén realmente disponibles, y permanece bloqueada externamente hasta entonces.
 
-## Implementation Strategy
+## Estrategia de implementación
 
 ### MVP
 
-1. Complete Phase 1 and Phase 2, including the V15/V16 coordination gate.
-2. Complete US1 automatic initialization and US2 market state/listing.
-3. Complete US7 idempotency and US8 quote consumption.
-4. Complete US3 purchase and its atomic tests.
-5. Validate the purchase-only market increment before continuing to sales.
+1. Completar la Fase 1 y la Fase 2, incluida la puerta de coordinación V15/V16.
+2. Completar la inicialización automática de US1 y el estado/listado del mercado de US2.
+3. Completar la idempotencia de US7 y el consumo de cotizaciones de US8.
+4. Completar la compra de US3 y sus pruebas atómicas.
+5. Validar el incremento del mercado limitado a compras antes de continuar con las ventas.
 
-### Incremental delivery
+### Entrega incremental
 
-1. Add US4 sales and finite-reserve accounting.
-2. Add US5 portfolio and US6 confirmed history/rejection audit.
-3. Add US9 frontend flows.
-4. Add US10 controlled demonstration.
-5. Run the later real Player Statistics Sync/Player Valuation integration verification when those features are available.
+1. Agregar las ventas de US4 y la contabilidad de reserva finita.
+2. Agregar el portfolio de US5 y el historial confirmado/auditoría de rechazos de US6.
+3. Agregar los flujos frontend de US9.
+4. Agregar la demostración controlada de US10.
+5. Ejecutar la verificación posterior de integración real con Player Statistics Sync/Player Valuation cuando esas features estén disponibles.
 
-## Notes
+## Notas
 
-- Every task uses the required checklist format and includes a concrete repository path.
-- `[P]` means the task can proceed in parallel without editing an incomplete dependency or the same file.
-- Story labels map to the ten user stories in `spec.md`.
-- No task modifies Player Statistics Sync files, approved Specify/Plan documents, or performs migrations against a database during planning.
-- No task implements scraping, statistics synchronization, valuation strategies, rankings, or a second quote source.
+- Cada tarea usa el formato de checklist requerido e incluye una ruta concreta del repositorio.
+- `[P]` significa que la tarea puede avanzar en paralelo sin editar una dependencia incompleta ni el mismo archivo.
+- Las etiquetas de historia corresponden a las diez historias de usuario de `spec.md`.
+- Ninguna tarea modifica archivos de Player Statistics Sync, documentos aprobados de Specify/Plan ni ejecuta migraciones contra una base de datos durante la planificación.
+- Ninguna tarea implementa scraping, sincronización de estadísticas, estrategias de valoración, rankings ni una segunda fuente de cotizaciones.

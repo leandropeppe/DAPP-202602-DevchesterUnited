@@ -2,23 +2,23 @@
 
 **Rama de Funcionalidad**: `feature/token-market`
 
-**Created**: 2026-10-10
+**Creado**: 2026-10-10
 
-**Status**: Draft
+**Estado**: Borrador
 
-**Input**: User description: "Crear el mercado de tokens de jugadores con créditos virtuales, emisión inicial, compras, ventas, portfolio e historial de transacciones, integrado mediante contrato con Player Valuation y sin duplicar Player Statistics Sync."
+**Entrada**: Descripción del usuario: "Crear el mercado de tokens de jugadores con créditos virtuales, emisión inicial, compras, ventas, portfolio e historial de transacciones, integrado mediante contrato con Player Valuation y sin duplicar Player Statistics Sync."
 
-## User Scenarios & Testing *(mandatory)*
+## Escenarios de usuario y pruebas *(obligatorio)*
 
-### User Story 1 - Inicializar el mercado de forma segura (Priority: P1)
+### Historia de usuario 1 - Inicializar el mercado de forma segura (Prioridad: P1)
 
 Como responsable de la plataforma, quiero que el mercado se inicialice automáticamente mediante un proceso interno, para habilitar una única economía de créditos y una emisión inicial controlada sin intervención manual ni duplicaciones.
 
-**Why this priority**: La inicialización es un prerrequisito para todas las operaciones y debe proteger el suministro inicial de créditos y tokens.
+**Por qué esta prioridad**: La inicialización es un prerrequisito para todas las operaciones y debe proteger el suministro inicial de créditos y tokens.
 
-**Independent Test**: Con un catálogo que contenga jugadores activos e inactivos y usuarios nuevos y existentes, ejecutar la inicialización varias veces y reiniciar el sistema; comprobar que las identidades, créditos y emisiones iniciales se mantienen únicas, que los jugadores elegibles reciben exactamente 100 tokens y que el mercado queda bloqueado si la inicialización obligatoria no termina correctamente.
+**Prueba independiente**: Con un catálogo que contenga jugadores activos e inactivos y usuarios nuevos y existentes, ejecutar la inicialización varias veces y reiniciar el sistema; comprobar que las identidades, créditos y emisiones iniciales se mantienen únicas, que los jugadores elegibles reciben exactamente 100 tokens y que el mercado queda bloqueado si la inicialización obligatoria no termina correctamente.
 
-**Acceptance Scenarios**:
+**Escenarios de aceptación**:
 
 1. **Given** que el mercado aún no fue inicializado, **When** se ejecuta el proceso interno con la configuración inicial por defecto, **Then** se crea una única identidad interna protegida de superusuario con 1.000.000 de créditos y cada jugador activo recibe una emisión inicial de 100 tokens propiedad del superusuario.
 2. **Given** que existe una configuración de reserva inicial válida antes de la primera inicialización, **When** se inicializa el mercado, **Then** la reserva utiliza ese valor y los cambios posteriores de configuración no alteran el saldo ya inicializado.
@@ -29,15 +29,15 @@ Como responsable de la plataforma, quiero que el mercado se inicialice automáti
 
 ---
 
-### User Story 2 - Consultar el estado operativo del mercado (Priority: P1)
+### Historia de usuario 2 - Consultar el estado operativo del mercado (Prioridad: P1)
 
 Como usuario autenticado, quiero consultar mi saldo, los jugadores operables, los tokens disponibles y sus cotizaciones, para conocer las condiciones antes de confirmar una operación.
 
-**Why this priority**: El usuario necesita información consistente del mercado para tomar decisiones y evitar confirmar operaciones que no pueden ejecutarse.
+**Por qué esta prioridad**: El usuario necesita información consistente del mercado para tomar decisiones y evitar confirmar operaciones que no pueden ejecutarse.
 
-**Independent Test**: Consultar el estado antes y después de una compra, durante una inicialización incompleta y con jugadores activos e inactivos; comprobar que el usuario solo ve su propio saldo y que la información distingue cotizaciones vigentes de precios históricos.
+**Prueba independiente**: Consultar el estado antes y después de una compra, durante una inicialización incompleta y con jugadores activos e inactivos; comprobar que el usuario solo ve su propio saldo y que la información distingue cotizaciones vigentes de precios históricos.
 
-**Acceptance Scenarios**:
+**Escenarios de aceptación**:
 
 1. **Given** un usuario autenticado y un mercado inicializado, **When** consulta su estado, **Then** obtiene únicamente su saldo, los jugadores activos operables, la disponibilidad de tokens del superusuario y la cotización vigente o la indicación de que no existe.
 2. **Given** un jugador inactivo con tenencias existentes, **When** el usuario consulta el mercado, **Then** el jugador no aparece como comprable ni vendible, pero sus tenencias y la última cotización conocida pueden identificarse como históricas cuando no estén vigentes.
@@ -45,15 +45,15 @@ Como usuario autenticado, quiero consultar mi saldo, los jugadores operables, lo
 
 ---
 
-### User Story 3 - Comprar tokens de un jugador activo (Priority: P1)
+### Historia de usuario 3 - Comprar tokens de un jugador activo (Prioridad: P1)
 
 Como usuario autenticado, quiero comprar una cantidad entera de tokens de un jugador activo usando mis créditos y una cotización aceptada, para incorporarlos a mi portfolio.
 
-**Why this priority**: La compra es la operación principal mediante la cual un usuario adquiere una posición en el mercado.
+**Por qué esta prioridad**: La compra es la operación principal mediante la cual un usuario adquiere una posición en el mercado.
 
-**Independent Test**: Con mercado inicializado, saldo suficiente, inventario disponible y una cotización vigente, confirmar compras completas y verificar la transferencia de créditos, tokens, costo de adquisición y registro de la operación.
+**Prueba independiente**: Con mercado inicializado, saldo suficiente, inventario disponible y una cotización vigente, confirmar compras completas y verificar la transferencia de créditos, tokens, costo de adquisición y registro de la operación.
 
-**Acceptance Scenarios**:
+**Escenarios de aceptación**:
 
 1. **Given** un usuario autenticado, un jugador activo, tokens disponibles, créditos suficientes y una cotización vigente, **When** confirma una cantidad entera positiva con su versión exacta y una clave de idempotencia válida, **Then** los créditos se transfieren al superusuario, los tokens al usuario, se actualiza su costo de adquisición y se registra una compra confirmada.
 2. **Given** una solicitud de compra que no cumple una validación, **When** se procesa, **Then** se rechaza la solicitud completa sin transferencias parciales ni registro como compraventa confirmada.
@@ -62,15 +62,15 @@ Como usuario autenticado, quiero comprar una cantidad entera de tokens de un jug
 
 ---
 
-### User Story 4 - Vender tokens de un jugador activo (Priority: P1)
+### Historia de usuario 4 - Vender tokens de un jugador activo (Prioridad: P1)
 
 Como usuario autenticado, quiero vender una cantidad entera positiva de tokens que poseo al superusuario, para recuperar créditos virtuales al precio de una cotización aceptada.
 
-**Why this priority**: La venta permite cerrar o reducir posiciones y materializar resultados económicos.
+**Por qué esta prioridad**: La venta permite cerrar o reducir posiciones y materializar resultados económicos.
 
-**Independent Test**: Con una posición abierta, reserva suficiente del superusuario y cotización vigente, ejecutar ventas completas y parciales; verificar la transferencia inversa, la actualización del costo restante y la ganancia o pérdida realizada.
+**Prueba independiente**: Con una posición abierta, reserva suficiente del superusuario y cotización vigente, ejecutar ventas completas y parciales; verificar la transferencia inversa, la actualización del costo restante y la ganancia o pérdida realizada.
 
-**Acceptance Scenarios**:
+**Escenarios de aceptación**:
 
 1. **Given** un usuario con suficientes tokens de un jugador activo, una reserva del superusuario suficiente y una cotización vigente, **When** confirma una venta con cantidad positiva, versión exacta y clave válida, **Then** transfiere los tokens al superusuario, recibe el importe total y se registra la venta confirmada.
 2. **Given** que la reserva del superusuario no alcanza para pagar la venta, **When** se procesa, **Then** se rechaza la solicitud completa sin transferencias parciales.
@@ -80,15 +80,15 @@ Como usuario autenticado, quiero vender una cantidad entera positiva de tokens q
 
 ---
 
-### User Story 5 - Consultar el portfolio y la rentabilidad (Priority: P2)
+### Historia de usuario 5 - Consultar el portfolio y la rentabilidad (Prioridad: P2)
 
 Como usuario autenticado, quiero consultar exclusivamente mis posiciones abiertas y su rentabilidad, para conocer el valor actual de mis tenencias y sus resultados acumulados.
 
-**Why this priority**: El portfolio transforma las operaciones individuales en una visión útil de la posición del usuario.
+**Por qué esta prioridad**: El portfolio transforma las operaciones individuales en una visión útil de la posición del usuario.
 
-**Independent Test**: Crear posiciones mediante compras y ventas parciales, consultar el portfolio con cotizaciones vigentes y ausentes, y verificar cantidades, costo promedio, valor actual y resultados sin exponer posiciones de otros usuarios.
+**Prueba independiente**: Crear posiciones mediante compras y ventas parciales, consultar el portfolio con cotizaciones vigentes y ausentes, y verificar cantidades, costo promedio, valor actual y resultados sin exponer posiciones de otros usuarios.
 
-**Acceptance Scenarios**:
+**Escenarios de aceptación**:
 
 1. **Given** que el usuario posee al menos un token de un jugador, **When** consulta su portfolio, **Then** se muestra una posición abierta con jugador, cantidad, costo promedio ponderado móvil, costo total pendiente y cotización vigente si existe.
 2. **Given** una posición con cotización vigente, **When** se calcula el portfolio, **Then** se muestra su valor actual y la ganancia o pérdida no realizada.
@@ -99,15 +99,15 @@ Como usuario autenticado, quiero consultar exclusivamente mis posiciones abierta
 
 ---
 
-### User Story 6 - Consultar transacciones confirmadas y auditoría (Priority: P2)
+### Historia de usuario 6 - Consultar transacciones confirmadas y auditoría (Prioridad: P2)
 
 Como usuario autenticado, quiero consultar mis transacciones confirmadas de forma paginada y filtrable, para revisar mis operaciones y resultados históricos.
 
-**Why this priority**: El historial permite auditar las operaciones realizadas sin confundirlas con intentos rechazados o solicitudes todavía inciertas.
+**Por qué esta prioridad**: El historial permite auditar las operaciones realizadas sin confundirlas con intentos rechazados o solicitudes todavía inciertas.
 
-**Independent Test**: Ejecutar compras y ventas confirmadas, intentos rechazados y solicitudes pendientes; verificar que el historial personal solo contiene operaciones confirmadas, ordenadas de la más reciente a la más antigua y filtrables por jugador, tipo y fechas.
+**Prueba independiente**: Ejecutar compras y ventas confirmadas, intentos rechazados y solicitudes pendientes; verificar que el historial personal solo contiene operaciones confirmadas, ordenadas de la más reciente a la más antigua y filtrables por jugador, tipo y fechas.
 
-**Acceptance Scenarios**:
+**Escenarios de aceptación**:
 
 1. **Given** transacciones confirmadas del usuario, **When** consulta su historial, **Then** recibe únicamente sus operaciones confirmadas, ordenadas de la más reciente a la más antigua, con paginación y filtros disponibles.
 2. **Given** un intento rechazado, **When** se procesa, **Then** no se crea una compraventa confirmada y el intento se conserva exclusivamente en una auditoría separada de acceso interno autorizado.
@@ -116,15 +116,15 @@ Como usuario autenticado, quiero consultar mis transacciones confirmadas de form
 
 ---
 
-### User Story 7 - Recuperar solicitudes idempotentes y concurrentes (Priority: P1)
+### Historia de usuario 7 - Recuperar solicitudes idempotentes y concurrentes (Prioridad: P1)
 
 Como usuario autenticado, quiero recuperar el resultado de una solicitud de compra o venta mediante la misma clave de idempotencia, para poder reintentar de forma segura ante una respuesta perdida o incierta.
 
-**Why this priority**: La idempotencia y la consistencia concurrente protegen los créditos, tokens y tenencias contra doble gasto y operaciones duplicadas.
+**Por qué esta prioridad**: La idempotencia y la consistencia concurrente protegen los créditos, tokens y tenencias contra doble gasto y operaciones duplicadas.
 
-**Independent Test**: Repetir solicitudes idénticas, reutilizar una clave con parámetros distintos y ejecutar operaciones concurrentes sobre el mismo saldo e inventario; verificar resultados únicos, conflictos y ausencia de sobregiros o tenencias negativas.
+**Prueba independiente**: Repetir solicitudes idénticas, reutilizar una clave con parámetros distintos y ejecutar operaciones concurrentes sobre el mismo saldo e inventario; verificar resultados únicos, conflictos y ausencia de sobregiros o tenencias negativas.
 
-**Acceptance Scenarios**:
+**Escenarios de aceptación**:
 
 1. **Given** una operación previamente confirmada, **When** el usuario reintenta con la misma clave y los mismos parámetros, **Then** se recupera el resultado original sin repetir transferencias.
 2. **Given** una clave ya utilizada con parámetros distintos, **When** se reutiliza, **Then** la solicitud se rechaza por conflicto y no modifica saldos ni tenencias.
@@ -133,15 +133,15 @@ Como usuario autenticado, quiero recuperar el resultado de una solicitud de comp
 
 ---
 
-### User Story 8 - Operar con cotizaciones publicadas (Priority: P1)
+### Historia de usuario 8 - Operar con cotizaciones publicadas (Prioridad: P1)
 
 Como mercado, quiero consumir cotizaciones publicadas mediante un contrato único y versionado, para ejecutar operaciones con el precio exacto que el usuario aceptó sin duplicar la responsabilidad de Player Valuation.
 
-**Why this priority**: La integridad del precio aplicado es necesaria para que compras, ventas, portfolios e historial sean reproducibles.
+**Por qué esta prioridad**: La integridad del precio aplicado es necesaria para que compras, ventas, portfolios e historial sean reproducibles.
 
-**Independent Test**: Publicar una cotización inicial de 1,00 crédito mediante el mismo contrato y fuente de verdad que las cotizaciones futuras de Player Valuation, reemplazarla por una cotización posterior, invalidarla y dejarla vencer según una política dinámica; comprobar qué operaciones se aceptan, cuáles se rechazan y cómo se muestra un precio histórico.
+**Prueba independiente**: Publicar una cotización inicial de 1,00 crédito mediante el mismo contrato y fuente de verdad que las cotizaciones futuras de Player Valuation, reemplazarla por una cotización posterior, invalidarla y dejarla vencer según una política dinámica; comprobar qué operaciones se aceptan, cuáles se rechazan y cómo se muestra un precio histórico.
 
-**Acceptance Scenarios**:
+**Escenarios de aceptación**:
 
 1. **Given** que aún no existe una cotización dinámica, **When** se inicializa el mercado, **Then** se persiste una cotización inicial de 1,00 crédito por token utilizando el mismo contrato funcional y la misma fuente de verdad que las futuras cotizaciones de Player Valuation; la responsabilidad técnica de publicarla se resolverá en Plan sin crear estructuras paralelas de precios.
 2. **Given** una cotización inicial no reemplazada ni invalidada, **When** transcurren siete días, **Then** continúa vigente y no caduca automáticamente por ese solo motivo.
@@ -152,15 +152,15 @@ Como mercado, quiero consumir cotizaciones publicadas mediante un contrato únic
 
 ---
 
-### User Story 9 - Utilizar la interfaz mínima del mercado (Priority: P2)
+### Historia de usuario 9 - Utilizar la interfaz mínima del mercado (Prioridad: P2)
 
 Como usuario autenticado, quiero consultar y operar sobre el mercado desde la interfaz web, para completar el flujo sin acceder directamente a la persistencia ni a proveedores externos.
 
-**Why this priority**: La interfaz permite validar el uso del mercado como producto, manteniendo las reglas de negocio en el backend.
+**Por qué esta prioridad**: La interfaz permite validar el uso del mercado como producto, manteniendo las reglas de negocio en el backend.
 
-**Independent Test**: Con el mercado inicializado, iniciar sesión, consultar saldo y jugadores, comprar, vender, revisar portfolio e historial, y comprobar mensajes claros para cotizaciones ausentes, precios históricos, rechazos y estados pendientes.
+**Prueba independiente**: Con el mercado inicializado, iniciar sesión, consultar saldo y jugadores, comprar, vender, revisar portfolio e historial, y comprobar mensajes claros para cotizaciones ausentes, precios históricos, rechazos y estados pendientes.
 
-**Acceptance Scenarios**:
+**Escenarios de aceptación**:
 
 1. **Given** un usuario autenticado, **When** abre el mercado, **Then** puede consultar saldo, jugadores activos, precio vigente y tokens disponibles del superusuario.
 2. **Given** una operación válida, **When** confirma una compra o venta en la interfaz, **Then** puede revisar cantidad, precio, versión e importe antes de enviarla y observa el resultado devuelto.
@@ -169,22 +169,22 @@ Como usuario autenticado, quiero consultar y operar sobre el mercado desde la in
 
 ---
 
-### User Story 10 - Verificar el escenario reproducible de demostración (Priority: P3)
+### Historia de usuario 10 - Verificar el escenario reproducible de demostración (Prioridad: P3)
 
 Como responsable del producto, quiero ejecutar una demostración controlada con cuatro usuarios y cinco jugadores, para verificar el ciclo completo de inicialización, compra, valoración, venta y rentabilidad.
 
-**Why this priority**: La demostración valida la integración funcional entre Token Market, Player Valuation y el catálogo sin fijar todavía la preparación técnica de fixtures o seeds.
+**Por qué esta prioridad**: La demostración valida la integración funcional entre Token Market, Player Valuation y el catálogo sin fijar todavía la preparación técnica de fixtures o seeds.
 
-**Independent Test**: Ejecutar el escenario con datos claramente identificados como prueba, registrar compras iniciales, publicar cotizaciones posteriores distintas, comparar portfolios, realizar ventas y verificar ganancias o pérdidas realizadas y no realizadas; cuando estén disponibles, repetir la verificación de integración utilizando estadísticas reales de Player Statistics Sync y cotizaciones publicadas por Player Valuation, sin incorporar esas responsabilidades a Token Market.
+**Prueba independiente**: Ejecutar el escenario con datos claramente identificados como prueba, registrar compras iniciales, publicar cotizaciones posteriores distintas, comparar portfolios, realizar ventas y verificar ganancias o pérdidas realizadas y no realizadas; cuando estén disponibles, repetir la verificación de integración utilizando estadísticas reales de Player Statistics Sync y cotizaciones publicadas por Player Valuation, sin incorporar esas responsabilidades a Token Market.
 
-**Acceptance Scenarios**:
+**Escenarios de aceptación**:
 
 1. **Given** cuatro usuarios y cinco jugadores de prueba separados de los datos reales, **When** se inicializa el mercado y se realizan compras con cotizaciones iniciales, **Then** se pueden comparar los portfolios resultantes sin duplicar emisiones ni créditos.
 2. **Given** cotizaciones posteriores diferentes publicadas por Player Valuation, **When** se consultan portfolios y se realizan ventas, **Then** los valores actuales, resultados realizados y resultados no realizados reflejan las versiones de cotización utilizadas.
 3. **Given** que finaliza la demostración controlada, **When** se consultan los historiales, **Then** las transacciones confirmadas, referencias de cotización y resultados son reproducibles, y los datos de prueba permanecen identificados y separados de los reales.
 4. **Given** que Player Statistics Sync y Player Valuation están disponibles, **When** se ejecuta la verificación de integración con estadísticas reales y cotizaciones publicadas por esas features, **Then** Token Market consume sus contratos sin realizar scraping, persistir estadísticas ni calcular precios internamente.
 
-### Edge Cases
+### Casos límite
 
 - El registro público intenta crear o seleccionar la identidad de superusuario.
 - La configuración de reserva cambia después de la primera inicialización.
@@ -210,9 +210,9 @@ Como responsable del producto, quiero ejecutar una demostración controlada con 
 - Un intento rechazado se confunde con una transacción confirmada.
 - Un nombre de jugador cambia después de una operación, pero el historial debe conservar el nombre al momento de operar.
 
-## Requirements *(mandatory)*
+## Requisitos *(obligatorio)*
 
-### Functional Requirements
+### Requisitos funcionales
 
 - **FR-001**: El sistema DEBE mantener una única identidad interna y protegida de superusuario, que NO DEBE poder crearse, seleccionarse ni operarse mediante el registro público de usuarios.
 - **FR-002**: El sistema DEBE inicializar el mercado automáticamente mediante un proceso interno sin endpoint público ni intervención manual.
@@ -267,7 +267,7 @@ Como responsable del producto, quiero ejecutar una demostración controlada con 
 - **FR-051**: Cuando Player Statistics Sync y Player Valuation estén disponibles, el sistema DEBE permitir verificar la integración del escenario con estadísticas reales y cotizaciones publicadas por esas features, sin incorporar scraping, persistencia de estadísticas ni cálculo de precios a Token Market.
 - **FR-052**: Los datos del escenario de demostración DEBEN identificarse como datos de prueba y mantenerse separados de los datos reales; la preparación técnica de fixtures o seeds queda para la etapa Plan.
 
-### Key Entities
+### Entidades principales
 
 - **Superusuario interno**: Identidad protegida que actúa como contraparte única del mercado y posee la reserva de créditos y los tokens emitidos inicialmente.
 - **Crédito virtual**: Unidad monetaria interna con dos decimales, asignada a usuarios y al superusuario para liquidar operaciones.
@@ -280,9 +280,9 @@ Como responsable del producto, quiero ejecutar una demostración controlada con 
 - **Auditoría de intento rechazado**: Registro separado, interno y autorizado de intentos que no llegaron a constituir una compraventa confirmada.
 - **Portfolio**: Vista de las posiciones abiertas y resultados del usuario autenticado.
 
-## Success Criteria *(mandatory)*
+## Criterios de éxito *(obligatorio)*
 
-### Measurable Outcomes
+### Resultados medibles
 
 - **SC-001**: En el 100% de las inicializaciones repetidas de prueba, cada usuario recibe créditos iniciales como máximo una vez, cada jugador elegible conserva una única emisión de 100 tokens y existe una única identidad de superusuario.
 - **SC-002**: En el 100% de los casos de inicialización fallida probados, las compras y ventas son rechazadas y no se observan transferencias parciales.
@@ -296,7 +296,7 @@ Como responsable del producto, quiero ejecutar una demostración controlada con 
 - **SC-010**: Los usuarios pueden completar una consulta de portfolio e historial sin acceder a datos de otro usuario y pueden distinguir visualmente cotizaciones vigentes, históricas, inexistentes y operaciones pendientes.
 - **SC-011**: Cuando estén disponibles Player Statistics Sync y Player Valuation, la verificación de integración utiliza estadísticas reales y cotizaciones publicadas por esas features sin que Token Market realice scraping, persista estadísticas ni calcule precios.
 
-## Assumptions
+## Supuestos
 
 - La autenticación JWT y la entidad de usuario existentes son reutilizadas; Token Market no redefine registro ni autenticación.
 - El catálogo existente es la fuente de verdad para la identidad y el estado activo o inactivo de los jugadores.

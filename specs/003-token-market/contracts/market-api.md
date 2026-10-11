@@ -1,46 +1,46 @@
-# Market API Contract (Proposed)
+# Contrato de API del mercado (propuesto)
 
-This is a planning contract, not an implementation commitment to final Java method names. It follows the repository's authenticated API, DTO validation, error handling, JWT, and OpenAPI conventions.
+Este es un contrato de planificación, no un compromiso de implementación con nombres finales de métodos Java. Sigue las convenciones de API autenticada, validación de DTOs, manejo de errores, JWT y OpenAPI del repositorio.
 
-## Authentication and ownership
+## Autenticación y propiedad
 
-All personal resources require a validated JWT. The backend derives the user from the authenticated principal; request bodies and query parameters must not select another account. The internal superuser is never exposed as a normal user or client-selectable counterparty.
+Todos los recursos personales requieren un JWT validado. El backend deriva el usuario del principal autenticado; los cuerpos de solicitud y parámetros de consulta no deben seleccionar otra cuenta. El superusuario interno nunca se expone como usuario normal ni como contraparte seleccionable por el cliente.
 
-## Proposed resources
+## Recursos propuestos
 
-| Method | Resource | Purpose |
+| Método | Recurso | Propósito |
 |---|---|---|
-| GET | `/api/v1/market/balance` | Return the authenticated user's available credits. |
-| GET | `/api/v1/market/players` | List catalog players operable in the market, current quote metadata, and superuser token availability. |
-| POST | `/api/v1/market/purchases` | Request an all-or-nothing purchase using player, positive integer quantity, exact quote identity/version, and `Idempotency-Key`. |
-| POST | `/api/v1/market/sales` | Request an all-or-nothing sale using player, positive integer quantity, exact quote identity/version, and `Idempotency-Key`. |
-| GET | `/api/v1/market/operations/{idempotency-key}` | Recover the authenticated user's request status/result, including `PROCESSING`, without presenting an unconfirmed operation as a trade. |
-| GET | `/api/v1/market/portfolio` | Return only the authenticated user's open positions and performance summary. |
-| GET | `/api/v1/market/transactions` | Return only the authenticated user's confirmed transactions, newest first, with pagination and player/type/date filters. |
+| GET | `/api/v1/market/balance` | Devuelve los créditos disponibles del usuario autenticado. |
+| GET | `/api/v1/market/players` | Lista los jugadores del catálogo operables en el mercado, los metadatos de la cotización actual y los tokens disponibles del superusuario. |
+| POST | `/api/v1/market/purchases` | Solicita una compra completa utilizando jugador, cantidad entera positiva, identidad/versión exacta de cotización y `Idempotency-Key`. |
+| POST | `/api/v1/market/sales` | Solicita una venta completa utilizando jugador, cantidad entera positiva, identidad/versión exacta de cotización y `Idempotency-Key`. |
+| GET | `/api/v1/market/operations/{idempotency-key}` | Recupera el estado/resultado de la solicitud del usuario autenticado, incluido `PROCESSING`, sin presentar una operación no confirmada como compraventa. |
+| GET | `/api/v1/market/portfolio` | Devuelve únicamente las posiciones abiertas y el resumen de rentabilidad del usuario autenticado. |
+| GET | `/api/v1/market/transactions` | Devuelve únicamente las transacciones confirmadas del usuario autenticado, de la más nueva a la más antigua, con paginación y filtros por jugador/tipo/fecha. |
 
-The exact path spelling can be aligned with the existing API convention during implementation; the contract must retain these ownership and semantic guarantees.
+La escritura exacta de las rutas puede alinearse con la convención API existente durante la implementación; el contrato debe conservar estas garantías semánticas y de propiedad.
 
-## Operation request semantics
+## Semántica de las solicitudes de operación
 
-The purchase/sale request identifies a stable player, integer quantity, quote identifier/version, and idempotency key. The server checks active status, issuance/inventory, balances, exact quote validity, and key semantics in one transactional flow. A failure rejects the whole request without partial transfers.
+La solicitud de compra/venta identifica un jugador estable, una cantidad entera, una identidad/versión de cotización y una clave de idempotencia. El servidor verifica estado activo, emisión/inventario, saldos, vigencia exacta de la cotización y semántica de la clave en un único flujo transaccional. Un fallo rechaza toda la solicitud sin transferencias parciales.
 
-Repeated identical requests return the original committed result. Reuse of the same key with a different normalized request returns a conflict. A pending or uncertain request can be recovered by the same key or its operation reference.
+Las solicitudes idénticas repetidas devuelven el resultado confirmado original. Reutilizar la misma clave con una solicitud normalizada diferente devuelve un conflicto. Una solicitud pendiente o incierta puede recuperarse mediante la misma clave o su referencia de operación.
 
-## Portfolio response semantics
+## Semántica de la respuesta del portfolio
 
-Open positions contain player, current quantity, weighted-average acquisition cost, pending cost, current valid quote/value when available, and unrealized P/L when calculable. The summary includes cumulative realized P/L even after positions close, unrealized P/L for open positions, and a combined result only when all required current valuations are available. A last known price may be marked historical and must not be represented as current.
+Las posiciones abiertas contienen jugador, cantidad actual, costo de adquisición promedio ponderado, costo pendiente, cotización/valor vigente cuando esté disponible y P/L no realizada cuando pueda calcularse. El resumen incluye P/L realizada acumulada incluso después del cierre de posiciones, P/L no realizada de posiciones abiertas y un resultado combinado solo cuando estén disponibles todas las valoraciones actuales necesarias. Un último precio conocido puede marcarse como histórico y no debe representarse como actual.
 
-## History response semantics
+## Semántica de la respuesta del historial
 
-Only confirmed trades appear. Each item contains transaction identity, timestamp, player identity/name snapshot, buy/sell type, quantity, applied unit price and total, superuser counterparty reference, exact quote version, idempotency reference, and realized P/L when applicable. Rejected attempts belong to an internal audit resource, not this personal history.
+Solo aparecen operaciones confirmadas. Cada elemento contiene identidad de transacción, fecha, identidad/nombre snapshot del jugador, tipo compra/venta, cantidad, precio unitario aplicado y total, referencia de contraparte superusuario, versión exacta de cotización, referencia de idempotencia y P/L realizada cuando corresponda. Los intentos rechazados pertenecen a un recurso de auditoría interno, no a este historial personal.
 
-## Error semantics
+## Semántica de errores
 
-Use existing response/error DTO conventions. The implementation should distinguish authentication/authorization failures, invalid input, inactive player, missing or stale quote, insufficient credits/tokens/reserve, market not ready, idempotency conflict, and pending/uncertain status. Error payloads must not disclose credentials, JWTs, or another user's data.
+Utilizar las convenciones existentes de DTOs de respuesta/error. La implementación debe distinguir fallos de autenticación/autorización, entrada inválida, jugador inactivo, cotización ausente u obsoleta, créditos/tokens/reserva insuficientes, mercado no operativo, conflicto de idempotencia y estado pendiente/incierto. Los payloads de error no deben revelar credenciales, JWT ni datos de otro usuario.
 
-## Security acceptance checks
+## Comprobaciones de seguridad
 
-- A valid user cannot supply another user's identifier to buy, sell, read balance, read portfolio, or read history.
-- A user cannot invoke superuser initialization or internal counterparty operations.
-- Requests without valid authentication are rejected according to existing security conventions.
-- Pagination and filters cannot broaden the authenticated user's history scope.
+- Un usuario válido no puede proporcionar el identificador de otro usuario para comprar, vender, leer saldo, consultar portfolio ni consultar historial.
+- Un usuario no puede invocar la inicialización del superusuario ni operaciones de la contraparte interna.
+- Las solicitudes sin autenticación válida se rechazan según las convenciones de seguridad existentes.
+- La paginación y los filtros no pueden ampliar el alcance del historial del usuario autenticado.

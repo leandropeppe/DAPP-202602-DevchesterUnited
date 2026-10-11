@@ -1,97 +1,97 @@
-# Research: Token Market
+# Investigación: Token Market
 
-## Repository evidence
+## Evidencia del repositorio
 
-- The repository uses a Java 21 Spring Boot backend with Gradle, PostgreSQL, Flyway, Spring Data JPA, JWT resource-server security, validation, and springdoc OpenAPI.
-- The backend follows the verified package convention under `com.devchesterunited.devchesterunitedv2`: `adapter`, `configuration`, `controller`, `modelo`, `persistence`, and `service`, with the subpackages documented in `plan.md`. The frontend is React/Vite with `api`, `components`, `session`, `styles`, and `views`.
-- Existing authentication and player catalog responsibilities remain outside Token Market. Token Market references stable player identity and active state; it does not alter player statistics or scrape WhoScored.
-- The current branch has Flyway history through V14. The locally available remote-tracking statistics branch contains a V15 migration, but it is not integrated into this branch. V16 is therefore a provisional candidate only.
-- The approved feature specification is the functional source of truth. This document records technical decisions needed to plan implementation without changing it.
+- El repositorio utiliza un backend Java 21 con Spring Boot, Gradle, PostgreSQL, Flyway, Spring Data JPA, seguridad JWT como resource server, validación y springdoc OpenAPI.
+- El backend sigue la convención de paquetes verificada bajo `com.devchesterunited.devchesterunitedv2`: `adapter`, `configuration`, `controller`, `modelo`, `persistence` y `service`, con los subpaquetes documentados en `plan.md`. El frontend utiliza React/Vite con `api`, `components`, `session`, `styles` y `views`.
+- Las responsabilidades existentes de autenticación y catálogo de jugadores permanecen fuera de Token Market. Token Market referencia la identidad estable y el estado activo del jugador; no modifica estadísticas ni realiza scraping de WhoScored.
+- La rama actual tiene historial Flyway hasta V14. La rama de estadísticas disponible localmente mediante referencia remota contiene una migración V15, pero no está integrada en esta rama. Por lo tanto, V16 es únicamente una candidata provisional.
+- La especificación funcional aprobada es la fuente de verdad. Este documento registra decisiones técnicas necesarias para planificar la implementación sin modificarla.
 
-## Decision 1: Use existing application conventions
+## Decisión 1: Utilizar las convenciones existentes de la aplicación
 
-Use Spring Boot application services, repositories, DTOs, controllers, PostgreSQL transactions, Flyway, JWT principal resolution, and existing error/response conventions. Avoid a new module or framework because the repository already has a consistent layered application structure.
+Utilizar servicios de aplicación Spring Boot, repositorios, DTOs, controladores, transacciones PostgreSQL, Flyway, resolución del principal JWT y las convenciones existentes de errores/respuestas. Evitar un módulo o framework nuevo porque el repositorio ya posee una estructura de aplicación por capas consistente.
 
-## Decision 2: Protected internal superuser
+## Decisión 2: Superusuario interno protegido
 
-Represent the market counterparty as exactly one protected internal identity, separate from publicly authenticatable `Usuario` accounts. It has a credit reserve and the initial player-token inventory, but no password, JWT login, public registration path, or client-selectable user identifier.
+Representar la contraparte del mercado como exactamente una identidad interna protegida, separada de las cuentas `Usuario` autenticables públicamente. Posee una reserva de créditos y el inventario inicial de tokens de jugadores, pero no tiene contraseña, login JWT, registro público ni identificador seleccionable por el cliente.
 
-Alternatives rejected:
+Alternativas descartadas:
 
-- A normal user with a special role would couple the reserve to public registration/login and risk exposing it through ordinary user flows.
-- A hard-coded account identifier would not provide persistent uniqueness or a durable balance/inventory owner.
-- An implicit balance without an identity would make counterparty references and transaction audit less explicit.
+- Un usuario normal con un rol especial acoplaría la reserva al registro/login público y podría exponerla mediante flujos ordinarios de usuario.
+- Un identificador de cuenta hardcodeado no proporcionaría unicidad persistente ni un propietario durable para saldo/inventario.
+- Un saldo implícito sin identidad haría menos explícitas las referencias de contraparte y la auditoría de transacciones.
 
-## Decision 3: Deterministic, resource-scoped locking
+## Decisión 3: Locks deterministas y acotados a recursos
 
-All buy and sell executions acquire lockable resources in this order:
+Todas las ejecuciones de compra y venta adquieren recursos bloqueables en este orden:
 
-1. The idempotency request row for `(authenticated user, idempotency key)`.
-2. The operational market-state row in a shared-lock read for a normal trade, or an exclusive lock for initialization/state transition.
-3. The selected catalog player's row in a shared-lock read to coordinate active/inactive status.
-4. The selected player's current quote/head row.
-5. The authenticated user's credit-account row.
-6. The protected superuser credit-account row.
-7. The selected player's issuance/inventory row.
-8. The authenticated user's holding row for that player.
+1. La fila de solicitud idempotente para `(authenticated user, idempotency key)`.
+2. La fila del estado operativo del mercado mediante lectura con lock compartido para una operación normal, o lock exclusivo para inicialización/transición de estado.
+3. La fila del jugador del catálogo seleccionado mediante lectura con lock compartido para coordinar el estado activo/inactivo.
+4. La cotización vigente/cabecera del jugador seleccionado.
+5. La fila de cuenta de créditos del usuario autenticado.
+6. La fila de cuenta de créditos del superusuario protegido.
+7. La fila de emisión/inventario del jugador seleccionado.
+8. La fila de tenencia del usuario autenticado para ese jugador.
 
-Both buy and sell use the same order, including when a holding row is absent. A missing holding is represented by an initialization-safe path that creates or locks a canonical per-user/player row under a uniqueness constraint, then retries the ordered operation; it never relies on an unprotected application-only check. A transaction that must create the row takes the uniqueness conflict into account and retries after a concurrent insert.
+Compra y venta utilizan el mismo orden, incluso cuando no existe una fila de tenencia. Una tenencia faltante se representa mediante un flujo seguro de inicialización que crea o bloquea una fila canónica usuario/jugador bajo una restricción de unicidad y luego reintenta la operación ordenada; nunca depende de una comprobación desprotegida solo en la aplicación. Una transacción que debe crear la fila contempla el conflicto de unicidad y reintenta después de una inserción concurrente.
 
-There is no exclusive global market lock for normal operations. A normal operation takes a PostgreSQL shared row lock on the singleton market state and keeps it until its short transaction commits; shared locks are compatible with other trades but block an exclusive state transition. Initialization or a transition takes the exclusive state-row lock, waits for in-flight trades, changes state/epoch, and prevents new shared-lock readers until the transition commits. Thus a trade never commits against a state that was changed concurrently, without serializing ordinary trades with one another.
+No existe un lock exclusivo global para las operaciones normales. Una operación normal toma un lock compartido de PostgreSQL sobre la fila singleton del estado del mercado y lo conserva hasta el commit de su transacción breve; los locks compartidos son compatibles entre operaciones, pero bloquean una transición de estado exclusiva. La inicialización o una transición toma el lock exclusivo de la fila de estado, espera las operaciones en curso, cambia el estado/época e impide nuevos lectores con lock compartido hasta el commit de la transición. Así, una operación no puede confirmar contra un estado cambiado concurrentemente sin serializar las operaciones normales entre sí.
 
-The catalog player owner changes active/inactive status under an exclusive lock on that player's row. A trade takes a shared lock on the same row before validating active status and holds it through commit. If deactivation wins first, the trade observes inactive and rejects; if the trade wins first, deactivation waits and applies afterward. The market does not update catalog state. Quote publication/invalidation locks the same player's quote-head resource and updates the immutable quote version/head atomically. A market operation validates the exact quote version after acquiring that lock and never substitutes a newer version. The player-row and quote-head positions are fixed in the order above to prevent cycles.
+El propietario del catálogo cambia el estado activo/inactivo bajo un lock exclusivo de la fila del jugador. Una operación toma un lock compartido de esa misma fila antes de validar el estado activo y lo conserva hasta el commit. Si la desactivación gana primero, la operación observa el jugador inactivo y rechaza; si la operación gana primero, la desactivación espera y se aplica después. El mercado no modifica el estado del catálogo. La publicación/invalidación de cotizaciones bloquea el recurso de coordinación de la cabecera del jugador y actualiza atómicamente la versión inmutable/cabecera. La operación valida la versión exacta después de adquirir ese lock y nunca sustituye una versión nueva. Las posiciones de la fila del jugador y de la cabecera de cotización son fijas en el orden anterior para evitar ciclos.
 
-## Decision 4: Persistent idempotency and recovery
+## Decisión 4: Idempotencia y recuperación persistentes
 
-The idempotency key is unique per authenticated user. The stored request includes a normalized parameter hash and a status such as `PROCESSING`, `CONFIRMED`, `REJECTED`, or `CONFLICT`.
+La clave de idempotencia es única por usuario autenticado. La solicitud almacenada incluye un hash de parámetros normalizados y un estado como `PROCESSING`, `CONFIRMED`, `REJECTED` o `CONFLICT`.
 
-The flow is:
+El flujo es:
 
-1. A short claim transaction inserts the request as `PROCESSING` with a unique execution token. An identical `CONFIRMED` or `REJECTED` request returns its stored result. A different hash for the same key returns a conflict. The claim is durable so a crashed process leaves a recoverable request.
-2. The executor immediately starts the business transaction and obtains a PostgreSQL transaction-scoped advisory lock derived from the persisted request identity, then locks the request row. A concurrent executor uses a non-blocking advisory-lock attempt: if the first executor still owns the transaction, it returns `PROCESSING` and cannot execute. If the first process crashed, PostgreSQL releases the transaction-scoped lock; the retry acquires it, locks the request row, and takes over the still-`PROCESSING` request. The owner token is conditionally checked/updated while holding the row lock.
-3. The single executor runs the ordered business transaction. The accepted quote, balance/token movements, holdings/cost update, immutable confirmed transaction, and final idempotency result are committed together. No executor can perform movements without holding the request's transaction-scoped lock.
-4. A functional validation failure is committed as `REJECTED` with a non-sensitive reason and no movement. It is not a confirmed trade.
-5. A technical rollback leaves no movements or confirmed transaction. The durable request remains `PROCESSING`; after the transaction-scoped advisory lock is released, a retry can safely take it over. A timeout while the first database transaction is still active cannot be taken over because the advisory lock is held; the retry reports pending or waits according to the API policy. After connection/process failure, the lock is released and the next retry recovers the result or re-executes atomically.
-6. A lost response is recovered by repeating the same key. A response is not declared successful until the commit has completed. The advisory lock is transaction-scoped and therefore cannot survive a crashed database session; there is no lease-expiry window in which two active executors can both move balances or tokens.
- 
-Alternatives rejected:
+1. Una transacción breve de reclamación inserta la solicitud como `PROCESSING` con un token de ejecución único. Una solicitud `CONFIRMED` o `REJECTED` idéntica devuelve su resultado almacenado. Un hash diferente para la misma clave devuelve conflicto. La reclamación es durable para que un proceso caído deje una solicitud recuperable.
+2. El ejecutor inicia inmediatamente la transacción de negocio y obtiene un advisory lock transaccional de PostgreSQL derivado de la identidad persistida de la solicitud; luego bloquea la fila de solicitud. Un ejecutor concurrente intenta el advisory lock sin bloqueo: si el primer ejecutor aún posee la transacción, devuelve `PROCESSING` y no puede ejecutar. Si el primer proceso cayó, PostgreSQL libera el lock transaccional; el reintento lo adquiere, bloquea la fila y toma la solicitud aún `PROCESSING`. El token de propietario se comprueba/actualiza condicionalmente mientras se mantiene el lock de fila.
+3. El único ejecutor ejecuta la transacción de negocio ordenada. La cotización aceptada, los movimientos de saldo/tokens, la actualización de tenencias/costos, la transacción confirmada inmutable y el resultado final de idempotencia se confirman juntos. Ningún ejecutor puede realizar movimientos sin mantener el lock transaccional de la solicitud.
+4. Un fallo de validación funcional se confirma como `REJECTED` con un motivo no sensible y sin movimientos. No es una operación confirmada.
+5. Un rollback técnico no deja movimientos ni transacción confirmada. La solicitud durable permanece `PROCESSING`; después de liberar el advisory lock transaccional, un reintento puede tomarla de forma segura. Un timeout mientras la primera transacción de base de datos sigue activa no puede ser tomado por otro ejecutor porque el advisory lock está retenido; el reintento informa pendiente o espera según la política de API. Después de una caída de conexión/proceso, el lock se libera y el siguiente reintento recupera el resultado o vuelve a ejecutar atómicamente.
+6. Una respuesta perdida se recupera repitiendo la misma clave. Una respuesta no se declara exitosa hasta completar el commit. El advisory lock es transaccional y por eso no puede sobrevivir a una sesión de base de datos caída; no existe una ventana de expiración de lease en la que dos ejecutores activos puedan mover saldos o tokens simultáneamente.
 
-- In-memory idempotency cannot survive restart or coordinate multiple instances.
-- Marking a request confirmed before committing movements can expose a false success.
-- Holding one long database transaction across the client request would increase lock duration and deadlock risk; the database transaction is limited to the claim executor and does not wait on the client.
+Alternativas descartadas:
 
-## Decision 5: Transactional market-state barrier
+- La idempotencia en memoria no sobrevive al reinicio ni coordina múltiples instancias.
+- Marcar una solicitud como confirmada antes de confirmar los movimientos puede exponer un éxito falso.
+- Mantener una transacción de base de datos larga durante toda la solicitud del cliente aumentaría la duración de los locks y el riesgo de deadlock; la transacción queda limitada al ejecutor de negocio y no espera al cliente.
 
-The singleton market-state row is a shared-lock barrier, not a global exclusive lock for every trade. Every normal trade reads it with `FOR SHARE` and verifies `READY` plus the current state epoch. Initialization and explicit state changes use `FOR UPDATE`, transition through `INITIALIZING`/`FAILED`/`READY`, and commit the epoch change only after their idempotent work completes. Because shared readers and the exclusive transition lock overlap for the full short transaction, no trade can commit while a state transition changes the operational state. A failed initialization leaves the market non-operational while unrelated application features continue.
+## Decisión 5: Barrera transaccional del estado del mercado
 
-## Decision 6: One quote contract and source of truth
+La fila singleton del estado del mercado es una barrera de locks compartidos, no un lock exclusivo global para cada operación. Cada operación normal la lee con `FOR SHARE` y verifica `READY` más la época actual. La inicialización y los cambios explícitos de estado utilizan `FOR UPDATE`, atraviesan `INITIALIZING`/`FAILED`/`READY` y confirman el cambio de época solo después de completar su trabajo idempotente. Como los lectores compartidos y la transición exclusiva se superponen durante toda la transacción breve, ninguna operación puede confirmar mientras una transición modifica el estado operativo. Una inicialización fallida deja el mercado no operativo, pero las funcionalidades independientes de la aplicación pueden continuar.
 
-The initial 1.00 credit quote is published through the same versioned quote store/contract consumed by Token Market and later published by Player Valuation. It is an immutable quote version with a valid state and no automatic seven-day expiry. A later Player Valuation quote replaces the current head by publication; it does not migrate data from a parallel initial-price table.
+## Decisión 6: Un contrato y una fuente de verdad para cotizaciones
 
-Player Valuation owns calculation, strategy selection, publication semantics, validity policy for dynamic quotes, and recalc-failure records. Token Market consumes and validates exact quote versions, stores the quote reference in confirmed history, and never calculates or substitutes prices. The concrete initial publisher is the internal `MarketInitializationService`, invoked by an automatic application-startup coordinator; it calls the shared `QuotePublicationPort.publishInitialQuote(playerId, 1.00, nonExpiring)` for each eligible player. The port is implemented by the single quote persistence adapter and is also the boundary used later by Player Valuation for dynamic publication. This is seeding, not valuation: the initializer contains no statistics, scraping, or strategy logic.
+La cotización inicial de 1.00 crédito se publica mediante el mismo almacén/contrato de cotizaciones versionado que consume Token Market y que posteriormente utilizará Player Valuation. Es una versión de cotización inmutable con estado válido y sin vencimiento automático a los siete días. Una cotización posterior de Player Valuation reemplaza la cabecera actual al publicarse; no migra datos desde una tabla paralela de precio inicial.
 
-## Decision 7: Automatic initialization and recovery
+Player Valuation es responsable del cálculo, la selección de estrategia, la semántica de publicación, la política de vigencia de cotizaciones dinámicas y los registros de fallos de recálculo. Token Market consume y valida versiones exactas, almacena la referencia de cotización en el historial confirmado y nunca calcula ni sustituye precios. El publicador inicial concreto es el `MarketInitializationService` interno, invocado por un coordinador automático de disponibilidad de la aplicación; llama al `QuotePublicationPort.publishInitialQuote(playerId, 1.00, nonExpiring)` para cada jugador elegible. El port es implementado por el único adaptador de persistencia de cotizaciones y será también el límite utilizado por Player Valuation para publicaciones dinámicas futuras. Esto es siembra, no valoración: el inicializador no contiene estadísticas, scraping ni estrategias de cálculo.
 
-An internal startup coordinator listens for application readiness and invokes the initialization service; there is no public endpoint or manual user action. The service locks the singleton market-state row, transitions to `INITIALIZING`, and performs idempotent steps: create/verify the one protected superuser and its configured initial reserve; grant exactly 1,000 credits to pre-existing users using a unique grant marker; ensure the one-time 100-token issuance and superuser inventory for currently active players; invoke the shared initial quote publication for eligible players. A player initially inactive receives its issuance and initial quote when it first becomes eligible; reactivation finds the existing issuance and never emits again.
+## Decisión 7: Inicialización y recuperación automáticas
 
-New registration uses an internal post-registration credit-grant hook with a unique `(user, initial-grant)` marker and retry. The user record can be committed independently, while market operations remain unavailable to that user until the grant is present. This preserves the requirement that registration receive exactly 1,000 credits without making unrelated authentication unavailable during a market initialization failure. Repeated startup, retries, and concurrent activation events use unique constraints and row locks, so each grant, issuance, and initial quote version is created once.
+Un coordinador interno de inicio escucha la disponibilidad de la aplicación e invoca el servicio de inicialización; no existe endpoint público ni acción manual del usuario. El servicio bloquea la fila singleton del estado del mercado, pasa a `INITIALIZING` y ejecuta pasos idempotentes: crear/verificar el único superusuario protegido y su reserva inicial configurable; asignar exactamente 1.000 créditos a los usuarios preexistentes mediante un marcador de asignación único; garantizar la emisión única de 100 tokens y el inventario del superusuario para los jugadores activos; invocar la publicación de la cotización inicial compartida para los jugadores elegibles. Un jugador inicialmente inactivo recibe su emisión y cotización inicial cuando se vuelve elegible por primera vez; una reactivación encuentra la emisión existente y nunca emite otra.
 
-If initialization fails, the state is `FAILED` and trading rejects. A later startup/retry reacquires the state lock, resumes only missing idempotent steps, and returns to `READY` only after reserve, grants, issuance, and required initial quotes are complete. The initializer never resets existing balances, reissues tokens, or replaces an already-valid quote. Dynamic Player Valuation publication waits for the same quote-head coordination and can replace the initial quote only through the shared publication boundary.
+El registro nuevo utiliza un hook interno posterior al registro con un marcador único `(user, initial-grant)` y reintento. El registro del usuario puede confirmarse independientemente, mientras que las operaciones de mercado permanecen deshabilitadas para ese usuario hasta que exista la asignación. Esto conserva el requisito de que el registro reciba exactamente 1.000 créditos sin hacer que la autenticación independiente dependa de un fallo de inicialización del mercado. Los reinicios, reintentos y eventos de activación concurrentes utilizan restricciones de unicidad y locks de filas, por lo que cada asignación, emisión y versión inicial de cotización se crea una sola vez.
 
-## Decision 8: Accounting representation
+Si la inicialización falla, el estado es `FAILED` y el trading se rechaza. Un inicio/reintento posterior vuelve a adquirir el lock de estado, reanuda únicamente los pasos faltantes y vuelve a `READY` solo después de completar la reserva, las asignaciones, las emisiones y las cotizaciones iniciales requeridas. El inicializador nunca restablece saldos existentes, vuelve a emitir tokens ni reemplaza una cotización inicial ya válida. La publicación dinámica de Player Valuation espera la misma coordinación de la cabecera de cotización y puede reemplazar la inicial únicamente mediante el límite de publicación compartido.
 
-Credit balances and prices use two-decimal external semantics. Holding acquisition cost uses sufficient internal precision for weighted-average calculations. On a partial sale, the cost removed is proportional to the sold quantity; on the final sale, quantity and residual cost are both zero. Realized gain/loss is retained in confirmed history and an account-level aggregate so it remains visible after a position closes.
+## Decisión 8: Representación contable
 
-## Decision 9: Flyway coordination
+Los saldos de créditos y precios utilizan semántica monetaria visible con dos decimales. El costo de adquisición de las tenencias utiliza precisión interna suficiente para los cálculos de promedio ponderado. En una venta parcial, el costo retirado es proporcional a la cantidad vendida; en la venta final, cantidad y costo residual quedan en cero. La ganancia/pérdida realizada se conserva en el historial confirmado y en un agregado de cuenta para que siga visible después del cierre de una posición.
 
-Do not assume V15 is available on this branch. Before implementation, compare the final statistics migration with this branch and coordinate an ordered merge/integration decision. V16 is a provisional candidate for the first Token Market migration, not a reserved version. No SQL or migration is generated by this Plan.
+## Decisión 9: Coordinación de Flyway
 
-## Decision 10: Verification strategy
+No asumir que V15 está disponible en esta rama. Antes de implementar, comparar la migración final de estadísticas con esta rama y coordinar una decisión ordenada de integración. V16 es una candidata provisional para la primera migración de Token Market, no una versión reservada. Este Plan no genera SQL ni migraciones.
 
-Use unit tests for domain calculations and state transitions, MockMvc for authenticated API behavior, PostgreSQL/Testcontainers for constraints/locking/rollback/concurrency, and the existing frontend test conventions for UI states. The four-user/five-player scenario is controlled demonstration data. Integration with real statistics and dynamic Player Valuation is a later cross-feature verification, not part of Token Market's calculation logic.
+## Decisión 10: Estrategia de verificación
 
-## Coordination still required
+Utilizar pruebas unitarias para cálculos y transiciones de dominio, MockMvc para el comportamiento de API autenticada, PostgreSQL/Testcontainers para restricciones/locks/rollback/concurrencia y las convenciones de pruebas frontend existentes para los estados de UI. El escenario de cuatro usuarios/cinco jugadores utiliza datos controlados de demostración. La integración con estadísticas reales y Player Valuation dinámico es una verificación posterior entre features, no parte de la lógica de cálculo de Token Market.
 
-- Confirm the final V15 contents and the migration ordering before selecting a real migration number.
-- Agree with Player Valuation on the shared quote publication boundary, identifiers, validity-state vocabulary, and adapter placement; the initial trigger is fixed here as the automatic `MarketInitializationService` coordinator.
-- Confirm the stable player identifier and active-state contract exposed by the catalog/statistics work without changing that feature here.
+## Coordinación pendiente
+
+- Confirmar los contenidos finales de V15 y el orden de migraciones antes de seleccionar un número real de migración.
+- Acordar con Player Valuation el límite compartido de publicación de cotizaciones, identificadores, vocabulario de estados de vigencia y ubicación del adaptador; el disparador inicial queda fijado aquí como el coordinador automático de `MarketInitializationService`.
+- Confirmar el identificador estable del jugador y el contrato de estado activo expuestos por el trabajo de catálogo/estadísticas sin modificar esa feature.

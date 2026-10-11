@@ -1,45 +1,45 @@
-# Quote Contract: Player Valuation to Token Market
+# Contrato de cotizaciones: Player Valuation a Token Market
 
-## Purpose
+## Propósito
 
-This is one functional quote contract and one source of truth shared by Player Valuation and Token Market. Token Market consumes published versions; it does not calculate prices or maintain a parallel initial-price table.
+Este es un único contrato funcional de cotizaciones y una única fuente de verdad compartida por Player Valuation y Token Market. Token Market consume versiones publicadas; no calcula precios ni mantiene una tabla paralela para el precio inicial.
 
-## Required quote data
+## Datos requeridos de una cotización
 
-Each immutable quote version identifies:
+Cada versión de cotización inmutable identifica:
 
-- stable player identifier;
-- quote identifier and monotonically distinguishable version;
-- price per token, represented with two-decimal monetary semantics;
-- publication timestamp and validity start;
-- optional validity end and explicit validity state;
-- optional reference to the valuation strategy used.
+- identificador estable del jugador;
+- identificador de cotización y versión distinguible monotónicamente;
+- precio por token, representado con semántica monetaria de dos decimales;
+- fecha de publicación y comienzo de vigencia;
+- fin de vigencia opcional y estado explícito de vigencia;
+- referencia opcional a la estrategia de valoración utilizada.
 
-Validity states distinguish at least valid, replaced, invalidated, and expired. The exact enum spelling is an implementation coordination item.
+Los estados de vigencia distinguen al menos válida, reemplazada, invalidada y vencida. La escritura exacta del enum es una coordinación de implementación.
 
-## Version and execution rules
+## Reglas de versión y ejecución
 
-Player Valuation publishes a new immutable version and advances the player's current quote head. Token Market receives the identifier/version selected by the user and, in the same ordered transaction flow as the trade, verifies that exact version is still valid. Replacement, invalidation, or expiry rejects the entire operation even when the replacement has the same numeric price. The market never silently substitutes another version.
+Player Valuation publica una nueva versión inmutable y avanza la cabecera de cotización actual del jugador. Token Market recibe la identidad/versión seleccionada por el usuario y, en el mismo flujo transaccional ordenado de la operación, verifica que esa versión exacta continúe válida. El reemplazo, la invalidación o el vencimiento rechazan toda la operación aunque la cotización nueva tenga el mismo precio numérico. El mercado nunca sustituye silenciosamente una versión.
 
-The initial quote is 1.00 credit per token, persisted through the same publication boundary and data source. It does not expire automatically after seven days; it remains valid until explicitly replaced or invalidated. If no valid quote exists, trade execution is unavailable. The last known invalid/historical quote may be displayed with an explicit historical marker only.
+La cotización inicial es de 1.00 crédito por token y se persiste mediante el mismo límite de publicación y fuente de datos. No vence automáticamente después de siete días; permanece válida hasta que se reemplace o invalide explícitamente. Si no existe una cotización válida, la ejecución de operaciones no está disponible. El último precio conocido inválido/histórico puede mostrarse únicamente con una marca histórica explícita.
 
-## Initial publication before Player Valuation
+## Publicación inicial antes de Player Valuation
 
-Before the full Player Valuation feature exists, the automatic `MarketInitializationService` invokes the internal `QuotePublicationPort.publishInitialQuote(playerId, 1.00, nonExpiring)` for each eligible player. The port is the single publication boundary backed by the shared quote persistence adapter. It creates the same immutable quote version/current-head representation used by future dynamic publications. The initializer may use only the fixed configured value 1.00; it contains no strategies, statistics, scraping, or second quote structure.
+Antes de que exista la feature completa Player Valuation, el `MarketInitializationService` automático invoca el `QuotePublicationPort.publishInitialQuote(playerId, 1.00, nonExpiring)` interno para cada jugador elegible. El port es el único límite de publicación, respaldado por el adaptador de persistencia de cotizaciones compartido. Crea la misma representación de versión inmutable/cabecera actual que utilizarán las publicaciones dinámicas futuras. El inicializador solo puede utilizar el valor fijo 1.00; no contiene estrategias, estadísticas, scraping ni una segunda estructura de cotizaciones.
 
-The startup coordinator is triggered by application readiness, not by a public endpoint. It runs idempotently under the market-state initialization barrier: it creates/verifies the protected superuser and finite reserve, grants pre-existing users exactly once, emits once for active/first-activated players, and calls the publication port only when an eligible player has no initial quote. A failure leaves the market unavailable for trading; a retry resumes missing steps without replacing valid initial quotes or duplicating grants/emissions.
+El coordinador de inicio se dispara cuando la aplicación está disponible, no mediante un endpoint público. Se ejecuta idempotentemente bajo la barrera de inicialización del estado del mercado: crea/verifica el superusuario protegido y la reserva finita, asigna una vez los créditos a usuarios preexistentes, emite una vez para jugadores activos/activados por primera vez y llama al port de publicación solo cuando un jugador elegible no posee una cotización inicial. Un fallo deja el mercado no disponible para trading; un reintento reanuda pasos faltantes sin reemplazar cotizaciones iniciales válidas ni duplicar asignaciones/emisiones.
 
-## Responsibility split
+## Distribución de responsabilidades
 
-| Responsibility | Token Market | Player Valuation | Player Statistics Sync |
+| Responsabilidad | Token Market | Player Valuation | Player Statistics Sync |
 |---|---|---|---|
-| Calculate price/strategy | No | Yes | No |
-| Publish immutable quote versions | Orchestrates initial seeding through `QuotePublicationPort` | Functional authority and future dynamic publisher through the same port | No |
-| Validate exact quote at trade execution | Yes | Provides validity/version contract | No |
-| Maintain quote validity/history | Stores trade reference and uses published state | Owns quote lifecycle, policy, and recalc-failure records | No |
-| Obtain/persist player statistics | No | Consumes as needed | Yes |
-| Record confirmed market movement/history | Yes | No | No |
+| Calcular precio/estrategia | No | Sí | No |
+| Publicar versiones inmutables | Orquesta la siembra inicial mediante `QuotePublicationPort` | Autoridad funcional y publicador dinámico futuro mediante el mismo port | No |
+| Validar cotización exacta en la ejecución | Sí | Proporciona el contrato de vigencia/versión | No |
+| Mantener vigencia/historial de cotizaciones | Almacena la referencia de la operación y utiliza el estado publicado | Posee el ciclo de vida, la política y los registros de fallos de recálculo | No |
+| Obtener/persistir estadísticas de jugadores | No | Las consume cuando corresponde | Sí |
+| Registrar movimientos confirmados del mercado | Sí | No | No |
 
-## Coordination requirements
+## Requisitos de coordinación
 
-Player Valuation must agree on the stable player key, quote/version identity, validity-state semantics, atomic head publication, and strategy reference format. The publication port and persistence representation are shared; no Token Market implementation may create a second source of truth. The remaining coordination is ownership of the shared adapter/package and the final naming of the internal port, not a change to the functional boundary.
+Player Valuation debe acordar la clave estable del jugador, la identidad/versión de cotización, la semántica de estados de vigencia, la publicación atómica de la cabecera y el formato de referencia de estrategia. El port de publicación y la representación de persistencia son compartidos; ninguna implementación de Token Market puede crear una segunda fuente de verdad. La coordinación restante es la propiedad del adaptador/paquete compartido y el nombre final del port interno, no un cambio del límite funcional.
