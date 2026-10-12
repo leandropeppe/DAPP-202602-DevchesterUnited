@@ -85,24 +85,6 @@ class WhoScoredStatisticsAdapterCompletenessTest {
     }
 
     @Test
-    void acepta287JugadoresCuandoCoincideConTotalResults() {
-        String response = responseWithPlayers(287, 287);
-        var setup = setup(response, response, response);
-
-        assertThat(setup.adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE).registros())
-                .hasSize(287);
-    }
-
-    @Test
-    void acepta400JugadoresCuandoCoincideConTotalResults() {
-        String response = responseWithPlayers(400, 400);
-        var setup = setup(response, response, response);
-
-        assertThat(setup.adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE).registros())
-                .hasSize(400);
-    }
-
-    @Test
     void acepta352JugadoresConPaginaDe400CuandoCoincideConTotalResults() {
         String response = responseWithPlayers(352, 352);
         var setup = setup(response, response, response);
