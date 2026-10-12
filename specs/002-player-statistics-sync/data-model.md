@@ -82,6 +82,32 @@ El contrato publico de detalle expone `position`, `minutes_played`, `goals`,
 El detalle solo resuelve jugadores activos de equipos activos; cualquier otro
 caso se trata como recurso inexistente.
 
+## Modelo de presentacion frontend
+
+### PlayerCatalogItem
+
+Representacion de lectura ya entregada por el catalogo. Conserva `id`, `name`,
+`league`, `team`, `position` y `nationality` para la card/ fila navegable. El
+campo `jersey_number` deja de formar parte de la presentacion; no se agrega un
+valor por defecto cuando esta ausente.
+
+### PlayerDetailView
+
+Representacion de lectura derivada de `data` en `GET /api/v1/players/{id}`.
+Muestra los datos basicos disponibles del jugador y, si `statistics` es un
+objeto, las diez metricas publicas definidas en el contrato. Si es `null`, el
+estado valido es "sin estadisticas" y no se crean metricas sustitutas.
+
+### Estados de la vista
+
+- `loading`: consulta en curso.
+- `success-with-statistics`: detalle cargado con metricas.
+- `success-without-statistics`: detalle cargado con `statistics: null`.
+- `error`: jugador inexistente, inactivo o fallo de red/HTTP, con accion de
+  regreso al catalogo.
+
+No son entidades persistentes ni modifican el modelo de dominio.
+
 ## Ejecucion y staging
 
 `estadisticas_sync` mantiene los estados `INICIADA`, `RECIBIENDO`, `VALIDADA`,

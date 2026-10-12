@@ -49,6 +49,38 @@ El contrato de listado `GET /api/v1/players` permanece intacto. El contrato de
 detalle expone solo las metricas publicas normalizadas y no expone ids tecnicos
 ni metadatos de sincronizacion.
 
+## Cierre de frontend
+
+El frontend reutiliza la navegacion manual existente basada en History API y
+agrega la ruta `/catalogo/jugadores/{id}`. La resolucion de rutas conserva el
+fallback actual hacia login y no agrega una dependencia de routing.
+
+La tabla responsive existente del catalogo se mantiene como representacion
+visual. Cada fila/card se convierte en un control navegable accesible hacia el
+detalle; no se rediseña el catalogo. La columna Dorsal se reemplaza por
+Nacionalidad utilizando el dato ya entregado por `GET /api/v1/players`.
+
+El cliente HTTP agrega una operacion de lectura para `GET /players/{id}`. La
+pagina de detalle consume unicamente el endpoint local, conserva el envoltorio
+`data`, muestra datos basicos y las diez metricas publicas, y contempla estados
+`loading`, `success`, `empty-statistics` y `error`. El regreso al catalogo usa
+la navegacion existente y funciona tambien para jugador inexistente.
+
+La pagina se implementa como una vista separada con estilos consistentes con
+los existentes. Las pruebas cubren contrato de URL, navegacion desde una card,
+renderizado de metricas, `statistics: null`, errores y ausencia del dorsal. La
+prueba E2E agrega el recorrido catalogo -> detalle -> volver sin realizar
+llamadas a WhoScored ni a hosts externos.
+
+## Contexto tecnico
+
+- Frontend: React existente, JavaScript/JSX y Vite.
+- Navegacion: History API y `popstate` ya utilizado por `App.jsx`.
+- Cliente HTTP: `frontend/src/api/http.js`, con errores normalizados mediante `HttpError`.
+- Pruebas: Vitest con Testing Library para vistas y Playwright para E2E.
+- Backend: contrato existente `GET /api/v1/players/{id}`; no se agregan endpoints.
+- Persistencia/sincronizacion WhoScored: existente y fuera del cambio frontend.
+
 ## Flujo arquitectonico
 
 1. El Service adquiere exclusion y crea una ejecucion `INICIADA`.
@@ -128,6 +160,9 @@ JSON real documentado y su ausencia no bloquea la adquisicion.
 - Tests no consumen WhoScored real ni requieren credenciales reales.
 - Adquisicion y promocion permanecen separadas.
 - Fallos no dejan actualizaciones parciales visibles.
+- Frontend consume exclusivamente el contrato backend documentado y no accede a persistencia ni a proveedores externos.
+- La implementacion frontend conserva las convenciones permanentes: 2 espacios, comillas simples, sin punto y coma y JSX legible.
+- La validacion incluye build frontend y pruebas unitarias/E2E correspondientes, sin modificar ni eliminar tests existentes.
 
 No se detecta incompatibilidad con la Constitution.
 

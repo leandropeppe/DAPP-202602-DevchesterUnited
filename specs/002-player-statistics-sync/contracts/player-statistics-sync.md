@@ -27,6 +27,25 @@ La consulta usa exclusivamente `JugadorRepository` y
 `WhoScoredStatisticsAdapter`, Selenium, sincronizaciones ni proveedores
 externos.
 
+## Contrato de consumo frontend
+
+El frontend consume `GET /api/v1/players/{id}` con el identificador opaco
+obtenido desde el listado. No consulta WhoScored, endpoints de sincronizacion,
+persistencia ni APIs externas.
+
+La vista debe distinguir estos resultados:
+
+| Resultado | Presentacion |
+|---|---|
+| HTTP 200 con `statistics` objeto | Datos basicos y diez metricas publicas |
+| HTTP 200 con `statistics: null` | Datos basicos y aviso de estadisticas no disponibles |
+| HTTP 404 | Mensaje de jugador no encontrado y regreso al catalogo |
+| Error de red u otro HTTP | Mensaje de error existente y regreso al catalogo |
+
+La ruta de interfaz es `/catalogo/jugadores/{id}` y conserva el identificador
+opaco sin transformarlo. La navegacion de regreso debe usar la navegacion
+existente del frontend y ser operable por teclado.
+
 ## Puerto ProveedorEstadisticasJugador
 
 El puerto expone conceptualmente una operacion de adquisicion completa por

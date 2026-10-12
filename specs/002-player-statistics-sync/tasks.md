@@ -265,3 +265,101 @@ ejemplo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controlle
   modificar ni borrar tests existentes sin autorizaciÃ³n explÃ­cita.
 - Las identidades nuevas WHOSCORED solo son visibles si la promoción completa termina correctamente; staging nunca las publica.
 - La red se ejecuta antes de la transacción de promoción y nunca dentro de ella.
+
+---
+
+## Phase 8: User Story 5 - Visualizar estadisticas desde el catalogo (Priority: P1) 🎯 MVP frontend
+
+**Goal**: Permitir seleccionar un jugador desde el catalogo, consultar su detalle local y visualizar sus datos basicos y las diez metricas requeridas, incluyendo estados de carga, error e inexistencia.
+
+**Independent Test**: Con respuestas controladas del endpoint existente, seleccionar una card/fila, verificar la navegacion a `/catalogo/jugadores/{id}`, el consumo de `/api/v1/players/{id}`, el renderizado de metricas, `statistics: null`, errores y el regreso al catalogo.
+
+### Tests for User Story 5
+
+- [X] T062 [P] [US5] Agregar pruebas de `getPlayerDetail` para URL con identificador opaco, envoltorio `data` y errores HTTP en frontend/tests/http-player-detail.test.js
+- [X] T063 [P] [US5] Crear pruebas de la vista de detalle para carga, datos basicos y diez metricas, `statistics: null`, HTTP 404, error de red y accion de regreso en frontend/tests/player-detail.test.jsx
+
+### Implementation for User Story 5
+
+- [X] T064 [US5] Implementar `getPlayerDetail(id)` reutilizando `request` y el contrato `GET /api/v1/players/{id}` en frontend/src/api/http.js
+- [X] T065 [US5] Crear `PlayerDetailPage` con estados loading, success-with-statistics, success-without-statistics y error, datos basicos, diez metricas y enlace accesible de regreso en frontend/src/views/PlayerDetailPage.jsx
+- [X] T066 [US5] Extender la resolucion de rutas y el renderizado de vistas para `/catalogo/jugadores/{id}` sin agregar una dependencia de routing en frontend/src/App.jsx
+- [X] T067 [P] [US5] Agregar estilos de detalle coherentes con el sistema visual existente y sus estados responsivos en frontend/src/styles/player-detail.css y frontend/src/App.jsx
+- [X] T068 [US5] Crear el recorrido E2E catalogo -> detalle -> volver, incluyendo datos con estadisticas, `statistics: null`, error/404 y bloqueo de hosts externos en frontend/e2e/player-detail.spec.js
+
+**Checkpoint**: La User Story 5 funciona de forma independiente consumiendo exclusivamente el endpoint backend documentado.
+
+---
+
+## Phase 9: User Story 6 - Identificar jugadores por nacionalidad en el catalogo (Priority: P2)
+
+**Goal**: Reemplazar el dorsal no confiable por la nacionalidad disponible y conservar cards/filas navegables sin ampliar scraping, matching, sincronizacion ni persistencia.
+
+**Independent Test**: Renderizar jugadores con nacionalidad y dorsal ausente, verificar que aparece Nacionalidad, que no aparece Dorsal ni `0`, y que la seleccion conserva la navegacion al detalle.
+
+### Tests for User Story 6
+
+- [X] T069 [P] [US6] Crear pruebas de la presentacion de nacionalidad, ausencia de dorsal, ausencia de nacionalidad y navegacion accesible de la card en frontend/tests/catalog-player-card.test.jsx
+
+### Implementation for User Story 6
+
+- [X] T070 [US6] Reemplazar la columna y los campos visuales Dorsal por Nacionalidad, envolver cada jugador en un enlace accesible al detalle y conservar filtros/paginacion en frontend/src/views/CatalogPage.jsx
+- [X] T071 [P] [US6] Ajustar estilos de tabla responsive, foco de teclado y estado navegable de filas/cards sin rediseñar el catalogo en frontend/src/styles/catalog.css
+
+**Checkpoint**: Las cards/filas muestran nacionalidad, no muestran dorsal ni `0`, y siguen conduciendo al detalle.
+
+---
+
+## Phase 10: Polish & Cross-Cutting Concerns
+
+**Purpose**: Validar el cierre frontend contra la constitucion, el contrato y el quickstart sin modificar tests existentes.
+
+- [X] T072 [P] Revisar que los cambios frontend respeten 2 espacios, comillas simples, ausencia de punto y coma, JSX legible y accesibilidad en frontend/src/
+- [X] T073 Ejecutar `npm test -- --run`, `npm run build` y `npm run verify:frontend` desde frontend/ y documentar el resultado conforme a specs/002-player-statistics-sync/quickstart.md
+
+---
+
+## Updated Dependencies & Execution Order
+
+### New User Story Dependencies
+
+- **US5 (P1 frontend)**: depende de T061 y del contrato existente de detalle; T062-T063 pueden prepararse en paralelo, T064 precede a T065, y T066-T068 integran la navegación y validación.
+- **US6 (P2)**: depende de la ruta de detalle de US5 para verificar la navegación completa; T069 puede prepararse en paralelo con T070-T071, y la historia se valida después de T070.
+- **Polish**: T072-T073 dependen de US5 y US6.
+
+### Parallel Opportunities
+
+- T062 y T063 pueden ejecutarse en paralelo porque cubren archivos de prueba distintos.
+- T067 puede ejecutarse en paralelo con T064-T066 al trabajar sobre la hoja de estilos y su importación definida.
+- T069, T070 y T071 pueden prepararse en paralelo cuando se coordine la edición de `CatalogPage.jsx` y `catalog.css`.
+- T072 y la preparación de T073 son independientes entre sí.
+
+## Parallel Example: User Story 5
+
+```text
+T062: prueba del cliente HTTP en frontend/tests/http-player-detail.test.js
+T063: pruebas de PlayerDetailPage en frontend/tests/player-detail.test.jsx
+T067: estilos de detalle en frontend/src/styles/player-detail.css
+```
+
+## Updated Implementation Strategy
+
+### MVP frontend
+
+1. Completar T062-T068 y validar la User Story 5 de forma independiente.
+2. Confirmar que el detalle consume solo `GET /api/v1/players/{id}` y que los estados de error/ausencia son recuperables.
+3. Continuar con T069-T071 para cerrar la sustitucion del dorsal por nacionalidad.
+4. Ejecutar T072-T073 antes de considerar terminado el cierre frontend.
+
+### Nota de testing
+
+La constitucion prohíbe modificar o borrar tests existentes sin autorizacion
+explicita. Las tareas nuevas agregan cobertura en archivos nuevos; si una
+expectativa existente sobre Dorsal requiere actualizacion por el cambio de
+requisito, debe solicitarse primero esa autorizacion y conservarse la cobertura
+equivalente para Nacionalidad.
+
+**Estado de validacion**: T062-T073 completadas. La asercion obsoleta de Dorsal
+en frontend/tests/views.test.jsx fue actualizada unicamente a Nacionalidad con
+autorizacion explicita. La suite frontend completa, el build y
+verify:frontend pasan.

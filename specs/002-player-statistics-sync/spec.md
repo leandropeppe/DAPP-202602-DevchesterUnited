@@ -94,6 +94,67 @@ un jugador sin fila de estadisticas y con jugadores inexistentes o inactivos.
    exclusivamente de la persistencia local y no se consulta WhoScored, no se
    ejecuta Selenium ni se inicia una sincronizacion.
 
+---
+
+### User Story 5 - Visualizar estadisticas desde el catalogo (Prioridad: P1)
+
+Como usuario del catalogo, quiero seleccionar un jugador y consultar su detalle
+con sus estadisticas, para conocer su rendimiento desde la interfaz sin buscar
+manualmente un identificador ni depender de una fuente externa.
+
+**Por que esta prioridad**: Completa el flujo visible de la feature y permite
+utilizar el detalle estadistico ya disponible desde la experiencia principal del
+catalogo.
+
+**Prueba Independiente**: Con un jugador del catalogo con estadisticas, otro
+sin estadisticas y un identificador inexistente, seleccionar cards, verificar la
+navegacion al detalle, los datos mostrados y los estados de error o ausencia.
+
+**Escenarios de Aceptacion**:
+
+1. **Dado** un jugador visible en el catalogo, **cuando** el usuario selecciona
+   su card, **entonces** se abre la pagina de detalle correspondiente y se
+   consulta el endpoint de detalle existente para ese jugador.
+2. **Dado** un detalle con estadisticas, **cuando** termina la carga, **entonces**
+   se muestran los datos basicos disponibles y minutos jugados, goles,
+   asistencias, tiros, pases clave, regates, tackles, valoracion, tarjetas
+   amarillas y tarjetas rojas.
+3. **Dado** un detalle sin estadisticas, **cuando** la respuesta indica
+   `statistics = null`, **entonces** la interfaz informa claramente que no hay
+   estadisticas disponibles sin inventar ni ocultar los datos basicos del jugador.
+4. **Dado** que la consulta esta en curso, **cuando** se muestra la pagina de
+   detalle, **entonces** la interfaz presenta un estado de carga comprensible.
+5. **Dado** que el jugador no existe o la consulta falla, **cuando** se recibe el
+   error, **entonces** la interfaz informa el problema y ofrece una forma clara
+   de volver al catalogo.
+6. **Dado** la pagina de detalle abierta, **cuando** el usuario utiliza la accion
+   de volver, **entonces** regresa al catalogo sin quedar bloqueado en el detalle.
+
+---
+
+### User Story 6 - Identificar jugadores por nacionalidad en el catalogo (Prioridad: P2)
+
+Como usuario del catalogo, quiero ver la nacionalidad en cada card, para
+identificar al jugador sin mostrar un dorsal que no representa un dato fiable.
+
+**Por que esta prioridad**: Corrige una representacion enganosa del catalogo y
+utiliza un dato de jugador ya disponible, sin ampliar la adquisicion externa.
+
+**Prueba Independiente**: Con jugadores cuya nacionalidad esta disponible y con
+un dorsal ausente, verificar que las cards muestran nacionalidad y no muestran
+el dorsal ni un valor `0` como sustituto.
+
+**Escenarios de Aceptacion**:
+
+1. **Dado** un jugador con nacionalidad disponible, **cuando** se muestra su
+   card, **entonces** se visualiza la nacionalidad en el lugar destinado a la
+   identificacion complementaria.
+2. **Dado** un jugador cuyo dorsal no esta disponible, **cuando** se muestra su
+   card, **entonces** no aparece el dorsal ni un `0` derivado de una ausencia.
+3. **Dado** el cambio de presentacion de la card, **cuando** se carga el
+   catalogo, **entonces** no se realizan cambios en scraping, matching,
+   sincronizacion ni fuentes de datos para obtener el dorsal.
+
 ## Requisitos *(obligatorio)*
 
 ### Requisitos Funcionales
@@ -126,6 +187,19 @@ un jugador sin fila de estadisticas y con jugadores inexistentes o inactivos.
 - **FR-024**: La consulta NO DEBE invocar WhoScored, Selenium, `WhoScoredStatisticsAdapter` ni sincronizaciones.
 - **FR-025**: El contrato de detalle NO DEBE exponer ids tecnicos ni metadatos de sincronizacion, y NO DEBE modificar `GET /api/v1/players`.
 
+### Requisitos de visualizacion frontend
+
+- **FR-026**: Las cards de jugadores del catalogo DEBEN permitir seleccionar un jugador y navegar a su pagina de detalle correspondiente.
+- **FR-027**: La pagina de detalle DEBE consumir el endpoint existente `GET /api/v1/players/{id}` y NO DEBE consultar WhoScored ni otra fuente externa directamente.
+- **FR-028**: La pagina de detalle DEBE mostrar los datos basicos disponibles del jugador y, cuando `statistics` no sea nulo, minutos jugados, goles, asistencias, tiros, pases clave, regates, tackles, valoracion, tarjetas amarillas y tarjetas rojas.
+- **FR-029**: La pagina de detalle DEBE presentar un estado de carga mientras espera la respuesta del endpoint.
+- **FR-030**: Ante un jugador inexistente o un error de consulta, la pagina DEBE mostrar un mensaje comprensible y una accion clara para volver al catalogo.
+- **FR-031**: Cuando `statistics = null`, la pagina DEBE informar que el jugador no tiene estadisticas disponibles y DEBE conservar visibles sus datos basicos disponibles.
+- **FR-032**: La pagina de detalle DEBE ofrecer una forma clara de regresar al catalogo.
+- **FR-033**: Las cards del catalogo NO DEBEN mostrar el dorsal/jersey number y DEBEN mostrar la nacionalidad disponible del jugador en su lugar.
+- **FR-034**: La ausencia del dorsal NO DEBE representarse como `0` ni requerir una nueva fuente, scraping o modificacion del matching para esta presentacion.
+- **FR-035**: Esta extension NO DEBE incorporar compra, venta, cotizacion, portfolio ni transacciones.
+
 ### Entidades Clave
 
 - **Jugador**: Entidad ya existente en el dominio de Devchester United. Esta feature no redefine ni reemplaza su modelado. Las estadísticas sincronizadas deben asociarse al jugador correspondiente.
@@ -139,6 +213,13 @@ un jugador sin fila de estadisticas y con jugadores inexistentes o inactivos.
 
 - **SC-007**: Los escenarios con estadisticas, sin estadisticas e inexistente/inactivo cumplen respectivamente HTTP 200 con objeto, HTTP 200 con `null` y HTTP 404.
 - **SC-008**: El 100% de las consultas de detalle verificadas funciona con informacion local aunque WhoScored no este disponible, sin ejecutar Selenium ni sincronizaciones.
+
+### Resultados de visualizacion frontend
+
+- **SC-009**: En las pruebas del flujo principal, al menos el 95% de las selecciones de cards conduce al detalle correcto del jugador en un unico intento.
+- **SC-010**: El 100% de los escenarios de carga, error/inexistencia y `statistics = null` muestra un estado comprensible y una ruta clara de recuperacion o regreso al catalogo.
+- **SC-011**: El 100% de los detalles con estadisticas muestra las diez metricas requeridas y los datos basicos disponibles sin incorporar datos inventados.
+- **SC-012**: El 100% de las cards verificadas muestra la nacionalidad disponible y no muestra el dorsal ni un `0` sustituto por ausencia de dorsal.
 
 ### Resultados Medibles
 
@@ -156,6 +237,19 @@ un jugador sin fila de estadisticas y con jugadores inexistentes o inactivos.
 - La identificación necesaria para reconocer al mismo jugador entre ejecuciones y conjuntos de información será resuelta durante el diseño técnico a partir de los datos disponibles, sin exponer detalles del proveedor en el dominio.
 - La ausencia de una estadística individual no invalida por sí misma al jugador; se conserva como dato no informado, salvo que la validación determine que el conjunto es inconsistente.
 - La selección de temporadas, criterios de actualización y política de concurrencia que no estén definidas por esta especificación se resolverán en `/speckit-plan` sin alterar el alcance funcional.
+
+## Aclaracion de alcance frontend
+
+La presentacion de estadisticas en el frontend, antes indicada como fuera de
+alcance, queda incorporada por las User Stories 5 y 6 y los requisitos FR-026 a
+FR-035 de esta extension. La implementacion debe reutilizar la arquitectura,
+convenciones visuales y estrategia de testing frontend existentes.
+
+El backend de adquisicion, matching, sincronizacion, persistencia y contrato de
+detalle ya implementado permanece fuera de modificacion, salvo un ajuste
+estrictamente necesario para permitir el consumo del contrato desde el
+frontend. Esta extension no incorpora compra, venta, cotizacion, portfolio ni
+transacciones.
 
 ## Fuera de Alcance
 

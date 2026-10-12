@@ -138,6 +138,67 @@ real no entrega una regla inequívoca.
 
 Los tests automatizados usan JSON controlado, fixtures, fakes o mocks y no
 consumen WhoScored real. Selenium real es únicamente diagnóstico/manual.
+## Decisiones de cierre frontend
+
+### Navegacion
+
+Decision: reutilizar la navegacion manual existente con la ruta
+`/catalogo/jugadores/{id}` y el evento `popstate`.
+
+Rationale: `App.jsx` ya resuelve rutas y publica navegaciones sin una libreria
+de routing. Agregar una dependencia para una unica vista ampliaria el cambio
+sin aportar valor y podria alterar el comportamiento existente.
+
+Alternatives considered: mantener el detalle dentro de la misma vista del
+catalogo o agregar una libreria de routing. La primera no cumple claramente la
+separacion de pagina solicitada; la segunda no es necesaria para las
+convenciones actuales.
+
+### Control navegable del catalogo
+
+Decision: conservar la tabla responsive y hacer navegable cada fila mediante un
+enlace semantico con nombre accesible e identificador opaco.
+
+Rationale: en escritorio se mantiene el diseno visual actual y en movil las
+filas ya se comportan como cards. Un enlace permite teclado, historial y
+lectores de pantalla sin depender de un click no semantico.
+
+Alternatives considered: reemplazar toda la tabla por cards nuevas o usar
+`onClick` sobre `tr`. Ambas opciones aumentan el alcance y la segunda degrada
+accesibilidad.
+
+### Contrato de detalle
+
+Decision: agregar solo un lector frontend para `GET /api/v1/players/{id}` y
+usar `data` como fuente del detalle, distinguiendo `statistics === null` de un
+error HTTP.
+
+Rationale: el endpoint ya existe, esta documentado y tiene pruebas E2E de
+backend para las metricas requeridas, por lo que el frontend no debe duplicar
+la logica ni modificar el contrato.
+
+Alternatives considered: ampliar `GET /api/v1/players` con estadisticas o
+consultar una fuente externa desde React. Ambas alternativas rompen el alcance
+y las reglas de arquitectura.
+
+### Estados y recuperacion
+
+Decision: la vista mantiene estados explicitos de carga, exito con estadisticas,
+exito sin estadisticas y error; el error muestra mensaje existente y enlace de
+regreso al catalogo.
+
+Rationale: diferencia ausencia valida de datos de un fallo de consulta y evita
+una pantalla vacia o un valor estadistico inventado.
+
+### Nacionalidad
+
+Decision: sustituir la columna Dorsal por Nacionalidad y mostrar el helper de
+ausencia ya usado por el catalogo cuando el dato no este disponible.
+
+Rationale: nacionalidad ya forma parte del dato del jugador y no requiere
+scraping, matching o persistencia adicional. El dorsal no es confiable y no se
+debe convertir su ausencia en `0`.
+
 ### Estado final validado
 
 El flujo vigente no conserva el contrato HTTP ficticio ni sus DTOs, paginacion

@@ -13,7 +13,7 @@ const noInfo = (value) => (
     : value
 )
 
-export default function CatalogPage () {
+export default function CatalogPage ({ onNavigate = () => {} }) {
   const [filters, setFilters] = useState(EMPTY_FILTERS)
   const [page, setPage] = useState(1)
   const [catalog, setCatalog] = useState({
@@ -190,13 +190,24 @@ export default function CatalogPage () {
                   <th>Liga</th>
                   <th>Equipo</th>
                   <th>Posición</th>
-                  <th>Dorsal</th>
+                  <th>Nacionalidad</th>
                 </tr>
               </thead>
               <tbody>
                 {catalog.players.map((player) => (
                   <tr key={player.id}>
-                    <td data-label="Jugador">{player.name}</td>
+                    <td data-label="Jugador">
+                      <a
+                        className="player-card-link"
+                        href={`/catalogo/jugadores/${encodeURIComponent(player.id)}`}
+                        onClick={(event) => {
+                          event.preventDefault()
+                          onNavigate(`/catalogo/jugadores/${encodeURIComponent(player.id)}`)
+                        }}
+                      >
+                        {player.name}
+                      </a>
+                    </td>
                     <td data-label="Liga">{player.league}</td>
                     <td data-label="Equipo">{player.team}</td>
                     <td data-label="Posición">
@@ -207,12 +218,12 @@ export default function CatalogPage () {
                         {noInfo(player.position)}
                       </span>
                     </td>
-                    <td data-label="Dorsal">
+                    <td data-label="Nacionalidad">
                       <span className="sr-only">
-                        Dorsal: {noInfo(player.jersey_number)}
+                        Nacionalidad: {noInfo(player.nationality)}
                       </span>
                       <span aria-hidden="true">
-                        {noInfo(player.jersey_number)}
+                        {noInfo(player.nationality)}
                       </span>
                     </td>
                   </tr>

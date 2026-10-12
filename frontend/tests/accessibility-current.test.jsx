@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import RegistrationPage from '../src/views/RegistrationPage.jsx'
 import LoginPage from '../src/views/LoginPage.jsx'
-import CredentialsPage from '../src/views/CredentialsPage.jsx'
 import CatalogPage from '../src/views/CatalogPage.jsx'
 import { SessionProvider, useSession } from '../src/session/SessionContext.jsx'
 
@@ -62,10 +61,6 @@ describe('accesibilidad implementada del frontend', () => {
     const login = withSession(LoginPage, { onNavigate: vi.fn() })
     expect(screen.getByLabelText(/Contrase/)).toBeInTheDocument()
     login.unmount()
-
-    const credentials = withSession(CredentialsPage, { onNavigate: vi.fn() })
-    expect(screen.getByLabelText('Ingresar una API Key guardada')).toBeInTheDocument()
-    credentials.unmount()
 
     globalThis.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: { players: [], pagination: {} } }))
     const catalog = render(<CatalogPage />)

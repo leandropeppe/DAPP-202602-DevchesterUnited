@@ -101,6 +101,30 @@ evasiÃ³n, stealth o bypass.
 
 La evidencia productiva final registro 2175 jugadores adquiridos y 1968 publicados. Los jugadores individualmente no resolubles se omiten sin abortar la publicacion; los errores tecnicos, estructurales, de equipo, staging o promocion siguen siendo fatales.
 
+## Validacion del cierre frontend
+
+Desde `frontend/`, ejecutar:
+
+    npm test -- --run
+    npm run build
+
+La validacion de vistas debe cubrir:
+
+1. El listado muestra Nacionalidad y no muestra Dorsal ni `0` como sustituto.
+2. Seleccionar una fila/card navega a `/catalogo/jugadores/{id}` y solicita
+   `/api/v1/players/{id}`.
+3. Un detalle con estadisticas muestra datos basicos y las diez metricas del
+   contrato.
+4. `statistics: null` muestra el estado sin estadisticas y conserva los datos
+   basicos.
+5. HTTP 404, errores de red y carga muestran estados comprensibles y permiten
+   regresar a `/catalogo`.
+
+La prueba E2E debe ejecutar el recorrido catalogo -> detalle -> volver con
+respuestas controladas y verificar que no se realizan solicitudes a WhoScored,
+Football-Data u otros hosts externos. Las pruebas existentes no deben
+modificarse ni eliminarse.
+
 ## Flujo reproducible desde una base nueva
 
 1. Levantar PostgreSQL y ejecutar el arranque normal de la aplicacion para que Flyway aplique las migraciones.

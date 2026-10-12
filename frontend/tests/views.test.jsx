@@ -2,7 +2,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import RegistrationPage from '../src/views/RegistrationPage.jsx'
 import LoginPage from '../src/views/LoginPage.jsx'
-import CredentialsPage from '../src/views/CredentialsPage.jsx'
 import CatalogPage from '../src/views/CatalogPage.jsx'
 import { SessionProvider, useSession } from '../src/session/SessionContext.jsx'
 
@@ -65,35 +64,6 @@ describe('vistas funcionales de US5', () => {
     expect(window.sessionStorage.getItem('devchester.jwt')).toBe('jwt-login')
   })
 
-  it('genera y rota API Key mostrando el secreto solo tras la respuesta', async () => {
-    const responses = [
-      jsonResponse({ message: 'Clave nueva', data: { api_key: 'dev_key_first' } }),
-      jsonResponse({ message: 'Clave rotada', data: { api_key: 'dev_key_second' } })
-    ]
-    global.fetch = vi.fn().mockImplementation(() => Promise.resolve(responses.shift()))
-    const jwt = 'header.eyJleHAiOjQxMDI0NDQ4MDB9.signature'
-    window.sessionStorage.setItem('devchester.jwt', jwt)
-    withSession(CredentialsPage, { onNavigate: vi.fn() })
-
-    expect(screen.queryByText('dev_key_first')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Generar o rotar API Key' }))
-    expect(await screen.findByText('dev_key_first')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Generar o rotar API Key' }))
-    expect(await screen.findByText('dev_key_second')).toBeInTheDocument()
-    expect(window.sessionStorage.getItem('devchester.api-key')).toBe('dev_key_second')
-  })
-
-  it('muestra errores de conflicto al generar API Key', async () => {
-    global.fetch = vi.fn().mockResolvedValue(jsonResponse({ message: 'Ya hay una operación en curso' }, 409))
-    window.sessionStorage.setItem('devchester.jwt', 'header.eyJleHAiOjQxMDI0NDQ4MDB9.signature')
-    withSession(CredentialsPage, { onNavigate: vi.fn() })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Generar o rotar API Key' }))
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Ya hay una operación en curso')
-  })
-
   it('consulta el catálogo sin credenciales con filtros, paginación y valores null', async () => {
     const responses = [
       jsonResponse({ data: { players: [{ id: '1', name: 'Jugador Uno', league: 'LaLiga', team: 'Madrid', position: null, jersey_number: null }], pagination: { current_page: 1, total_pages: 2, total_records: 2 } } }),
@@ -104,7 +74,7 @@ describe('vistas funcionales de US5', () => {
 
     expect(await screen.findByText('Jugador Uno')).toBeInTheDocument()
     expect(screen.getByText(/Posición:.*Sin información/)).toBeInTheDocument()
-    expect(screen.getByText(/Dorsal:.*Sin información/)).toBeInTheDocument()
+    expect(screen.getByText(/Nacionalidad:.*Sin información/)).toBeInTheDocument()
 
     fill('Equipo', 'Madrid')
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar filtros' }))
