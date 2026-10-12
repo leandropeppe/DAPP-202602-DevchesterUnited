@@ -39,11 +39,126 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+sourceSets {
+	manualTest {
+		java.srcDir 'src/manualTest/java'
+		resources.srcDir 'src/manualTest/resources'
+		compileClasspath += sourceSets.main.output + configurations.manualTestCompileClasspath
+		runtimeClasspath += output + sourceSets.main.output + configurations.manualTestRuntimeClasspath
+	}
+}
+
+configurations {
+	manualTestImplementation.extendsFrom testImplementation
+	manualTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 	// Evita depender de alias de zona horaria del equipo al conectar con PostgreSQL.
 	systemProperty 'user.timezone', 'UTC'
 	finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.register('manualStatisticsSyncTest', Test) {
+	description = 'Ejecuta manualmente una sincronizacion real de estadisticas contra PostgreSQL y WhoScored.'
+	group = 'verification'
+	dependsOn tasks.named('manualTestClasses')
+	testClassesDirs = sourceSets.manualTest.output.classesDirs
+	classpath = sourceSets.manualTest.runtimeClasspath
+	filter {
+		includeTestsMatching 'com.devchesterunited.devchesterunitedv2.ManualStatisticsSyncTest.sincronizarEstadisticasRealesUnaVez'
+	}
+	jacoco {
+		enabled = false
+	}
+	useJUnitPlatform()
+	systemProperty 'user.timezone', 'UTC'
+}
+
+tasks.register('generateWhoScoredTeamEnrollmentReport', Test) {
+	description = 'Genera manualmente el CSV de diagnóstico de enrolamiento de equipos WhoScored.'
+	group = 'verification'
+	dependsOn tasks.named('manualTestClasses')
+	testClassesDirs = sourceSets.manualTest.output.classesDirs
+	classpath = sourceSets.manualTest.runtimeClasspath
+	filter {
+		includeTestsMatching 'com.devchesterunited.devchesterunitedv2.diagnostico.GenerateWhoScoredTeamEnrollmentReportTest'
+	}
+	jacoco {
+		enabled = false
+	}
+	useJUnitPlatform()
+	systemProperty 'user.timezone', 'UTC'
+	systemProperty 'spring.flyway.enabled', 'false'
+	systemProperty 'spring.jpa.hibernate.ddl-auto', 'none'
+	systemProperty 'spring.datasource.hikari.connection-init-sql',
+			'SET default_transaction_read_only = on'
+}
+
+tasks.register('generateWhoScoredPlayerIdentityDiagnostic', Test) {
+	description = 'Genera manualmente el CSV diagnostico de identidades de jugadores WhoScored.'
+	group = 'verification'
+	dependsOn tasks.named('manualTestClasses')
+	testClassesDirs = sourceSets.manualTest.output.classesDirs
+	classpath = sourceSets.manualTest.runtimeClasspath
+	filter {
+		includeTestsMatching 'com.devchesterunited.devchesterunitedv2.diagnostico.GenerateWhoScoredPlayerIdentityDiagnosticTest'
+	}
+	jacoco { enabled = false }
+	useJUnitPlatform()
+	systemProperty 'user.timezone', 'UTC'
+	systemProperty 'spring.flyway.enabled', 'false'
+	systemProperty 'spring.jpa.hibernate.ddl-auto', 'none'
+	systemProperty 'spring.jpa.open-in-view', 'false'
+	systemProperty 'spring.main.web-application-type', 'none'
+	systemProperty 'spring.datasource.hikari.connection-init-sql', 'SET default_transaction_read_only = on'
+}
+
+tasks.register('testWhoScoredPlayerIdentityDiagnosticContext', Test) {
+	description = 'Valida el contexto minimo del diagnostico de identidades sin contactar WhoScored.'
+	group = 'verification'
+	dependsOn tasks.named('manualTestClasses')
+	testClassesDirs = sourceSets.manualTest.output.classesDirs
+	classpath = sourceSets.manualTest.runtimeClasspath
+	filter {
+		includeTestsMatching 'com.devchesterunited.devchesterunitedv2.diagnostico.WhoScoredPlayerIdentityDiagnosticContextTest'
+	}
+	jacoco { enabled = false }
+	useJUnitPlatform()
+	systemProperty 'user.timezone', 'UTC'
+	systemProperty 'spring.flyway.enabled', 'false'
+	systemProperty 'spring.jpa.hibernate.ddl-auto', 'none'
+	systemProperty 'spring.jpa.open-in-view', 'false'
+	systemProperty 'spring.main.web-application-type', 'none'
+	systemProperty 'spring.datasource.hikari.connection-init-sql', 'SET default_transaction_read_only = on'
+}
+
+tasks.register('importWhoScoredTeamIdentities', Test) {
+	description = 'Importa transaccionalmente las identidades WhoScored del CSV aprobado en PostgreSQL.'
+	group = 'verification'
+	dependsOn tasks.named('manualTestClasses')
+	testClassesDirs = sourceSets.manualTest.output.classesDirs
+	classpath = sourceSets.manualTest.runtimeClasspath
+	filter {
+		includeTestsMatching 'com.devchesterunited.devchesterunitedv2.importer.ImportWhoscoredTeamIdentitiesTest'
+	}
+	jacoco { enabled = false }
+	useJUnitPlatform()
+	systemProperty 'user.timezone', 'UTC'
+	systemProperty 'spring.flyway.enabled', 'false'
+	systemProperty 'spring.jpa.hibernate.ddl-auto', 'none'
+	systemProperty 'spring.jpa.open-in-view', 'false'
+	systemProperty 'spring.main.web-application-type', 'none'
+	doFirst {
+		['DB_URL', 'DB_USERNAME', 'DB_PASSWORD'].each { variable ->
+			def value = System.getenv(variable)
+			if (!value) {
+				throw new GradleException("La task importWhoScoredTeamIdentities requiere la variable de entorno ${variable}.")
+			}
+			environment variable, value
+		}
+	}
 }
 
 tasks.withType(JavaCompile).configureEach {

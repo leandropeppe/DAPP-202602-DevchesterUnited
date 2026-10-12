@@ -1,84 +1,76 @@
 package com.devchesterunited.devchesterunitedv2.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
-import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
 import com.devchesterunited.devchesterunitedv2.service.exception.IdentidadEstadisticaNoResueltaException;
 import com.devchesterunited.devchesterunitedv2.service.impl.IdentidadEquipoResolver;
 import java.time.Instant;
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class IdentidadEquipoResolverTest {
-    @Mock EquipoRepository equipos;
     @Mock IdentidadExternaEquipoRepository identidades;
 
     @Test
-    void resuelveUnaCoincidenciaExactaIgnorandoEspaciosYMayusculas() {
-        var equipo = equipo("Arsenal FC");
-        when(identidades.findByProveedorAndExternalId(any(), any())).thenReturn(java.util.Optional.empty());
-        when(equipos.findAllByActivoTrueAndLigaIgnoreCase("Premier League")).thenReturn(List.of(equipo));
+    void resuelveSoloIdentidadPersistidaWhoscored() {
+        var equipo = equipo("Club local", true);
+        when(identidades.findByProveedorAndExternalId(ProveedorIdentidadExterna.WHOSCORED, 63L))
+                .thenReturn(Optional.of(new IdentidadExternaEquipoEntity(UUID.randomUUID(), equipo,
+                        ProveedorIdentidadExterna.WHOSCORED, 63L)));
 
-        var result = resolver().resolver(hintEquipo("  arsenal   fc "), CompeticionEstadistica.PREMIER_LEAGUE);
+        var resultado = resolver().resolver(63L, "Nombre diferente", CompeticionEstadistica.LA_LIGA);
 
-        assertThat(result.equipoId()).isEqualTo(equipo.getId());
-        assertThat(result.identidadNueva()).isNotNull();
+        assertThat(resultado.equipo()).isSameAs(equipo);
+        assertThat(resultado.identidadNueva()).isNull();
     }
 
     @Test
-    void rechazaCeroMultiplesYEvidenciaInsuficiente() {
-        when(identidades.findByProveedorAndExternalId(any(), any())).thenReturn(java.util.Optional.empty());
-        when(equipos.findAllByActivoTrueAndLigaIgnoreCase("Premier League")).thenReturn(List.of());
-        assertThatThrownBy(() -> resolver().resolver(hintEquipo("Arsenal"), CompeticionEstadistica.PREMIER_LEAGUE))
-                .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
+    void identidadAusenteFallaSinConsultarEquiposNiHacerMatchingNominal() {
+        when(identidades.findByProveedorAndExternalId(any(), eq(228L))).thenReturn(Optional.empty());
 
-        var a = equipo("Arsenal");
-        var b = equipo(" Arsenal ");
-        when(equipos.findAllByActivoTrueAndLigaIgnoreCase("Premier League")).thenReturn(List.of(a, b));
-        assertThatThrownBy(() -> resolver().resolver(hintEquipo("Arsenal"), CompeticionEstadistica.PREMIER_LEAGUE))
-                .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
-
-        var noHint = new IdentidadEstadisticaJugador(9, "Jugador", null, null, 10L, null);
-        assertThatThrownBy(() -> resolver().resolver(noHint, CompeticionEstadistica.PREMIER_LEAGUE))
-                .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
+        assertThatThrownBy(() -> resolver().resolver(228L, "Olympique Lyonnais", CompeticionEstadistica.LIGUE_1))
+                .isInstanceOf(IdentidadEstadisticaNoResueltaException.class)
+                .satisfies(error -> assertThat(((IdentidadEstadisticaNoResueltaException) error)
+                        .diagnosticos().get(0).motivo())
+                        .isEqualTo(IdentidadEstadisticaNoResueltaException.Motivo.SIN_CANDIDATOS));
+        verify(identidades).findByProveedorAndExternalId(ProveedorIdentidadExterna.WHOSCORED, 228L);
     }
 
     @Test
-    void usaIdentidadWhoscoredPersistidaYNoElMatchingLocal() {
-        var equipo = equipo("Arsenal FC");
-        when(identidades.findByProveedorAndExternalId(
-                eq(com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED), eq(10L)))
-                .thenReturn(java.util.Optional.of(new com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity(
-                        UUID.randomUUID(), equipo,
-                        com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 10L)));
+    void identidadQueApuntaAEquipoInactivoFalla() {
+        var equipo = equipo("Inactivo", false);
+        when(identidades.findByProveedorAndExternalId(any(), eq(309L))).thenReturn(Optional.of(
+                new IdentidadExternaEquipoEntity(UUID.randomUUID(), equipo,
+                        ProveedorIdentidadExterna.WHOSCORED, 309L)));
 
-        assertThat(resolver().resolver(hintEquipo("Otro nombre"), CompeticionEstadistica.PREMIER_LEAGUE)
-                .equipoId()).isEqualTo(equipo.getId());
-        verify(equipos, org.mockito.Mockito.never()).findAllByActivoTrueAndLigaIgnoreCase("Premier League");
+        assertThatThrownBy(() -> resolver().resolver(309L, "Lens", CompeticionEstadistica.LIGUE_1))
+                .isInstanceOf(IdentidadEstadisticaNoResueltaException.class)
+                .satisfies(error -> assertThat(((IdentidadEstadisticaNoResueltaException) error)
+                        .diagnosticos().get(0).motivo())
+                        .isEqualTo(IdentidadEstadisticaNoResueltaException.Motivo.EQUIPO_INACTIVO));
     }
 
-    private IdentidadEquipoResolver resolver() { return new IdentidadEquipoResolver(equipos, identidades); }
+    private IdentidadEquipoResolver resolver() { return new IdentidadEquipoResolver(identidades); }
 
-    private static IdentidadEstadisticaJugador hintEquipo(String nombre) {
-        return new IdentidadEstadisticaJugador(9, "Jugador", "Forward", "Argentina", 10L, nombre);
-    }
-
-    private static EquipoEntity equipo(String nombre) {
+    private static EquipoEntity equipo(String nombre, boolean activo) {
         Instant now = Instant.now();
-        return EquipoEntity.builder().id(UUID.randomUUID()).nombre(nombre).liga("Premier League")
-                .activo(true).creadoEn(now).actualizadoEn(now).build();
+        return EquipoEntity.builder().id(UUID.randomUUID()).nombre(nombre).liga("Ligue 1")
+                .activo(activo).creadoEn(now).actualizadoEn(now).build();
     }
 }

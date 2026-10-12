@@ -6,15 +6,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.adapter.ProveedorEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.PaginaEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
@@ -26,6 +24,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.service.impl.IdentidadEquipoResolver;
 import com.devchesterunited.devchesterunitedv2.service.impl.IdentidadJugadorResolver;
@@ -97,12 +96,12 @@ class IdentidadPersistidaWhoScoredIntegrationTest extends PostgresTestSupport {
         identidades.saveAndFlush(new IdentidadExternaJugadorEntity(UUID.randomUUID(), jugador,
                 ProveedorIdentidadExterna.WHOSCORED, 9911L));
 
+        var equipo = equiposRepositorio.findById(equipoId).orElseThrow();
         var resultado = resolver.resolver(new IdentidadEstadisticaJugador(9911L, "Otro nombre",
-                null, null, 1234L, "Otro equipo"), CompeticionEstadistica.PREMIER_LEAGUE);
+                null, null, 1234L, "Otro equipo"), equipo, CompeticionEstadistica.PREMIER_LEAGUE);
 
         assertThat(resultado.jugadorId()).isEqualTo(jugadorId);
         assertThat(resultado.identidadNueva()).isNull();
-        verify(equipos, never()).resolver(any(), any());
         assertThat(identidades.findAllByProveedorAndExternalIdIn(ProveedorIdentidadExterna.WHOSCORED,
                 java.util.List.of(9911L))).hasSize(1);
     }
@@ -118,7 +117,7 @@ class IdentidadPersistidaWhoScoredIntegrationTest extends PostgresTestSupport {
         sincronizaciones.findAll().stream().map(ejecucion -> ejecucion.getId())
                 .filter(id -> !sincronizacionesPrevias.contains(id)).forEach(fixtureSyncs::add);
 
-        verify(equipos, times(12)).resolver(any(), any());
+        verify(equipos, times(5)).resolver(any(), any(), any());
         assertThat(identidades.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED).stream()
                 .filter(identity -> fixturePlayers.contains(identity.getJugador().getId()))).hasSize(5);
         assertThat(identidades.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED).stream()
@@ -134,6 +133,8 @@ class IdentidadPersistidaWhoScoredIntegrationTest extends PostgresTestSupport {
                     .nombre(nombreLiga(competicion) + " persistido US2").liga(nombreLiga(competicion))
                     .activo(true).creadoEn(ahora).actualizadoEn(ahora).build());
             fixtureTeams.add(equipo.getId());
+            identidadesEquipos.save(new IdentidadExternaEquipoEntity(UUID.randomUUID(), equipo,
+                    ProveedorIdentidadExterna.WHOSCORED, 98201L + index));
             JugadorEntity jugador = jugadores.save(new JugadorEntity(UUID.randomUUID(),
                     "Jugador persistido US2 " + index, equipo.getId(), "Forward", null,
                     "Argentina", true));
@@ -148,10 +149,8 @@ class IdentidadPersistidaWhoScoredIntegrationTest extends PostgresTestSupport {
     }
 
     private void configurarProveedorCompleto() {
-        when(proveedor.obtenerPagina(any(), any(), any(Integer.class), any(Integer.class)))
-                .thenAnswer(invocation -> {
-                    CompeticionEstadistica competicion = invocation.getArgument(0);
-                    FamiliaEstadistica familia = invocation.getArgument(1);
+        doAnswer(invocation ->
+                java.util.Arrays.stream(CompeticionEstadistica.values()).map(competicion -> {
                     int index = competicion.ordinal();
                     long playerId = index == 0 ? 98101L : 98101L + index;
                     String nombre = index == 0 ? "Nombre que no participa en matching"
@@ -161,12 +160,12 @@ class IdentidadPersistidaWhoScoredIntegrationTest extends PostgresTestSupport {
                     var registro = new RegistroEstadisticasJugador(
                             new IdentidadEstadisticaJugador(playerId, nombre, "Forward", "Argentina",
                                     98201L + index, nombreEquipo),
-                            familia,
+                            com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.GENERAL,
                             new MetricasEstadisticasJugador(90, 1, 1, BigDecimal.ONE,
                                     null, null, null, null, null, null));
-                    return new PaginaEstadisticasJugador(competicion, familia, 1, 50, 1, 1,
-                            java.util.List.of(registro));
-                });
+                    return new com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador(
+                            competicion, java.util.List.of(registro));
+                }).toList()).when(proveedor).obtenerSnapshots(any());
     }
 
     private static String nombreLiga(CompeticionEstadistica competicion) {

@@ -48,9 +48,10 @@ No realiza matching local ni escribe repositories.
 
 ## Responsabilidad del Service
 
-1. Resolver identidades WHOSCORED persistidas.
-2. Ejecutar enrolamiento conservador para identidades ausentes.
-3. Persistir identidades nuevas solo junto con la promocion.
+1. Resolver equipos exclusivamente mediante identidades WHOSCORED persistidas
+   previamente por el importer del mapping aprobado.
+2. Resolver jugadores de forma conservadora dentro del equipo local ya resuelto.
+3. Persistir identidades nuevas de jugadores solo junto con la promocion.
 4. Consolidar o validar el flujo interno sin conocer familias del proveedor.
 5. Escribir staging y promover estadisticas atomicamente.
 
@@ -66,3 +67,15 @@ matching.
 
 Los tests automatizados usan JSON controlado, fixtures, fakes o mocks. No se
 consume WhoScored real. No se implementan stealth, evasiones ni bypass.
+
+## Estado final validado
+
+La sincronizacion real usa Selenium headed, cinco competiciones, tres familias
+internas, isMinApp=false, numberOfPlayersToPick=500 y page=1. No existe
+paginacion productiva actualmente. Los equipos se resuelven exclusivamente
+mediante identidad WhoScored persistida; no hay matching nominal o fuzzy de
+equipos durante la sincronizacion normal. Una identidad individual de jugador
+no resoluble se omite y se reporta, sin crear identidad ni abortar la
+publicacion. Los errores tecnicos, estructurales, de equipo o persistencia son
+fatales. La evidencia validada fue 2175 adquiridos, 1968 publicados y 207
+omitidos.

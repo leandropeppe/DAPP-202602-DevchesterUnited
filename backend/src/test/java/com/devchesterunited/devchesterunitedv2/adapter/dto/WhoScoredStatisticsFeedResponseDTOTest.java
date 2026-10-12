@@ -19,7 +19,7 @@ class WhoScoredStatisticsFeedResponseDTOTest {
 
         assertThat(summary.currentPage()).isEqualTo(1);
         assertThat(summary.totalPages()).isEqualTo(1);
-        assertThat(summary.resultsPerPage()).isEqualTo(350);
+        assertThat(summary.resultsPerPage()).isEqualTo(500);
         assertThat(summary.totalResults()).isEqualTo(1);
         assertThat(summary.paging()).isNotNull();
         assertThat(summary.playerTableStats()).hasSize(1);

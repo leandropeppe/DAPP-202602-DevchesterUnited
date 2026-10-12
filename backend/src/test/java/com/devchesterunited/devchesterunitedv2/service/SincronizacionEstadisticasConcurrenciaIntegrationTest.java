@@ -4,10 +4,8 @@ import com.devchesterunited.devchesterunitedv2.adapter.ProveedorEstadisticasJuga
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync;
-import com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.PaginaEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
@@ -43,7 +41,7 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -93,18 +91,16 @@ class SincronizacionEstadisticasConcurrenciaIntegrationTest extends PostgresTest
         var primeraPaginaRecibida = new CountDownLatch(1);
         var liberarPrimera = new CountDownLatch(1);
         var primeraLlamada = new AtomicBoolean();
-        when(proveedor.obtenerPagina(any(), any(), any(Integer.class), any(Integer.class)))
-                .thenAnswer(invocacion -> {
+        doAnswer(invocacion -> {
                     if (primeraLlamada.compareAndSet(false, true)) {
                         primeraPaginaRecibida.countDown();
                         if (!liberarPrimera.await(10, TimeUnit.SECONDS)) {
                             throw new IllegalStateException("La prueba no liberó la primera sincronización.");
                         }
                     }
-                    CompeticionEstadistica competicion = invocacion.getArgument(0);
-                    FamiliaEstadistica familia = invocacion.getArgument(1);
-                    return pagina(competicion, familia);
-                });
+                    return java.util.Arrays.stream(CompeticionEstadistica.values())
+                            .map(this::snapshot).toList();
+                }).when(proveedor).obtenerSnapshots(any());
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
@@ -158,14 +154,15 @@ class SincronizacionEstadisticasConcurrenciaIntegrationTest extends PostgresTest
                 BigDecimal.valueOf(6), 0, 0, baseline, now, now));
     }
 
-    private PaginaEstadisticasJugador pagina(CompeticionEstadistica competicion,
-            FamiliaEstadistica familia) {
+    private com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador snapshot(
+            CompeticionEstadistica competicion) {
         var registro = new RegistroEstadisticasJugador(
                 new IdentidadEstadisticaJugador(99001L, "Concurrent Player", "Forward", "Argentina",
-                        88001L, "Concurrent FC"), familia,
+                        88001L, "Concurrent FC"),
+                com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.GENERAL,
                 new MetricasEstadisticasJugador(100, 2, 2, BigDecimal.ONE, BigDecimal.ONE,
                         BigDecimal.ONE, BigDecimal.ONE, BigDecimal.valueOf(7), 0, 0));
-        return new PaginaEstadisticasJugador(competicion, familia, 1, 50, 1, 1,
-                java.util.List.of(registro));
+        return new com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador(
+                competicion, java.util.List.of(registro));
     }
 }

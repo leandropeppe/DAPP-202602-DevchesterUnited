@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,7 +63,7 @@ class WhoScoredStatisticsAdapterSnapshotTest {
         assertThat(urls.getAllValues()).allSatisfy(url -> {
             assertThat(url).contains("statsAccumulationType=0", "isCurrent=true",
                     "stageId=25544", "tournamentOptions=2", "sortBy=Rating",
-                    "field=Overall", "isMinApp=true", "numberOfPlayersToPick=350");
+                    "field=Overall", "isMinApp=false", "numberOfPlayersToPick=500");
         });
         assertThat(urls.getAllValues().get(0)).contains("category=summary", "subcategory=all");
         assertThat(urls.getAllValues().get(1)).contains("category=summary", "subcategory=offensive");
@@ -78,19 +77,18 @@ class WhoScoredStatisticsAdapterSnapshotTest {
         configuration.setCurrent(true);
         configuration.setSortBy("Rating");
         configuration.setField("Overall");
-        configuration.setMinApp(true);
-        configuration.setNumberOfPlayersToPick(350);
+        configuration.setMinApp(false);
+        configuration.setNumberOfPlayersToPick(500);
         var pair = new CompetitionParameters();
         pair.setTournamentOptions(2);
         pair.setStageId(25544);
         configuration.setCompetitions(Map.of("premier-league", pair));
-        return new WhoScoredStatisticsAdapter(RestClient.builder(), "https://www.whoscored.com", "", 1_000_000,
-                new ObjectMapper(), factory, configuration);
+        return new WhoScoredStatisticsAdapter("https://www.whoscored.com", new ObjectMapper(), factory, configuration);
     }
 
     private String summary() {
         return """
-                {"paging":{"currentPage":1,"totalPages":1,"totalResults":1,"resultsPerPage":350},
+                {"paging":{"currentPage":1,"totalPages":1,"totalResults":1,"resultsPerPage":500},
                  "playerTableStats":[{"playerId":101,"name":" Ana   Perez ","teamId":201,"teamName":" Equipo A ",
                  "minsPlayed":900,"goal":8,"assistTotal":4,"shotsPerGame":2.4,"keyPassPerGame":9.9,
                  "dribbleWonPerGame":9.9,"tacklePerGame":9.9,"rating":7.2,"yellowCard":1,"redCard":0}]}
@@ -99,7 +97,7 @@ class WhoScoredStatisticsAdapterSnapshotTest {
 
     private String offensive() {
         return """
-                {"paging":{"currentPage":1,"totalPages":1,"totalResults":1,"resultsPerPage":350},
+                {"paging":{"currentPage":1,"totalPages":1,"totalResults":1,"resultsPerPage":500},
                  "playerTableStats":[{"playerId":101,"name":"Ana Perez","teamId":201,"teamName":"Equipo A",
                  "minsPlayed":999,"goal":99,"assistTotal":99,"shotsPerGame":9.9,"keyPassPerGame":1.7,
                  "dribbleWonPerGame":2.1,"rating":9.9}]}
@@ -108,13 +106,13 @@ class WhoScoredStatisticsAdapterSnapshotTest {
 
     private String defensive() {
         return """
-                {"paging":{"currentPage":1,"totalPages":1,"totalResults":1,"resultsPerPage":350},
+                {"paging":{"currentPage":1,"totalPages":1,"totalResults":1,"resultsPerPage":500},
                  "playerTableStats":[{"playerId":101,"name":"Ana Perez","teamId":201,"teamName":"Equipo A",
                  "minsPlayed":998,"tacklePerGame":1.9,"rating":9.8}]}
                 """;
     }
 
     private String emptyResponse() {
-        return "{\"paging\":{\"currentPage\":1,\"totalPages\":1,\"totalResults\":0,\"resultsPerPage\":350},\"playerTableStats\":[]}";
+        return "{\"paging\":{\"currentPage\":1,\"totalPages\":1,\"totalResults\":0,\"resultsPerPage\":500},\"playerTableStats\":[]}";
     }
 }

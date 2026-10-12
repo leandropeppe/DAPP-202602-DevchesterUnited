@@ -3,10 +3,8 @@ package com.devchesterunited.devchesterunitedv2.service;
 import com.devchesterunited.devchesterunitedv2.adapter.ProveedorEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.PaginaEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
@@ -17,6 +15,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquip
 import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionEstadisticasJugadorService;
 import java.math.BigDecimal;
@@ -35,7 +34,7 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 
@@ -94,7 +93,7 @@ class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSuppor
         assertThat(identidadesEquipos.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED)).hasSize(5);
         assertThat(ejecuciones.findAllByEstado(com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync.PUBLICADA))
                 .isNotEmpty();
-        verify(proveedor, times(30)).obtenerPagina(any(), any(), any(Integer.class), any(Integer.class));
+        verify(proveedor, times(1)).obtenerSnapshots(any());
         assertThat(estadisticas.findAll()).hasSize(7)
                 .anySatisfy(stat -> assertThat(stat.getMinutosJugados()).isEqualTo(90))
                 .anySatisfy(stat -> assertThat(stat.getMinutosJugados()).isEqualTo(120));
@@ -106,7 +105,7 @@ class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSuppor
         assertThatThrownBy(servicio::sincronizar).isInstanceOf(RuntimeException.class);
         assertThat(estadisticas.count()).isZero();
         assertThat(identidadesJugadores.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED)).isEmpty();
-        assertThat(identidadesEquipos.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED)).isEmpty();
+        assertThat(identidadesEquipos.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED)).hasSize(5);
         var ejecucionesFallidas = ejecuciones.findAllByEstado(
                 com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync.FALLIDA);
         assertThat(ejecucionesFallidas).isNotEmpty();
@@ -120,6 +119,8 @@ class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSuppor
             var equipo = equipo(competencia, i);
             equipos.save(equipo);
             fixtureTeams.add(equipo.getId());
+            identidadesEquipos.save(new IdentidadExternaEquipoEntity(UUID.randomUUID(), equipo,
+                    ProveedorIdentidadExterna.WHOSCORED, 20_000L + i));
             var player = new JugadorEntity(UUID.randomUUID(), "Jugador " + i, equipo.getId(),
                     "Forward", null, "Argentina", true);
             jugadores.save(player);
@@ -131,40 +132,28 @@ class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSuppor
                 fixturePlayers.add(segundo.getId());
             }
         }
-        when(proveedor.obtenerPagina(any(), any(), any(Integer.class), any(Integer.class)))
-                .thenAnswer(invocation -> {
-                    CompeticionEstadistica competicion = invocation.getArgument(0);
-                    FamiliaEstadistica familia = invocation.getArgument(1);
-                    int pagina = invocation.getArgument(2);
-                    if (falla && competicion == CompeticionEstadistica.SERIE_A
-                            && familia == FamiliaEstadistica.OFENSIVA && pagina == 1) {
-                        throw new IllegalStateException("fallo controlado");
-                    }
-                    int index = competicion.ordinal();
-                    var primero = new RegistroEstadisticasJugador(
-                            new IdentidadEstadisticaJugador(10_000L + index, "Jugador " + index,
-                                    "Forward", "Argentina", 20_000L + index,
-                                    nombreLiga(competicion)), familia,
-                            new MetricasEstadisticasJugador(90, 1, 2, BigDecimal.ONE, BigDecimal.TWO,
-                                    BigDecimal.ONE, BigDecimal.ONE, BigDecimal.valueOf(7), 0, 0));
-                    var segundo = new RegistroEstadisticasJugador(
-                            new IdentidadEstadisticaJugador(30_000L + index, "Jugador " + index + " B",
-                                    "Midfielder", "Argentina", 20_000L + index,
-                                    nombreLiga(competicion)), familia,
-                            new MetricasEstadisticasJugador(120, 3, 4, BigDecimal.TEN, BigDecimal.valueOf(6),
-                                    BigDecimal.valueOf(2), BigDecimal.valueOf(3), BigDecimal.valueOf(8), 1, 0));
-                    List<RegistroEstadisticasJugador> registros;
-                    if (index == 0) {
-                        registros = pagina == 1 ? List.of(primero)
-                                : pagina == 2 ? List.of(segundo) : List.of();
-                    } else if (index == 1) {
-                        registros = pagina == 1 ? List.of(primero, segundo) : List.of();
-                    } else {
-                        registros = pagina == 1 ? List.of(primero) : List.of();
-                    }
-                    int total = index < 2 ? 2 : 1;
-                    return new PaginaEstadisticasJugador(competicion, familia, pagina, 50, 2, total, registros);
-                });
+        doAnswer(invocation -> {
+            if (falla) throw new IllegalStateException("fallo controlado");
+            return java.util.Arrays.stream(CompeticionEstadistica.values()).map(competicion -> {
+                int index = competicion.ordinal();
+                var primero = new RegistroEstadisticasJugador(
+                        new IdentidadEstadisticaJugador(10_000L + index, "Jugador " + index,
+                                "Forward", "Argentina", 20_000L + index, nombreLiga(competicion)),
+                        com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.GENERAL,
+                        new MetricasEstadisticasJugador(90, 1, 2, BigDecimal.ONE, BigDecimal.TWO,
+                                BigDecimal.ONE, BigDecimal.ONE, BigDecimal.valueOf(7), 0, 0));
+                var segundo = new RegistroEstadisticasJugador(
+                        new IdentidadEstadisticaJugador(30_000L + index, "Jugador " + index + " B",
+                                "Midfielder", "Argentina", 20_000L + index, nombreLiga(competicion)),
+                        com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.GENERAL,
+                        new MetricasEstadisticasJugador(120, 3, 4, BigDecimal.TEN, BigDecimal.valueOf(6),
+                                BigDecimal.valueOf(2), BigDecimal.valueOf(3), BigDecimal.valueOf(8), 1, 0));
+                List<RegistroEstadisticasJugador> registros = index < 2
+                        ? List.of(primero, segundo) : List.of(primero);
+                return new com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador(
+                        competicion, registros);
+            }).toList();
+        }).when(proveedor).obtenerSnapshots(any());
     }
 
     private static EquipoEntity equipo(CompeticionEstadistica competencia, int index) {

@@ -14,7 +14,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.WebDriverException;
-import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -133,14 +132,13 @@ class WhoScoredStatisticsAdapterFailureTest {
         configuration.setCurrent(true);
         configuration.setSortBy("Rating");
         configuration.setField("Overall");
-        configuration.setMinApp(true);
-        configuration.setNumberOfPlayersToPick(350);
+        configuration.setMinApp(false);
+        configuration.setNumberOfPlayersToPick(500);
         var pair = new CompetitionParameters();
         pair.setTournamentOptions(2);
         pair.setStageId(25544);
         configuration.setCompetitions(Map.of("premier-league", pair));
-        return new WhoScoredStatisticsAdapter(RestClient.builder(), "https://www.whoscored.com", "", 1_000_000,
-                new ObjectMapper(), factory, configuration);
+        return new WhoScoredStatisticsAdapter("https://www.whoscored.com", new ObjectMapper(), factory, configuration);
     }
 
     private String fixture(String name) throws IOException {

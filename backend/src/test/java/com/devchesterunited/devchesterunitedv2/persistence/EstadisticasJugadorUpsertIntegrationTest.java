@@ -2,18 +2,17 @@ package com.devchesterunited.devchesterunitedv2.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
 
 import com.devchesterunited.devchesterunitedv2.adapter.ProveedorEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.PaginaEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionEstadisticasJugadorService;
 import java.math.BigDecimal;
@@ -58,6 +57,8 @@ class EstadisticasJugadorUpsertIntegrationTest extends PostgresTestSupport {
                     .liga(nombreLiga(competicion)).activo(true).creadoEn(ahora)
                     .actualizadoEn(ahora).build());
             fixtureTeams.add(equipo.getId());
+            identidadesEquipos.save(new IdentidadExternaEquipoEntity(UUID.randomUUID(), equipo,
+                    ProveedorIdentidadExterna.WHOSCORED, 91001L + index));
             JugadorEntity jugador = jugadores.save(new JugadorEntity(UUID.randomUUID(),
                     "Jugador US2 " + index, equipo.getId(), "Forward", null, "Argentina", true));
             fixturePlayers.add(jugador.getId());
@@ -105,7 +106,7 @@ class EstadisticasJugadorUpsertIntegrationTest extends PostgresTestSupport {
         assertThat(identidadesJugadores.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED))
                 .hasSize(identidadesJugadoresAntes + 5);
         assertThat(identidadesEquipos.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED))
-                .hasSize(identidadesEquiposAntes + 5);
+                .hasSize(identidadesEquiposAntes);
         assertThat(estadisticas.findAll().stream().filter(s -> fixturePlayers.contains(s.getJugadorId())))
                 .hasSize(5);
 
@@ -120,7 +121,7 @@ class EstadisticasJugadorUpsertIntegrationTest extends PostgresTestSupport {
         assertThat(identidadesJugadores.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED))
                 .hasSize(identidadesJugadoresAntes + 5);
         assertThat(identidadesEquipos.findAllByProveedor(ProveedorIdentidadExterna.WHOSCORED))
-                .hasSize(identidadesEquiposAntes + 5);
+                .hasSize(identidadesEquiposAntes);
         assertThat(estadisticas.findAll().stream().filter(s -> fixturePlayers.contains(s.getJugadorId())))
                 .hasSize(5);
 
@@ -137,22 +138,20 @@ class EstadisticasJugadorUpsertIntegrationTest extends PostgresTestSupport {
     }
 
     private void configurarProveedor() {
-        when(proveedor.obtenerPagina(any(), any(), any(Integer.class), any(Integer.class)))
-                .thenAnswer(invocation -> {
-                    CompeticionEstadistica competicion = invocation.getArgument(0);
-                    FamiliaEstadistica familia = invocation.getArgument(1);
+        doAnswer(invocation ->
+                java.util.Arrays.stream(CompeticionEstadistica.values()).map(competicion -> {
                     int index = competicion.ordinal();
                     var registro = new RegistroEstadisticasJugador(
                             new IdentidadEstadisticaJugador(90001L + index,
                                     "Jugador US2 " + index, "Forward", "Argentina",
-                                    91001L + index, nombreLiga(competicion) + " US2 " + index),
-                            familia,
+                                    91001L + index, nombreLiga(competicion)),
+                            com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.GENERAL,
                             new MetricasEstadisticasJugador(versionMetricas == 2 ? 120 : 90,
                                     versionMetricas == 2 ? 3 : 2, 1, BigDecimal.ONE,
                                     null, null, null, null, null, null));
-                    return new PaginaEstadisticasJugador(competicion, familia, 1, 50, 1, 1,
-                            java.util.List.of(registro));
-                });
+                    return new com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador(
+                            competicion, java.util.List.of(registro));
+                }).toList()).when(proveedor).obtenerSnapshots(any());
     }
 
     private UUID nuevaSync() {

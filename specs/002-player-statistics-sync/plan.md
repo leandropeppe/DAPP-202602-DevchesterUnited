@@ -17,6 +17,12 @@ competicion y no conoce familias del proveedor, Selenium ni paginacion.
 El contrato ficticio anterior `GET /statistics` con `competition`, `family`,
 `page`, `pageSize` y Bearer API key queda **superseded**.
 
+La implementacion vigente utiliza exclusivamente snapshots completos adquiridos
+por Selenium desde `statisticsfeed`. No existe un flujo HTTP legacy de
+WhoScored en el adapter. La configuracion validada es `isMinApp=false` y
+`numberOfPlayersToPick=500`; el limite real observado permite una llamada por
+familia y competicion, sin paginacion.
+
 ## Flujo arquitectonico
 
 1. El Service adquiere exclusion y crea una ejecucion `INICIADA`.
@@ -39,8 +45,9 @@ si la paginacion futura se encapsula dentro del Adapter.
 Endpoint real: `/statisticsfeed/1/getplayerstatistics`.
 
 Parametros comunes: `statsAccumulationType=0`, `isCurrent=true`, `sortBy=Rating`,
-`field=Overall`, `isMinApp=true` y un `numberOfPlayersToPick` suficientemente
-alto. El valor 350 fue validado manualmente, pero no es una garantia universal.
+`field=Overall`, `isMinApp=false` y `numberOfPlayersToPick=500`. El diagnostico
+real verifico un maximo actual de 472 jugadores por competicion, por lo que se
+realiza una llamada por familia/competicion sin paginacion.
 
 La primera implementacion no pagina. Se acepta solo metadata coherente con una
 respuesta completa en una pagina:
@@ -105,3 +112,13 @@ No se detecta incompatibilidad con la Constitution.
 - Bearer API key como mecanismo documentado.
 - Familias separadas consumidas por el Service.
 - Paginacion controlada por el Service.
+
+## Estado validado para reproduccion
+
+El enrollment inicial requiere importar el mapping aprobado de equipos
+WhoScored/Football-Data versionado en
+`backend/config/whoscored-team-enrollment-approved.csv`. Una identidad
+individual de jugador no resoluble de forma segura se omite sin abortar la
+publicacion; los errores tecnicos, estructurales, de equipo, staging o
+promocion siguen siendo fatales. La validacion productiva registro 2175
+jugadores adquiridos y 1968 publicados.

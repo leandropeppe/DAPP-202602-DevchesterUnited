@@ -134,9 +134,38 @@ stage IDs, tournamentOptions ni parametros HTTP.
 
 La implementacion debe validar completitud de cada respuesta. Un resultado con
 `totalPages > 1` o `players.size != totalResults` no puede considerarse completo
-silenciosamente. `numberOfPlayersToPick=350` fue solo un valor de validacion
-manual y no es una garantia universal ni una cantidad fija del dominio.
+silenciosamente. La decision productiva final es `isMinApp=false` y
+`numberOfPlayersToPick=500`. El diagnostico real verifico un maximo actual de
+472 jugadores por competicion, por lo que se realiza una llamada por
+familia/competicion y no se implementa paginacion. La validacion estricta de
+completitud permanece activa: `currentPage == 1`, `totalPages == 1`, cantidad
+recibida igual a `totalResults` y `totalResults <= resultsPerPage`.
 
 El contrato ficticio `GET /statistics` con `competition`, `family`, `page`,
 `pageSize` y Bearer API key queda **superseded**. No se agrega un endpoint
 publico ni se agregan al dominio los IDs de infraestructura de las competiciones.
+
+## Decision final de identidad de jugadores WhoScored
+
+- Los candidatos se restringen exclusivamente a jugadores activos del Equipo
+  local previamente resuelto por identidad WhoScored; el resolver de jugadores
+  no vuelve a resolver equipos.
+- La equivalencia por normalizacion canonica (Unicode NFKD, eliminacion de
+  marcas, lowercase ROOT, apostrofes eliminados, guiones como espacios,
+  puntuacion eliminada y espacios colapsados) no se considera fuzzy.
+- Despues se aplican componentes nominales: apellido como tramo compartido de
+  la parte final/compuesta y nombre compatible por igualdad, prefijo o
+  similitud algoritmica; compartir un token generico no alcanza.
+- Levenshtein sobre el nombre canonico completo solo se utiliza como ultimo
+  fallback, con score minimo 0.85 y margen minimo 0.15 frente al segundo.
+- Una identidad individual ambigua o insuficiente se omite, no entra en
+  staging ni promocion, y se informa en el resultado/log. No aborta la
+  sincronizacion. Los errores tecnicos, estructurales, de equipo, staging o
+  promocion siguen siendo fatales.
+- La publicacion de todas las identidades validas sigue siendo transaccional y
+  el resultado informa adquiridos, publicados y omitidos.
+
+La validacion productiva final registro 2175 jugadores adquiridos y 1968
+publicados. El mapping aprobado de equipos WhoScored/Football-Data, versionado
+en `backend/config/whoscored-team-enrollment-approved.csv`, es un prerrequisito
+reproducible del flujo.

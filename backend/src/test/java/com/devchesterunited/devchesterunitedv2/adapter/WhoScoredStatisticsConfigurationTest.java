@@ -19,8 +19,8 @@ class WhoScoredStatisticsConfigurationTest {
         configuration.setCurrent(true);
         configuration.setSortBy("Rating");
         configuration.setField("Overall");
-        configuration.setMinApp(true);
-        configuration.setNumberOfPlayersToPick(350);
+        configuration.setMinApp(false);
+        configuration.setNumberOfPlayersToPick(500);
         configuration.setCompetitions(Map.of(
                 "premier-league", pair(2, 25544), "la-liga", pair(4, 25662),
                 "serie-a", pair(5, 25518), "bundesliga", pair(3, 25666),
@@ -31,8 +31,8 @@ class WhoScoredStatisticsConfigurationTest {
         assertThat(configuration.isCurrent()).isTrue();
         assertThat(configuration.getSortBy()).isEqualTo("Rating");
         assertThat(configuration.getField()).isEqualTo("Overall");
-        assertThat(configuration.isMinApp()).isTrue();
-        assertThat(configuration.getNumberOfPlayersToPick()).isEqualTo(350);
+        assertThat(configuration.isMinApp()).isFalse();
+        assertThat(configuration.getNumberOfPlayersToPick()).isEqualTo(500);
         assertThat(configuration.forCompetition(CompeticionEstadistica.PREMIER_LEAGUE)
                 .getTournamentOptions()).isEqualTo(2);
         assertThat(configuration.forCompetition(CompeticionEstadistica.LIGUE_1).getStageId())
@@ -56,15 +56,15 @@ class WhoScoredStatisticsConfigurationTest {
                         "whoscored.statistics.current=true",
                         "whoscored.statistics.sort-by=Rating",
                         "whoscored.statistics.field=Overall",
-                        "whoscored.statistics.min-app=true",
-                        "whoscored.statistics.number-of-players-to-pick=350",
+                        "whoscored.statistics.min-app=false",
+                        "whoscored.statistics.number-of-players-to-pick=500",
                         "whoscored.statistics.competitions.premier-league.tournament-options=2",
                         "whoscored.statistics.competitions.premier-league.stage-id=25544")
                 .run(context -> {
                     var configuration = context.getBean(WhoScoredStatisticsConfiguration.class);
                     assertThat(configuration.forCompetition(CompeticionEstadistica.PREMIER_LEAGUE)
                             .getStageId()).isEqualTo(25544);
-                    assertThat(configuration.getNumberOfPlayersToPick()).isEqualTo(350);
+                    assertThat(configuration.getNumberOfPlayersToPick()).isEqualTo(500);
                 });
     }
 

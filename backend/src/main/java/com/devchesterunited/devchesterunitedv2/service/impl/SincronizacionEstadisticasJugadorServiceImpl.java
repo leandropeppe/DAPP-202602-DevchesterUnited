@@ -3,11 +3,13 @@ package com.devchesterunited.devchesterunitedv2.service.impl;
 import com.devchesterunited.devchesterunitedv2.adapter.ProveedorEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.service.exception.EstadisticasProveedorException;
 import com.devchesterunited.devchesterunitedv2.service.exception.IdentidadEstadisticaNoResueltaException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEstadisticasEnCursoException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEstadisticasException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionPersistenciaException;
+import com.devchesterunited.devchesterunitedv2.service.dto.SincronizacionEstadisticasResultado;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionEstadisticasJugadorService;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -26,6 +28,7 @@ public class SincronizacionEstadisticasJugadorServiceImpl
         implements SincronizacionEstadisticasJugadorService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SincronizacionEstadisticasJugadorServiceImpl.class);
     private final ProveedorEstadisticasJugador proveedor;
+    private final IdentidadEquipoResolver equipos;
     private final IdentidadJugadorResolver jugadores;
     private final EstadisticasStagingService staging;
     private final EstadisticasPromocionService promocion;
@@ -33,10 +36,11 @@ public class SincronizacionEstadisticasJugadorServiceImpl
     private final EstadisticasSyncService ciclo;
 
     public SincronizacionEstadisticasJugadorServiceImpl(ProveedorEstadisticasJugador proveedor,
-            IdentidadJugadorResolver jugadores,
+            IdentidadEquipoResolver equipos, IdentidadJugadorResolver jugadores,
             EstadisticasStagingService staging, EstadisticasPromocionService promocion,
             EstadisticasSyncLock lock, EstadisticasSyncService ciclo) {
         this.proveedor = proveedor;
+        this.equipos = equipos;
         this.jugadores = jugadores;
         this.staging = staging;
         this.promocion = promocion;
@@ -45,30 +49,42 @@ public class SincronizacionEstadisticasJugadorServiceImpl
     }
 
     @Override
-    public void sincronizar() {
+    public SincronizacionEstadisticasResultado sincronizar() {
         UUID syncId = null;
         boolean publicada = false;
         RuntimeException failure = null;
+        SincronizacionEstadisticasResultado resultado = null;
         var handle = lock.tryAcquire().orElseThrow(SincronizacionEstadisticasEnCursoException::new);
         try {
             syncId = ciclo.iniciar();
             ciclo.marcarRecibiendo(syncId);
             Map<Long, IdentidadJugadorResolver.NuevaIdentidad> nuevasJugadores = new LinkedHashMap<>();
-            Map<Long, IdentidadEquipoResolver.NuevaIdentidad> nuevosEquipos = new LinkedHashMap<>();
+            List<PendingSnapshot> pendientes = new ArrayList<>();
+            List<IdentidadEstadisticaNoResueltaException.Diagnostico> omitidos = new ArrayList<>();
 
             List<SnapshotEstadisticasJugador> snapshots = validarAdquisicionCompleta(
                     proveedor.obtenerSnapshots(List.of(CompeticionEstadistica.values())));
+            Map<Long, EquipoEntity> equiposPorWhoscoredTeamId = resolverEquipos(snapshots);
             Set<String> competicionesEsperadas = EnumSet.allOf(CompeticionEstadistica.class).stream()
                     .map(CompeticionEstadistica::name)
                     .collect(java.util.stream.Collectors.toUnmodifiableSet());
-            for (var snapshot : snapshots) {
-                procesarSnapshot(syncId, snapshot, nuevasJugadores, nuevosEquipos);
+            int adquiridos = snapshots.stream().mapToInt(s -> s.registros().size()).sum();
+            for (var snapshot : snapshots) pendientes.add(prepararSnapshot(snapshot, nuevasJugadores,
+                    equiposPorWhoscoredTeamId, omitidos));
+            for (var pendiente : pendientes) {
+                staging.escribirLote(syncId, pendiente.competicion(), pendiente.entradas());
             }
 
             ciclo.marcarValidada(syncId);
             staging.validarCompeticionesCompletas(syncId, competicionesEsperadas);
-            promocion.promover(syncId, nuevasJugadores.values(), nuevosEquipos.values(), Map.of());
+            promocion.promover(syncId, nuevasJugadores.values(), List.of(), Map.of());
             publicada = true;
+            resultado = new SincronizacionEstadisticasResultado(adquiridos, adquiridos - omitidos.size(),
+                    omitidos.size(), omitidos);
+            if (!omitidos.isEmpty()) {
+                LOGGER.warn("Sincronización estadística publicada: adquiridos={}, publicados={}, omitidos={}",
+                        resultado.adquiridos(), resultado.publicados(), resultado.omitidos());
+            }
         } catch (RuntimeException exception) {
             RuntimeException applicationException = traducir(exception);
             if (syncId != null && !publicada) {
@@ -96,6 +112,7 @@ public class SincronizacionEstadisticasJugadorServiceImpl
         if (failure != null) {
             throw failure;
         }
+        return resultado;
     }
 
     private RuntimeException traducir(RuntimeException exception) {
@@ -136,24 +153,67 @@ public class SincronizacionEstadisticasJugadorServiceImpl
         return List.copyOf(snapshots);
     }
 
-    private void procesarSnapshot(UUID syncId, SnapshotEstadisticasJugador snapshot,
+    private PendingSnapshot prepararSnapshot(SnapshotEstadisticasJugador snapshot,
             Map<Long, IdentidadJugadorResolver.NuevaIdentidad> nuevasJugadores,
-            Map<Long, IdentidadEquipoResolver.NuevaIdentidad> nuevosEquipos) {
+            Map<Long, EquipoEntity> equiposPorWhoscoredTeamId,
+            List<IdentidadEstadisticaNoResueltaException.Diagnostico> omitidos) {
         if (snapshot.competicion() == null) {
             throw new IllegalStateException("El snapshot no tiene competición.");
         }
         var lote = new ArrayList<EstadisticasStagingService.Entrada>();
         for (var registro : snapshot.registros()) {
-            var identidad = jugadores.resolver(registro.identidad(), snapshot.competicion());
+            IdentidadJugadorResolver.Resultado identidad;
+            try {
+                EquipoEntity equipo = equiposPorWhoscoredTeamId.get(registro.identidad().teamId());
+                if (equipo == null) {
+                    throw new IllegalStateException("No hay equipo resuelto para el teamId del snapshot.");
+                }
+                identidad = jugadores.resolver(registro.identidad(), equipo, snapshot.competicion());
+            } catch (IdentidadEstadisticaNoResueltaException exception) {
+                if (exception.diagnosticos().isEmpty()) throw exception;
+                omitidos.addAll(exception.diagnosticos());
+                continue;
+            }
             if (identidad.identidadNueva() != null) {
                 nuevasJugadores.putIfAbsent(registro.identidad().playerId(), identidad.identidadNueva());
-            }
-            if (identidad.equipoNueva() != null) {
-                nuevosEquipos.putIfAbsent(identidad.equipoNueva().externalId(), identidad.equipoNueva());
             }
             lote.add(new EstadisticasStagingService.Entrada(
                     identidad.jugadorId(), identidad.equipoId(), registro));
         }
-        staging.escribirLote(syncId, snapshot.competicion().name(), lote);
+        return new PendingSnapshot(snapshot.competicion().name(), lote);
     }
+
+    private Map<Long, EquipoEntity> resolverEquipos(List<SnapshotEstadisticasJugador> snapshots) {
+        Map<Long, EquipoHint> unicos = new LinkedHashMap<>();
+        List<IdentidadEstadisticaNoResueltaException.Diagnostico> errores = new ArrayList<>();
+        for (var snapshot : snapshots) {
+            for (var registro : snapshot.registros()) {
+                var hint = registro.identidad();
+                if (hint.teamId() == null) {
+                    errores.add(new IdentidadEstadisticaNoResueltaException.Diagnostico(
+                            IdentidadEstadisticaNoResueltaException.Tipo.EQUIPO, "WHOSCORED", null,
+                            hint.nombreEquipo(), snapshot.competicion().name(), hint.nombreEquipo(), null,
+                            null, null, IdentidadEstadisticaNoResueltaException.Motivo.EVIDENCIA_INSUFICIENTE));
+                } else {
+                    unicos.putIfAbsent(hint.teamId(), new EquipoHint(hint.nombreEquipo(), snapshot.competicion()));
+                }
+            }
+        }
+        Map<Long, EquipoEntity> resultado = new LinkedHashMap<>();
+        for (var entry : unicos.entrySet()) {
+            try {
+                resultado.put(entry.getKey(), equipos.resolver(entry.getKey(), entry.getValue().nombre(),
+                        entry.getValue().competicion()).equipo());
+            } catch (IdentidadEstadisticaNoResueltaException exception) {
+                errores.addAll(exception.diagnosticos());
+                if (exception.diagnosticos().isEmpty()) throw exception;
+            }
+        }
+        if (!errores.isEmpty()) throw new IdentidadEstadisticaNoResueltaException(errores);
+        return resultado;
+    }
+
+    private record EquipoHint(String nombre, CompeticionEstadistica competicion) { }
+
+    private record PendingSnapshot(String competicion, List<EstadisticasStagingService.Entrada> entradas) { }
 }

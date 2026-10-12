@@ -20,12 +20,11 @@ import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncE
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionEstadisticasJugadorService;
 import com.devchesterunited.devchesterunitedv2.adapter.ProveedorEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync;
-import com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.PaginaEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
@@ -38,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
 import java.math.BigDecimal;
 
 @SpringBootTest
@@ -82,8 +81,11 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
     void ceroCandidatosNoUsaMatchingFuzzyNiCreaIdentidad() {
         var hint = new IdentidadEstadisticaJugador(801L, "Nombre parecido", "Forward",
                 "Argentina", 901L, "Equipo inexistente");
+        var equipo = equipos.save(EquipoEntity.builder().id(UUID.randomUUID()).nombre("Equipo local")
+                .liga("Premier League").activo(true).creadoEn(Instant.now()).actualizadoEn(Instant.now()).build());
+        fixtureEquipos.add(equipo.getId());
 
-        assertThatThrownBy(() -> jugadoresResolver.resolver(hint, CompeticionEstadistica.PREMIER_LEAGUE))
+        assertThatThrownBy(() -> jugadoresResolver.resolver(hint, equipo, CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
         assertThat(identidadesJugadores.findByProveedorAndExternalId(
                 com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 901L))
@@ -103,8 +105,9 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
         var hint = new IdentidadEstadisticaJugador(802L, "Alex Smith", "Defender",
                 "Argentina", 902L, "Equipo ambiguo");
 
-        equiposResolver.resolver(hint, CompeticionEstadistica.PREMIER_LEAGUE);
-        assertThatThrownBy(() -> jugadoresResolver.resolver(hint, CompeticionEstadistica.PREMIER_LEAGUE))
+        assertThatThrownBy(() -> equiposResolver.resolver(902L, "Equipo ambiguo", CompeticionEstadistica.PREMIER_LEAGUE))
+                .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
+        assertThatThrownBy(() -> jugadoresResolver.resolver(hint, equipo, CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
     }
 
@@ -115,9 +118,8 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
                 .map(this::snapshotPublicado)
                 .toList();
         var syncsAntes = ejecuciones.findAll().stream().map(e -> e.getId()).collect(java.util.stream.Collectors.toSet());
-        when(proveedor.obtenerPagina(any(), any(), any(Integer.class), any(Integer.class)))
-                .thenAnswer(invocacion -> pagina(invocacion.getArgument(0), invocacion.getArgument(1),
-                        90111L, "Jugador inexistente", 90112L, "Equipo inexistente"));
+        doReturn(snapshots(90111L, "Jugador inexistente",
+                90112L, "Equipo inexistente")).when(proveedor).obtenerSnapshots(any());
 
         org.assertj.core.api.Assertions.assertThatThrownBy(servicio::sincronizar)
                 .isInstanceOf(RuntimeException.class);
@@ -158,9 +160,8 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
         fixtureJugadores.add(ambiguoUno.getId());
         fixtureJugadores.add(ambiguoDos.getId());
         fixtureEquipos.add(equipo.getId());
-        when(proveedor.obtenerPagina(any(), any(), any(Integer.class), any(Integer.class)))
-                .thenAnswer(invocacion -> pagina(invocacion.getArgument(0), invocacion.getArgument(1),
-                        90211L, "Ambiguous Player", 90212L, "Ambiguous Service FC"));
+        doReturn(snapshots(90211L, "Ambiguous Player",
+                90212L, "Ambiguous Service FC")).when(proveedor).obtenerSnapshots(any());
 
         org.assertj.core.api.Assertions.assertThatThrownBy(servicio::sincronizar)
                 .isInstanceOf(RuntimeException.class);
@@ -193,14 +194,16 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
         return new Snapshot(jugador.getId(), syncId);
     }
 
-    private PaginaEstadisticasJugador pagina(CompeticionEstadistica competicion,
-            FamiliaEstadistica familia, long playerId, String playerName, long teamId, String teamName) {
-        return new PaginaEstadisticasJugador(competicion, familia, 1, 50, 1, 1,
-                java.util.List.of(new RegistroEstadisticasJugador(
-                        new IdentidadEstadisticaJugador(playerId, playerName, "Forward", "Argentina",
-                                teamId, teamName), familia,
-                        new MetricasEstadisticasJugador(100, 2, 2, BigDecimal.ONE, BigDecimal.ONE,
-                                BigDecimal.ONE, BigDecimal.ONE, BigDecimal.valueOf(8), 0, 0))));
+    private List<com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador> snapshots(
+            long playerId, String playerName, long teamId, String teamName) {
+        return java.util.Arrays.stream(CompeticionEstadistica.values()).map(competicion ->
+                new com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador(
+                        competicion, java.util.List.of(new RegistroEstadisticasJugador(
+                                new IdentidadEstadisticaJugador(playerId, playerName, "Forward", "Argentina",
+                                        teamId, teamName),
+                                com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.GENERAL,
+                                new MetricasEstadisticasJugador(100, 2, 2, BigDecimal.ONE, BigDecimal.ONE,
+                                        BigDecimal.ONE, BigDecimal.ONE, BigDecimal.valueOf(8), 0, 0))))).toList();
     }
 
     private record Snapshot(UUID jugadorId, UUID syncId) { }

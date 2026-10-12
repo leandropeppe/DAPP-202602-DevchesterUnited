@@ -26,8 +26,10 @@ cuando se cumple:
 - `players.size == totalResults`;
 - no existen contradicciones en la metadata.
 
-`numberOfPlayersToPick=350` fue validado experimentalmente, pero no es una
-garantia universal. Si `totalPages > 1` o la respuesta es incompleta, el
+La decision productiva es `isMinApp=false` y `numberOfPlayersToPick=500`. El
+diagnostico real verifico un maximo actual de 472 jugadores por competicion,
+por lo que se realiza una llamada por familia/competicion y no se implementa
+paginacion. Si `totalPages > 1` o la respuesta es incompleta, el
 Adapter falla de forma controlada. No se valida ni publica el snapshot parcial
 y el Service conserva el snapshot anterior. Una paginacion futura debera
 permanecer encapsulada en el Adapter y no cambiar el contrato del Service.
@@ -78,13 +80,13 @@ Para cada competicion el Adapter solicita:
 | DEFENSIVA | summary | defensive |
 
 Parametros comunes relevantes: `statsAccumulationType=0`, `isCurrent=true`,
-`stageId`, `tournamentOptions`, `sortBy=Rating`, `field=Overall`, `isMinApp=true`
-y `numberOfPlayersToPick`.
+`stageId`, `tournamentOptions`, `sortBy=Rating`, `field=Overall`, `isMinApp=false`
+y `numberOfPlayersToPick=500`.
 
-La prueba manual de Premier League 2026/2027 uso `tournamentOptions=2`,
-`stageId=25544` y `numberOfPlayersToPick=350`. Las tres respuestas devolvieron
-`currentPage=1`, `totalPages=1`, `totalResults=315`, `resultsPerPage=350` y
-315 jugadores.
+El diagnostico real de las cinco competiciones verifico `currentPage=1`,
+`totalPages=1`, `players.size == totalResults` y `totalResults <= resultsPerPage`
+en una unica llamada por familia/competicion. El maximo actual fue 472
+jugadores por competicion, dentro de `resultsPerPage=500`.
 
 ## Mapeo conceptual de metricas
 
@@ -136,3 +138,15 @@ real no entrega una regla inequívoca.
 
 Los tests automatizados usan JSON controlado, fixtures, fakes o mocks y no
 consumen WhoScored real. Selenium real es únicamente diagnóstico/manual.
+### Estado final validado
+
+El flujo vigente no conserva el contrato HTTP ficticio ni sus DTOs, paginacion
+o parametros `competition/family/page/pageSize`. El Adapter devuelve snapshots
+completos adquiridos por Selenium con `isMinApp=false` y
+`numberOfPlayersToPick=500`; actualmente no se requiere paginacion porque las
+cinco competiciones fueron recuperadas completas con una llamada por familia.
+El mapping aprobado de equipos debe importarse desde
+`backend/config/whoscored-team-enrollment-approved.csv` antes de la primera
+sincronizacion. Los jugadores individualmente no resolubles se omiten sin
+abortar la publicacion. La evidencia productiva final fue 2175 adquiridos y
+1968 publicados.

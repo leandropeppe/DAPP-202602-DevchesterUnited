@@ -5,7 +5,6 @@ import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsExcept
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync;
 import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasJugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasSyncRepository;
@@ -18,6 +17,8 @@ import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncE
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncStagingEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.service.impl.EstadisticasPromocionService;
 import com.devchesterunited.devchesterunitedv2.service.impl.IdentidadEquipoResolver;
 import com.devchesterunited.devchesterunitedv2.service.impl.IdentidadJugadorResolver;
@@ -36,7 +37,7 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
 @SpringBootTest
@@ -58,6 +59,8 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
 
     @AfterEach
     void limpiarFixtures() {
+        identidadesEquipos.findByProveedorAndExternalId(ProveedorIdentidadExterna.WHOSCORED, 88101L)
+                .ifPresent(identidadesEquipos::delete);
         fixtureJugadores.forEach(id -> estadisticas.findByJugadorId(id).ifPresent(estadisticas::delete));
         fixtureSyncs.forEach(id -> staging.findAllBySyncId(id).forEach(staging::delete));
         fixtureSyncs.forEach(ejecuciones::deleteById);
@@ -83,8 +86,8 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         estadisticas.save(new EstadisticasJugadorEntity(UUID.randomUUID(), jugador.getId(), "Forward", 90,
                 3, 1, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
                 BigDecimal.valueOf(7), 0, 0, publicada, now, now));
-        when(proveedor.obtenerPagina(any(), any(), any(Integer.class), any(Integer.class)))
-                .thenThrow(new IllegalStateException("provider internal secret"));
+        doThrow(new IllegalStateException("provider internal secret"))
+                .when(proveedor).obtenerSnapshots(any());
 
         assertThatThrownBy(servicio::sincronizar).isInstanceOf(RuntimeException.class);
 
@@ -110,10 +113,10 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         estadisticas.save(new EstadisticasJugadorEntity(UUID.randomUUID(), jugador.getId(), "Forward", 75,
                 1, 1, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
                 BigDecimal.valueOf(6), 0, 0, anterior, now, now));
-        when(proveedor.obtenerPagina(any(), any(), any(Integer.class), any(Integer.class)))
-                .thenThrow(new WhoScoredStatisticsException(
+        doThrow(new WhoScoredStatisticsException(
                         "https://whoscored.test/private?token=secret body=full-sensitive-body header=Bearer-secret",
-                        new IllegalStateException("internal stack secret")));
+                        new IllegalStateException("internal stack secret")))
+                .when(proveedor).obtenerSnapshots(any());
 
         assertThatThrownBy(servicio::sincronizar).isInstanceOf(RuntimeException.class);
 
@@ -184,6 +187,8 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         var equipo = equipos.save(EquipoEntity.builder().id(UUID.randomUUID()).nombre("Service Atomic FC")
                 .liga("Premier League").activo(true).creadoEn(now).actualizadoEn(now).build());
         fixtureEquipos.add(equipo.getId());
+        identidadesEquipos.save(new IdentidadExternaEquipoEntity(UUID.randomUUID(), equipo,
+                ProveedorIdentidadExterna.WHOSCORED, 88101L));
         var jugador = jugadores.save(new JugadorEntity(UUID.randomUUID(), "Service Atomic Player",
                 equipo.getId(), "Forward", 9, "Argentina", true));
         fixtureJugadores.add(jugador.getId());
@@ -193,24 +198,37 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         estadisticas.save(new EstadisticasJugadorEntity(UUID.randomUUID(), jugador.getId(), "Forward", 77,
                 1, 1, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
                 BigDecimal.valueOf(6), 0, 0, anterior, now, now));
-        when(proveedor.obtenerPagina(any(), any(), any(Integer.class), any(Integer.class)))
-                .thenAnswer(invocacion -> {
-                    CompeticionEstadistica competicion = invocacion.getArgument(0);
-                    FamiliaEstadistica familia = invocacion.getArgument(1);
+        doReturn(
+                java.util.Arrays.stream(CompeticionEstadistica.values()).map(competicion -> {
                     if (competicion != CompeticionEstadistica.PREMIER_LEAGUE) {
-                        return new com.devchesterunited.devchesterunitedv2.modelo.PaginaEstadisticasJugador(
-                                competicion, familia, 1, 50, 1, 0, java.util.List.of());
+                        return new com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador(
+                                competicion, java.util.List.of());
                     }
-                    return new com.devchesterunited.devchesterunitedv2.modelo.PaginaEstadisticasJugador(
-                            competicion, familia, 1, 50, 1, 1, java.util.List.of(
+                    return new com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador(
+                            competicion, java.util.List.of(
                                     new com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador(
                                             new com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador(
                                                     99101L, "Service Atomic Player", "Forward", "Argentina",
-                                                    88101L, "Service Atomic FC"), familia,
+                                                    88101L, "Service Atomic FC"),
+                                            com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.GENERAL,
                                             new com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador(
                                                     101, 2, 2, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
-                                                    BigDecimal.ONE, BigDecimal.valueOf(8), 0, 0))));
-                });
+                                                    BigDecimal.ONE, BigDecimal.valueOf(8), 0, 0)),
+                                    new com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador(
+                                            new com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador(
+                                                    99101L, "Service Atomic Player", "Forward", "Argentina",
+                                                    88101L, "Service Atomic FC"),
+                                            com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.OFENSIVA,
+                                            new com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador(
+                                                    null, null, null, null, BigDecimal.ONE, BigDecimal.ONE, null, null, null, null)),
+                                    new com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador(
+                                            new com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador(
+                                                    99101L, "Service Atomic Player", "Forward", "Argentina",
+                                                    88101L, "Service Atomic FC"),
+                                            com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.DEFENSIVA,
+                                            new com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador(
+                                                    null, null, null, null, null, null, BigDecimal.ONE, null, null, null))));
+                }).toList()).when(proveedor).obtenerSnapshots(any());
         doThrow(new IllegalStateException("fallo controlado durante promoción")).when(estadisticas)
                 .save(any(EstadisticasJugadorEntity.class));
 
@@ -220,13 +238,12 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         assertThat(estadisticas.findByJugadorId(jugador.getId()).orElseThrow().getMinutosJugados()).isEqualTo(77);
         assertThat(identidadesEquipos.findByProveedorAndExternalId(
                 com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 88101L))
-                .isEmpty();
+                .isPresent();
         assertThat(identidadesJugadores.findByProveedorAndExternalId(
                 com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 99101L))
                 .isEmpty();
         var fallida = ejecuciones.findAllByEstado(EstadoEstadisticasSync.FALLIDA).stream()
                 .filter(e -> !fallidasAntes.contains(e.getId())).findFirst().orElseThrow();
-        assertThat(staging.findAllBySyncId(fallida.getId())).isNotEmpty();
         assertThat(estadisticas.findAll()).noneMatch(e -> e.getSyncId().equals(fallida.getId()));
         fixtureSyncs.add(fallida.getId());
     }

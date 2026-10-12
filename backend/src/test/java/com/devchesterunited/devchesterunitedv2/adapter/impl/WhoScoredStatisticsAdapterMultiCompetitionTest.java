@@ -15,7 +15,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.WebDriverException;
-import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -80,8 +79,8 @@ class WhoScoredStatisticsAdapterMultiCompetitionTest {
         configuration.setCurrent(true);
         configuration.setSortBy("Rating");
         configuration.setField("Overall");
-        configuration.setMinApp(true);
-        configuration.setNumberOfPlayersToPick(350);
+        configuration.setMinApp(false);
+        configuration.setNumberOfPlayersToPick(500);
         Map<String, CompetitionParameters> competitions = new java.util.HashMap<>();
         int[] tournamentOptions = {2, 4, 5, 3, 22};
         int[] stageIds = {25544, 25662, 25518, 25666, 25554};
@@ -92,13 +91,12 @@ class WhoScoredStatisticsAdapterMultiCompetitionTest {
             competitions.put(CompeticionEstadistica.values()[index].name().toLowerCase().replace('_', '-'), pair);
         }
         configuration.setCompetitions(competitions);
-        return new WhoScoredStatisticsAdapter(RestClient.builder(), "https://www.whoscored.com", "", 1_000_000,
-                new ObjectMapper(), factory, configuration);
+        return new WhoScoredStatisticsAdapter("https://www.whoscored.com", new ObjectMapper(), factory, configuration);
     }
 
     private String[] emptyResponses(int amount) {
         String empty = "{\"paging\":{\"currentPage\":1,\"totalPages\":1,\"totalResults\":0,"
-                + "\"resultsPerPage\":350},\"playerTableStats\":[]}";
+                + "\"resultsPerPage\":500},\"playerTableStats\":[]}";
         String[] responses = new String[amount];
         java.util.Arrays.fill(responses, empty);
         return responses;

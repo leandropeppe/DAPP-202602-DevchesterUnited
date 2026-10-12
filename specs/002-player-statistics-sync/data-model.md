@@ -92,3 +92,11 @@ La adquisicion se ejecuta fuera de la transaccion de promocion. Una respuesta
 invalida, incompleta o bloqueada no publica staging parcial. Si falla la
 promocion, las identidades nuevas y las estadisticas revierten y el snapshot
 anterior permanece visible.
+
+## Estado operativo validado
+
+El enrollment de equipos usa identidades persistidas (WHOSCORED, teamId) y el
+mapping aprobado revisado humanamente en
+backend/config/whoscored-team-enrollment-approved.csv. El importer es
+transaccional e idempotente. El resultado productivo validado fue de 2175
+adquiridos, 1968 publicados y 207 omitidos.

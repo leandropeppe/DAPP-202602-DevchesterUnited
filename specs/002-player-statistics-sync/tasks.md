@@ -222,6 +222,16 @@ sincronización.
 - [X] T051 [P] [US1] Crear los DTOs/fixtures internos para las respuestas reales de summary/all, summary/offensive y summary/defensive, manteniéndolos dentro de backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/dto/ y sin agregar métricas de dominio fuera de FR-003/FR-004
 - [X] T052 [US1] Implementar la creación, reutilización y cierre garantizado de una única sesión WebDriver por sincronización completa, incluyendo cierre ante excepciones, en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/impl/ y backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/
 - [X] T053 [US1] Implementar la navegación Selenium al endpoint /statisticsfeed/1/getplayerstatistics, lectura del JSON del body, adquisición de las tres familias, traducción y consolidación por playerId dentro de backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/impl/WhoScoredStatisticsAdapter.java sin llamadas desde Service
+
+## Cierre final de la feature
+
+La implementacion vigente queda cerrada con snapshots adquiridos por Selenium
+headed, cinco competiciones, isMinApp=false, numberOfPlayersToPick=500,
+page=1 y sin paginacion productiva. El mapping aprobado versionado es un
+prerrequisito reproducible y no se regenera automaticamente. La evidencia
+productiva validada es 2175 adquiridos, 1968 publicados y 207 omitidos.
+Las referencias anteriores a HTTP, paginacion y PaginaEstadisticasJugador
+permanecen solamente como trazabilidad historica superseded.
 - [X] T054 [US1] Implementar la validación sin paginación de currentPage == 1, totalPages == 1, players.size == totalResults y ausencia de contradicciones en metadata, con fallo controlado ante respuesta incompleta en backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/impl/
 - [X] T055 [P] [US1] Reemplazar las pruebas acopladas al JSON ficticio por pruebas con JSON controlado, fixtures y fakes que cubran las tres familias, metadata válida e inválida y traducción en backend/src/test/java/com/devchesterunited/devchesterunitedv2/adapter/
 - [X] T056 [P] [US3] Cubrir fallos de Selenium, body inválido, metadata inconsistente, adquisición incompleta y errores sanitizados sin conectividad real en backend/src/test/java/com/devchesterunited/devchesterunitedv2/adapter/ y backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/

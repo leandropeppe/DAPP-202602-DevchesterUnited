@@ -1,5 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.interfaces;
 
+import com.devchesterunited.devchesterunitedv2.service.dto.SincronizacionEstadisticasResultado;
+
 /**
  * Caso de uso de sincronización de estadísticas de jugadores.
  *
@@ -7,5 +9,5 @@ package com.devchesterunited.devchesterunitedv2.service.interfaces;
  * el contrato no expone transporte, DTOs externos ni detalles de persistencia.
  */
 public interface SincronizacionEstadisticasJugadorService {
-    void sincronizar();
+    SincronizacionEstadisticasResultado sincronizar();
 }
