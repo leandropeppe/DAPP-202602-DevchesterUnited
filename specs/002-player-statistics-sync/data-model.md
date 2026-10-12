@@ -68,6 +68,20 @@ opcional y su ausencia no bloquea la adquisicion.
 unicidad, metricas normalizadas, referencia de ejecucion y auditoria. Se
 actualiza por upsert dentro de la promocion.
 
+## Lectura del detalle de jugador
+
+El detalle del Catalogo relaciona el jugador activo con cero o una fila de
+`jugador_estadisticas` mediante `jugador_id`. La fila ausente es un estado
+valido de lectura y se representa como `statistics: null`.
+
+El contrato publico de detalle expone `position`, `minutes_played`, `goals`,
+`assists`, `shots`, `key_passes`, `dribbles`, `tackles`, `rating`,
+`yellow_cards` y `red_cards`. No forman parte del contrato `id`, `sync_id`,
+`created_at` ni `updated_at` de la persistencia de estadisticas.
+
+El detalle solo resuelve jugadores activos de equipos activos; cualquier otro
+caso se trata como recurso inexistente.
+
 ## Ejecucion y staging
 
 `estadisticas_sync` mantiene los estados `INICIADA`, `RECIBIENDO`, `VALIDADA`,

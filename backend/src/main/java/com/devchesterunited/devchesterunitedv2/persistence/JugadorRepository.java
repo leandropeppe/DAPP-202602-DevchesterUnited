@@ -41,6 +41,17 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
                    j.nationality AS nacionalidad
             """;
 
+    String FROM_CATALOGO_ACTIVO = """
+            FROM jugadores j
+            JOIN equipos e ON e.id = j.team_id
+            WHERE j.id = :id
+              AND j.is_active = TRUE
+              AND e.is_active = TRUE
+            """;
+
+    @Query(value = COLUMNAS_CATALOGO + FROM_CATALOGO_ACTIVO, nativeQuery = true)
+    java.util.Optional<JugadorCatalogoProjection> buscarActivoPorId(@Param("id") UUID id);
+
     /** Offset basado en cero; orden fijo, independiente de cualquier entrada del cliente. */
     @Query(value = COLUMNAS_CATALOGO + FROM_Y_FILTROS
             + " ORDER BY id ASC LIMIT :limite OFFSET :offset", nativeQuery = true)

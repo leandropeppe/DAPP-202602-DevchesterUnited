@@ -11,7 +11,7 @@ description: "Tareas de implementación para la sincronización de estadísticas
 
 **Tests**: incluidos porque la especificación y la Constitución exigen pruebas unitarias, de Adapter, integración con PostgreSQL/Testcontainers y casos de fallo.
 
-**Scope**: no se agrega endpoint HTTP, no se modifican ni eliminan tests existentes y no se reintroducen campos legacy ni representaciones alternativas de Jugador/Equipo.
+**Scope**: se agrega Ãºnicamente el extremo de lectura local del detalle de jugador, no se modifican ni eliminan tests existentes y no se reintroducen campos legacy ni representaciones alternativas de Jugador/Equipo.
 
 **Estado historico**: T001-T048 representan la implementacion del diseño
 anterior en el commit e886221. Las tareas que dependian del contrato HTTP
@@ -242,10 +242,26 @@ permanecen solamente como trazabilidad historica superseded.
 
 ---
 
+## ExtensiÃ³n de lectura del catÃ¡logo
+
+La siguiente tarea extiende esta misma feature para comprobar la lectura de las
+estadÃ­sticas ya publicadas. No reabre la adquisiciÃ³n ni crea una nueva feature.
+
+- [X] T061 [US4] Implementar `GET /api/v1/players/{id}` con `ply_<uuid>`, detalle del jugador activo de equipo activo, `statistics` opcional leÃ­do exclusivamente mediante `JugadorRepository` y `EstadisticasJugadorRepository.findByJugadorId(UUID)`, HTTP 200 con estadÃ­sticas o `null`, HTTP 404 para inexistentes/inactivos, contrato de detalle separado del listado y sin invocar WhoScored/Selenium/sincronizaciÃ³n; modificar o crear Ãºnicamente los componentes productivos necesarios en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/JugadorController.java`, `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/JugadorService.java`, `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/JugadorServiceImpl.java`, `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/JugadorRepository.java`, DTOs de `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y resultados de `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/dto/`, manteniendo intacto `GET /api/v1/players`.
+
 ## Notes
 
+Las pruebas previstas para T061 deben crearse como una suite nueva, por
+ejemplo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/JugadorDetalleE2ETest.java`, y pueden complementarse con una prueba nueva de Service o Repository sin modificar suites existentes.
+- La resolucion de 404 puede requerir el handler y/o la excepcion de aplicacion
+  correspondiente en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/exceptionhandler/` y `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/exception/`; esos archivos quedan dentro del alcance de T061 solo si son necesarios.
+
 - Todas las tareas usan formato checklist, ID secuencial, marca [P] solo cuando corresponde, etiqueta de historia en fases de usuario y ruta de archivo.
-- No hay tareas de endpoint HTTP ni frontend porque están fuera de alcance.
+- La implementación del endpoint HTTP queda acotada a T061; no incluye frontend.
 - No se permite modificar o borrar tests existentes.
+- T061 debe agregar pruebas nuevas para jugador con estadÃ­sticas, jugador sin
+  estadÃ­sticas, inexistente, jugador/equipo inactivo, aislamiento frente a
+  WhoScored y preservaciÃ³n del contrato existente del listado. No se pueden
+  modificar ni borrar tests existentes sin autorizaciÃ³n explÃ­cita.
 - Las identidades nuevas WHOSCORED solo son visibles si la promoción completa termina correctamente; staging nunca las publica.
 - La red se ejecuta antes de la transacción de promoción y nunca dentro de ella.

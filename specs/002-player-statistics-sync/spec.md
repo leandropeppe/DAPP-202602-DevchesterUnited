@@ -66,6 +66,34 @@ Como responsable de la plataforma, quiero que una sincronización fallida no exp
 - Puede ocurrir un fallo antes, durante o después del procesamiento de una competición; el resultado visible debe seguir siendo el último estado local válido.
 - Una sincronización repetida puede coincidir con otra en curso; el comportamiento de concurrencia deberá definirse durante el diseño técnico sin comprometer la atomicidad ni producir duplicados.
 
+## Extension de lectura del catalogo
+
+### User Story 4 - Consultar el detalle persistido de un jugador (Prioridad: P1)
+
+Como consumidor del catalogo, quiero consultar el detalle de un jugador con sus
+estadisticas ya sincronizadas, para obtener una respuesta local sin depender en
+tiempo real de WhoScored.
+
+**Prueba Independiente**: Con un jugador activo de un equipo activo, verificar
+que el endpoint devuelva el detalle y las estadisticas persistidas; repetir con
+un jugador sin fila de estadisticas y con jugadores inexistentes o inactivos.
+
+**Escenarios de Aceptacion**:
+
+1. **Dado** un jugador activo de un equipo activo con estadisticas persistidas,
+   **cuando** se consulta `GET /api/v1/players/{id}` usando `ply_<uuid>`,
+   **entonces** responde HTTP 200 con el detalle del jugador y un objeto
+   `statistics` con las metricas persistidas.
+2. **Dado** un jugador activo de un equipo activo sin estadisticas persistidas,
+   **cuando** se consulta su detalle, **entonces** responde HTTP 200 y
+   `statistics` es `null`.
+3. **Dado** un identificador inexistente, de un jugador inactivo o de un jugador
+   cuyo equipo esta inactivo, **cuando** se consulta el detalle, **entonces**
+   responde HTTP 404.
+4. **Dado** cualquier consulta de detalle, **entonces** los datos se obtienen
+   exclusivamente de la persistencia local y no se consulta WhoScored, no se
+   ejecuta Selenium ni se inicia una sincronizacion.
+
 ## Requisitos *(obligatorio)*
 
 ### Requisitos Funcionales
@@ -87,6 +115,17 @@ Como responsable de la plataforma, quiero que una sincronización fallida no exp
 - **FR-016**: Los datos sincronizados DEBEN quedar disponibles para su utilización posterior por las funcionalidades de cotización, sin incluir en esta feature reglas de valorización.
 - **FR-017**: El sistema DEBE asociar las estadísticas obtenidas al Jugador existente correspondiente y NO DEBE crear una representación alternativa de Jugador como parte del modelo estadístico.
 
+### Requisitos de lectura del detalle
+
+- **FR-018**: El catalogo DEBE exponer `GET /api/v1/players/{id}` con el identificador publico opaco `ply_<uuid>`.
+- **FR-019**: Para un jugador activo de un equipo activo, el detalle DEBE responder HTTP 200 y conservar los campos actuales del jugador.
+- **FR-020**: Con estadisticas persistidas, el detalle DEBE incluir `statistics` con `position`, `minutes_played`, `goals`, `assists`, `shots`, `key_passes`, `dribbles`, `tackles`, `rating`, `yellow_cards` y `red_cards`.
+- **FR-021**: Sin fila de `jugador_estadisticas`, el detalle DEBE responder HTTP 200 con `statistics: null`.
+- **FR-022**: El detalle DEBE responder HTTP 404 para jugadores inexistentes, inactivos o pertenecientes a equipos inactivos.
+- **FR-023**: La consulta DEBE leer exclusivamente datos persistidos mediante `JugadorRepository` y `EstadisticasJugadorRepository`.
+- **FR-024**: La consulta NO DEBE invocar WhoScored, Selenium, `WhoScoredStatisticsAdapter` ni sincronizaciones.
+- **FR-025**: El contrato de detalle NO DEBE exponer ids tecnicos ni metadatos de sincronizacion, y NO DEBE modificar `GET /api/v1/players`.
+
 ### Entidades Clave
 
 - **Jugador**: Entidad ya existente en el dominio de Devchester United. Esta feature no redefine ni reemplaza su modelado. Las estadísticas sincronizadas deben asociarse al jugador correspondiente.
@@ -95,6 +134,11 @@ Como responsable de la plataforma, quiero que una sincronización fallida no exp
 - **Sincronización**: Operación lógica que obtiene, valida, normaliza y actualiza las estadísticas asociadas a los jugadores existentes, conservando atomicidad y el último estado local válido ante fallos.
 
 ## Criterios de Éxito *(obligatorio)*
+
+### Resultados de lectura del detalle
+
+- **SC-007**: Los escenarios con estadisticas, sin estadisticas e inexistente/inactivo cumplen respectivamente HTTP 200 con objeto, HTTP 200 con `null` y HTTP 404.
+- **SC-008**: El 100% de las consultas de detalle verificadas funciona con informacion local aunque WhoScored no este disponible, sin ejecutar Selenium ni sincronizaciones.
 
 ### Resultados Medibles
 
@@ -118,7 +162,7 @@ Como responsable de la plataforma, quiero que una sincronización fallida no exp
 - Cálculo de cotizaciones o reglas de valorización de jugadores.
 - Compra, venta o cualquier funcionalidad de mercado.
 - Presentación de estadísticas en el frontend, salvo que una historia funcional posterior la requiera explícitamente.
-- Exposición de nuevos contratos públicos o definición de detalles técnicos del mecanismo de obtención.
+- Nuevos contratos públicos de sincronización o detalles técnicos del mecanismo de obtención. El contrato de lectura de detalle definido por la User Story 4 queda dentro del alcance de esta extensión.
 # Mecanismo de adquisicion vigente (actualizacion tecnica)
 
 La adquisicion real validada de WhoScored se realiza mediante Selenium

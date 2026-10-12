@@ -14,7 +14,8 @@
 
     .\gradlew.bat test --no-daemon --console=plain
 
-No se modifican ni borran tests existentes. No se agrega endpoint HTTP.
+No se modifican ni borran tests existentes. La extension agrega una consulta de
+detalle del Catalogo, sin alterar el contrato de `GET /api/v1/players`.
 
 ## Validacion manual diagnostica
 
@@ -84,6 +85,14 @@ garantizadamente al finalizar o ante error.
 6. Atomicidad: fallos de adquisicion, staging y promocion no dejan parciales.
 7. Mapeo: solo las metricas existentes se traducen; `posicion` queda pendiente si no aparece en JSON.
 8. Errores: detalles de JSON, navegacion y proveedor se sanitizan.
+9. Detalle con estadisticas: `GET /api/v1/players/{id}` devuelve HTTP 200 y el
+   objeto `statistics` con los valores persistidos.
+10. Detalle sin estadisticas: el mismo endpoint devuelve HTTP 200 con
+    `statistics: null`.
+11. Detalle inexistente o inactivo: devuelve HTTP 404 para jugador inexistente,
+    jugador inactivo o equipo inactivo.
+12. Aislamiento de lectura: la consulta de detalle no invoca WhoScored, Selenium,
+    `WhoScoredStatisticsAdapter` ni sincronizaciones.
 
 Los tests automatizados no consumen WhoScored real ni implementan mecanismos de
 evasiÃ³n, stealth o bypass.

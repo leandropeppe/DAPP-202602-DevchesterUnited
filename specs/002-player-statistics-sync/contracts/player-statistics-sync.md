@@ -1,7 +1,31 @@
 # Contratos internos de sincronizacion
 
-No se agrega endpoint HTTP. El contrato define el puerto entre Service y
-Adapter y las consultas de persistencia necesarias para enrolamiento.
+El contrato define el puerto entre Service y Adapter, las consultas de
+persistencia necesarias para enrolamiento y el extremo de lectura local del
+Catalogo. El extremo de lectura no consulta el Adapter.
+
+## GET /api/v1/players/{id}
+
+`id` recibe exclusivamente el identificador opaco `ply_<uuid>` expuesto por
+`GET /api/v1/players`. No se acepta UUID desnudo como contrato publico.
+
+Para un jugador activo de un equipo activo, la respuesta exitosa mantiene el
+envoltorio `status`/`data` y devuelve los campos actuales del jugador junto con
+`statistics`. `statistics` es un objeto cuando existe una fila persistida en
+`jugador_estadisticas` y `null` cuando no existe.
+
+El objeto de estadisticas expone `position`, `minutes_played`, `goals`,
+`assists`, `shots`, `key_passes`, `dribbles`, `tackles`, `rating`,
+`yellow_cards` y `red_cards`. No expone el id tecnico de la fila, `syncId`,
+`createdAt` ni `updatedAt`.
+
+Respuestas: HTTP 200 para jugador activo con o sin estadisticas; HTTP 404 para
+identificador inexistente, jugador inactivo o equipo inactivo.
+
+La consulta usa exclusivamente `JugadorRepository` y
+`EstadisticasJugadorRepository.findByJugadorId(UUID)`. No invoca
+`WhoScoredStatisticsAdapter`, Selenium, sincronizaciones ni proveedores
+externos.
 
 ## Puerto ProveedorEstadisticasJugador
 

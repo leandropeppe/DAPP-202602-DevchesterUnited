@@ -32,7 +32,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(access -> {
                     access.requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll();
                     access.requestMatchers(HttpMethod.POST, "/api/v1/auth/apikey").authenticated();
-                    access.requestMatchers(HttpMethod.GET, "/api/v1/players").permitAll();
+                    access.requestMatchers(HttpMethod.GET, "/api/v1/players", "/api/v1/players/**").permitAll();
                     access.requestMatchers(HttpMethod.POST, "/api/v1/catalog/sync").hasAuthority("API_KEY");
                     if (environment.acceptsProfiles(Profiles.of("local", "test"))) {
                         if (environment.getProperty("springdoc.api-docs.enabled", Boolean.class, false).booleanValue()) {

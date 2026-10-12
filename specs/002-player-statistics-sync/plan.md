@@ -23,6 +23,32 @@ WhoScored en el adapter. La configuracion validada es `isMinApp=false` y
 `numberOfPlayersToPick=500`; el limite real observado permite una llamada por
 familia y competicion, sin paginacion.
 
+## Extension de lectura del catalogo
+
+La feature tambien incorpora la consulta local `GET /api/v1/players/{id}`.
+Recibe el identificador opaco `ply_<uuid>` del catalogo y solo considera
+consultables jugadores activos pertenecientes a equipos activos.
+
+El flujo de lectura es estrictamente:
+
+```text
+JugadorController
+    -> JugadorService
+        -> JugadorRepository
+        -> EstadisticasJugadorRepository
+            -> PostgreSQL
+```
+
+El Service obtiene el jugador y sus datos actuales de catalogo, consulta la
+fila opcional de `jugador_estadisticas` mediante `findByJugadorId`, y compone
+un contrato especifico de detalle. La ausencia de esa fila produce HTTP 200
+con `statistics: null`; la ausencia o inactividad del jugador/equipo produce
+HTTP 404. Este flujo no utiliza Adapter, WhoScored, Selenium ni sincronizacion.
+
+El contrato de listado `GET /api/v1/players` permanece intacto. El contrato de
+detalle expone solo las metricas publicas normalizadas y no expone ids tecnicos
+ni metadatos de sincronizacion.
+
 ## Flujo arquitectonico
 
 1. El Service adquiere exclusion y crea una ejecucion `INICIADA`.
