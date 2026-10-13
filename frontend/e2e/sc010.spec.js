@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('SC-010 completa el flujo funcional del frontend sin hosts externos', async ({ page, context }) => {
+test('SC-010 completa el flujo funcional del frontend sin hosts externos', async ({ page }) => {
   const requests = []
   page.on('request', (request) => requests.push(request.url()))
 
@@ -20,20 +20,6 @@ test('SC-010 completa el flujo funcional del frontend sin hosts externos', async
   await page.getByRole('button', { name: 'Iniciar sesión' }).click()
   await expect(page).toHaveURL(/\/catalogo$/)
 
-  await page.getByRole('link', { name: 'Credenciales' }).click()
-  await expect(page).toHaveURL(/\/credenciales$/)
-
-  await page.getByRole('button', { name: 'Generar o rotar API Key' }).click()
-  const generatedKey = await page.locator('code').textContent()
-  expect(generatedKey).toMatch(/^dev_key_[A-Za-z0-9_-]{43}$/)
-  await expect(page.getByText('no volverá a mostrarse completa')).toBeVisible()
-
-  await page.reload()
-  await expect(page.locator('code')).toHaveCount(0)
-  await expect(page.getByText(/API Key conservada:/)).toBeVisible()
-
-  await page.getByRole('link', { name: 'Catálogo' }).click()
-  await expect(page).toHaveURL(/\/catalogo$/)
   await expect(page.getByText('Jugador Real 01')).toBeVisible()
   await expect(page.getByText('Sin información', { exact: true }).first()).toBeVisible()
 
@@ -42,11 +28,6 @@ test('SC-010 completa el flujo funcional del frontend sin hosts externos', async
   await expect(page.getByText('Página 1 de 2')).toBeVisible()
   await page.getByRole('button', { name: 'Siguiente' }).click()
   await expect(page.getByText('Página 2 de 2')).toBeVisible()
-
-  const secondPage = await context.newPage()
-  await secondPage.goto('/credenciales')
-  await expect(secondPage.getByText('No hay una API Key guardada en esta pestaña.')).toBeVisible()
-  await secondPage.close()
 
   await page.getByRole('button', { name: 'Cerrar sesión' }).click()
   await expect(page).toHaveURL(/\/login$/)

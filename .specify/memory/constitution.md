@@ -14,8 +14,7 @@ Sync Impact Report
 - **Frontend Web:** React.
 - **Base de Datos:** PostgreSQL para persistencia de datos.
 - **Testing Frameworks Backend:** JUnit 5 + Testcontainers (para entorno de base de datos real en pruebas de integración).
-- **Integraciones Externas:** Las APIs de terceros deben consumirse exclusivamente a través de una capa `adapter`, desacoplada del dominio y de los controladores.
-
+- **Integraciones Externas:** Las fuentes de datos de terceros, incluyendo APIs, endpoints HTTP y scraping web, deben consumirse exclusivamente a través de una capa `Adapter`, desacoplada del dominio y de los controladores.
 ---
 ## 2. Principios de Arquitectura y Diseño por Capas
 
@@ -137,7 +136,7 @@ Las validaciones realizadas en capas superiores no reemplazan las invariantes de
 
 ---
 
-## 5. Integraciones con APIs Externas
+## 5. Integraciones con Fuentes Externas
 
 - Toda integración con terceros DEBE implementarse mediante la capa `Adapter`.
 - Queda prohibido realizar llamadas HTTP a APIs externas desde Controller, Modelo o Repository.
@@ -154,6 +153,21 @@ Las validaciones realizadas en capas superiores no reemplazan las invariantes de
 - Las estructuras entregadas por un proveedor externo no definen directamente el modelo de dominio de Devchester United.
 - El Adapter debe traducir los datos externos a representaciones internas controladas por la aplicación.
 
+### Abstracción de fuentes externas
+
+- Toda fuente externa de datos DEBE estar desacoplada de la capa `Service`
+  mediante una interfaz definida por la aplicación.
+- El `Service` debe depender de dicha interfaz y no de una implementación
+  concreta del mecanismo de obtención de datos.
+- Las implementaciones concretas pueden utilizar APIs HTTP, endpoints JSON,
+  scraping HTML u otros mecanismos de integración, siempre encapsulados
+  dentro de la capa `Adapter`.
+- Cambiar el mecanismo de obtención de datos no debe requerir modificar la
+  lógica de negocio ni el caso de uso de sincronización.
+- Los detalles específicos del proveedor, incluyendo URLs, selectores HTML,
+  parámetros HTTP, identificadores externos y estructuras de respuesta,
+  deben permanecer encapsulados dentro del Adapter.
+
 ### Sincronización
 
 - Los procesos de sincronización deben ser idempotentes siempre que el caso de uso lo permita.
@@ -167,6 +181,31 @@ Las validaciones realizadas en capas superiores no reemplazan las invariantes de
 - Los detalles internos de la respuesta del proveedor no deben filtrarse directamente al consumidor de la API.
 - Timeouts, errores HTTP o respuestas inválidas no deben dejar el sistema en un estado inconsistente.
 - Un fallo externo no debe provocar la eliminación de información local válida previamente sincronizada.
+
+### Procesamiento de grandes volúmenes
+
+- Las integraciones externas deben evitar cargar en memoria cantidades de
+  datos mayores a las necesarias para completar el caso de uso.
+- Cuando la fuente externa permita paginación, lotes o procesamiento
+  incremental, estos mecanismos deben utilizarse cuando resulte apropiado.
+- El tamaño de página o lote debe ser una decisión de infraestructura y no
+  debe formar parte de la lógica de negocio.
+- El procesamiento por lotes no debe comprometer la consistencia global de
+  la sincronización.
+
+### Atomicidad de sincronizaciones
+
+- Una sincronización que represente una única operación lógica DEBE ser
+  atómica respecto de la persistencia local.
+- No deben quedar actualizaciones parciales visibles si la sincronización
+  falla antes de completarse.
+- Ante un error durante la persistencia, los cambios correspondientes a la
+  sincronización deben revertirse y conservarse el último estado local válido.
+- La obtención de datos desde proveedores externos debe separarse, cuando
+  resulte posible, de la transacción de persistencia para evitar mantener
+  transacciones de base de datos abiertas durante operaciones de red.
+- Los datos externos deben validarse antes de reemplazar o actualizar el
+  estado local persistido.
 
 ---
 ## 6. Estrategia de Testing y Definition of Done
@@ -260,39 +299,7 @@ El frontend no debe contener lógica de negocio del dominio, acceso directo a pe
 
 ---
 
-## 9. Alcance de la Entrega Nro 1
-
-### Seguridad
-
-- Autenticación mediante JWT.
-- Identificación mediante API Key para los endpoints privados definidos por el contrato.
-
-### Funcionalidades
-
-- Creación de usuario.
-- Login.
-- Generación y rotación de API Key.
-- Catálogo de jugadores con filtros por liga, equipo y posición.
-- Integración de catálogo con una fuente externa para obtener y actualizar equipos y jugadores de las cinco principales ligas europeas.
-- Persistencia local de los datos obtenidos desde la fuente externa.
-- Frontend web MVP en React para consumir las funcionalidades disponibles del backend.
-
-### Fuera de alcance
-
-Permanecen fuera del alcance de esta entrega, salvo que una especificación posterior indique lo contrario:
-
-- mercado de tokens;
-- compra y venta de jugadores;
-- portfolio;
-- estrategias de valuación;
-- cotizaciones históricas;
-- ranking de mercado;
-- schedulers de valuación;
-- funcionalidades avanzadas de mercado.
-
----
-
-## 10. Estándares Permanentes del Frontend
+## 9. Estándares Permanentes del Frontend
 
 Estas reglas son obligatorias para todas las futuras páginas, componentes y
 modificaciones del frontend. Su objetivo es mantener un código legible,
@@ -316,7 +323,7 @@ predecible y consistente sin alterar el comportamiento funcional.
 - Toda implementación o modificación frontend debe aplicar estas reglas y
   preservar comportamiento, validaciones, accesibilidad y contratos existentes.
 
-## 11. Instrucciones de Desarrollo Frontend para Codex
+## 10. Instrucciones de Desarrollo Frontend para Codex
 
 Codex debe tratar la sección 10 como una regla permanente al crear o modificar
 cualquier archivo del frontend. Antes de entregar cambios debe revisar que no

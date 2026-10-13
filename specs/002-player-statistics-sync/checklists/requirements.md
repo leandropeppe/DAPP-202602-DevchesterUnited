@@ -1,35 +1,39 @@
-# Specification Quality Checklist: Sincronización de Estadísticas de Jugadores
+# Specification Quality Checklist: Player Statistics Sync y cierre frontend
 
-**Purpose**: Validar la completitud y calidad de la especificación antes de pasar a planificación
-**Created**: 2026-10-03
+**Purpose**: Validar la completitud y calidad de la especificacion antes de proceder a planificacion o implementacion
+**Created**: 2026-10-12
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
 
-- [x] No incluye detalles de implementación, lenguajes, frameworks ni librerías.
-- [x] Está enfocada en el valor funcional y las necesidades del negocio.
-- [x] Está redactada para responsables y consumidores funcionales, no para imponer una solución técnica.
-- [x] Todas las secciones obligatorias de la plantilla están completas.
+- [x] No implementation details (languages, frameworks, APIs)
+- [x] Focused on user value and business needs
+- [x] Written for non-technical stakeholders
+- [x] All mandatory sections completed
 
 ## Requirement Completeness
 
-- [x] No quedan decisiones funcionales pendientes de aclaración.
-- [x] Los requisitos son verificables y no ambiguos para la fase de especificación.
-- [x] Los criterios de éxito son medibles.
-- [x] Los criterios de éxito son independientes de tecnologías concretas.
-- [x] Los escenarios de aceptación cubren los flujos principales.
-- [x] Los casos límite y fallos externos están identificados.
-- [x] El alcance y el fuera de alcance están delimitados.
-- [x] Los supuestos y dependencias funcionales están documentados.
+- [x] No [NEEDS CLARIFICATION] markers remain
+- [x] Requirements are testable and unambiguous
+- [x] Success criteria are measurable
+- [x] Success criteria are technology-agnostic (no implementation details)
+- [x] All acceptance scenarios are defined
+- [x] Edge cases are identified
+- [x] Scope is clearly bounded
+- [x] Dependencies and assumptions identified
 
 ## Feature Readiness
 
-- [x] Los requisitos funcionales tienen escenarios de aceptación o criterios de éxito relacionados.
-- [x] Las historias de usuario cubren obtención, actualización y conservación ante fallos.
-- [x] La feature define resultados verificables para las cinco competiciones soportadas.
-- [x] No se filtran decisiones de implementación que correspondan a `/speckit-plan`.
+- [x] All functional requirements have clear acceptance criteria
+- [x] User scenarios cover primary flows
+- [x] Feature meets measurable outcomes defined in Success Criteria
+- [x] No implementation details leak into specification
 
 ## Notes
 
-- La selección de tecnologías de obtención, persistencia, procesamiento, identificación técnica y concurrencia queda deliberadamente reservada para la fase de planificación.
-- No se generaron `plan.md`, `tasks.md` ni código.
+- La especificacion existente de sincronizacion y detalle backend se conserva.
+- La visualizacion frontend se incorpora mediante User Stories 5 y 6 y FR-026 a FR-035.
+- El endpoint de detalle y los datos persistidos se consumen tal como estan definidos; no se amplia scraping, matching, sincronizacion ni persistencia.
+- No se incluyen compra, venta, cotizacion, portfolio ni transacciones.
+- Los checks pasan tras una iteracion de validacion: no quedan marcadores de aclaracion y los estados de carga, error, inexistencia y `statistics = null` estan cubiertos.
+- Items marked incomplete require spec updates before `$speckit-clarify` or `$speckit-plan`

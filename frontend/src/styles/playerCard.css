@@ -1,0 +1,430 @@
+.player-card {
+    --card-primary: #334155;
+    --card-secondary: #0f172a;
+    --card-border: #64748b;
+
+    position: relative;
+
+    min-width: 0;
+    min-height: 410px;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    border: 2px solid var(--card-border);
+
+    border-radius:
+            34px
+            34px
+            56px
+            56px;
+
+    background:
+            radial-gradient(
+                    circle at 70% 25%,
+                    rgba(255, 255, 255, .15),
+                    transparent 30%
+            ),
+            linear-gradient(
+                    150deg,
+                    var(--card-primary) 0%,
+                    var(--card-primary) 38%,
+                    var(--card-secondary) 100%
+            );
+
+    color: #fff;
+
+    cursor: pointer;
+
+    box-shadow:
+            0 16px 32px rgba(15, 23, 42, .18),
+            inset 0 1px 0 rgba(255, 255, 255, .22);
+
+    transition:
+            transform .22s ease,
+            box-shadow .22s ease;
+}
+
+.player-card::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+            linear-gradient(
+                    125deg,
+                    transparent 10%,
+                    rgba(255, 255, 255, .11) 32%,
+                    transparent 48%
+            ),
+            repeating-linear-gradient(
+                    145deg,
+                    transparent 0,
+                    transparent 55px,
+                    rgba(255, 255, 255, .025) 56px,
+                    rgba(255, 255, 255, .025) 58px
+            );
+
+    pointer-events: none;
+}
+
+.player-card::after {
+    content: "";
+
+    position: absolute;
+
+    top: -110px;
+    right: -115px;
+
+    width: 280px;
+    height: 280px;
+
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 50%;
+
+    box-shadow:
+            0 0 0 34px rgba(255, 255, 255, .025),
+            0 0 0 68px rgba(255, 255, 255, .018);
+
+    pointer-events: none;
+}
+
+/* DEFENSORES */
+
+.player-card--red {
+    --card-primary: #c8102e;
+    --card-secondary: #38030d;
+    --card-border: #e32c46;
+}
+
+/* MEDIOCAMPISTAS */
+
+.player-card--blue {
+    --card-primary: #0874d1;
+    --card-secondary: #031f48;
+    --card-border: #3b9cf1;
+}
+
+/* ARQUEROS */
+
+.player-card--green {
+    --card-primary: #008555;
+    --card-secondary: #003421;
+    --card-border: #21b47b;
+}
+
+/* DELANTEROS */
+
+.player-card--purple {
+    --card-primary: #7422ae;
+    --card-secondary: #270541;
+    --card-border: #a64ce1;
+}
+
+/* POSICIÓN DESCONOCIDA */
+
+.player-card--neutral {
+    --card-primary: #475569;
+    --card-secondary: #111827;
+    --card-border: #64748b;
+}
+
+.player-card__shine {
+    position: absolute;
+
+    top: -190px;
+    left: -100px;
+
+    width: 210px;
+    height: 520px;
+
+    transform: rotate(30deg);
+
+    background:
+            linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255, 255, 255, .1),
+                    transparent
+            );
+
+    pointer-events: none;
+}
+
+.player-card__rating {
+    position: absolute;
+
+    top: 22px;
+    left: 24px;
+
+    z-index: 3;
+
+    display: flex;
+    flex-direction: column;
+
+    line-height: 1;
+}
+
+.player-card__rating strong {
+    min-height: 34px;
+
+    font-size: 2rem;
+    font-weight: 900;
+}
+
+.player-card__rating span {
+    margin-top: 5px;
+
+    font-size: 1.35rem;
+    font-weight: 850;
+}
+
+.player-card__portrait {
+    position: relative;
+
+    height: 255px;
+
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+
+    overflow: hidden;
+}
+
+.player-card__portrait::before {
+    content: "";
+
+    position: absolute;
+
+    width: 260px;
+    height: 260px;
+
+    bottom: -100px;
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, .08);
+
+    filter: blur(2px);
+}
+
+.player-card__portrait::after {
+    content: "";
+
+    position: absolute;
+
+    bottom: -45px;
+
+    width: 260px;
+    height: 120px;
+
+    border-radius: 50%;
+
+    background: rgba(0, 0, 0, .22);
+
+    filter: blur(20px);
+}
+
+.player-card__silhouette {
+    position: relative;
+
+    z-index: 2;
+
+    width: 92%;
+    height: 94%;
+
+    fill: rgba(5, 9, 20, .88);
+
+    filter:
+            drop-shadow(0 0 5px rgba(255, 255, 255, .25))
+            drop-shadow(0 14px 18px rgba(0, 0, 0, .35));
+
+    transform-origin: bottom center;
+
+    transition:
+            transform .25s ease,
+            filter .25s ease;
+}
+
+.player-card__silhouette-highlight {
+    fill: rgba(255, 255, 255, .04);
+}
+
+.player-card__content {
+    position: relative;
+
+    z-index: 3;
+
+    flex: 1;
+
+    padding: 2px 24px 28px;
+
+    background:
+            linear-gradient(
+                    to bottom,
+                    transparent,
+                    rgba(0, 0, 0, .2)
+            );
+}
+
+.player-card__name {
+    margin: 0 0 14px;
+
+    color: #fff;
+
+    font-size: 1.28rem;
+    font-weight: 900;
+
+    letter-spacing: -.025em;
+}
+
+.player-card__metadata {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    font-size: .9rem;
+    font-weight: 520;
+}
+
+.player-card__metadata > div {
+    display: flex;
+    align-items: center;
+
+    min-width: 0;
+
+    gap: 10px;
+}
+
+.player-card__metadata > div > span:last-child {
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player-card__icon {
+    width: 19px;
+    height: 19px;
+
+    flex: 0 0 19px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.player-card__icon svg {
+    width: 100%;
+    height: 100%;
+
+    fill: currentColor;
+}
+
+.player-card__icon--outline {
+    width: 22px;
+    height: 22px;
+
+    flex-basis: 22px;
+}
+
+.player-card__icon--outline svg {
+    fill: none;
+
+    stroke: currentColor;
+    stroke-width: 1.8;
+}
+
+.player-card__action {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    z-index: 10;
+
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    background: rgba(4, 10, 22, .9);
+
+    font-size: .88rem;
+    font-weight: 800;
+
+    transform: translateY(100%);
+
+    transition: transform .2s ease;
+}
+
+.player-card__action strong {
+    transition: transform .2s ease;
+}
+
+.player-card:focus-visible {
+    outline: 4px solid rgba(215, 25, 32, .25);
+    outline-offset: 4px;
+
+    transform: translateY(-4px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .player-card:hover {
+        transform:
+                translateY(-9px)
+                scale(1.018);
+
+        box-shadow:
+                0 28px 55px rgba(15, 23, 42, .28),
+                0 0 0 1px var(--card-border);
+    }
+
+    .player-card:hover .player-card__silhouette {
+        transform: scale(1.07);
+
+        filter:
+                drop-shadow(0 0 8px rgba(255, 255, 255, .32))
+                drop-shadow(0 18px 20px rgba(0, 0, 0, .4));
+    }
+
+    .player-card:hover .player-card__action {
+        transform: translateY(0);
+    }
+
+
+    .player-card:hover .player-card__action strong {
+        transform: translateX(4px);
+    }
+
+    .player-card__flag {
+        display: block;
+
+        width: 24px;
+        height: 18px;
+
+        flex: 0 0 24px;
+
+        padding: 0;
+        margin: 0;
+
+        border: 1px solid rgba(0, 0, 0, .65);
+        border-radius: 2px;
+
+        background: #000;
+        box-shadow: none;
+
+        object-fit: cover;
+
+    }
+}

@@ -1,34 +1,421 @@
-.catalog-toolbar { display: grid; gap: 20px; margin-bottom: 28px; padding: 22px; }
-.filter-grid { display: grid; grid-template-columns: repeat(3, 1fr) auto; align-items: end; gap: 14px; }
-.filter-field { display: grid; gap: 7px; }
-.filter-field label { color: #4b5563; font-size: .82rem; font-weight: 800; }
-.filter-field input, .filter-field select { width: 100%; border: 1px solid #d1d5db; border-radius: 10px; background: #fff; color: #1f2937; padding: 12px 14px; transition: border-color .2s, box-shadow .2s; }
-.filter-field select { min-height: 46px; }
-.filter-field input:focus, .filter-field select:focus { border-color: #d71920; box-shadow: 0 0 0 3px rgba(215, 25, 32, .13); outline: none; }
-.filter-actions { display: flex; gap: 10px; }
-.catalog-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 14px; }
-.catalog-summary h2 { margin: 0; color: #111827; font-size: 1.15rem; }
-.catalog-summary span { color: #6b7280; font-size: .9rem; }
-.players-table-wrap { overflow: hidden; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; }
-.players-table { width: 100%; border-collapse: collapse; text-align: left; }
-.players-table th { background: #f9fafb; color: #6b7280; font-size: .75rem; letter-spacing: .07em; text-transform: uppercase; }
-.players-table th, .players-table td { padding: 15px 18px; border-bottom: 1px solid #eef0f2; }
-.players-table tr:last-child td { border-bottom: 0; }
-.players-table td:first-child { color: #111827; font-weight: 750; }
-.players-table td:not(:first-child) { color: #4b5563; }
-.empty-state { display: block; padding: 34px 20px; border: 1px dashed #cfd4dc; border-radius: 14px; background: #fff; text-align: center; }
-.empty-state strong { display: block; color: #111827; font-size: 1.05rem; }
-.pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 22px; }
-.pagination__label { min-width: 120px; color: #4b5563; font-size: .9rem; text-align: center; }
-@media (max-width: 760px) {
-  .filter-grid { grid-template-columns: 1fr 1fr; }
-  .filter-actions { grid-column: 1 / -1; }
-  .filter-actions .button { flex: 1; }
-  .players-table-wrap { border: 0; background: transparent; overflow: visible; }
-  .players-table, .players-table thead, .players-table tbody, .players-table tr, .players-table td { display: block; }
-  .players-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  .players-table tr { margin-bottom: 12px; padding: 13px 16px; border: 1px solid #e5e7eb; border-radius: 14px; background: #fff; }
-  .players-table td { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; border: 0; text-align: right; }
-  .players-table td::before { color: #6b7280; content: attr(data-label); font-size: .78rem; font-weight: 750; text-align: left; }
+.catalog-page {
+  position: relative;
 }
-@media (max-width: 480px) { .filter-grid { grid-template-columns: 1fr; } .filter-actions { grid-column: auto; } .catalog-summary { align-items: flex-start; flex-direction: column; } }
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.catalog-hero {
+  position: relative;
+
+  min-height: 250px;
+
+  margin-bottom: -46px;
+
+  overflow: hidden;
+
+  border-radius: 22px;
+
+  background: #f5f6f8;
+}
+
+
+.catalog-hero__stadium {
+  position: absolute;
+  inset: 0;
+
+  background-image:
+          linear-gradient(
+                  90deg,
+                  rgba(245, 246, 248, 1) 0%,
+                  rgba(245, 246, 248, .97) 22%,
+                  rgba(245, 246, 248, .78) 43%,
+                  rgba(245, 246, 248, .25) 65%,
+                  rgba(245, 246, 248, .02) 100%
+          ),
+          url("/images/old-trafford.png");
+
+  background-position: center 55%;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+
+.catalog-hero__content {
+  position: relative;
+
+  z-index: 2;
+
+  max-width: 760px;
+
+  padding:
+          42px
+          30px
+          94px;
+}
+
+.catalog-hero .eyebrow {
+  margin-bottom: 9px;
+}
+
+.catalog-hero h1 {
+  margin: 0;
+
+  color: #08152f;
+
+  font-size: clamp(2.1rem, 4vw, 3.2rem);
+  font-weight: 900;
+
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.catalog-hero__description {
+  max-width: 680px;
+
+  margin: 16px 0 0;
+
+  color: #5f6b7d;
+
+  font-size: 1rem;
+}
+
+/* =========================================================
+   FILTROS
+   ========================================================= */
+
+.catalog-toolbar {
+  position: relative;
+
+  z-index: 10;
+
+  display: grid;
+
+  gap: 20px;
+
+  margin:
+          0
+          22px
+          36px;
+
+  padding: 22px;
+
+  border: 1px solid rgba(220, 226, 234, .9);
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, .97);
+
+  box-shadow:
+          0 20px 45px rgba(15, 23, 42, .12);
+}
+
+.filter-grid {
+  display: grid;
+
+  grid-template-columns:
+    minmax(170px, 1fr)
+    minmax(220px, 1.25fr)
+    minmax(170px, 1fr)
+    auto;
+
+  align-items: end;
+
+  gap: 14px;
+}
+
+.filter-field {
+  display: grid;
+
+  gap: 7px;
+}
+
+.filter-field label {
+  color: #334155;
+
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.filter-field input,
+.filter-field select {
+  width: 100%;
+
+  min-height: 48px;
+
+  border: 1px solid #ccd4df;
+  border-radius: 11px;
+
+  background: #fff;
+
+  color: #1f2937;
+
+  padding:
+          12px
+          14px;
+
+  font: inherit;
+
+  transition:
+          border-color .2s,
+          box-shadow .2s,
+          background-color .2s;
+}
+
+.filter-field input:hover,
+.filter-field select:hover {
+  border-color: #aeb8c6;
+}
+
+.filter-field input:focus,
+.filter-field select:focus {
+  border-color: #d71920;
+
+  box-shadow:
+          0 0 0 3px rgba(215, 25, 32, .13);
+
+  outline: none;
+}
+
+.filter-actions {
+  display: flex;
+
+  gap: 10px;
+}
+
+.filter-actions .button {
+  min-height: 48px;
+
+  white-space: nowrap;
+}
+
+/* =========================================================
+   RESUMEN
+   ========================================================= */
+
+.catalog-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin:
+          0
+          0
+          18px;
+}
+
+.catalog-summary h2 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 1.25rem;
+  font-weight: 850;
+}
+
+.catalog-summary span {
+  color: #6b7280;
+
+  font-size: .9rem;
+}
+
+/* =========================================================
+   GRID DE JUGADORES
+   ========================================================= */
+
+.players-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 24px;
+
+  margin-bottom: 36px;
+}
+
+/* =========================================================
+   ESTADO VACÍO
+   ========================================================= */
+
+.empty-state {
+  display: block;
+
+  padding:
+          40px
+          20px;
+
+  border: 1px dashed #cfd4dc;
+  border-radius: 16px;
+
+  background: #fff;
+
+  text-align: center;
+}
+
+.empty-state strong {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #111827;
+
+  font-size: 1.05rem;
+}
+
+/* =========================================================
+   PAGINACIÓN
+   ========================================================= */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 16px;
+
+  margin-top: 26px;
+}
+
+.pagination__label {
+  min-width: 130px;
+
+  color: #4b5563;
+
+  font-size: .9rem;
+  text-align: center;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1200px) {
+  .players-grid {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+
+  .filter-grid {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+
+  .filter-actions {
+    grid-column: 1 / -1;
+  }
+
+  .filter-actions .button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 850px) {
+  .catalog-hero {
+    min-height: 210px;
+  }
+
+  .catalog-hero__content {
+    padding:
+            34px
+            24px
+            78px;
+  }
+
+  .catalog-toolbar {
+    margin-right: 14px;
+    margin-left: 14px;
+  }
+
+  .players-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-grid {
+    grid-template-columns:
+      1fr
+      1fr;
+  }
+
+  .filter-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .catalog-hero {
+    min-height: 230px;
+
+    margin-bottom: -30px;
+  }
+
+  .catalog-hero__stadium {
+    position: absolute;
+    inset: 0;
+
+    background-image:
+            linear-gradient(
+                    90deg,
+                    rgba(245, 246, 248, 1) 0%,
+                    rgba(245, 246, 248, .96) 25%,
+                    rgba(245, 246, 248, .72) 45%,
+                    rgba(245, 246, 248, .18) 70%,
+                    rgba(245, 246, 248, 0) 100%
+            ),
+            url("/images/old-trafford.png");
+
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: auto 100%;
+  }
+
+  .catalog-hero__content {
+    padding:
+            30px
+            18px
+            70px;
+  }
+
+  .catalog-hero h1 {
+    font-size: 2rem;
+  }
+
+  .catalog-toolbar {
+    margin:
+            0
+            8px
+            28px;
+
+    padding: 18px;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    grid-column: auto;
+
+    flex-direction: column;
+  }
+
+  .players-grid {
+    grid-template-columns: 1fr;
+
+    gap: 20px;
+  }
+
+  .catalog-summary {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 4px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+  }
+}

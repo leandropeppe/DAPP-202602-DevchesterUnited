@@ -1,6 +1,6 @@
 export default function Header ({ route, session, onNavigate }) {
   const items = session.jwt
-    ? [['/catalogo', 'Catálogo'], ['/credenciales', 'Credenciales']]
+    ? [['/catalogo', 'Catálogo']]
     : [['/catalogo', 'Catálogo'], ['/login', 'Iniciar sesión'], ['/registro', 'Registrarse']]
 
   function go (event, path) {

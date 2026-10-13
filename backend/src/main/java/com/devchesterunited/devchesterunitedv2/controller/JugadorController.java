@@ -2,9 +2,13 @@ package com.devchesterunited.devchesterunitedv2.controller;
 
 import com.devchesterunited.devchesterunitedv2.controller.dto.FiltroJugadoresDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.EstadisticasJugadorResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.JugadorDetalleResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.JugadoresResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.JugadorService;
+import com.devchesterunited.devchesterunitedv2.service.dto.EstadisticasJugadorResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.JugadorDetalleResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.JugadorResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.JugadoresResultado;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -112,6 +117,18 @@ public class JugadorController {
         return ResponseEntity.ok(new SuccessResponseDTO<>(respuesta));
     }
 
+    @Operation(
+            operationId = "consultarDetalleJugador",
+            summary = "Consultar detalle de jugador y estadisticas persistidas")
+    @ApiResponse(responseCode = "200", description = "Detalle del jugador.")
+    @ApiResponse(responseCode = "404", description = "Jugador no encontrado.")
+    @GetMapping("/players/{id}")
+    public ResponseEntity<SuccessResponseDTO<JugadorDetalleResponseDTO>> consultarDetalle(
+            @PathVariable String id) {
+        JugadorDetalleResponseDTO respuesta = mapearDetalle(servicio.consultarDetalle(id));
+        return ResponseEntity.ok(new SuccessResponseDTO<>(respuesta));
+    }
+
     private static JugadoresResponseDTO mapear(JugadoresResultado resultado) {
         return new JugadoresResponseDTO(
                 resultado.jugadores().stream().map(JugadorController::mapear).toList(),
@@ -124,6 +141,37 @@ public class JugadorController {
         return new com.devchesterunited.devchesterunitedv2.controller.dto.JugadorResponseDTO(
                 "ply_" + jugador.id(), jugador.nombre(), jugador.liga(), jugador.equipo(), jugador.posicion(),
                 jugador.dorsal(), jugador.nacionalidad());
+    }
+
+    private static JugadorDetalleResponseDTO mapearDetalle(JugadorDetalleResultado jugador) {
+        return new JugadorDetalleResponseDTO(
+                "ply_" + jugador.id(),
+                jugador.nombre(),
+                jugador.liga(),
+                jugador.equipo(),
+                jugador.posicion(),
+                jugador.dorsal(),
+                jugador.nacionalidad(),
+                mapearEstadisticas(jugador.estadisticas()));
+    }
+
+    private static EstadisticasJugadorResponseDTO mapearEstadisticas(
+            EstadisticasJugadorResultado estadisticas) {
+        if (estadisticas == null) {
+            return null;
+        }
+        return new EstadisticasJugadorResponseDTO(
+                estadisticas.posicion(),
+                estadisticas.minutosJugados(),
+                estadisticas.goles(),
+                estadisticas.asistencias(),
+                estadisticas.tiros(),
+                estadisticas.pasesClave(),
+                estadisticas.regates(),
+                estadisticas.tackles(),
+                estadisticas.valoracion(),
+                estadisticas.tarjetasAmarillas(),
+                estadisticas.tarjetasRojas());
     }
 
     private static void validarParametros(HttpServletRequest request) {

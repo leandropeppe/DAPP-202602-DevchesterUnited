@@ -1,59 +1,124 @@
-# Contrato de sincronización de estadísticas de jugadores
+# Contratos internos de sincronizacion
 
-## Caso de uso administrativo
+El contrato define el puerto entre Service y Adapter, las consultas de
+persistencia necesarias para enrolamiento y el extremo de lectura local del
+Catalogo. El extremo de lectura no consulta el Adapter.
 
-Se incorpora un disparador administrativo para ejecutar una sincronización completa de estadísticas. El contrato debe documentarse con OpenAPI y respetar la autenticación administrativa ya existente.
+## GET /api/v1/players/{id}
 
-### Solicitud
+`id` recibe exclusivamente el identificador opaco `ply_<uuid>` expuesto por
+`GET /api/v1/players`. No se acepta UUID desnudo como contrato publico.
 
-- Método: `POST`
-- Ruta propuesta: `/api/v1/player-statistics/sync`
-- Cuerpo: ausente
-- Parámetros de WhoScored: no forman parte del contrato público.
+Para un jugador activo de un equipo activo, la respuesta exitosa mantiene el
+envoltorio `status`/`data` y devuelve los campos actuales del jugador junto con
+`statistics`. `statistics` es un objeto cuando existe una fila persistida en
+`jugador_estadisticas` y `null` cuando no existe.
 
-### Respuesta exitosa
+El objeto de estadisticas expone `position`, `minutes_played`, `goals`,
+`assists`, `shots`, `key_passes`, `dribbles`, `tackles`, `rating`,
+`yellow_cards` y `red_cards`. No expone el id tecnico de la fila, `syncId`,
+`createdAt` ni `updatedAt`.
 
-Código `200 OK`, con una respuesta envolvente consistente con los contratos existentes y un resumen que incluya como mínimo:
+Respuestas: HTTP 200 para jugador activo con o sin estadisticas; HTTP 404 para
+identificador inexistente, jugador inactivo o equipo inactivo.
 
-- competiciones procesadas;
-- jugadores considerados;
-- estadísticas creadas;
-- estadísticas actualizadas;
-- identificador/fecha de la última sincronización publicada, sin exponer detalles internos del proveedor.
+La consulta usa exclusivamente `JugadorRepository` y
+`EstadisticasJugadorRepository.findByJugadorId(UUID)`. No invoca
+`WhoScoredStatisticsAdapter`, Selenium, sincronizaciones ni proveedores
+externos.
 
-La respuesta solo se entrega después de la promoción atómica. No se devuelve éxito si el staging quedó incompleto.
+## Contrato de consumo frontend
 
-### Errores públicos
+El frontend consume `GET /api/v1/players/{id}` con el identificador opaco
+obtenido desde el listado. No consulta WhoScored, endpoints de sincronizacion,
+persistencia ni APIs externas.
 
-| Código | Situación | Comportamiento |
-|---|---|---|
-| `400` | Solicitud con cuerpo o formato no permitido | No inicia la sincronización. |
-| `401` | Credencial ausente, inválida o usuario inexistente | No consulta al proveedor. |
-| `409` | Otra sincronización de estadísticas en curso | No consulta al proveedor ni modifica estadísticas. |
-| `503` | WhoScored indisponible, timeout, respuesta inválida, cuota no disponible o persistencia no disponible | Conserva el último estado local válido. |
-| `500` | Error inesperado | No expone detalles del proveedor; conserva el estado publicado si la promoción no terminó. |
+La vista debe distinguir estos resultados:
 
-Los mensajes de error son propios de la aplicación y no incluyen URL, parámetros, cuerpo JSON, credenciales ni mensajes internos de WhoScored.
+| Resultado | Presentacion |
+|---|---|
+| HTTP 200 con `statistics` objeto | Datos basicos y diez metricas publicas |
+| HTTP 200 con `statistics: null` | Datos basicos y aviso de estadisticas no disponibles |
+| HTTP 404 | Mensaje de jugador no encontrado y regreso al catalogo |
+| Error de red u otro HTTP | Mensaje de error existente y regreso al catalogo |
 
-## Contrato interno del proveedor
+La ruta de interfaz es `/catalogo/jugadores/{id}` y conserva el identificador
+opaco sin transformarlo. La navegacion de regreso debe usar la navegacion
+existente del frontend y ser operable por teclado.
 
-La interfaz interna de proveedor debe permitir solicitar una página por:
+## Puerto ProveedorEstadisticasJugador
 
-- competición soportada;
-- familia `general`, `ofensiva` o `defensiva` de la representación interna;
-- número de página;
-- tamaño de lote configurado.
+El puerto expone conceptualmente una operacion de adquisicion completa por
+`CompeticionEstadistica`. Devuelve un snapshot completo y normalizado de esa
+competicion, con registros consolidados por `playerId`.
 
-Debe devolver una página normalizada con:
+El Service no consume lotes separados por familia y no conoce
+`summary/all`, `summary/offensive` ni `summary/defensive`. Tampoco recibe
+`page`, `pageSize`, `stageId`, `tournamentOptions`, URLs, Selenium o parametros
+HTTP.
 
-- jugadores estadísticos identificados por `playerId`;
-- métricas de la familia solicitada;
-- metadata de paginación necesaria para continuar o validar completitud.
+El snapshot contiene:
 
-La interfaz no debe mencionar URL, nombres de parámetros, `stageId`, JSON, clases DTO externas ni detalles de transporte. La traducción de `summary/all`, `summary/offensive` y `summary/defensive` ocurre exclusivamente dentro del Adapter.
+- competicion interna;
+- registros `RegistroEstadisticasJugador` consolidados;
+- metricas internas existentes;
+- metadata interna de completitud, si es necesaria, sin modelar el transporte.
 
-## Compatibilidad
+## Responsabilidad del Adapter
 
-- No se cambia el contrato de consulta pública del catálogo de jugadores.
-- No se agregan estadísticas al frontend en esta feature.
-- El nuevo contrato administrativo se registrará en OpenAPI v3 y se probará con MockMvc.
+Para cada competicion, el Adapter:
+
+1. Reutiliza la unica sesion WebDriver de la sincronizacion completa.
+2. Adquiere `summary/all`, `summary/offensive` y `summary/defensive`.
+3. Valida cada respuesta y traduce el JSON real.
+4. Exige `currentPage == 1`, `totalPages == 1`, `players.size == totalResults` y metadata coherente.
+5. Consolida las tres familias por `playerId`.
+6. Devuelve el snapshot completo o un error de proveedor.
+
+La consolidacion aplica precedencia fija: Summary para minutos, goles,
+asistencias, tiros, valoracion y tarjetas; Offensive para pases clave y
+regates; Defensive para tackles. Una familia secundaria no sobrescribe la
+fuente canonica. Puede validarse coherencia de valores redundantes sin agregar
+metricas al dominio. `posicion` es opcional y no bloquea por ausencia.
+
+La primera implementacion no pagina. Si `totalPages > 1`, la respuesta es
+incompleta o la metadata contradice el contenido, falla de forma controlada.
+Una futura paginacion debe quedar dentro del Adapter sin modificar este
+contrato.
+
+El Adapter crea y cierra WebDriver, con cierre garantizado ante excepciones.
+No realiza matching local ni escribe repositories.
+
+## Responsabilidad del Service
+
+1. Resolver equipos exclusivamente mediante identidades WHOSCORED persistidas
+   previamente por el importer del mapping aprobado.
+2. Resolver jugadores de forma conservadora dentro del equipo local ya resuelto.
+3. Persistir identidades nuevas de jugadores solo junto con la promocion.
+4. Consolidar o validar el flujo interno sin conocer familias del proveedor.
+5. Escribir staging y promover estadisticas atomicamente.
+
+Ante error de proveedor, JSON invalido, metadata incoherente, navegacion fallida,
+bloqueo o adquisicion incompleta, aborta la sincronizacion y conserva el ultimo
+snapshot valido.
+
+## Repositorios y pruebas
+
+Se reutilizan repositories de identidades, jugadores y equipos, y los
+repositories de estadisticas, ejecuciones y staging. No se agrega tabla de
+matching.
+
+Los tests automatizados usan JSON controlado, fixtures, fakes o mocks. No se
+consume WhoScored real. No se implementan stealth, evasiones ni bypass.
+
+## Estado final validado
+
+La sincronizacion real usa Selenium headed, cinco competiciones, tres familias
+internas, isMinApp=false, numberOfPlayersToPick=500 y page=1. No existe
+paginacion productiva actualmente. Los equipos se resuelven exclusivamente
+mediante identidad WhoScored persistida; no hay matching nominal o fuzzy de
+equipos durante la sincronizacion normal. Una identidad individual de jugador
+no resoluble se omite y se reporta, sin crear identidad ni abortar la
+publicacion. Los errores tecnicos, estructurales, de equipo o persistencia son
+fatales. La evidencia validada fue 2175 adquiridos, 1968 publicados y 207
+omitidos.

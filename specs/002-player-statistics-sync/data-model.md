@@ -1,91 +1,142 @@
-# Modelo de Datos: Estadísticas de Jugadores
+# Modelo de datos: estadisticas y vinculacion de identidades
 
-## Agregado de dominio: `EstadisticasJugador`
+## EstadisticasJugador
 
-Representa la fotografía normalizada de estadísticas asociada a un `Jugador` existente. Su identidad funcional es `jugadorId`; no crea una identidad de jugador alternativa.
+Fotografia vigente asociada por `jugador_id` al Jugador local. Los campos
+existentes son: posicion, minutos jugados, goles, asistencias, tiros, pases
+clave, regates, tackles, valoracion, tarjetas amarillas y tarjetas rojas.
 
-### Componentes
+Las metricas individuales ausentes permanecen `NULL`. No se crean Jugador ni
+Equipo alternativos y no se agregan metricas solo porque WhoScored las devuelva.
+Las métricas estadísticas decimales normalizadas por Devchester se representan
+con escala exacta de 2 decimales y redondeo `RoundingMode.HALF_UP`; la
+precisión adicional entregada por los proveedores externos no forma parte de
+la representación normalizada del dominio. Actualmente son decimales
+`tiros`, `pasesClave`, `regates`, `tackles` y `valoracion`; los minutos, goles,
+asistencias y tarjetas conservan su representación entera.
 
-| Componente | Datos | Reglas |
+## Snapshot normalizado por competicion
+
+El puerto entrega un snapshot completo de una competicion, no lotes separados
+por familia. El snapshot contiene registros consolidados por `playerId` y las
+metricas internas disponibles. Las familias `summary/all`,
+`summary/offensive` y `summary/defensive` son internas al Adapter.
+
+El snapshot solo puede considerarse completo si el Adapter valida cada una de
+las tres respuestas y la metadata de cada respuesta representa una pagina
+completa:
+
+- `currentPage == 1`;
+- `totalPages == 1`;
+- `players.size == totalResults`;
+- metadata sin contradicciones.
+
+Si no se cumple, la ejecucion falla y el snapshot no entra en staging validado.
+
+## Mapeo de metricas existente
+
+| Metrica interna | Campo real WhoScored | Familia de origen |
 |---|---|---|
-| `Participacion` | `apps`, `minsPlayed` | Valores no negativos; cada dato puede estar ausente si la fuente no lo informa. |
-| `EstadisticasOfensivas` | `goals`, `assists`, `shotsPerGame`, `keyPassPerGame`, `dribbleWonPerGame` | Conteos no negativos; promedios no negativos; ausencia explícita permitida. |
-| `EstadisticasDefensivas` | `tacklePerGame` | Promedio no negativo; ausencia explícita permitida. |
-| `Disciplina` | `yellowCard`, `redCard` | Conteos no negativos; ausencia explícita permitida. |
-| `ValoracionGeneral` | `rating` | Valor decimal no negativo y dentro del rango aceptado por la fuente cuando esté informado. |
+| `minutosJugados` | `minsPlayed` | Summary, Offensive o Defensive |
+| `goles` | `goal` | Summary u Offensive |
+| `asistencias` | `assistTotal` | Summary u Offensive |
+| `tiros` | `shotsPerGame` | Summary u Offensive |
+| `pasesClave` | `keyPassPerGame` | Offensive |
+| `regates` | `dribbleWonPerGame` | Offensive |
+| `tackles` | `tacklePerGame` | Defensive |
+| `valoracion` | `rating` | Summary |
+| `tarjetasAmarillas` | `yellowCard` | Summary |
+| `tarjetasRojas` | `redCard` | Summary |
+| `posicion` | No documentado en el JSON disponible | Pendiente |
 
-Los grupos evitan constructores de más de siete parámetros y mantienen cohesión conceptual. No se copiarán campos externos que no estén requeridos por el spec.
+No se mapean al dominio `aerialWonPerGame`, `manOfTheMatch`,
+`foulGivenPerGame`, `offsideGivenPerGame`, `dispossessedPerGame`,
+`turnoverPerGame`, `interceptionPerGame`, `foulsPerGame`, `offsideWonPerGame`,
+`clearancePerGame`, `wasDribbledPerGame`, `outfielderBlockPerGame` ni
+`goalOwn`. `goalOwn` no sustituye `goles`.
 
-## Entidad persistida publicada
+La precedencia de consolidacion es fija: Summary es canonica para minutos,
+goles, asistencias, tiros, valoracion y tarjetas; Offensive es canonica para
+pases clave y regates; Defensive es canonica para tackles. Una familia
+secundaria no sobrescribe el valor canonico. La coherencia entre valores
+redundantes puede validarse sin agregar metricas de dominio. `posicion` es
+opcional y su ausencia no bloquea la adquisicion.
 
-### `jugador_estadisticas`
+## Persistencia publicada
 
-| Campo conceptual | Persistencia | Regla |
-|---|---|---|
-| Identidad del registro | UUID local | Clave primaria propia del registro. |
-| Jugador asociado | UUID `jugador_id` | FK a `jugadores.id`, NOT NULL, UNIQUE. |
-| Participación | `apps`, `mins_played` | Nullable individualmente, no negativos cuando presentes. |
-| Ofensiva | `goals`, `assists`, `shots_per_game`, `key_pass_per_game`, `dribble_won_per_game` | Nullable por métrica; validaciones de dominio. |
-| Defensiva | `tackle_per_game` | Nullable; no negativo cuando presente. |
-| Disciplina | `yellow_card`, `red_card` | Nullable; no negativos cuando presentes. |
-| Valoración | `rating` | Nullable; validación de rango. |
-| Contexto de edición vigente | referencia interna de edición/sincronización | Permite saber qué fotografía se publicó sin convertir el `stageId` en identidad universal de liga. |
-| Auditoría | `created_at`, `updated_at` | Fechas coherentes y actualizadas en la promoción. |
+`jugador_estadisticas` mantiene una fila por `jugador_id`, FK a jugadores,
+unicidad, metricas normalizadas, referencia de ejecucion y auditoria. Se
+actualiza por upsert dentro de la promocion.
 
-La relación se resuelve por `jugador_id`; no se agrega otra fila por cada familia de estadísticas. El identificador externo del jugador permanece en la entidad `Jugador` existente.
+## Lectura del detalle de jugador
 
-## Entidades técnicas de staging
+El detalle del Catalogo relaciona el jugador activo con cero o una fila de
+`jugador_estadisticas` mediante `jugador_id`. La fila ausente es un estado
+valido de lectura y se representa como `statistics: null`.
 
-### `estadisticas_sync`
+El contrato publico de detalle expone `position`, `minutes_played`, `goals`,
+`assists`, `shots`, `key_passes`, `dribbles`, `tackles`, `rating`,
+`yellow_cards` y `red_cards`. No forman parte del contrato `id`, `sync_id`,
+`created_at` ni `updated_at` de la persistencia de estadisticas.
 
-Representa una ejecución aislada: identificador, estado, inicio, finalización, competencias esperadas, familias esperadas y motivo de error técnico si la ejecución falla. No es visible para las consultas de negocio.
+El detalle solo resuelve jugadores activos de equipos activos; cualquier otro
+caso se trata como recurso inexistente.
 
-Estados: `INICIADA`, `RECIBIENDO`, `VALIDADA`, `PUBLICADA`, `FALLIDA`.
+## Modelo de presentacion frontend
 
-### `estadisticas_sync_staging`
+### PlayerCatalogItem
 
-Contiene una fila normalizada por `sync_id`, competición y `playerId`, con los grupos de métricas consolidados progresivamente y marcas de familia recibida.
+Representacion de lectura ya entregada por el catalogo. Conserva `id`, `name`,
+`league`, `team`, `position` y `nationality` para la card/ fila navegable. El
+campo `jersey_number` deja de formar parte de la presentacion; no se agrega un
+valor por defecto cuando esta ausente.
 
-Restricciones:
+### PlayerDetailView
 
-- clave única `(sync_id, competicion, player_id)`;
-- `player_id` positivo;
-- valores numéricos no negativos cuando estén presentes;
-- marca independiente para `all`, `offensive` y `defensive`;
-- no se publica mientras `sync_id` no esté `VALIDADA`;
-- los reintentos de una misma página son idempotentes mediante la misma clave.
+Representacion de lectura derivada de `data` en `GET /api/v1/players/{id}`.
+Muestra los datos basicos disponibles del jugador y, si `statistics` es un
+objeto, las diez metricas publicas definidas en el contrato. Si es `null`, el
+estado valido es "sin estadisticas" y no se crean metricas sustitutas.
 
-El staging permite descartar una ejecución incompleta sin tocar `jugador_estadisticas`.
+### Estados de la vista
 
-## Correspondencia de identidad de fuente
+- `loading`: consulta en curso.
+- `success-with-statistics`: detalle cargado con metricas.
+- `success-without-statistics`: detalle cargado con `statistics: null`.
+- `error`: jugador inexistente, inactivo o fallo de red/HTTP, con accion de
+  regreso al catalogo.
 
-El modelo no presupone que `Jugador.external_id` y `WhoScored.playerId` sean el mismo identificador: el código actual utiliza `Jugador.external_id` para el proveedor del catálogo. Si la validación de la implementación confirma namespaces distintos, se agregará una tabla técnica de correspondencias con:
+No son entidades persistentes ni modifican el modelo de dominio.
 
-- `jugador_id` como FK a `jugadores`;
-- `fuente` como namespace de integración;
-- `identificador_externo` como `playerId` de la fuente;
-- unicidad por `(fuente, identificador_externo)` y por `(fuente, jugador_id)`.
+## Ejecucion y staging
 
-La tabla no reemplaza ni duplica `Jugador`. Una identidad no correspondida impide la promoción de la sincronización; no se hará matching silencioso por nombre o equipo.
+`estadisticas_sync` mantiene los estados `INICIADA`, `RECIBIENDO`, `VALIDADA`,
+`PUBLICADA` y `FALLIDA`, timestamps y error sanitizado.
 
-## Relaciones
+`estadisticas_sync_staging` mantiene ejecucion, competicion, IDs externos,
+identidades locales, hints normalizados, metricas consolidadas y marcas de
+familias. El staging no es visible para negocio.
 
-```text
-Jugador 1 ───── 0..1 EstadisticasJugador
-Jugador 1 ───── N    EstadisticasSyncStaging (durante una sincronización)
-EstadisticasSync 1 ─ N EstadisticasSyncStaging
-```
+## Identidades y detalles fuera del modelo
 
-## Reglas de consolidación
+`IdentidadExternaJugador(WHOSCORED, playerId)` referencia Jugador local y
+`IdentidadExternaEquipo(WHOSCORED, teamId)` referencia Equipo local.
 
-1. El `playerId` es la clave de unión entre las tres familias externas.
-2. Cada familia puede aportar métricas nulas individualmente, pero debe tener una respuesta y secuencia de páginas válida para el conjunto esperado.
-3. Antes de promover, todos los `playerId` deben resolverse contra un único `Jugador` local mediante `idExterno`.
-4. Un jugador repetido con valores incompatibles, una familia incompleta o una referencia local inexistente invalida toda la ejecución.
-5. La promoción actualiza la fila existente por `jugador_id` o crea una sola fila si todavía no existe.
+`stageId`, `tournamentOptions`, `category`, `subcategory`, Selenium, WebDriver,
+rutas, cookies, headers, limites y tamanos de adquisicion son detalles del
+Adapter. No forman parte del dominio ni del contrato del Service.
 
-## Migraciones previstas
+## Atomicidad
 
-- Nueva migración posterior a las existentes para `jugador_estadisticas`, con FK, unicidad, índices y restricciones numéricas.
-- Nueva migración posterior para `estadisticas_sync` y `estadisticas_sync_staging`, con índices por ejecución, competición y jugador.
-- No se modifica la tabla ni la entidad conceptual `jugadores`, salvo usar su clave externa e índice existente de `external_id`.
+La adquisicion se ejecuta fuera de la transaccion de promocion. Una respuesta
+invalida, incompleta o bloqueada no publica staging parcial. Si falla la
+promocion, las identidades nuevas y las estadisticas revierten y el snapshot
+anterior permanece visible.
+
+## Estado operativo validado
+
+El enrollment de equipos usa identidades persistidas (WHOSCORED, teamId) y el
+mapping aprobado revisado humanamente en
+backend/config/whoscored-team-enrollment-approved.csv. El importer es
+transaccional e idempotente. El resultado productivo validado fue de 2175
+adquiridos, 1968 publicados y 207 omitidos.

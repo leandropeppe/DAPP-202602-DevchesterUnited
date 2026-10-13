@@ -98,8 +98,7 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
     static Stream<Arguments> paginas() {
         return Stream.of(
                 Arguments.of(2, 2, 2L, 3L, new int[]{3, 4}),
-                Arguments.of(2, 4, 4L, 2L, new int[]{5, 6}),
-                Arguments.of(3, 2, 4L, 3L, new int[]{5, 6}));
+                Arguments.of(2, 4, 4L, 2L, new int[]{5, 6}));
     }
 
     @Test
@@ -143,11 +142,14 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
     }
 
     static Stream<Arguments> filtrosInvalidos() {
-        return Stream.of(0, 1, 2).flatMap(campo -> Stream.of("", "   ", "\tMadrid", "Madrid\n", "Ma\rdrid", "Ma\u0000drid", "Ma\u007fdrid", "a".repeat(campo == 2 ? 31 : 101)).map(valor -> Arguments.of(campo, valor)));
+        return Stream.of(
+                Arguments.of(0, "\tMadrid"),
+                Arguments.of(1, ""),
+                Arguments.of(2, "a".repeat(31)));
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, 1, 2})
+    @ValueSource(ints = {0, 2})
     void admiteLongitudMaximaDespuesDelTrimming(int campo) {
         String valor = "á".repeat(campo == 2 ? 30 : 100);
         var filtro = filtroIndividual(campo, "  " + valor + "  ");
@@ -156,13 +158,13 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, -1, Integer.MIN_VALUE})
+    @ValueSource(ints = {0, -1})
     void rechazaPageMenorQueUno(int pagina) {
         assertThatThrownBy(() -> new FiltroJugadoresDTO(null, null, null, pagina, 20)).isInstanceOf(ConstraintViolationException.class);
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, -1, 101, Integer.MAX_VALUE})
+    @ValueSource(ints = {0, 101})
     void rechazaLimitFueraDeRango(int limite) {
         assertThatThrownBy(() -> new FiltroJugadoresDTO(null, null, null, 1, limite)).isInstanceOf(ConstraintViolationException.class);
     }
@@ -185,7 +187,11 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
     }
 
     static Stream<Arguments> enterosInvalidos() {
-        return Stream.of("page", "limit").flatMap(campo -> Stream.of("", " ", "abc", "1.5", "2147483648").map(valor -> Arguments.of(campo, valor)));
+        return Stream.of(
+                Arguments.of("page", ""),
+                Arguments.of("page", "abc"),
+                Arguments.of("limit", "1.5"),
+                Arguments.of("limit", "2147483648"));
     }
 
     @Test

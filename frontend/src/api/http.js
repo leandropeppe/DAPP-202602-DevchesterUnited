@@ -103,3 +103,5 @@ export const getPlayers = ({ filters = {} } = {}) => {
   const query = params.toString()
   return request('/players' + (query ? '?' + query : ''))
 }
+
+export const getPlayerDetail = (id) => request('/players/' + encodeURIComponent(id))

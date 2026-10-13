@@ -1,0 +1,23 @@
+{
+  "paging": {
+    "currentPage": 1,
+    "totalPages": 1,
+    "totalResults": 1,
+    "resultsPerPage": 500
+  },
+  "playerTableStats": [
+    {
+      "playerId": 101,
+      "name": "Ana Perez",
+      "teamId": 201,
+      "teamName": "Equipo A",
+      "minsPlayed": 900,
+      "goal": 8,
+      "assistTotal": 4,
+      "shotsPerGame": 2.4,
+      "rating": 7.2,
+      "yellowCard": 1,
+      "redCard": 0
+    }
+  ]
+}

@@ -19,9 +19,15 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionPersistenciaException;
+import com.devchesterunited.devchesterunitedv2.service.exception.JugadorNoEncontradoException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    @ExceptionHandler(JugadorNoEncontradoException.class)
+    public ResponseEntity<Object> playerNotFound(JugadorNoEncontradoException exception) {
+        return response(HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(SincronizacionEnCursoException.class)
     public ResponseEntity<Object> syncConflict(SincronizacionEnCursoException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponseDTO("Ya hay una sincronizacion del catalogo en curso"));

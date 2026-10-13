@@ -1,9 +1,8 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import RegistrationPage from '../src/views/RegistrationPage.jsx'
 import LoginPage from '../src/views/LoginPage.jsx'
-import CredentialsPage from '../src/views/CredentialsPage.jsx'
 import CatalogPage from '../src/views/CatalogPage.jsx'
 import { SessionProvider, useSession } from '../src/session/SessionContext.jsx'
 
@@ -63,10 +62,6 @@ describe('accesibilidad implementada del frontend', () => {
     expect(screen.getByLabelText(/Contrase/)).toBeInTheDocument()
     login.unmount()
 
-    const credentials = withSession(CredentialsPage, { onNavigate: vi.fn() })
-    expect(screen.getByLabelText('Ingresar una API Key guardada')).toBeInTheDocument()
-    credentials.unmount()
-
     globalThis.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: { players: [], pagination: {} } }))
     const catalog = render(<CatalogPage />)
     expect(screen.getByRole('form', { name: /Filtros del cat/ })).toBeInTheDocument()
@@ -106,9 +101,11 @@ describe('accesibilidad implementada del frontend', () => {
 
       resolveRequest(response)
       resolved = true
-      const table = await screen.findByRole('table')
-      expect(table.querySelector('caption')).toHaveTextContent(/Jugadores del cat/)
-      expect(within(table).getAllByRole('columnheader')).toHaveLength(5)
+      const playerCard = await screen.findByRole('link', {
+        name: /Ver estadísticas de Jugador Sintético/
+      })
+      expect(playerCard).toHaveAttribute('tabindex', '0')
+      expect(screen.getByRole('navigation', { name: 'Paginación del catálogo' })).toBeInTheDocument()
       expect(screen.getByLabelText('Liga')).toBeInTheDocument()
       expect(screen.getByLabelText('Equipo')).toBeInTheDocument()
       expect(screen.getByLabelText(/Posici/)).toBeInTheDocument()

@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface EquipoRepository extends JpaRepository<EquipoEntity, UUID> {
     List<EquipoEntity> findAllByActivoTrue();
+    List<EquipoEntity> findAllByActivoTrueAndLigaIgnoreCase(String liga);
 }
