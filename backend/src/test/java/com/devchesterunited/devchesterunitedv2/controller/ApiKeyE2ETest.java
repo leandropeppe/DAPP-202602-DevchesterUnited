@@ -6,9 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.sql.DriverManager;
+import org.springframework.beans.factory.annotation.Value;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +32,12 @@ class ApiKeyE2ETest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper mapper;
     @Autowired JwtEncoder jwtEncoder;
+    @Value("${spring.datasource.url}") String jdbcUrl;
     private final List<String> usuarios = new ArrayList<>();
 
     @Test
     void generaYRotaUnaClaveConRespuestaCompletaNoStoreYSecretoUnaSolaVez() throws Exception {
-        String jwt = registrarYLogin();
+        String jwt = registrarYLogin().jwt();
         JsonNode primera = cuerpo(generar(jwt).andExpect(status().isOk())
                 .andExpect(header().string("Cache-Control", containsString("no-store"))));
         assertThat(primera.path("status").asText()).isEqualTo("success");
@@ -53,7 +53,7 @@ class ApiKeyE2ETest {
 
     @Test
     void rechazaCuerpoNoVacioYApiKeySolaNoAutoriza() throws Exception {
-        String jwt = registrarYLogin();
+        String jwt = registrarYLogin().jwt();
         error(mvc.perform(post("/api/v1/auth/apikey").header("Authorization", "Bearer " + jwt)
                 .contentType(MediaType.APPLICATION_JSON).content("{}")), 400);
         error(mvc.perform(post("/api/v1/auth/apikey").header("X-API-KEY", "dev_key_" + "a".repeat(43))), 401);
@@ -62,7 +62,7 @@ class ApiKeyE2ETest {
 
     @Test
     void jwtAusenteAlteradoExpiradoYOUsuarioInexistenteSon401() throws Exception {
-        String valido = registrarYLogin();
+        String valido = registrarYLogin().jwt();
         error(generarSinAuth(), 401);
         error(generar("no.es.un.jwt"), 401);
         var ahora = java.time.Instant.now().minusSeconds(7200);
@@ -79,26 +79,47 @@ class ApiKeyE2ETest {
 
     @Test
     void competenciaDeRotacionExpone409SinSecretoEnElError() throws Exception {
-        String jwt = registrarYLogin();
-        try (var executor = Executors.newFixedThreadPool(2)) {
-            Callable<Integer> llamada = () -> generar(jwt).andReturn().getResponse().getStatus();
-            var a = executor.submit(llamada);
-            var b = executor.submit(llamada);
-            int uno = a.get(30, TimeUnit.SECONDS);
-            int dos = b.get(30, TimeUnit.SECONDS);
-            assertThat(List.of(uno, dos)).contains(200, 409);
+        Credenciales credenciales = registrarYLogin();
+        try (var conexion = DriverManager.getConnection(jdbcUrl)) {
+            conexion.setAutoCommit(false);
+            try {
+                try (var consulta = conexion.prepareStatement(
+                        "SELECT id FROM usuarios WHERE id = ? FOR UPDATE")) {
+                    consulta.setObject(1, credenciales.usuarioId());
+                    try (var resultado = consulta.executeQuery()) {
+                        assertThat(resultado.next()).isTrue();
+                    }
+                }
+
+                JsonNode conflicto = cuerpo(generar(credenciales.jwt())
+                        .andExpect(status().isConflict()));
+                assertThat(conflicto.path("status").asText()).isEqualTo("error");
+                assertThat(conflicto.path("message").asText())
+                        .isEqualTo("La solicitud entra en conflicto con el estado actual del recurso.");
+                assertThat(conflicto.toString())
+                        .doesNotContain("dev_key_", "api_key", "access_token", "Segura123!");
+            } finally {
+                conexion.rollback();
+            }
         }
+
+        JsonNode posterior = cuerpo(generar(credenciales.jwt()).andExpect(status().isOk()));
+        assertThat(posterior.path("data").path("api_key").asText())
+                .matches("dev_key_[A-Za-z0-9_-]{43}");
     }
 
-    private String registrarYLogin() throws Exception {
+    private Credenciales registrarYLogin() throws Exception {
         String nombre = "u" + UUID.randomUUID().toString().replace("-", "").substring(0, 20);
         usuarios.add(nombre);
-        mvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON)
+        JsonNode registro = cuerpo(mvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(Map.of("username", nombre, "email", nombre + "@example.com", "password", "Segura123!"))))
-                .andExpect(status().isCreated());
-        return cuerpo(mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .andExpect(status().isCreated()));
+        String jwt = cuerpo(mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(Map.of("username", nombre, "password", "Segura123!"))))
                 .andExpect(status().isOk())).path("data").path("access_token").asText();
+        String id = registro.path("data").path("id").asText();
+        assertThat(id).startsWith("usr_");
+        return new Credenciales(jwt, UUID.fromString(id.substring(4)));
     }
 
     private ResultActions generar(String jwt) throws Exception {
@@ -118,5 +139,8 @@ class ApiKeyE2ETest {
         assertThat(json.path("message").asText()).matches("(?s).*[A-Za-zÁÉÍÓÚáéíóú].*");
         return json;
     }
+
+    private record Credenciales(String jwt, UUID usuarioId) { }
+
     @AfterEach void limpiar() { /* La suite real limpia sus fixtures al hacer rollback/BD descartable. */ }
 }
