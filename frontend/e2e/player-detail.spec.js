@@ -53,18 +53,19 @@ test('navega del catalogo al detalle y vuelve', async ({ page }) => {
   await page.getByRole('link', { name: 'Jugador Uno' }).click()
 
   await expect(page).toHaveURL(/\/catalogo\/jugadores\/ply-1$/)
-  await expect(page.getByRole('heading', { name: 'Jugador Uno' })).toBeVisible()
-  await expect(page.getByText('Valoracion')).toBeVisible()
-  await page.getByRole('link', { name: /Volver al catalogo/i }).click()
+  await expect(page.getByRole('heading', { name: 'Jugador Uno', level: 1 })).toBeVisible()
+  await expect(page.locator('.player-statistics').getByText('Valoración', { exact: true })).toBeVisible()
+  await page.getByRole('link', { name: /Volver al catálogo/i }).click()
   await expect(page).toHaveURL(/\/catalogo$/)
+  await expect(page.getByRole('link', { name: 'Jugador Uno' })).toBeVisible()
 })
 
 test('muestra ausencia de estadisticas sin inventar valores', async ({ page }) => {
   await mockPlayers(page, { ...player, statistics: null })
   await page.goto('/catalogo/jugadores/ply-1')
 
-  await expect(page.getByText(/no tiene estadisticas disponibles/i)).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Jugador Uno' })).toBeVisible()
+  await expect(page.getByText(/no tiene estadísticas disponibles/i)).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Jugador Uno', level: 1 })).toBeVisible()
 })
 
 test('muestra error de jugador inexistente y recuperacion', async ({ page }) => {
@@ -78,6 +79,6 @@ test('muestra error de jugador inexistente y recuperacion', async ({ page }) => 
   await page.goto('/catalogo/jugadores/ply-missing')
 
   await expect(page.getByRole('alert')).toContainText('Jugador no encontrado')
-  await page.getByRole('link', { name: /Volver al catalogo/i }).click()
+  await page.getByRole('link', { name: /Volver al catálogo/i }).click()
   await expect(page).toHaveURL(/\/catalogo$/)
 })

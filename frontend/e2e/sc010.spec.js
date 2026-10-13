@@ -21,7 +21,7 @@ test('SC-010 completa el flujo funcional del frontend sin hosts externos', async
   await expect(page).toHaveURL(/\/catalogo$/)
 
   await expect(page.getByText('Jugador Real 01')).toBeVisible()
-  await expect(page.getByText('Sin información', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('--', { exact: true }).first()).toBeVisible()
 
   await page.getByLabel('Equipo').fill('Madrid')
   await page.getByRole('button', { name: 'Aplicar filtros' }).click()
