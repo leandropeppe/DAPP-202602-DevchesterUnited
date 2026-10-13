@@ -1,6 +1,5 @@
 import '../styles/playerCard.css'
 
-
 const COUNTRY_CODES = {
     Argentina: 'AR',
     Austria: 'AT',
@@ -70,6 +69,13 @@ const POSITION_ABBREVIATIONS = {
     Forward: 'DL'
 }
 
+const PLAYER_SILHOUETTES = {
+    blue: '/images/player-silhouette-blue.png',
+    red: '/images/player-silhouette-red.png',
+    green: '/images/player-silhouette-green.png',
+    purple: '/images/player-silhouette-purple.png'
+}
+
 function noInfo (value) {
     return value === null || value === undefined || value === ''
         ? 'Sin información'
@@ -86,56 +92,13 @@ function getPositionAbbreviation (position) {
         '--'
 }
 
-function PlayerSilhouette () {
-    return (
-        <svg
-            className="player-card__silhouette"
-            viewBox="0 0 300 300"
-            aria-hidden="true"
-        >
-            <path
-                d="
-          M150 42
-          C119 42 100 66 102 96
-          C103 118 115 136 128 145
-          L125 161
-          C102 168 76 180 63 204
-          C53 222 47 249 44 275
-          L256 275
-          C253 249 247 222 237 204
-          C224 180 198 168 175 161
-          L172 145
-          C185 136 197 118 198 96
-          C200 66 181 42 150 42
-          Z
-        "
-            />
-
-            <path
-                className="player-card__silhouette-highlight"
-                d="
-          M121 162
-          C130 173 139 178 150 178
-          C161 178 170 173 179 162
-          L192 168
-          C181 194 168 205 150 205
-          C132 205 119 194 108 168
-          Z
-        "
-            />
-        </svg>
-    )
-}
-
 function ShieldIcon () {
     return (
         <svg
             viewBox="0 0 24 24"
             aria-hidden="true"
         >
-            <path
-                d="M12 2 20 5v6c0 5.3-3.4 9.3-8 11-4.6-1.7-8-5.7-8-11V5l8-3Z"
-            />
+            <path d="M12 2 20 5v6c0 5.3-3.4 9.3-8 11-4.6-1.7-8-5.7-8-11V5l8-3Z" />
             <path d="M8 9h8M9 13h6" />
         </svg>
     )
@@ -158,9 +121,12 @@ function TrophyIcon () {
     )
 }
 
-export default function PlayerCard ({ player, onOpen }) {
+export default function PlayerCard ({ player, onOpen, interactive = true }) {
     const theme = getPlayerTheme(player)
     const countryCode = COUNTRY_CODES[player.nationality]
+
+    const silhouetteSrc =
+        PLAYER_SILHOUETTES[theme] ?? PLAYER_SILHOUETTES.blue
 
     function handleOpen () {
         onOpen?.(player)
@@ -175,12 +141,18 @@ export default function PlayerCard ({ player, onOpen }) {
 
     return (
         <article
-            className={`player-card player-card--${theme}`}
-            tabIndex="0"
-            role="link"
-            onClick={handleOpen}
-            onKeyDown={handleKeyDown}
-            aria-label={`Ver estadísticas de ${noInfo(player.name)}`}
+            className={`player-card player-card--${theme} ${
+                interactive ? '' : 'player-card--static'
+            }`}
+            tabIndex={interactive ? 0 : undefined}
+            role={interactive ? 'link' : undefined}
+            onClick={interactive ? handleOpen : undefined}
+            onKeyDown={interactive ? handleKeyDown : undefined}
+            aria-label={
+                interactive
+                    ? `Ver estadísticas de ${noInfo(player.name)}`
+                    : undefined
+            }
         >
             <div
                 className="player-card__shine"
@@ -188,7 +160,9 @@ export default function PlayerCard ({ player, onOpen }) {
             />
 
             <div className="player-card__rating">
-                <strong>-</strong>
+                <strong>
+                    -
+                </strong>
 
                 <span>
           {getPositionAbbreviation(player.position)}
@@ -199,7 +173,11 @@ export default function PlayerCard ({ player, onOpen }) {
                 className="player-card__portrait"
                 aria-hidden="true"
             >
-                <PlayerSilhouette />
+                <img
+                    src={silhouetteSrc}
+                    alt=""
+                    className="player-card__silhouette"
+                />
             </div>
 
             <div className="player-card__content">
@@ -210,7 +188,7 @@ export default function PlayerCard ({ player, onOpen }) {
                 <div className="player-card__metadata">
                     <div>
             <span className="player-card__icon player-card__icon--outline">
-              <ShieldIcon />
+              <ShieldIcon/>
             </span>
 
                         <span>
@@ -220,7 +198,7 @@ export default function PlayerCard ({ player, onOpen }) {
 
                     <div>
             <span className="player-card__icon">
-              <TrophyIcon />
+              <TrophyIcon/>
             </span>
 
                         <span>
@@ -250,18 +228,20 @@ export default function PlayerCard ({ player, onOpen }) {
                 </div>
             </div>
 
-            <div
-                className="player-card__action"
-                aria-hidden="true"
-            >
-        <span>
-          Ver estadísticas
-        </span>
+            {interactive && (
+                <div
+                    className="player-card__action"
+                    aria-hidden="true"
+                >
+                    <span>
+                      Ver estadísticas
+                    </span>
 
-                <strong>
-                    →
-                </strong>
-            </div>
+                    <strong>
+                        →
+                    </strong>
+                </div>
+            )}
         </article>
     )
 }
