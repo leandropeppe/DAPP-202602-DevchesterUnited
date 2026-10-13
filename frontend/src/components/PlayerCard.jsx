@@ -1,4 +1,4 @@
-import '../styles/PlayerCard.css'
+import '../styles/playerCard.css'
 
 
 const COUNTRY_CODES = {
