@@ -40,6 +40,10 @@ Este es un diseño conceptual de persistencia para Plan. Los nombres son descrip
 
 ## Inicialización y transiciones de estado
 
+La fila singleton comienza en `epoch = 1`. Cada transición persistida incrementa
+`epoch` exactamente una vez; las transiciones a `INITIALIZING` y `FAILED` también
+cuentan. Los reintentos continúan desde la época persistida y nunca la reinician.
+
 Un coordinador interno de inicio de la aplicación invoca la inicialización; no se utiliza endpoint público. La fila del estado singleton se bloquea con `FOR UPDATE` mientras el coordinador pasa a `INITIALIZING`, verifica el único superusuario y su reserva inicial configurable, asigna créditos a usuarios existentes mediante un marcador inicial único, emite exactamente 100 tokens para cada jugador elegible y publica la cotización inicial mediante el port compartido de publicación. Un fallo deja el estado en `FAILED`; un reintento reanuda los pasos faltantes y puede llegar a `READY` solo después de completar todos los pasos obligatorios. Las asignaciones, emisiones y cotizaciones válidas existentes nunca se restablecen ni duplican.
 
 El registro invoca un hook interno de asignación idempotente utilizando el mismo marcador único para el nuevo usuario. El usuario puede persistirse independientemente de una inicialización fallida, pero no puede operar en el mercado hasta que exista su cuenta/asignación de 1.000 créditos. La activación de un jugador inicialmente inactivo ejecuta el mismo flujo de emisión única. La reactivación encuentra la emisión existente y no crea otra de 100 tokens.

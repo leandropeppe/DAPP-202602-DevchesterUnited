@@ -35,6 +35,8 @@ class TokenMarketRepositoryIntegrationTest extends PostgresTestSupport {
     @Autowired
     private UsuarioRepository usuarios;
     @Autowired
+    private EstadoMercadoRepository estados;
+    @Autowired
     private JugadorRepository jugadores;
     @Autowired
     private ContraparteMercadoRepository contrapartes;
@@ -60,10 +62,22 @@ class TokenMarketRepositoryIntegrationTest extends PostgresTestSupport {
     private PnLRealizadoMercadoRepository pnl;
 
     @Test
+    void creaElEstadoSingletonDeFormaIdempotenteYPermiteBloquearlo() {
+        assertThat(estados.ensureSingleton(AHORA)).isEqualTo(1);
+        assertThat(estados.ensureSingleton(AHORA.plusSeconds(1))).isZero();
+
+        assertThat(estados.findSingletonForUpdate()).get()
+                .extracting(estado -> estado.getId(), estado -> estado.getStatus(),
+                        estado -> estado.getEpoch())
+                .containsExactly((short) 1, "UNINITIALIZED", 1L);
+    }
+
+    @Test
     void consultaRecursosPorPropietarioYRespetaElOrdenDeMercado() {
         UUID usuarioId = UUID.randomUUID();
         UUID contraparteId = UUID.randomUUID();
         UUID cuentaId = UUID.randomUUID();
+        UUID cuentaContraparteId = UUID.randomUUID();
         UUID asignacionId = UUID.randomUUID();
         UUID quoteId = UUID.randomUUID();
         UUID solicitudId = UUID.randomUUID();
@@ -77,6 +91,8 @@ class TokenMarketRepositoryIntegrationTest extends PostgresTestSupport {
                 new ContraparteMercadoEntity(contraparteId, "SUPERUSER", "Mercado", AHORA));
         cuentas.saveAndFlush(new CuentaCreditosMercadoEntity(cuentaId, usuarioId, null,
                 new BigDecimal("100.00"), AHORA, AHORA));
+        cuentas.saveAndFlush(new CuentaCreditosMercadoEntity(cuentaContraparteId, null,
+                contraparteId, new BigDecimal("1000000.00"), AHORA, AHORA));
         asignaciones.saveAndFlush(new AsignacionCreditosInicialesEntity(asignacionId, usuarioId,
                 cuentaId, "INITIAL_GRANT", new BigDecimal("1000.00"), AHORA));
         emisiones.saveAndFlush(new EmisionTokensMercadoEntity(jugador.getId(), contraparteId,
@@ -101,7 +117,11 @@ class TokenMarketRepositoryIntegrationTest extends PostgresTestSupport {
         pnl.saveAndFlush(new PnLRealizadoMercadoEntity(usuarioId, BigDecimal.ZERO, AHORA));
 
         assertThat(asignaciones.findByUsuarioIdAndTipoAsignacion(usuarioId, "INITIAL_GRANT")).isPresent();
+        assertThat(asignaciones.findByUsuarioIdAndTipoAsignacionForUpdate(
+                usuarioId, "INITIAL_GRANT")).isPresent();
         assertThat(cuentas.findByUsuarioId(usuarioId)).isPresent();
+        assertThat(cuentas.findByUsuarioIdForUpdate(usuarioId)).isPresent();
+        assertThat(cuentas.findByContraparteIdForUpdate(contraparteId)).isPresent();
         assertThat(cuentas.findByUsuarioIdWithBalanceAtLeast(usuarioId, new BigDecimal("100.00")))
                 .isPresent();
         assertThat(cuentas.findByIdWithBalanceAtLeast(cuentaId, new BigDecimal("100.00"))).isPresent();
@@ -124,5 +144,7 @@ class TokenMarketRepositoryIntegrationTest extends PostgresTestSupport {
         assertThat(movimientos.findAllByTransaccionIdOrderByCreadoEnAsc(transaccionId)).hasSize(1);
         assertThat(pnl.findById(usuarioId)).isPresent();
         assertThat(contrapartes.findByTipoContraparte("SUPERUSER")).contains(contraparte);
+        assertThat(contrapartes.findByTipoContraparteForUpdate("SUPERUSER"))
+                .contains(contraparte);
     }
 }

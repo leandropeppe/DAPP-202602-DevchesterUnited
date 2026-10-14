@@ -15,6 +15,18 @@ public interface CuentaCreditosMercadoRepository
     Optional<CuentaCreditosMercadoEntity> findByUsuarioId(UUID usuarioId);
     Optional<CuentaCreditosMercadoEntity> findByContraparteId(UUID contraparteId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select cuenta from CuentaCreditosMercadoEntity cuenta "
+            + "where cuenta.usuarioId = :usuarioId")
+    Optional<CuentaCreditosMercadoEntity> findByUsuarioIdForUpdate(
+            @Param("usuarioId") UUID usuarioId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select cuenta from CuentaCreditosMercadoEntity cuenta "
+            + "where cuenta.contraparteId = :contraparteId")
+    Optional<CuentaCreditosMercadoEntity> findByContraparteIdForUpdate(
+            @Param("contraparteId") UUID contraparteId);
+
     @Query("select cuenta from CuentaCreditosMercadoEntity cuenta "
             + "where cuenta.usuarioId = :usuarioId and cuenta.balance >= :montoMinimo")
     Optional<CuentaCreditosMercadoEntity> findByUsuarioIdWithBalanceAtLeast(

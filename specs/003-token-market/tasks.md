@@ -57,7 +57,7 @@ description: "Lista de tareas para la implementación de Token Market"
 
 ### Implementación para la historia de usuario 1
 
-- [ ] T018 Crear repositorios de persistencia y consultas de locks para inicialización/estado en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/`, usando la fila singleton de estado del mercado y semántica transaccional determinista.
+- [x] T018 Crear repositorios de persistencia y consultas de locks para inicialización/estado en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/`, usando la fila singleton de estado del mercado y semántica transaccional determinista.
 - [ ] T019 Implementar `MarketInitializationService` bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/` para crear/verificar el superusuario protegido, aplicar el valor por defecto configurado de 1.000.000 de créditos antes de la primera inicialización y nunca restablecer una reserva inicializada.
 - [ ] T020 Implementar el coordinador automático de disponibilidad de la aplicación bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/` o `service/config/`, con transiciones reintentables `INITIALIZING`, `FAILED` y `READY`, y sin endpoint público.
 - [ ] T021 Implementar la asignación idempotente de créditos iniciales para usuarios existentes y el hook de asignación posterior al registro bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, usando el marcador de asignación único y evitando que la autenticación dependa del inicio exitoso del mercado.
