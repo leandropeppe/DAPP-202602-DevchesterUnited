@@ -28,7 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.mockito.Answers;
 import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.times;
 @SpringBootTest
 @ActiveProfiles("test")
 class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSupport {
-    @MockBean(answer = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
+    @MockitoBean(answers = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
     @org.springframework.beans.factory.annotation.Autowired private SincronizacionEstadisticasJugadorService servicio;
     @org.springframework.beans.factory.annotation.Autowired private EquipoRepository equipos;
     @org.springframework.beans.factory.annotation.Autowired private JugadorRepository jugadores;
@@ -116,7 +116,7 @@ class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSuppor
     private void configurarFuente(boolean falla) {
         for (int i = 0; i < CompeticionEstadistica.values().length; i++) {
             var competencia = CompeticionEstadistica.values()[i];
-            var equipo = equipo(competencia, i);
+            var equipo = equipo(competencia);
             equipos.save(equipo);
             fixtureTeams.add(equipo.getId());
             identidadesEquipos.save(new IdentidadExternaEquipoEntity(UUID.randomUUID(), equipo,
@@ -156,7 +156,7 @@ class EnrolamientoIdentidadesWhoScoredIntegrationTest extends PostgresTestSuppor
         }).when(proveedor).obtenerSnapshots(any());
     }
 
-    private static EquipoEntity equipo(CompeticionEstadistica competencia, int index) {
+    private static EquipoEntity equipo(CompeticionEstadistica competencia) {
         Instant now = Instant.now();
         return EquipoEntity.builder().id(UUID.randomUUID()).nombre(nombreLiga(competencia))
                 .liga(nombreLiga(competencia)).activo(true).creadoEn(now).actualizadoEn(now).build();

@@ -58,18 +58,20 @@ class EstadisticasSchemaRepositoryIntegrationTest extends PostgresTestSupport {
                 UUID.randomUUID(), jugadorId, null, null, null, null,
                 null, null, null, null, null, null, null, syncId, AHORA, AHORA));
 
-        assertThatThrownBy(() -> estadisticas.saveAndFlush(new EstadisticasJugadorEntity(
+        var duplicateStatistics = new EstadisticasJugadorEntity(
                 UUID.randomUUID(), jugadorId, null, null, null, null,
-                null, null, null, null, null, null, null, syncId, AHORA, AHORA)))
+                null, null, null, null, null, null, null, syncId, AHORA, AHORA);
+        assertThatThrownBy(() -> estadisticas.saveAndFlush(duplicateStatistics))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void impideEstadisticaSinEjecucionExistente() {
         UUID jugadorId = jugadores.findAll().stream().findFirst().orElseThrow().getId();
-        assertThatThrownBy(() -> estadisticas.saveAndFlush(new EstadisticasJugadorEntity(
+        var statisticsWithoutSync = new EstadisticasJugadorEntity(
                 UUID.randomUUID(), jugadorId, null, null, null, null,
-                null, null, null, null, null, null, null, UUID.randomUUID(), AHORA, AHORA)))
+                null, null, null, null, null, null, null, UUID.randomUUID(), AHORA, AHORA);
+        assertThatThrownBy(() -> estadisticas.saveAndFlush(statisticsWithoutSync))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

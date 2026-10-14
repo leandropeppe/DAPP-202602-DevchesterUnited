@@ -15,7 +15,7 @@ const MARKET_STATE_TYPES = {
 }
 
 export default function MarketStateMessage ({ status, message }) {
-  const knownStatus = Object.prototype.hasOwnProperty.call(MARKET_STATE_MESSAGES, status)
+  const knownStatus = Object.hasOwn(MARKET_STATE_MESSAGES, status)
   const resolvedStatus = knownStatus ? status : 'info'
   const resolvedMessage = knownStatus
     ? (message || MARKET_STATE_MESSAGES[resolvedStatus])

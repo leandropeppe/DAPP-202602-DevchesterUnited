@@ -32,15 +32,18 @@ class TokenMarketValidationTest {
 
     @Test
     void rejectsNonPositivePrice() {
-        assertThatThrownBy(() -> validRequest(new BigDecimal("0.00")))
+        var zero = new BigDecimal("0.00");
+        var negative = new BigDecimal("-0.01");
+        assertThatThrownBy(() -> validRequest(zero))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> validRequest(new BigDecimal("-0.01")))
+        assertThatThrownBy(() -> validRequest(negative))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void rejectsPriceWithMoreThanTwoDecimals() {
-        assertThatThrownBy(() -> validRequest(new BigDecimal("1.001")))
+        var price = new BigDecimal("1.001");
+        assertThatThrownBy(() -> validRequest(price))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -62,10 +65,12 @@ class TokenMarketValidationTest {
 
     @Test
     void rejectsInvalidValidityDates() {
+        var afterPublication = PUBLISHED_AT.plusSeconds(1);
+        var beforePublication = PUBLISHED_AT.minusSeconds(1);
         assertThatThrownBy(() -> new QuotePublicationRequest(
                 PLAYER_ID,
                 BigDecimal.ONE,
-                PUBLISHED_AT.plusSeconds(1),
+                afterPublication,
                 PUBLISHED_AT,
                 null,
                 null))
@@ -75,7 +80,7 @@ class TokenMarketValidationTest {
                 BigDecimal.ONE,
                 PUBLISHED_AT,
                 PUBLISHED_AT,
-                PUBLISHED_AT.minusSeconds(1),
+                beforePublication,
                 null))
                 .isInstanceOf(IllegalArgumentException.class);
     }

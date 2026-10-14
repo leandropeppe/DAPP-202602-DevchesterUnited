@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.mockito.Answers;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.doThrow;
 @SpringBootTest
 @ActiveProfiles("test")
 class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSupport {
-    @MockBean(answer = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
+    @MockitoBean(answers = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
     @Autowired private SincronizacionEstadisticasJugadorService servicio;
     @Autowired private EquipoRepository equipos;
     @Autowired private JugadorRepository jugadores;
@@ -164,8 +164,11 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         var nuevoEquipo = new IdentidadEquipoResolver.NuevaIdentidad(equipo.getId(), 88001L, equipo);
         var nuevoJugador = new IdentidadJugadorResolver.NuevaIdentidad(jugador.getId(), 99001L, jugador);
 
-        assertThatThrownBy(() -> promocion.promover(syncId, java.util.List.of(nuevoJugador),
-                java.util.List.of(nuevoEquipo), java.util.Map.of()))
+        var jugadoresNuevos = java.util.List.of(nuevoJugador);
+        var equiposNuevos = java.util.List.of(nuevoEquipo);
+        var estadisticasNuevas = java.util.Map.<java.util.UUID, EstadisticasJugadorEntity>of();
+        assertThatThrownBy(() -> promocion.promover(syncId, jugadoresNuevos,
+                equiposNuevos, estadisticasNuevas))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(estadisticas.findByJugadorId(jugador.getId()).orElseThrow().getSyncId()).isEqualTo(anterior);

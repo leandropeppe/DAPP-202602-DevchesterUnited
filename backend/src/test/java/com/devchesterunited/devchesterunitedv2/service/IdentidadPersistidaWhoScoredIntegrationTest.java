@@ -3,7 +3,6 @@ package com.devchesterunited.devchesterunitedv2.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.doAnswer;
@@ -23,6 +22,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugad
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
@@ -39,13 +39,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.mockito.Answers;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 class IdentidadPersistidaWhoScoredIntegrationTest extends PostgresTestSupport {
-    @MockBean(answer = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
+    @MockitoBean(answers = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
     @Autowired private IdentidadJugadorResolver resolver;
     @Autowired private SincronizacionEstadisticasJugadorService servicio;
     @Autowired private JugadorRepository jugadores;
@@ -111,10 +111,10 @@ class IdentidadPersistidaWhoScoredIntegrationTest extends PostgresTestSupport {
         configurarFixtureCompleto();
         reset(equipos);
         Set<UUID> sincronizacionesPrevias = sincronizaciones.findAll().stream()
-                .map(ejecucion -> ejecucion.getId()).collect(java.util.stream.Collectors.toSet());
+                .map(EstadisticasSyncEntity::getId).collect(java.util.stream.Collectors.toSet());
 
         servicio.sincronizar();
-        sincronizaciones.findAll().stream().map(ejecucion -> ejecucion.getId())
+        sincronizaciones.findAll().stream().map(EstadisticasSyncEntity::getId)
                 .filter(id -> !sincronizacionesPrevias.contains(id)).forEach(fixtureSyncs::add);
 
         verify(equipos, times(5)).resolver(any(), any(), any());

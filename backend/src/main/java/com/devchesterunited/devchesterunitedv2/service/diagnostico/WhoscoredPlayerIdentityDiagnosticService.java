@@ -142,7 +142,8 @@ public class WhoscoredPlayerIdentityDiagnosticService {
     }
 
     public static double diagnosticSimilarity(String left, String right) {
-        String a = diagnosticNormalize(left); String b = diagnosticNormalize(right);
+        String a = diagnosticNormalize(left);
+        String b = diagnosticNormalize(right);
         if (a.isEmpty() && b.isEmpty()) return 1.0;
         if (a.isEmpty() || b.isEmpty()) return 0.0;
         return 1.0 - (double) levenshtein(a, b) / Math.max(a.length(), b.length());
@@ -165,8 +166,8 @@ public class WhoscoredPlayerIdentityDiagnosticService {
     static List<ObservedPlayer> deduplicate(Collection<SnapshotEstadisticasJugador> snapshots) {
         Map<Key, ObservedPlayer> result = new LinkedHashMap<>();
         for (SnapshotEstadisticasJugador snapshot : snapshots) {
-            for (RegistroEstadisticasJugador record : snapshot.registros()) {
-                IdentidadEstadisticaJugador identity = record.identidad();
+            for (RegistroEstadisticasJugador registro : snapshot.registros()) {
+                IdentidadEstadisticaJugador identity = registro.identidad();
                 if (identity.teamId() == null) {
                     throw new IllegalStateException("El diagnóstico recibió un jugador sin teamId: playerId="
                             + identity.playerId());
@@ -179,7 +180,8 @@ public class WhoscoredPlayerIdentityDiagnosticService {
     }
 
     void escribirCsv(List<Row> rows, Path output) throws IOException {
-        Path absolute = output.toAbsolutePath(); Path directory = absolute.getParent();
+        Path absolute = output.toAbsolutePath();
+        Path directory = absolute.getParent();
         Files.createDirectories(directory);
         Path temporary = Files.createTempFile(directory, absolute.getFileName().toString(), ".tmp");
         boolean moved = false;
@@ -198,8 +200,10 @@ public class WhoscoredPlayerIdentityDiagnosticService {
     }
 
     private static List<String> values(Row row) {
-        IdentidadEstadisticaJugador external = row.player().identity(); Candidate one = at(row.candidates(), 0);
-        Candidate two = at(row.candidates(), 1); Candidate three = at(row.candidates(), 2);
+        IdentidadEstadisticaJugador external = row.player().identity();
+        Candidate one = at(row.candidates(), 0);
+        Candidate two = at(row.candidates(), 1);
+        Candidate three = at(row.candidates(), 2);
         return List.of(row.player().competition().name(), String.valueOf(row.player().teamId()), empty(row.player().teamName()),
                 String.valueOf(row.team().getId()), empty(row.team().getNombre()), String.valueOf(external.playerId()),
                 empty(external.nombre()), empty(external.posicion()), empty(external.nacionalidad()),

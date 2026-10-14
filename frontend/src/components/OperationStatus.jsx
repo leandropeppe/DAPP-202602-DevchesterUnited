@@ -15,7 +15,7 @@ const OPERATION_STATUS_TYPES = {
 }
 
 export default function OperationStatus ({ status, message }) {
-  const knownStatus = Object.prototype.hasOwnProperty.call(OPERATION_STATUS_MESSAGES, status)
+  const knownStatus = Object.hasOwn(OPERATION_STATUS_MESSAGES, status)
   const resolvedStatus = knownStatus ? status : 'uncertain'
   const resolvedMessage = knownStatus
     ? (message || OPERATION_STATUS_MESSAGES[resolvedStatus])

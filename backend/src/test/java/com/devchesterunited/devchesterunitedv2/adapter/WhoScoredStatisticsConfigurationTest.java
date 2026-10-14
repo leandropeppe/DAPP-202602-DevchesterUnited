@@ -41,8 +41,8 @@ class WhoScoredStatisticsConfigurationTest {
 
     @Test
     void rechazaCompeticionSinParejaConfigurada() {
-        assertThatThrownBy(() -> new WhoScoredStatisticsConfiguration()
-                .forCompetition(CompeticionEstadistica.PREMIER_LEAGUE))
+        var configuration = new WhoScoredStatisticsConfiguration();
+        assertThatThrownBy(() -> configuration.forCompetition(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

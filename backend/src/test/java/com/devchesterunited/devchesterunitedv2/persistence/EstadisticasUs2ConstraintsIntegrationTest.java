@@ -55,9 +55,10 @@ class EstadisticasUs2ConstraintsIntegrationTest extends PostgresTestSupport {
                 null, null, null, null, null, null, null, null, null, null, null,
                 sync.getId(), ahora, ahora));
 
-        assertThatThrownBy(() -> estadisticas.saveAndFlush(new EstadisticasJugadorEntity(
+        var duplicateStatistics = new EstadisticasJugadorEntity(
                 UUID.randomUUID(), jugador.getId(), null, null, null, null, null, null,
-                null, null, null, null, null, sync.getId(), ahora, ahora)))
+                null, null, null, null, null, sync.getId(), ahora, ahora);
+        assertThatThrownBy(() -> estadisticas.saveAndFlush(duplicateStatistics))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -67,8 +68,9 @@ class EstadisticasUs2ConstraintsIntegrationTest extends PostgresTestSupport {
         identidadesJugadores.saveAndFlush(new IdentidadExternaJugadorEntity(UUID.randomUUID(),
                 jugador, ProveedorIdentidadExterna.WHOSCORED, 99101L));
 
-        assertThatThrownBy(() -> identidadesJugadores.saveAndFlush(new IdentidadExternaJugadorEntity(
-                UUID.randomUUID(), otro, ProveedorIdentidadExterna.WHOSCORED, 99101L)))
+        var duplicateIdentity = new IdentidadExternaJugadorEntity(
+                UUID.randomUUID(), otro, ProveedorIdentidadExterna.WHOSCORED, 99101L);
+        assertThatThrownBy(() -> identidadesJugadores.saveAndFlush(duplicateIdentity))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -77,8 +79,9 @@ class EstadisticasUs2ConstraintsIntegrationTest extends PostgresTestSupport {
         identidadesJugadores.saveAndFlush(new IdentidadExternaJugadorEntity(UUID.randomUUID(),
                 jugador, ProveedorIdentidadExterna.WHOSCORED, 99102L));
 
-        assertThatThrownBy(() -> identidadesJugadores.saveAndFlush(new IdentidadExternaJugadorEntity(
-                UUID.randomUUID(), jugador, ProveedorIdentidadExterna.WHOSCORED, 99103L)))
+        var duplicateIdentity = new IdentidadExternaJugadorEntity(
+                UUID.randomUUID(), jugador, ProveedorIdentidadExterna.WHOSCORED, 99103L);
+        assertThatThrownBy(() -> identidadesJugadores.saveAndFlush(duplicateIdentity))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -88,8 +91,9 @@ class EstadisticasUs2ConstraintsIntegrationTest extends PostgresTestSupport {
         identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(UUID.randomUUID(),
                 equipo, ProveedorIdentidadExterna.WHOSCORED, 99201L));
 
-        assertThatThrownBy(() -> identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
-                UUID.randomUUID(), otro, ProveedorIdentidadExterna.WHOSCORED, 99201L)))
+        var duplicateIdentity = new IdentidadExternaEquipoEntity(
+                UUID.randomUUID(), otro, ProveedorIdentidadExterna.WHOSCORED, 99201L);
+        assertThatThrownBy(() -> identidadesEquipos.saveAndFlush(duplicateIdentity))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -98,8 +102,9 @@ class EstadisticasUs2ConstraintsIntegrationTest extends PostgresTestSupport {
         identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(UUID.randomUUID(),
                 equipo, ProveedorIdentidadExterna.WHOSCORED, 99202L));
 
-        assertThatThrownBy(() -> identidadesEquipos.saveAndFlush(new IdentidadExternaEquipoEntity(
-                UUID.randomUUID(), equipo, ProveedorIdentidadExterna.WHOSCORED, 99203L)))
+        var duplicateIdentity = new IdentidadExternaEquipoEntity(
+                UUID.randomUUID(), equipo, ProveedorIdentidadExterna.WHOSCORED, 99203L);
+        assertThatThrownBy(() -> identidadesEquipos.saveAndFlush(duplicateIdentity))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -108,8 +113,9 @@ class EstadisticasUs2ConstraintsIntegrationTest extends PostgresTestSupport {
         staging.saveAndFlush(new EstadisticasSyncStagingEntity(UUID.randomUUID(), sync.getId(),
                 "PREMIER_LEAGUE", 99301L, "Jugador staging"));
 
-        assertThatThrownBy(() -> staging.saveAndFlush(new EstadisticasSyncStagingEntity(
-                UUID.randomUUID(), sync.getId(), "PREMIER_LEAGUE", 99301L, "Jugador staging")))
+        var duplicateStaging = new EstadisticasSyncStagingEntity(
+                UUID.randomUUID(), sync.getId(), "PREMIER_LEAGUE", 99301L, "Jugador staging");
+        assertThatThrownBy(() -> staging.saveAndFlush(duplicateStaging))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

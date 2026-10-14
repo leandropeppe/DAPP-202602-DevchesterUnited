@@ -129,7 +129,7 @@ public class WhoscoredTeamEnrollmentReportService {
     private static List<String> toCsvValues(EnrollmentReportRow reportRow) {
         ObservedTeam team = reportRow.team();
         List<Candidate> candidates = reportRow.candidates();
-        Candidate one = candidates.size() > 0 ? candidates.get(0) : null;
+        Candidate one = !candidates.isEmpty() ? candidates.get(0) : null;
         Candidate two = candidates.size() > 1 ? candidates.get(1) : null;
         return List.of(team.competicion().name(), String.valueOf(team.teamId()), nullToEmpty(team.teamName()),
                 String.valueOf(team.jugadoresObservados()), value(one, Candidate::uuid), value(one, Candidate::footballDataId),
@@ -147,8 +147,8 @@ public class WhoscoredTeamEnrollmentReportService {
     public static List<ObservedTeam> deduplicate(Collection<SnapshotEstadisticasJugador> snapshots) {
         Map<Key, MutableObservedTeam> teams = new LinkedHashMap<>();
         for (SnapshotEstadisticasJugador snapshot : snapshots) {
-            for (RegistroEstadisticasJugador record : snapshot.registros()) {
-                IdentidadEstadisticaJugador identity = record.identidad();
+            for (RegistroEstadisticasJugador registro : snapshot.registros()) {
+                IdentidadEstadisticaJugador identity = registro.identidad();
                 if (identity.teamId() == null) continue;
                 Key key = new Key(snapshot.competicion(), identity.teamId());
                 MutableObservedTeam team = teams.computeIfAbsent(key,
@@ -261,8 +261,10 @@ public class WhoscoredTeamEnrollmentReportService {
     private record Key(CompeticionEstadistica competition, long teamId) { }
 
     private static final class MutableObservedTeam {
-        private final CompeticionEstadistica competition; private final long teamId;
-        private String teamName; private final Set<Long> playerIds = new HashSet<>();
+        private final CompeticionEstadistica competition;
+        private final long teamId;
+        private String teamName;
+        private final Set<Long> playerIds = new HashSet<>();
         private MutableObservedTeam(CompeticionEstadistica competition, long teamId, String teamName) {
             this.competition = competition; this.teamId = teamId; this.teamName = teamName;
         }

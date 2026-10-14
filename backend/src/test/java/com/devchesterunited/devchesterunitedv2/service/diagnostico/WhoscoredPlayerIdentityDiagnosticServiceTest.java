@@ -3,7 +3,6 @@ package com.devchesterunited.devchesterunitedv2.service.diagnostico;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import java.util.List;
 import java.util.UUID;

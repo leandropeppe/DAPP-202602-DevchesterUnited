@@ -71,7 +71,8 @@ public class IdentidadJugadorResolver {
     }
 
     private static boolean compatibleEstructural(String externo, String local) {
-        List<String> a = tokens(externo), b = tokens(local);
+        List<String> a = tokens(externo);
+        List<String> b = tokens(local);
         CommonRun run = tramoComun(a, b);
         if (run.length() == 0) return false;
         String apellido = a.get(run.leftStart());
@@ -94,7 +95,8 @@ public class IdentidadJugadorResolver {
     }
 
     private static boolean nombreCompatible(List<String> a, List<String> b) {
-        String primeroA = a.get(0), primeroB = b.get(0);
+        String primeroA = a.get(0);
+        String primeroB = b.get(0);
         if (primeroA.equals(primeroB)) return true;
         int min = Math.min(primeroA.length(), primeroB.length());
         if (min >= 3 && (primeroA.startsWith(primeroB) || primeroB.startsWith(primeroA))) return true;

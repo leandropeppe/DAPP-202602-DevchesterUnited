@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,7 +43,8 @@ class IdentidadEquipoResolverTest {
     void identidadAusenteFallaSinConsultarEquiposNiHacerMatchingNominal() {
         when(identidades.findByProveedorAndExternalId(any(), eq(228L))).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> resolver().resolver(228L, "Olympique Lyonnais", CompeticionEstadistica.LIGUE_1))
+        var resolver = resolver();
+        assertThatThrownBy(() -> resolver.resolver(228L, "Olympique Lyonnais", CompeticionEstadistica.LIGUE_1))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class)
                 .satisfies(error -> assertThat(((IdentidadEstadisticaNoResueltaException) error)
                         .diagnosticos().get(0).motivo())
@@ -59,7 +59,8 @@ class IdentidadEquipoResolverTest {
                 new IdentidadExternaEquipoEntity(UUID.randomUUID(), equipo,
                         ProveedorIdentidadExterna.WHOSCORED, 309L)));
 
-        assertThatThrownBy(() -> resolver().resolver(309L, "Lens", CompeticionEstadistica.LIGUE_1))
+        var resolver = resolver();
+        assertThatThrownBy(() -> resolver.resolver(309L, "Lens", CompeticionEstadistica.LIGUE_1))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class)
                 .satisfies(error -> assertThat(((IdentidadEstadisticaNoResueltaException) error)
                         .diagnosticos().get(0).motivo())

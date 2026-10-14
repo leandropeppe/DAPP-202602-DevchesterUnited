@@ -34,7 +34,8 @@ class WhoScoredStatisticsAdapterFailureTest {
         when(driver.findElement(any(By.class))).thenReturn(body);
         when(body.getDomProperty("textContent")).thenReturn(fixture("summary-invalid-total-pages.json"));
 
-        assertThatThrownBy(() -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
+        var adapter = adapter(factory);
+        assertThatThrownBy(() -> adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(WhoScoredStatisticsException.class);
 
         verify(driver).get(any(String.class));
@@ -86,7 +87,8 @@ class WhoScoredStatisticsAdapterFailureTest {
         when(driver.findElement(any(By.class))).thenReturn(body);
         when(body.getDomProperty("textContent")).thenReturn("   ");
 
-        assertThatThrownBy(() -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
+        var adapter = adapter(factory);
+        assertThatThrownBy(() -> adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(WhoScoredStatisticsException.class)
                 .hasMessage("WhoScored devolvio un body vacio.");
         verify(driver).quit();
@@ -119,7 +121,8 @@ class WhoScoredStatisticsAdapterFailureTest {
         when(driver.findElement(any(By.class))).thenReturn(body);
         when(body.getDomProperty("textContent")).thenReturn(fixture("summary-all.json"), "not-json");
 
-        assertThatThrownBy(() -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
+        var adapter = adapter(factory);
+        assertThatThrownBy(() -> adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(WhoScoredStatisticsException.class);
         verify(driver, times(2)).get(any(String.class));
         verify(driver).quit();

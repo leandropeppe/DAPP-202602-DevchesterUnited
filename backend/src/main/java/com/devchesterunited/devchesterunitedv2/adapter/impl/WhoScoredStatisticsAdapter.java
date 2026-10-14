@@ -211,10 +211,12 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         return player.playerId();
     }
 
+    private static final String SUMMARY_CATEGORY = "summary";
+
     private enum FamiliaFeed {
-        SUMMARY(FamiliaEstadistica.GENERAL, "summary", "all"),
-        OFFENSIVE(FamiliaEstadistica.OFENSIVA, "summary", "offensive"),
-        DEFENSIVE(FamiliaEstadistica.DEFENSIVA, "summary", "defensive");
+        SUMMARY(FamiliaEstadistica.GENERAL, SUMMARY_CATEGORY, "all"),
+        OFFENSIVE(FamiliaEstadistica.OFENSIVA, SUMMARY_CATEGORY, "offensive"),
+        DEFENSIVE(FamiliaEstadistica.DEFENSIVA, SUMMARY_CATEGORY, "defensive");
 
         private final FamiliaEstadistica familiaEstadistica;
         private final String category;

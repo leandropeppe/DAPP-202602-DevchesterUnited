@@ -2,7 +2,6 @@ package com.devchesterunited.devchesterunitedv2.service;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasJugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasSyncRepository;
@@ -30,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.mockito.Answers;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +42,7 @@ import java.math.BigDecimal;
 @SpringBootTest
 @ActiveProfiles("test")
 class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSupport {
-    @MockBean(answer = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
+    @MockitoBean(answers = Answers.CALLS_REAL_METHODS) private ProveedorEstadisticasJugador proveedor;
     @Autowired private SincronizacionEstadisticasJugadorService servicio;
     @Autowired private EquipoRepository equipos;
     @Autowired private JugadorRepository jugadores;
@@ -113,7 +112,7 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
 
     @Test
     void ceroCandidatosEnElCasoDeUsoMarcaFallidaYConservaSnapshot() {
-        var baseline = crearSnapshotAnterior("Baseline Zero FC", "Baseline Zero Player", 90110L);
+        var baseline = crearSnapshotAnterior("Baseline Zero FC", "Baseline Zero Player");
         var snapshotPublicadoAntes = estadisticas.findAll().stream()
                 .map(this::snapshotPublicado)
                 .toList();
@@ -147,7 +146,7 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
 
     @Test
     void multiplesCandidatosEnElCasoDeUsoBloqueanPublicacion() {
-        var baseline = crearSnapshotAnterior("Baseline Multiple FC", "Baseline Multiple Player", 90210L);
+        var baseline = crearSnapshotAnterior("Baseline Multiple FC", "Baseline Multiple Player");
         var syncsAntes = ejecuciones.findAll().stream().map(e -> e.getId()).collect(java.util.stream.Collectors.toSet());
         int stagingAntes = staging.findAll().size();
         Instant now = Instant.now();
@@ -177,7 +176,7 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
                 .forEach(fixtureSyncs::add);
     }
 
-    private Snapshot crearSnapshotAnterior(String nombreEquipo, String nombreJugador, long syncNumero) {
+    private Snapshot crearSnapshotAnterior(String nombreEquipo, String nombreJugador) {
         Instant now = Instant.now();
         var equipo = equipos.save(EquipoEntity.builder().id(UUID.randomUUID()).nombre(nombreEquipo)
                 .liga("Premier League").activo(true).creadoEn(now).actualizadoEn(now).build());
