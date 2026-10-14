@@ -55,10 +55,14 @@ public class EstadisticasStagingService {
                         entity.getPasesClave(), entity.getRegates(), entity.getTackles(), entity.getValoracion(),
                         entity.getTarjetasAmarillas(), entity.getTarjetasRojas()), registro.metricas());
         String posicion = identidad.posicion() != null ? identidad.posicion() : entity.getPosicion();
-        entity.aplicar(jugadorId, equipoId, identidad.teamId(), identidad.nombreEquipo(),
-                posicion, identidad.nacionalidad(), registro.familia().name(),
-                m.minutosJugados(), m.goles(), m.asistencias(), m.tiros(), m.pasesClave(),
-                m.regates(), m.tackles(), m.valoracion(), m.tarjetasAmarillas(), m.tarjetasRojas());
+        entity.aplicar(EstadisticasSyncStagingEntity.Aplicacion.builder()
+                .jugadorId(jugadorId).equipoId(equipoId).teamId(identidad.teamId())
+                .nombreEquipo(identidad.nombreEquipo()).posicion(posicion)
+                .nacionalidad(identidad.nacionalidad()).familia(registro.familia().name())
+                .minutos(m.minutosJugados()).goles(m.goles()).asistencias(m.asistencias())
+                .tiros(m.tiros()).pasesClave(m.pasesClave()).regates(m.regates())
+                .tackles(m.tackles()).valoracion(m.valoracion())
+                .amarillas(m.tarjetasAmarillas()).rojas(m.tarjetasRojas()));
         staging.save(entity);
     }
 

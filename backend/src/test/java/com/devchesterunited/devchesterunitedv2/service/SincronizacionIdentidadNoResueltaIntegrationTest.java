@@ -187,9 +187,11 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
         UUID syncId = UUID.randomUUID();
         fixtureSyncs.add(syncId);
         ejecuciones.save(new EstadisticasSyncEntity(syncId, EstadoEstadisticasSync.PUBLICADA, now));
-        estadisticas.save(new EstadisticasJugadorEntity(UUID.randomUUID(), jugador.getId(), "Forward", 70,
-                1, 1, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
-                BigDecimal.valueOf(6), 0, 0, syncId, now, now));
+        estadisticas.save(new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugador.getId()).posicion("Forward").minutosJugados(70)
+                .goles(1).asistencias(1).tiros(BigDecimal.ONE).pasesClave(BigDecimal.ONE)
+                .regates(BigDecimal.ONE).tackles(BigDecimal.ONE).valoracion(BigDecimal.valueOf(6))
+                .tarjetasAmarillas(0).tarjetasRojas(0).syncId(syncId).creadoEn(now).actualizadoEn(now)));
         return new Snapshot(jugador.getId(), syncId);
     }
 

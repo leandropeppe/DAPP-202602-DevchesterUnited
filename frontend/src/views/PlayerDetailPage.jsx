@@ -175,7 +175,7 @@ export default function PlayerDetailPage ({ playerId, onNavigate }) {
       }
     }
 
-    loadPlayer()
+    void loadPlayer()
 
     return () => {
       active = false

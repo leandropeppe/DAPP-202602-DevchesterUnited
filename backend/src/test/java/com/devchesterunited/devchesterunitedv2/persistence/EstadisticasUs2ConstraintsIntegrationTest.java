@@ -51,13 +51,13 @@ class EstadisticasUs2ConstraintsIntegrationTest extends PostgresTestSupport {
     @Test
     void impideDosEstadisticasParaElMismoJugador() {
         Instant ahora = Instant.now();
-        estadisticas.saveAndFlush(new EstadisticasJugadorEntity(UUID.randomUUID(), jugador.getId(),
-                null, null, null, null, null, null, null, null, null, null, null,
-                sync.getId(), ahora, ahora));
+        estadisticas.saveAndFlush(new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugador.getId()).syncId(sync.getId())
+                .creadoEn(ahora).actualizadoEn(ahora)));
 
-        var duplicateStatistics = new EstadisticasJugadorEntity(
-                UUID.randomUUID(), jugador.getId(), null, null, null, null, null, null,
-                null, null, null, null, null, sync.getId(), ahora, ahora);
+        var duplicateStatistics = new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugador.getId()).syncId(sync.getId())
+                .creadoEn(ahora).actualizadoEn(ahora));
         assertThatThrownBy(() -> estadisticas.saveAndFlush(duplicateStatistics))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }

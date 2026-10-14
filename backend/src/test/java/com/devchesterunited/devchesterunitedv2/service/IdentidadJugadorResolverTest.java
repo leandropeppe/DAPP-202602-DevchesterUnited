@@ -53,7 +53,9 @@ class IdentidadJugadorResolverTest {
         when(jugadores.findAllByEquipoIdAndActivoTrue(equipo.getId())).thenReturn(List.of());
 
         var resolver = resolver();
-        assertThatThrownBy(() -> resolver.resolver(hint(), equipo, CompeticionEstadistica.PREMIER_LEAGUE))
+        var hint = hint();
+        var competicion = CompeticionEstadistica.PREMIER_LEAGUE;
+        assertThatThrownBy(() -> resolver.resolver(hint, equipo, competicion))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
         verify(jugadores, never()).findAllByEquipoIdAndActivoTrue(UUID.randomUUID());
     }
@@ -68,7 +70,9 @@ class IdentidadJugadorResolverTest {
                         UUID.randomUUID(), otro, ProveedorIdentidadExterna.WHOSCORED, 44L)));
 
         var resolver = resolver();
-        assertThatThrownBy(() -> resolver.resolver(hint(), equipo, CompeticionEstadistica.PREMIER_LEAGUE))
+        var hint = hint();
+        var competicion = CompeticionEstadistica.PREMIER_LEAGUE;
+        assertThatThrownBy(() -> resolver.resolver(hint, equipo, competicion))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
         verify(jugadores, never()).findAllByEquipoIdAndActivoTrue(equipo.getId());
     }

@@ -62,11 +62,9 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         Objects.requireNonNull(competiciones, "Las competiciones son obligatorias.");
         List<CompeticionEstadistica> solicitadas = List.copyOf(competiciones);
         try (WebDriverSession session = WebDriverSession.open(webDriverFactory)) {
-            List<SnapshotEstadisticasJugador> snapshots = new java.util.ArrayList<>(solicitadas.size());
-            for (CompeticionEstadistica competicion : solicitadas) {
-                snapshots.add(obtenerSnapshot(competicion, session));
-            }
-            return List.copyOf(snapshots);
+            return solicitadas.stream()
+                    .map(competicion -> obtenerSnapshot(competicion, session))
+                    .toList();
         } catch (WhoScoredStatisticsException exception) {
             throw exception;
         } catch (RuntimeException exception) {
@@ -135,32 +133,56 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         if (response == null) {
             failures.add("response == null");
         } else {
-            if (currentPage == null) failures.add("currentPage == null");
-            if (totalPages == null) failures.add("totalPages == null");
-            if (totalResults == null) failures.add("totalResults == null");
-            if (resultsPerPage == null) failures.add("resultsPerPage == null");
-            if (response.players() == null) failures.add("playerTableStats == null");
-            if (currentPage != null && currentPage < 1) failures.add("currentPage < 1");
-            if (totalPages != null && totalPages < 1) failures.add("totalPages < 1");
-            if (totalResults != null && totalResults < 0) failures.add("totalResults < 0");
-            if (resultsPerPage != null && resultsPerPage < 1) failures.add("resultsPerPage < 1");
-            if (currentPage != null && currentPage != 1) failures.add("currentPage != 1");
-            if (totalPages != null && totalPages != 1) failures.add("totalPages != 1");
-            if (totalResults != null && resultsPerPage != null && totalResults > resultsPerPage) {
-                failures.add("totalResults > resultsPerPage");
-            }
-            if (playersReceived != null && totalResults != null && !playersReceived.equals(totalResults)) {
-                failures.add("playersRecibidos != totalResults");
-            }
+            agregarFallosMetadata(response, currentPage, totalPages, resultsPerPage, totalResults,
+                    playersReceived, failures);
         }
         if (!failures.isEmpty()) {
-            throw new WhoScoredStatisticsException("WhoScored devolvio una respuesta paginada o incompleta: "
-                    + "competicion=" + competicion + ", familia=" + familia
-                    + ", currentPage=" + currentPage + ", totalPages=" + totalPages
-                    + ", resultsPerPage=" + resultsPerPage + ", totalResults=" + totalResults
-                    + ", playersRecibidos=" + playersReceived + ", adquisicion=" + sanitizarAdquisicion(url)
-                    + ", fallos=" + failures);
+            throw errorDeCompletitud(competicion, familia, currentPage, totalPages, resultsPerPage,
+                    totalResults, playersReceived, url, failures);
         }
+    }
+
+    private void agregarFallosMetadata(WhoScoredStatisticsFeedResponseDTO response,
+            Integer currentPage, Integer totalPages, Integer resultsPerPage, Integer totalResults,
+            Integer playersReceived, List<String> failures) {
+        agregarFallosNulos(response, currentPage, totalPages, resultsPerPage, failures);
+        agregarFallosRangos(currentPage, totalPages, totalResults, resultsPerPage, failures);
+        if (totalResults != null && resultsPerPage != null && totalResults > resultsPerPage) {
+            failures.add("totalResults > resultsPerPage");
+        }
+        if (playersReceived != null && totalResults != null && !playersReceived.equals(totalResults)) {
+            failures.add("playersRecibidos != totalResults");
+        }
+    }
+
+    private void agregarFallosNulos(WhoScoredStatisticsFeedResponseDTO response,
+            Integer currentPage, Integer totalPages, Integer resultsPerPage, List<String> failures) {
+        if (currentPage == null) failures.add("currentPage == null");
+        if (totalPages == null) failures.add("totalPages == null");
+        if (response.totalResults() == null) failures.add("totalResults == null");
+        if (resultsPerPage == null) failures.add("resultsPerPage == null");
+        if (response.players() == null) failures.add("playerTableStats == null");
+    }
+
+    private void agregarFallosRangos(Integer currentPage, Integer totalPages, Integer totalResults,
+            Integer resultsPerPage, List<String> failures) {
+        if (currentPage != null && currentPage < 1) failures.add("currentPage < 1");
+        if (totalPages != null && totalPages < 1) failures.add("totalPages < 1");
+        if (totalResults != null && totalResults < 0) failures.add("totalResults < 0");
+        if (resultsPerPage != null && resultsPerPage < 1) failures.add("resultsPerPage < 1");
+        if (currentPage != null && currentPage != 1) failures.add("currentPage != 1");
+        if (totalPages != null && totalPages != 1) failures.add("totalPages != 1");
+    }
+
+    private WhoScoredStatisticsException errorDeCompletitud(CompeticionEstadistica competicion,
+            FamiliaFeed familia, Integer currentPage, Integer totalPages, Integer resultsPerPage,
+            Integer totalResults, Integer playersReceived, String url, List<String> failures) {
+        return new WhoScoredStatisticsException("WhoScored devolvio una respuesta paginada o incompleta: "
+                + "competicion=" + competicion + ", familia=" + familia
+                + ", currentPage=" + currentPage + ", totalPages=" + totalPages
+                + ", resultsPerPage=" + resultsPerPage + ", totalResults=" + totalResults
+                + ", playersRecibidos=" + playersReceived + ", adquisicion=" + sanitizarAdquisicion(url)
+                + ", fallos=" + failures);
     }
 
     private String sanitizarAdquisicion(String url) {

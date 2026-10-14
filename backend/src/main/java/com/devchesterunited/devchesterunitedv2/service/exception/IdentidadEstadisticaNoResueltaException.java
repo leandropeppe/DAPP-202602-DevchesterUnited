@@ -1,5 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.service.exception;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -7,6 +8,7 @@ import java.util.stream.Collectors;
 
 /** Indica que una identidad externa no tiene una asociación local inequívoca. */
 public class IdentidadEstadisticaNoResueltaException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
     public enum Tipo { EQUIPO, JUGADOR }
 
     public enum Motivo {
@@ -15,13 +17,16 @@ public class IdentidadEstadisticaNoResueltaException extends RuntimeException {
           EQUIPO_NO_RESUELTO, EQUIPO_INACTIVO
     }
 
-    public record Candidato(String id, String nombre, Double score) { }
+    public record Candidato(String id, String nombre, Double score) implements Serializable {
+        private static final long serialVersionUID = 1L;
+    }
 
     /** Diagnóstico técnico seguro; no contiene URLs, credenciales ni cuerpos del proveedor. */
     public record Diagnostico(
             Tipo tipo, String proveedor, Long externalId, String nombre, String competicion,
             String equipoWhoScored, String equipoLocal, Candidato mejorCandidato,
-            Candidato segundoCandidato, Motivo motivo) {
+            Candidato segundoCandidato, Motivo motivo) implements Serializable {
+        private static final long serialVersionUID = 1L;
         public Diagnostico {
             Objects.requireNonNull(tipo, "tipo");
             Objects.requireNonNull(motivo, "motivo");

@@ -86,10 +86,17 @@ public class IdentidadJugadorResolver {
 
     private static CommonRun tramoComun(List<String> a, List<String> b) {
         CommonRun best = new CommonRun(0, 0, 0);
-        for (int i = 0; i < a.size(); i++) for (int j = 0; j < b.size(); j++) {
-            int n = 0;
-            while (i + n < a.size() && j + n < b.size() && a.get(i + n).equals(b.get(j + n))) n++;
-            if (n > best.length() || (n == best.length() && i > best.leftStart())) best = new CommonRun(i, j, n);
+        for (int i = 0; i < a.size(); i++) {
+            for (int j = 0; j < b.size(); j++) {
+                int n = 0;
+                while (i + n < a.size() && j + n < b.size()
+                        && a.get(i + n).equals(b.get(j + n))) {
+                    n++;
+                }
+                if (n > best.length() || (n == best.length() && i > best.leftStart())) {
+                    best = new CommonRun(i, j, n);
+                }
+            }
         }
         return best;
     }

@@ -149,9 +149,11 @@ class SincronizacionEstadisticasConcurrenciaIntegrationTest extends PostgresTest
         syncIds.add(baseline);
         ejecuciones.save(new com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncEntity(
                 baseline, EstadoEstadisticasSync.PUBLICADA, now));
-        estadisticas.save(new EstadisticasJugadorEntity(UUID.randomUUID(), jugadorId, "Forward", 80,
-                1, 1, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
-                BigDecimal.valueOf(6), 0, 0, baseline, now, now));
+        estadisticas.save(new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugadorId).posicion("Forward").minutosJugados(80)
+                .goles(1).asistencias(1).tiros(BigDecimal.ONE).pasesClave(BigDecimal.ONE)
+                .regates(BigDecimal.ONE).tackles(BigDecimal.ONE).valoracion(BigDecimal.valueOf(6))
+                .tarjetasAmarillas(0).tarjetasRojas(0).syncId(baseline).creadoEn(now).actualizadoEn(now)));
     }
 
     private com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador snapshot(

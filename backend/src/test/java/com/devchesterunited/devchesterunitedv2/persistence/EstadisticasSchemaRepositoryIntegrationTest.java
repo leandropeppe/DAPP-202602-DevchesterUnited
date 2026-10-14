@@ -39,9 +39,10 @@ class EstadisticasSchemaRepositoryIntegrationTest extends PostgresTestSupport {
 
         staging.saveAndFlush(new EstadisticasSyncStagingEntity(
                 UUID.randomUUID(), syncId, "PREMIER_LEAGUE", 7001L, "Jugador externo"));
-        estadisticas.saveAndFlush(new EstadisticasJugadorEntity(
-                UUID.randomUUID(), jugadorId, "Forward", 900, 2, 1,
-                null, null, null, null, null, 1, 0, syncId, AHORA, AHORA));
+        estadisticas.saveAndFlush(new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugadorId).posicion("Forward").minutosJugados(900)
+                .goles(2).asistencias(1).tarjetasAmarillas(1).tarjetasRojas(0)
+                .syncId(syncId).creadoEn(AHORA).actualizadoEn(AHORA)));
 
         assertThat(sincronizaciones.findById(syncId)).isPresent();
         assertThat(staging.findAllBySyncId(syncId)).hasSize(1);
@@ -54,13 +55,13 @@ class EstadisticasSchemaRepositoryIntegrationTest extends PostgresTestSupport {
         UUID syncId = UUID.randomUUID();
         sincronizaciones.saveAndFlush(new EstadisticasSyncEntity(
                 syncId, EstadoEstadisticasSync.PUBLICADA, AHORA));
-        estadisticas.saveAndFlush(new EstadisticasJugadorEntity(
-                UUID.randomUUID(), jugadorId, null, null, null, null,
-                null, null, null, null, null, null, null, syncId, AHORA, AHORA));
+        estadisticas.saveAndFlush(new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugadorId).syncId(syncId)
+                .creadoEn(AHORA).actualizadoEn(AHORA)));
 
-        var duplicateStatistics = new EstadisticasJugadorEntity(
-                UUID.randomUUID(), jugadorId, null, null, null, null,
-                null, null, null, null, null, null, null, syncId, AHORA, AHORA);
+        var duplicateStatistics = new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugadorId).syncId(syncId)
+                .creadoEn(AHORA).actualizadoEn(AHORA));
         assertThatThrownBy(() -> estadisticas.saveAndFlush(duplicateStatistics))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
@@ -68,9 +69,9 @@ class EstadisticasSchemaRepositoryIntegrationTest extends PostgresTestSupport {
     @Test
     void impideEstadisticaSinEjecucionExistente() {
         UUID jugadorId = jugadores.findAll().stream().findFirst().orElseThrow().getId();
-        var statisticsWithoutSync = new EstadisticasJugadorEntity(
-                UUID.randomUUID(), jugadorId, null, null, null, null,
-                null, null, null, null, null, null, null, UUID.randomUUID(), AHORA, AHORA);
+        var statisticsWithoutSync = new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugadorId).syncId(UUID.randomUUID())
+                .creadoEn(AHORA).actualizadoEn(AHORA));
         assertThatThrownBy(() -> estadisticas.saveAndFlush(statisticsWithoutSync))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }

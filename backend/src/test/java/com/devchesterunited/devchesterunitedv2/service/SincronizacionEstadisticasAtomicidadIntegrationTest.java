@@ -83,9 +83,11 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         UUID publicada = UUID.randomUUID();
         fixtureSyncs.add(publicada);
         ejecuciones.save(new EstadisticasSyncEntity(publicada, EstadoEstadisticasSync.PUBLICADA, now));
-        estadisticas.save(new EstadisticasJugadorEntity(UUID.randomUUID(), jugador.getId(), "Forward", 90,
-                3, 1, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
-                BigDecimal.valueOf(7), 0, 0, publicada, now, now));
+        estadisticas.save(new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugador.getId()).posicion("Forward").minutosJugados(90)
+                .goles(3).asistencias(1).tiros(BigDecimal.ONE).pasesClave(BigDecimal.ONE)
+                .regates(BigDecimal.ONE).tackles(BigDecimal.ONE).valoracion(BigDecimal.valueOf(7))
+                .tarjetasAmarillas(0).tarjetasRojas(0).syncId(publicada).creadoEn(now).actualizadoEn(now)));
         doThrow(new IllegalStateException("provider internal secret"))
                 .when(proveedor).obtenerSnapshots(any());
 
@@ -110,9 +112,11 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         UUID anterior = UUID.randomUUID();
         fixtureSyncs.add(anterior);
         ejecuciones.save(new EstadisticasSyncEntity(anterior, EstadoEstadisticasSync.PUBLICADA, now));
-        estadisticas.save(new EstadisticasJugadorEntity(UUID.randomUUID(), jugador.getId(), "Forward", 75,
-                1, 1, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
-                BigDecimal.valueOf(6), 0, 0, anterior, now, now));
+        estadisticas.save(new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugador.getId()).posicion("Forward").minutosJugados(75)
+                .goles(1).asistencias(1).tiros(BigDecimal.ONE).pasesClave(BigDecimal.ONE)
+                .regates(BigDecimal.ONE).tackles(BigDecimal.ONE).valoracion(BigDecimal.valueOf(6))
+                .tarjetasAmarillas(0).tarjetasRojas(0).syncId(anterior).creadoEn(now).actualizadoEn(now)));
         doThrow(new WhoScoredStatisticsException(
                         "https://whoscored.test/private?token=secret body=full-sensitive-body header=Bearer-secret",
                         new IllegalStateException("internal stack secret")))
@@ -141,22 +145,22 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         UUID anterior = UUID.randomUUID();
         fixtureSyncs.add(anterior);
         ejecuciones.save(new EstadisticasSyncEntity(anterior, EstadoEstadisticasSync.PUBLICADA, now));
-        estadisticas.save(new EstadisticasJugadorEntity(UUID.randomUUID(), jugador.getId(), "Forward", 88,
-                2, 1, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
-                BigDecimal.valueOf(6), 0, 0, anterior, now, now));
+        estadisticas.save(new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugador.getId()).posicion("Forward").minutosJugados(88)
+                .goles(2).asistencias(1).tiros(BigDecimal.ONE).pasesClave(BigDecimal.ONE)
+                .regates(BigDecimal.ONE).tackles(BigDecimal.ONE).valoracion(BigDecimal.valueOf(6))
+                .tarjetasAmarillas(0).tarjetasRojas(0).syncId(anterior).creadoEn(now).actualizadoEn(now)));
 
         UUID syncId = UUID.randomUUID();
         fixtureSyncs.add(syncId);
         ejecuciones.save(new EstadisticasSyncEntity(syncId, EstadoEstadisticasSync.VALIDADA, now));
         var fila = new EstadisticasSyncStagingEntity(UUID.randomUUID(), syncId, "PREMIER_LEAGUE", 99001L,
                 "Atomic Player");
-        fila.aplicar(jugador.getId(), equipo.getId(), 88001L, "Atomic FC", "Forward", "Argentina",
-                "GENERAL", 100, 4, 2, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
-                BigDecimal.ONE, BigDecimal.valueOf(8), 0, 0);
-        fila.aplicar(jugador.getId(), equipo.getId(), 88001L, "Atomic FC", "Forward", "Argentina",
-                "OFENSIVA", null, null, null, null, null, null, null, null, null, null);
-        fila.aplicar(jugador.getId(), equipo.getId(), 88001L, "Atomic FC", "Forward", "Argentina",
-                "DEFENSIVA", null, null, null, null, null, null, null, null, null, null);
+        fila.aplicar(aplicacion(jugador.getId(), equipo.getId(), "GENERAL").minutos(100).goles(4).asistencias(2)
+                .tiros(BigDecimal.ONE).pasesClave(BigDecimal.ONE).regates(BigDecimal.ONE)
+                .tackles(BigDecimal.ONE).valoracion(BigDecimal.valueOf(8)).amarillas(0).rojas(0));
+        fila.aplicar(aplicacion(jugador.getId(), equipo.getId(), "OFENSIVA"));
+        fila.aplicar(aplicacion(jugador.getId(), equipo.getId(), "DEFENSIVA"));
         staging.save(fila);
 
         doThrow(new IllegalStateException("persistencia controlada")).when(estadisticas)
@@ -198,9 +202,11 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         UUID anterior = UUID.randomUUID();
         fixtureSyncs.add(anterior);
         ejecuciones.save(new EstadisticasSyncEntity(anterior, EstadoEstadisticasSync.PUBLICADA, now));
-        estadisticas.save(new EstadisticasJugadorEntity(UUID.randomUUID(), jugador.getId(), "Forward", 77,
-                1, 1, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
-                BigDecimal.valueOf(6), 0, 0, anterior, now, now));
+        estadisticas.save(new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
+                .id(UUID.randomUUID()).jugadorId(jugador.getId()).posicion("Forward").minutosJugados(77)
+                .goles(1).asistencias(1).tiros(BigDecimal.ONE).pasesClave(BigDecimal.ONE)
+                .regates(BigDecimal.ONE).tackles(BigDecimal.ONE).valoracion(BigDecimal.valueOf(6))
+                .tarjetasAmarillas(0).tarjetasRojas(0).syncId(anterior).creadoEn(now).actualizadoEn(now)));
         doReturn(
                 java.util.Arrays.stream(CompeticionEstadistica.values()).map(competicion -> {
                     if (competicion != CompeticionEstadistica.PREMIER_LEAGUE) {
@@ -249,5 +255,12 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
                 .filter(e -> !fallidasAntes.contains(e.getId())).findFirst().orElseThrow();
         assertThat(estadisticas.findAll()).noneMatch(e -> e.getSyncId().equals(fallida.getId()));
         fixtureSyncs.add(fallida.getId());
+    }
+
+    private EstadisticasSyncStagingEntity.Aplicacion aplicacion(UUID jugadorId, UUID equipoId, String familia) {
+        return EstadisticasSyncStagingEntity.Aplicacion.builder()
+                .jugadorId(jugadorId).equipoId(equipoId).teamId(88001L)
+                .nombreEquipo("Atomic FC").posicion("Forward").nacionalidad("Argentina")
+                .familia(familia);
     }
 }
