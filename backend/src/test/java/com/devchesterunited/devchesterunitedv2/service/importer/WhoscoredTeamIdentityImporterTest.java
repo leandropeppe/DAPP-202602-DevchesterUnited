@@ -34,7 +34,7 @@ class WhoscoredTeamIdentityImporterTest {
 
     @BeforeEach
     void setUp() {
-        importer = new WhoscoredTeamIdentityImporter(identities);
+        importer = new WhoscoredTeamIdentityImporter(new WhoscoredTeamIdentityPublicationService(identities));
         mappings = new ArrayList<>();
         teams = new ArrayList<>();
         for (long i = 1; i <= 96; i++) {

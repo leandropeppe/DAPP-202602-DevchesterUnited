@@ -16,6 +16,7 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Import;
+import com.devchesterunited.devchesterunitedv2.service.importer.WhoscoredTeamIdentityPublicationService;
 
 @TestConfiguration(proxyBeanMethods = false)
 @EnableAutoConfiguration(exclude = {FlywayAutoConfiguration.class, SecurityAutoConfiguration.class,
@@ -25,6 +26,6 @@ import org.springframework.context.annotation.Import;
         includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE,
                 classes = {EquipoRepository.class, IdentidadExternaEquipoRepository.class}))
 @EnableConfigurationProperties
-@Import(WhoscoredTeamIdentityImporter.class)
+@Import({WhoscoredTeamIdentityImporter.class, WhoscoredTeamIdentityPublicationService.class})
 public class WhoscoredTeamIdentityImporterManualConfiguration {
 }
