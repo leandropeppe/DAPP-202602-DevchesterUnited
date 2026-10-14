@@ -53,7 +53,7 @@ description: "Lista de tareas para la implementación de Token Market"
 ### Pruebas para la historia de usuario 1
 
 - [ ] T016 [P] [US1] Agregar pruebas unitarias para transiciones del estado de inicialización, reserva configurada, asignaciones únicas, emisiones únicas, activación de jugadores inactivos y recuperación mediante reintentos en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T017 [P] [US1] Agregar pruebas PostgreSQL/Testcontainers para superusuario singleton, unicidad de asignaciones, unicidad de emisiones, exactamente 100 tokens, saldos no negativos e idempotencia tras reinicio en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
+- [x] T017 [P] [US1] Agregar pruebas PostgreSQL/Testcontainers para superusuario singleton, unicidad de asignaciones, unicidad de emisiones, exactamente 100 tokens, saldos no negativos e idempotencia tras reinicio en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
 
 ### Implementación para la historia de usuario 1
 
