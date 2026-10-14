@@ -57,7 +57,10 @@ class WhoScoredStatisticsAdapterFailureTest {
 
         assertThat(error).isInstanceOfSatisfying(WhoScoredStatisticsException.class,
                 exception -> assertThat(exception).hasMessageContaining("No se pudo leer el JSON de statisticsfeed.")
-                        .doesNotContain("whoscored.test", "stageId", "tournamentOptions", "secret"));
+                        .hasMessageNotContaining("whoscored.test")
+                        .hasMessageNotContaining("stageId")
+                        .hasMessageNotContaining("tournamentOptions")
+                        .hasMessageNotContaining("secret"));
         verify(driver).quit();
     }
 
@@ -74,7 +77,7 @@ class WhoScoredStatisticsAdapterFailureTest {
 
         assertThat(error).isInstanceOfSatisfying(WhoScoredStatisticsException.class,
                 exception -> assertThat(exception).hasMessage("No se pudo leer el JSON de statisticsfeed.")
-                        .doesNotContain("internal wait detail"));
+                        .hasMessageNotContaining("internal wait detail"));
         verify(driver).quit();
     }
 
@@ -108,7 +111,9 @@ class WhoScoredStatisticsAdapterFailureTest {
 
         assertThat(error).isInstanceOfSatisfying(WhoScoredStatisticsException.class,
                 exception -> assertThat(exception).hasMessage("No se pudo leer el JSON de statisticsfeed.")
-                        .doesNotContain("privateToken", "secret", "malformed"));
+                        .hasMessageNotContaining("privateToken")
+                        .hasMessageNotContaining("secret")
+                        .hasMessageNotContaining("malformed"));
         verify(driver).quit();
     }
 
