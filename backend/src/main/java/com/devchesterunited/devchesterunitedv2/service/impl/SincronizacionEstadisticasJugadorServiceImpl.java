@@ -62,7 +62,7 @@ public class SincronizacionEstadisticasJugadorServiceImpl
             publicada = true;
         } catch (RuntimeException exception) {
             RuntimeException applicationException = traducir(exception);
-            if (syncId != null && !publicada) {
+            if (syncId != null) {
                 try {
                     ciclo.marcarFallida(syncId, applicationException);
                 } catch (RuntimeException markingFailure) {

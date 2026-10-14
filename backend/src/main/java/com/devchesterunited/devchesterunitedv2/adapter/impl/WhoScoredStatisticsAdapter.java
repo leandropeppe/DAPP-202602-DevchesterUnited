@@ -50,7 +50,7 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
     WhoScoredStatisticsAdapter(String baseUrl, ObjectMapper objectMapper,
             WebDriverFactory webDriverFactory,
             WhoScoredStatisticsConfiguration statisticsConfiguration) {
-        this.baseUrl = Objects.requireNonNull(baseUrl).replaceAll("/++$", "");
+        this.baseUrl = quitarBarrasFinales(Objects.requireNonNull(baseUrl));
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.webDriverFactory = webDriverFactory;
         this.statisticsConfiguration = statisticsConfiguration;
@@ -140,6 +140,14 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
             throw errorDeCompletitud(new CompletitudContext(competicion, familia, currentPage,
                     totalPages, resultsPerPage, totalResults, playersReceived, url, failures));
         }
+    }
+
+    private static String quitarBarrasFinales(String value) {
+        int end = value.length();
+        while (end > 0 && value.charAt(end - 1) == '/') {
+            end--;
+        }
+        return end == value.length() ? value : value.substring(0, end);
     }
 
     private void agregarFallosMetadata(WhoScoredStatisticsFeedResponseDTO response,

@@ -16,26 +16,18 @@ public final class WebDriverSession implements AutoCloseable {
     /** Crea y configura una sesion, limpiando el driver si la configuracion falla. */
     public static WebDriverSession open(WebDriverFactory factory) {
         Objects.requireNonNull(factory, "La fabrica WebDriver es obligatoria.");
-        WebDriver driver = null;
-        boolean failureHandled = false;
-        boolean sessionCreated = false;
-        try {
-            driver = Objects.requireNonNull(factory.create(), "La fabrica no creo un WebDriver.");
+        DriverResource resource = null;
+        try (DriverResource candidate = new DriverResource(
+                Objects.requireNonNull(factory.create(), "La fabrica no creo un WebDriver."))) {
+            resource = candidate;
+            WebDriver driver = candidate.driver();
             factory.configure(driver);
-            sessionCreated = true;
-            return new WebDriverSession(driver);
+            return candidate.transferToSession();
         } catch (RuntimeException failure) {
-            failureHandled = true;
-            cerrarTrasFallo(driver, failure);
-            throw failure;
-        } finally {
-            if (!sessionCreated && !failureHandled && driver != null) {
-                try {
-                    driver.quit();
-                } catch (RuntimeException ignored) {
-                    // Mantener el Error original como causa de la salida del metodo.
-                }
+            if (resource != null) {
+                resource.agregarFalloDeCierre(failure);
             }
+            throw failure;
         }
     }
 
@@ -54,14 +46,40 @@ public final class WebDriverSession implements AutoCloseable {
         }
     }
 
-    private static void cerrarTrasFallo(WebDriver driver, Throwable failure) {
-        if (driver == null) {
-            return;
+    private static final class DriverResource implements AutoCloseable {
+        private final WebDriver driver;
+        private RuntimeException closeFailure;
+        private boolean transferred;
+
+        private DriverResource(WebDriver driver) {
+            this.driver = driver;
         }
-        try {
-            driver.quit();
-        } catch (RuntimeException closeFailure) {
-            failure.addSuppressed(closeFailure);
+
+        private WebDriver driver() {
+            return driver;
+        }
+
+        private WebDriverSession transferToSession() {
+            WebDriverSession session = new WebDriverSession(driver);
+            transferred = true;
+            return session;
+        }
+
+        @Override
+        public void close() {
+            if (!transferred) {
+                try {
+                    driver.quit();
+                } catch (RuntimeException failure) {
+                    closeFailure = failure;
+                }
+            }
+        }
+
+        private void agregarFalloDeCierre(RuntimeException failure) {
+            if (closeFailure != null) {
+                failure.addSuppressed(closeFailure);
+            }
         }
     }
 }
