@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import PlayerDetailPage from '../src/views/PlayerDetailPage.jsx'
 
@@ -67,6 +67,6 @@ describe('detalle frontend de jugador', () => {
     render(<PlayerDetailPage playerId="ply-missing" onNavigate={onNavigate} />)
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Jugador no encontrado')
-    await waitFor(() => expect(screen.getByRole('link', { name: /Volver al catálogo/i })).toBeInTheDocument())
+    expect(await screen.findByRole('link', { name: /Volver al catálogo/i })).toBeInTheDocument()
   })
 })

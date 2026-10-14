@@ -39,7 +39,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.mockito.Answers;
 import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 
@@ -107,12 +107,9 @@ class SincronizacionEstadisticasConcurrenciaIntegrationTest extends PostgresTest
             var primera = executor.submit(servicio::sincronizar);
             assertThat(primeraPaginaRecibida.await(10, TimeUnit.SECONDS)).isTrue();
             var segunda = executor.submit(servicio::sincronizar);
-            try {
-                segunda.get(10, TimeUnit.SECONDS);
-                fail("La segunda sincronización debió ser rechazada por el lock");
-            } catch (ExecutionException exception) {
-                assertThat(exception.getCause()).isInstanceOf(SincronizacionEstadisticasEnCursoException.class);
-            }
+            ExecutionException exception = assertThrows(ExecutionException.class,
+                    () -> segunda.get(10, TimeUnit.SECONDS));
+            assertThat(exception.getCause()).isInstanceOf(SincronizacionEstadisticasEnCursoException.class);
             assertThat(ejecuciones.count()).isEqualTo(syncsAntes + 1);
             assertThat(staging.findAll()).isEmpty();
             liberarPrimera.countDown();

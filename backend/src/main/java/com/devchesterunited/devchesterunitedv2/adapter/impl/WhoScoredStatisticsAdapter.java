@@ -123,22 +123,22 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
 
     private void validarCompletitud(WhoScoredStatisticsFeedResponseDTO response,
             CompeticionEstadistica competicion, FamiliaFeed familia, String url) {
-        Integer currentPage = response == null ? null : response.currentPage();
-        Integer totalPages = response == null ? null : response.totalPages();
-        Integer resultsPerPage = response == null ? null : response.resultsPerPage();
-        Integer totalResults = response == null ? null : response.totalResults();
-        Integer playersReceived = response == null || response.players() == null
-                ? null : response.players().size();
         List<String> failures = new java.util.ArrayList<>();
         if (response == null) {
             failures.add("response == null");
-        } else {
-            agregarFallosMetadata(response, currentPage, totalPages, resultsPerPage, totalResults,
-                    playersReceived, failures);
+            throw errorDeCompletitud(new CompletitudContext(competicion, familia, null, null, null,
+                    null, null, url, failures));
         }
+        Integer currentPage = response.currentPage();
+        Integer totalPages = response.totalPages();
+        Integer resultsPerPage = response.resultsPerPage();
+        Integer totalResults = response.totalResults();
+        Integer playersReceived = response.players() == null ? null : response.players().size();
+        agregarFallosMetadata(response, currentPage, totalPages, resultsPerPage, totalResults,
+                playersReceived, failures);
         if (!failures.isEmpty()) {
-            throw errorDeCompletitud(competicion, familia, currentPage, totalPages, resultsPerPage,
-                    totalResults, playersReceived, url, failures);
+            throw errorDeCompletitud(new CompletitudContext(competicion, familia, currentPage,
+                    totalPages, resultsPerPage, totalResults, playersReceived, url, failures));
         }
     }
 
@@ -174,16 +174,18 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         if (totalPages != null && totalPages != 1) failures.add("totalPages != 1");
     }
 
-    private WhoScoredStatisticsException errorDeCompletitud(CompeticionEstadistica competicion,
-            FamiliaFeed familia, Integer currentPage, Integer totalPages, Integer resultsPerPage,
-            Integer totalResults, Integer playersReceived, String url, List<String> failures) {
+    private WhoScoredStatisticsException errorDeCompletitud(CompletitudContext context) {
         return new WhoScoredStatisticsException("WhoScored devolvio una respuesta paginada o incompleta: "
-                + "competicion=" + competicion + ", familia=" + familia
-                + ", currentPage=" + currentPage + ", totalPages=" + totalPages
-                + ", resultsPerPage=" + resultsPerPage + ", totalResults=" + totalResults
-                + ", playersRecibidos=" + playersReceived + ", adquisicion=" + sanitizarAdquisicion(url)
-                + ", fallos=" + failures);
+                + "competicion=" + context.competicion() + ", familia=" + context.familia()
+                + ", currentPage=" + context.currentPage() + ", totalPages=" + context.totalPages()
+                + ", resultsPerPage=" + context.resultsPerPage() + ", totalResults=" + context.totalResults()
+                + ", playersRecibidos=" + context.playersReceived() + ", adquisicion="
+                + sanitizarAdquisicion(context.url()) + ", fallos=" + context.failures());
     }
+
+    private record CompletitudContext(CompeticionEstadistica competicion, FamiliaFeed familia,
+            Integer currentPage, Integer totalPages, Integer resultsPerPage, Integer totalResults,
+            Integer playersReceived, String url, List<String> failures) { }
 
     private String sanitizarAdquisicion(String url) {
         return url == null ? null : url.replaceAll(
@@ -312,11 +314,11 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         private static <T> T preferir(T current, T candidate) {
             return current == null ? candidate : current;
         }
-    }
 
-    private static String normalizar(String value) { return value.trim().replaceAll("\\s+", " "); }
+        private static String normalizar(String value) { return value.trim().replaceAll("\\s+", " "); }
 
-    private static String normalizarOpcional(String value) {
-        return value == null || value.isBlank() ? null : normalizar(value);
+        private static String normalizarOpcional(String value) {
+            return value == null || value.isBlank() ? null : normalizar(value);
+        }
     }
 }

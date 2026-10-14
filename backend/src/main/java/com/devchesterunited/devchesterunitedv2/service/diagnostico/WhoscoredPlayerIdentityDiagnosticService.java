@@ -77,16 +77,18 @@ public class WhoscoredPlayerIdentityDiagnosticService {
         Map<UUID, List<JugadorEntity>> rosterByTeam = new HashMap<>();
         List<Row> rows = new ArrayList<>();
         for (ObservedPlayer player : observed) {
-            if (persistedWhoScoredIds.contains(player.identity().playerId())) continue;
-            EquipoEntity team = localTeams.get(player.teamId());
-            List<JugadorEntity> roster = rosterByTeam.computeIfAbsent(team.getId(),
-                    jugadores::findAllByEquipoIdAndActivoTrue);
-            List<JugadorEntity> currentCandidates = roster.stream()
-                    .filter(candidate -> currentRuleMatches(candidate, player.identity()))
-                    .toList();
-            if (currentCandidates.size() == 1) continue;
-            List<Candidate> ranked = rankCandidates(player.identity(), roster, footballDataIds);
-            rows.add(new Row(player, team, ranked, currentCandidates.size()));
+            if (!persistedWhoScoredIds.contains(player.identity().playerId())) {
+                EquipoEntity team = localTeams.get(player.teamId());
+                List<JugadorEntity> roster = rosterByTeam.computeIfAbsent(team.getId(),
+                        jugadores::findAllByEquipoIdAndActivoTrue);
+                List<JugadorEntity> currentCandidates = roster.stream()
+                        .filter(candidate -> currentRuleMatches(candidate, player.identity()))
+                        .toList();
+                if (currentCandidates.size() != 1) {
+                    List<Candidate> ranked = rankCandidates(player.identity(), roster, footballDataIds);
+                    rows.add(new Row(player, team, ranked, currentCandidates.size()));
+                }
+            }
         }
         escribirCsv(rows, output);
         return new ReportResult(output, observed.size(), rows.size(), persistedWhoScoredIds.size());

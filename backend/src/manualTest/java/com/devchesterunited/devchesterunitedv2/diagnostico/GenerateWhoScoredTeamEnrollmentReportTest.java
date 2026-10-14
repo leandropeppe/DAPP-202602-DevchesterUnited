@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.diagnostico;
 
 import com.devchesterunited.devchesterunitedv2.service.diagnostico.WhoscoredTeamEnrollmentReportService;
 import java.nio.file.Path;
+import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,7 +17,7 @@ class GenerateWhoScoredTeamEnrollmentReportTest {
     private WhoscoredTeamEnrollmentReportService service;
 
     @Test
-    void generateReport() throws Exception {
+    void generateReport() throws IOException {
         var result = service.generar(Path.of("build/reports/whoscored-team-enrollment.csv"));
         System.out.println("teamId únicos: " + result.totalTeams());
         result.byCompetition().forEach((competition, count) ->

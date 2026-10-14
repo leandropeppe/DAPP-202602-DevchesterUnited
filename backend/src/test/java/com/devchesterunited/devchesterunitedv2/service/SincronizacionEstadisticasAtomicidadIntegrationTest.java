@@ -32,7 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.mockito.Answers;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,7 +48,7 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
     @Autowired private EquipoRepository equipos;
     @Autowired private JugadorRepository jugadores;
     @Autowired private EstadisticasSyncRepository ejecuciones;
-    @SpyBean private EstadisticasJugadorRepository estadisticas;
+    @MockitoSpyBean private EstadisticasJugadorRepository estadisticas;
     @Autowired private EstadisticasSyncStagingRepository staging;
     @Autowired private IdentidadExternaEquipoRepository identidadesEquipos;
     @Autowired private IdentidadExternaJugadorRepository identidadesJugadores;

@@ -139,10 +139,6 @@ public class WhoscoredTeamEnrollmentReportService {
                 value(two, Candidate::sigla), value(two, Candidate::score), value(two, Candidate::motivo), "", "");
     }
 
-    /*
-     * La construcción histórica de una fila queda centralizada en toCsvValues;
-     * no debe abrir writers ni acceder a repositories.
-     */
     /** Deduplica por competencia y teamId, contando jugadores distintos. */
     public static List<ObservedTeam> deduplicate(Collection<SnapshotEstadisticasJugador> snapshots) {
         Map<Key, MutableObservedTeam> teams = new LinkedHashMap<>();

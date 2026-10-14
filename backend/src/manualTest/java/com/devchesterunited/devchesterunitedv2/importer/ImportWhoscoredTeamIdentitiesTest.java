@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.importer;
 
 import com.devchesterunited.devchesterunitedv2.service.importer.WhoscoredTeamIdentityImporter;
 import java.nio.file.Path;
+import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,7 @@ class ImportWhoscoredTeamIdentitiesTest {
     @Autowired private WhoscoredTeamIdentityImporter importer;
 
     @Test
-    void importApprovedCsv() throws Exception {
+    void importApprovedCsv() throws IOException {
         Path csv = Path.of(System.getProperty("whoscored.enrollment.csv",
                 "config/whoscored-team-enrollment-approved.csv"));
         System.out.println(importer.importCsv(csv));

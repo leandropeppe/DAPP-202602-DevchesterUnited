@@ -38,7 +38,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.mockito.Answers;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,7 +55,7 @@ class IdentidadPersistidaWhoScoredIntegrationTest extends PostgresTestSupport {
     @Autowired private EstadisticasJugadorRepository estadisticas;
     @Autowired private EstadisticasSyncRepository sincronizaciones;
     @Autowired private EstadisticasSyncStagingRepository staging;
-    @SpyBean private IdentidadEquipoResolver equipos;
+    @MockitoSpyBean private IdentidadEquipoResolver equipos;
     private UUID jugadorId;
     private final Set<UUID> fixturePlayers = new HashSet<>();
     private final Set<UUID> fixtureTeams = new HashSet<>();

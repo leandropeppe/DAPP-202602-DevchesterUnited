@@ -55,9 +55,9 @@ class WhoScoredStatisticsAdapterFailureTest {
         var error = org.assertj.core.api.Assertions.catchThrowable(
                 () -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE));
 
-        assertThat(error).isInstanceOf(WhoScoredStatisticsException.class);
-        assertThat(error.getMessage()).contains("No se pudo leer el JSON de statisticsfeed.")
-                .doesNotContain("whoscored.test", "stageId", "tournamentOptions", "secret");
+        assertThat(error).isInstanceOfSatisfying(WhoScoredStatisticsException.class,
+                exception -> assertThat(exception).hasMessageContaining("No se pudo leer el JSON de statisticsfeed.")
+                        .doesNotContain("whoscored.test", "stageId", "tournamentOptions", "secret"));
         verify(driver).quit();
     }
 
@@ -72,9 +72,9 @@ class WhoScoredStatisticsAdapterFailureTest {
         var error = org.assertj.core.api.Assertions.catchThrowable(
                 () -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE));
 
-        assertThat(error).isInstanceOf(WhoScoredStatisticsException.class);
-        assertThat(error.getMessage()).isEqualTo("No se pudo leer el JSON de statisticsfeed.")
-                .doesNotContain("internal wait detail");
+        assertThat(error).isInstanceOfSatisfying(WhoScoredStatisticsException.class,
+                exception -> assertThat(exception).hasMessage("No se pudo leer el JSON de statisticsfeed.")
+                        .doesNotContain("internal wait detail"));
         verify(driver).quit();
     }
 
@@ -106,9 +106,9 @@ class WhoScoredStatisticsAdapterFailureTest {
         var error = org.assertj.core.api.Assertions.catchThrowable(
                 () -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE));
 
-        assertThat(error).isInstanceOf(WhoScoredStatisticsException.class);
-        assertThat(error.getMessage()).isEqualTo("No se pudo leer el JSON de statisticsfeed.")
-                .doesNotContain("privateToken", "secret", "malformed");
+        assertThat(error).isInstanceOfSatisfying(WhoScoredStatisticsException.class,
+                exception -> assertThat(exception).hasMessage("No se pudo leer el JSON de statisticsfeed.")
+                        .doesNotContain("privateToken", "secret", "malformed"));
         verify(driver).quit();
     }
 
