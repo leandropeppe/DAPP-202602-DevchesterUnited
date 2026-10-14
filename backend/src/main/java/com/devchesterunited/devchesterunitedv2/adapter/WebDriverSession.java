@@ -17,13 +17,25 @@ public final class WebDriverSession implements AutoCloseable {
     public static WebDriverSession open(WebDriverFactory factory) {
         Objects.requireNonNull(factory, "La fabrica WebDriver es obligatoria.");
         WebDriver driver = null;
+        boolean failureHandled = false;
+        boolean sessionCreated = false;
         try {
             driver = Objects.requireNonNull(factory.create(), "La fabrica no creo un WebDriver.");
             factory.configure(driver);
+            sessionCreated = true;
             return new WebDriverSession(driver);
-        } catch (RuntimeException | Error failure) {
+        } catch (RuntimeException failure) {
+            failureHandled = true;
             cerrarTrasFallo(driver, failure);
             throw failure;
+        } finally {
+            if (!sessionCreated && !failureHandled && driver != null) {
+                try {
+                    driver.quit();
+                } catch (RuntimeException ignored) {
+                    // Mantener el Error original como causa de la salida del metodo.
+                }
+            }
         }
     }
 

@@ -50,7 +50,7 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
     WhoScoredStatisticsAdapter(String baseUrl, ObjectMapper objectMapper,
             WebDriverFactory webDriverFactory,
             WhoScoredStatisticsConfiguration statisticsConfiguration) {
-        this.baseUrl = Objects.requireNonNull(baseUrl).replaceAll("/+$", "");
+        this.baseUrl = Objects.requireNonNull(baseUrl).replaceAll("/++$", "");
         this.objectMapper = Objects.requireNonNull(objectMapper);
         this.webDriverFactory = webDriverFactory;
         this.statisticsConfiguration = statisticsConfiguration;

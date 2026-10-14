@@ -92,9 +92,8 @@ class WhoScoredStatisticsAdapterCompletenessTest {
         String response = "{\"paging\":{\"currentPage\":1,\"totalPages\":1,"
                 + "\"resultsPerPage\":500,\"totalResults\":1},"
                 + "\"playerTableStats\":[{\"playerId\":101,\"name\":\"Ana Perez\",\"teamId\":201}]}";
-        return replacement.startsWith("\"totalResults\"")
-                ? response.replace("\"totalResults\":1", replacement)
-                : response.replace("\"currentPage\":1", replacement);
+        return response.replace(replacement.startsWith("\"totalResults\"")
+                ? "\"totalResults\":1" : "\"currentPage\":1", replacement);
     }
 
     @Test

@@ -20,6 +20,7 @@ import com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugado
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -80,7 +81,7 @@ class WhoscoredTeamEnrollmentReportServiceTest {
     }
 
     @Test
-    void generaUnaFilaPorEquipoYDejaCamposManualesVacios(@TempDir Path temp) throws Exception {
+    void generaUnaFilaPorEquipoYDejaCamposManualesVacios(@TempDir Path temp) throws IOException {
         var observed = new SnapshotEstadisticasJugador(CompeticionEstadistica.LA_LIGA,
                 List.of(crearRegistro(10, 77, "Man City"), crearRegistro(11, 77, "Man City")));
         when(proveedor.obtenerSnapshots(WhoscoredTeamEnrollmentReportService.COMPETICIONES)).thenReturn(List.of(observed));
@@ -104,7 +105,7 @@ class WhoscoredTeamEnrollmentReportServiceTest {
     }
 
     @Test
-    void siFallaElRankingDeUnEquipoPosteriorNoCreaCsvFinal(@TempDir Path temp) throws Exception {
+    void siFallaElRankingDeUnEquipoPosteriorNoCreaCsvFinal(@TempDir Path temp) {
         var first = new SnapshotEstadisticasJugador(CompeticionEstadistica.PREMIER_LEAGUE,
                 List.of(crearRegistro(10, 77, "City")));
         var second = new SnapshotEstadisticasJugador(CompeticionEstadistica.PREMIER_LEAGUE,

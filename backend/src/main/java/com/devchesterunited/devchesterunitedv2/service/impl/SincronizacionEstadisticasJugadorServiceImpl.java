@@ -174,7 +174,6 @@ public class SincronizacionEstadisticasJugadorServiceImpl
                 }
                 identidad = jugadores.resolver(registro.identidad(), equipo, snapshot.competicion());
             } catch (IdentidadEstadisticaNoResueltaException exception) {
-                if (exception.diagnosticos().isEmpty()) throw exception;
                 omitidos.addAll(exception.diagnosticos());
                 continue;
             }
@@ -210,7 +209,6 @@ public class SincronizacionEstadisticasJugadorServiceImpl
                         entry.getValue().competicion()).equipo());
             } catch (IdentidadEstadisticaNoResueltaException exception) {
                 errores.addAll(exception.diagnosticos());
-                if (exception.diagnosticos().isEmpty()) throw exception;
             }
         }
         if (!errores.isEmpty()) throw new IdentidadEstadisticaNoResueltaException(errores);
