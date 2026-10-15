@@ -1,0 +1,187 @@
+package com.devchesterunited.devchesterunitedv2.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.devchesterunited.devchesterunitedv2.modelo.EstadoMercado;
+import com.devchesterunited.devchesterunitedv2.service.dto.InicializacionMercadoResultado;
+import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationBootstrap;
+import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationCoordinator;
+import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationStateService;
+import java.lang.reflect.Field;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+class MarketInitializationCoordinatorTest {
+    private static final String MOTIVO_FALLO_BOOTSTRAP =
+            "Fallo durante bootstrap de inicializacion del mercado";
+
+    @Test
+    void iniciaEstadoYEjecutaBootstrapSinMarcarReady() {
+        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        InicializacionMercadoResultado iniciado = resultado(EstadoMercado.INITIALIZING, 2L);
+        when(estados.comenzarOReanudar()).thenReturn(iniciado);
+
+        var coordinador = new MarketInitializationCoordinator(estados, bootstrap);
+
+        assertThat(coordinador.coordinar()).isSameAs(iniciado);
+        verify(bootstrap).bootstrap();
+        verify(estados).comenzarOReanudar();
+        verify(estados, never()).marcarFailed(eq(2L), Mockito.anyString());
+    }
+
+    @Test
+    void noEjecutaBootstrapSiElMercadoYaEstaReady() {
+        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        InicializacionMercadoResultado listo = resultado(EstadoMercado.READY, 5L);
+        when(estados.comenzarOReanudar()).thenReturn(listo);
+
+        var coordinador = new MarketInitializationCoordinator(estados, bootstrap);
+
+        assertThat(coordinador.coordinar()).isSameAs(listo);
+        verify(bootstrap, never()).bootstrap();
+    }
+
+    @Test
+    void registraFailedConElEpochDelIntentoYPropagaElErrorOriginal() {
+        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        InicializacionMercadoResultado iniciado = resultado(EstadoMercado.INITIALIZING, 4L);
+        IllegalStateException original = new IllegalStateException("fallo del bootstrap");
+        when(estados.comenzarOReanudar()).thenReturn(iniciado);
+        doThrow(original).when(bootstrap).bootstrap();
+
+        var coordinador = new MarketInitializationCoordinator(estados, bootstrap);
+
+        assertThatThrownBy(coordinador::coordinar)
+                .isSameAs(original);
+        verify(estados).marcarFailed(4L, MOTIVO_FALLO_BOOTSTRAP);
+    }
+
+    @Test
+    void estadoInesperadoNoEjecutaBootstrapNiRegistraFailed() {
+        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        when(estados.comenzarOReanudar()).thenReturn(resultado(EstadoMercado.UNINITIALIZED, 1L));
+
+        var coordinador = new MarketInitializationCoordinator(estados, bootstrap);
+
+        assertThatThrownBy(coordinador::coordinar)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Estado inesperado");
+        verify(bootstrap, never()).bootstrap();
+        verify(estados, never()).marcarFailed(Mockito.anyLong(), Mockito.anyString());
+    }
+
+    @Test
+    void conservaElErrorOriginalSiFallaElRegistroDeFailed() {
+        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        InicializacionMercadoResultado iniciado = resultado(EstadoMercado.INITIALIZING, 4L);
+        IllegalStateException original = new IllegalStateException("fallo del bootstrap");
+        IllegalStateException falloPersistencia = new IllegalStateException("fallo al persistir");
+        when(estados.comenzarOReanudar()).thenReturn(iniciado);
+        doThrow(original).when(bootstrap).bootstrap();
+        when(estados.marcarFailed(4L, MOTIVO_FALLO_BOOTSTRAP))
+                .thenThrow(falloPersistencia);
+
+        var coordinador = new MarketInitializationCoordinator(estados, bootstrap);
+
+        assertThatThrownBy(coordinador::coordinar)
+                .isSameAs(original);
+        assertThat(original.getSuppressed()).containsExactly(falloPersistencia);
+    }
+
+    @Test
+    void dosInvocacionesNoEjecutanBootstrapSimultaneamente() throws Exception {
+        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        InicializacionMercadoResultado iniciado = resultado(EstadoMercado.INITIALIZING, 2L);
+        CountDownLatch bootstrapIniciado = new CountDownLatch(1);
+        CountDownLatch liberarBootstrap = new CountDownLatch(1);
+        CountDownLatch segundaInvocacionIniciada = new CountDownLatch(1);
+        AtomicReference<Thread> segundoHilo = new AtomicReference<>();
+        AtomicInteger activos = new AtomicInteger();
+        AtomicInteger maximosActivos = new AtomicInteger();
+        when(estados.comenzarOReanudar()).thenReturn(iniciado);
+        doAnswer(invocacion -> {
+            int actuales = activos.incrementAndGet();
+            maximosActivos.accumulateAndGet(actuales, Math::max);
+            bootstrapIniciado.countDown();
+            liberarBootstrap.await(10, TimeUnit.SECONDS);
+            activos.decrementAndGet();
+            return null;
+        }).when(bootstrap).bootstrap();
+
+        var coordinador = new MarketInitializationCoordinator(estados, bootstrap);
+        ReentrantLock lock = lockDelCoordinador(coordinador);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<?> primero = executor.submit(coordinador::coordinar);
+            assertThat(bootstrapIniciado.await(10, TimeUnit.SECONDS)).isTrue();
+            Future<?> segundo = executor.submit(() -> {
+                segundoHilo.set(Thread.currentThread());
+                segundaInvocacionIniciada.countDown();
+                coordinador.coordinar();
+            });
+            assertThat(segundaInvocacionIniciada.await(10, TimeUnit.SECONDS)).isTrue();
+            assertThat(esperarThreadEnCola(lock, segundoHilo.get()))
+                    .as("la segunda invocacion debe estar encolada en el ReentrantLock")
+                    .isTrue();
+            verify(bootstrap, Mockito.times(1)).bootstrap();
+            liberarBootstrap.countDown();
+            primero.get(10, TimeUnit.SECONDS);
+            segundo.get(10, TimeUnit.SECONDS);
+        } finally {
+            liberarBootstrap.countDown();
+            executor.shutdownNow();
+        }
+
+        assertThat(maximosActivos).hasValue(1);
+        verify(bootstrap, Mockito.times(2)).bootstrap();
+    }
+
+    private static boolean esperarThreadEnCola(ReentrantLock lock, Thread thread) {
+        long limite = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (System.nanoTime() < limite) {
+            if (lock.hasQueuedThread(thread)) {
+                return true;
+            }
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1));
+        }
+        return false;
+    }
+
+    private static ReentrantLock lockDelCoordinador(
+            MarketInitializationCoordinator coordinador) {
+        try {
+            Field field = MarketInitializationCoordinator.class
+                    .getDeclaredField("intentoEnCurso");
+            field.setAccessible(true);
+            return (ReentrantLock) field.get(coordinador);
+        } catch (ReflectiveOperationException exception) {
+            throw new AssertionError("No se pudo inspeccionar el lock del coordinador", exception);
+        }
+    }
+
+    private static InicializacionMercadoResultado resultado(EstadoMercado estado, long epoch) {
+        return new InicializacionMercadoResultado(estado, epoch, null);
+    }
+}
