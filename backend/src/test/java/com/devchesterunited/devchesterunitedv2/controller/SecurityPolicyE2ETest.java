@@ -57,6 +57,8 @@ class SecurityPolicyE2ETest extends PostgresTestSupport {
         jdbc.update("DELETE FROM equipos WHERE id IN (SELECT equipo_id FROM identidades_externas_equipo "
                 + "WHERE proveedor = 'FOOTBALL_DATA' AND external_id >= ?)", EQUIPO_BASE);
         for (UUID usuario : usuarios) {
+            jdbc.update("DELETE FROM market_initial_credit_grants WHERE user_id = ?", usuario);
+            jdbc.update("DELETE FROM market_credit_accounts WHERE user_id = ?", usuario);
             jdbc.update("DELETE FROM usuarios WHERE id = ?", usuario);
         }
         usuarios.clear();

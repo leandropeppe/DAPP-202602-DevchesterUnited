@@ -94,6 +94,12 @@ class AutenticacionIntegrationTest extends PostgresTestSupport {
     }
 
     private void limpiar(String nombre) {
+        jdbc.update("DELETE FROM market_initial_credit_grants WHERE user_id IN "
+                + "(SELECT id FROM usuarios WHERE username = ? OR email = ?)",
+                nombre, nombre + "@example.com");
+        jdbc.update("DELETE FROM market_credit_accounts WHERE user_id IN "
+                + "(SELECT id FROM usuarios WHERE username = ? OR email = ?)",
+                nombre, nombre + "@example.com");
         jdbc.update("DELETE FROM usuarios WHERE username = ? OR email = ?", nombre, nombre + "@example.com");
     }
 }

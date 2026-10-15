@@ -61,4 +61,12 @@ public class CuentaCreditosMercadoEntity {
     public BigDecimal getBalance() { return balance; }
     public Instant getCreadoEn() { return creadoEn; }
     public Instant getActualizadoEn() { return actualizadoEn; }
+
+    public void acreditar(BigDecimal importe, Instant momento) {
+        if (importe == null || importe.signum() <= 0 || importe.scale() > 2) {
+            throw new IllegalArgumentException("El importe a acreditar debe ser positivo.");
+        }
+        balance = balance.add(importe);
+        actualizadoEn = momento;
+    }
 }

@@ -142,7 +142,13 @@ class AuthE2ETest extends PostgresTestSupport {
 
     @AfterEach
     void limpiarFixtures() {
-        for (String nombre : registrados) jdbc.update("DELETE FROM usuarios WHERE username = ?", nombre);
+        for (String nombre : registrados) {
+            jdbc.update("DELETE FROM market_initial_credit_grants WHERE user_id IN "
+                    + "(SELECT id FROM usuarios WHERE username = ?)", nombre);
+            jdbc.update("DELETE FROM market_credit_accounts WHERE user_id IN "
+                    + "(SELECT id FROM usuarios WHERE username = ?)", nombre);
+            jdbc.update("DELETE FROM usuarios WHERE username = ?", nombre);
+        }
     }
 
     private ResultActions enviar(String endpoint, Object entrada) throws Exception {
