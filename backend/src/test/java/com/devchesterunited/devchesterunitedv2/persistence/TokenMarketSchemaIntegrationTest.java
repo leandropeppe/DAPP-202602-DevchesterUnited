@@ -64,6 +64,7 @@ class TokenMarketSchemaIntegrationTest extends PostgresTestSupport {
                 "market_state",
                 "market_token_issuances");
 
+        limpiarTokenMarketAntesDeVerificarEstadoInicial();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM market_state", Integer.class)).isZero();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM market_counterparties", Integer.class)).isZero();
     }
@@ -93,6 +94,7 @@ class TokenMarketSchemaIntegrationTest extends PostgresTestSupport {
 
     @Test
     void aplicaUnicidadYChecksDeDominio() {
+        limpiarTokenMarketAntesDeVerificarEstadoInicial();
         UUID counterpartyId = UUID.randomUUID();
         jdbc.update("INSERT INTO market_counterparties "
                 + "(id, counterparty_type, display_name, created_at) VALUES (?, 'SUPERUSER', 'Mercado', ?)",
@@ -117,6 +119,7 @@ class TokenMarketSchemaIntegrationTest extends PostgresTestSupport {
 
     @Test
     void aplicaFkCompuestasParaVersionesDeCotizacionYResultadoIdempotente() {
+        limpiarTokenMarketAntesDeVerificarEstadoInicial();
         UUID userId = UUID.randomUUID();
         UUID counterpartyId = UUID.randomUUID();
         UUID playerId = jdbc.queryForObject("SELECT id FROM jugadores ORDER BY id LIMIT 1", UUID.class);
@@ -189,6 +192,27 @@ class TokenMarketSchemaIntegrationTest extends PostgresTestSupport {
                   AND tc.constraint_type = 'FOREIGN KEY'
                   AND ccu.table_name LIKE ?
                 """, Integer.class, tableName, referencedTableFragment);
+    }
+
+    /**
+     * Varios tests comparten el contenedor PostgreSQL, pero estos escenarios verifican
+     * explícitamente el bootstrap del esquema desde cero. Se limpian solo tablas de
+     * Token Market y se respeta el orden de las claves foráneas.
+     */
+    private void limpiarTokenMarketAntesDeVerificarEstadoInicial() {
+        jdbc.update("DELETE FROM market_movements");
+        jdbc.update("DELETE FROM market_confirmed_transactions");
+        jdbc.update("DELETE FROM market_rejected_attempts");
+        jdbc.update("DELETE FROM market_idempotency_requests");
+        jdbc.update("DELETE FROM market_holdings");
+        jdbc.update("DELETE FROM market_realized_pnl");
+        jdbc.update("DELETE FROM market_quote_headers");
+        jdbc.update("DELETE FROM market_quote_versions");
+        jdbc.update("DELETE FROM market_initial_credit_grants");
+        jdbc.update("DELETE FROM market_token_issuances");
+        jdbc.update("DELETE FROM market_credit_accounts");
+        jdbc.update("DELETE FROM market_counterparties");
+        jdbc.update("DELETE FROM market_state");
     }
 
     private void assertConstraintViolation(String expectedSqlState, Runnable operation) {

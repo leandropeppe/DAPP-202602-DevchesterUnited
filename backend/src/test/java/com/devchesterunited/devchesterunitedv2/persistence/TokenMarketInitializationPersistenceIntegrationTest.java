@@ -41,6 +41,10 @@ class TokenMarketInitializationPersistenceIntegrationTest extends PostgresTestSu
             jdbc.update("DELETE FROM jugadores WHERE id = ?", fixture.playerId());
             jdbc.update("DELETE FROM usuarios WHERE id = ?", fixture.userId());
         }
+        for (Fixture fixture : fixtures) {
+            jdbc.update("DELETE FROM market_counterparties WHERE id = ?",
+                    fixture.counterpartyId());
+        }
         fixtures.clear();
     }
 
