@@ -103,12 +103,12 @@ description: "Lista de tareas para la implementación de Token Market"
 
 **Prueba independiente**: Las cotizaciones iniciales operan antes de que exista Player Valuation; los reemplazos, invalidaciones, vencimientos y publicaciones concurrentes rechazan versiones aceptadas obsoletas sin sustituir precios.
 
-- [ ] T037 [P] [US8] Agregar pruebas unitarias para versiones inmutables de cotización, reemplazo de la cabecera actual, invalidación explícita, cotización inicial no expirable, política de vigencia dinámica y aceptación de versión exacta en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T038 Agregar pruebas PostgreSQL/Testcontainers para publicación/invalidación concurrente de cotizaciones frente a la validación del mercado y la restricción de fuente única de verdad en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
+- [x] T037 [P] [US8] Agregar pruebas unitarias para versiones inmutables de cotización, reemplazo de la cabecera actual, invalidación explícita, cotización inicial no expirable, política de vigencia dinámica y aceptación de versión exacta en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [x] T038 Agregar pruebas PostgreSQL/Testcontainers para publicación/invalidación concurrente de cotizaciones frente a la validación del mercado y la restricción de fuente única de verdad en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
 - [x] T039 Implementar persistencia y repositorios de versiones/cabeceras de cotizaciones bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/`, distinguiendo versiones inmutables de la referencia/estado de la cotización actual por jugador.
 - [x] T040 Implementar servicios internos de publicación/consumo de cotizaciones bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/` y `service/interfaces/`, compartiendo la misma fuente para la siembra inicial y la publicación dinámica futura.
-- [ ] T041 Implementar la validación exacta de cotizaciones en el servicio de operaciones de mercado bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, rechazando versiones reemplazadas, invalidadas, vencidas o ausentes sin sustitución automática.
-- [ ] T042 Agregar el punto de integración con Player Valuation y pruebas de contrato bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`, documentando que valoración es responsable de estrategia/cálculo/histórico mientras Token Market solo consume y registra referencias.
+- [x] T041 Implementar la validación exacta de cotizaciones en el servicio de operaciones de mercado bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, rechazando versiones reemplazadas, invalidadas, vencidas o ausentes sin sustitución automática.
+- [x] T042 Agregar el punto de integración con Player Valuation y pruebas de contrato bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`, documentando que valoración es responsable de estrategia/cálculo/histórico mientras Token Market solo consume y registra referencias.
 
 **Punto de control**: Token Market tiene una única fuente de cotizaciones, ningún algoritmo de valoración y semántica de ejecución con versión exacta.
 

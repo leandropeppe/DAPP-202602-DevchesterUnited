@@ -8,9 +8,12 @@ import com.devchesterunited.devchesterunitedv2.persistence.dto.VersionCotizacion
 import com.devchesterunited.devchesterunitedv2.persistence.dto.VersionCotizacionMercadoId;
 import com.devchesterunited.devchesterunitedv2.persistence.mapper.VersionCotizacionMercadoMapper;
 import com.devchesterunited.devchesterunitedv2.service.dto.QuotePublicationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.QuoteValidityStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.QuotePublicationPort;
+import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -83,14 +86,51 @@ public class QuotePublicationService implements QuotePublicationPort {
     }
 
     @Override
+    @Transactional
+    public QuoteInvalidationResult invalidate(QuoteInvalidationRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("La solicitud de invalidacion es obligatoria.");
+        }
+        // Publication and invalidation use the same lock order: player, then header.
+        lockPlayer(request.playerId());
+        CabeceraCotizacionMercadoEntity header = cabeceras
+                .findByJugadorIdForUpdate(request.playerId())
+                .orElseThrow(() -> quoteUnavailable("La cabecera de cotizacion no existe."));
+
+        if (request.quoteId().equals(header.getQuoteId())
+                && request.version() == header.getVersionActual()
+                && "INVALIDATED".equals(header.getEstadoVigencia())) {
+            return invalidationResult(header);
+        }
+        if (!request.quoteId().equals(header.getQuoteId())
+                || request.version() != header.getVersionActual()
+                || !"VALID".equals(header.getEstadoVigencia())) {
+            throw quoteUnavailable("La cotizacion ya no es la referencia vigente.");
+        }
+
+        VersionCotizacionMercadoEntity entity = versiones.findExact(
+                        request.playerId(), request.quoteId(), request.version())
+                .orElseThrow(() -> quoteUnavailable("La version de cotizacion no existe."));
+        QuoteVersion current = mapper.toDomain(entity);
+        Instant now = canonicalTimestamp(clock.instant());
+        if (!current.isValidAt(now)) {
+            throw quoteUnavailable("La cotizacion ya no esta vigente.");
+        }
+
+        header.invalidar(now, request.reason());
+        cabeceras.saveAndFlush(header);
+        return invalidationResult(header);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Optional<QuoteVersion> currentQuote(UUID playerId) {
         if (playerId == null) {
             return Optional.empty();
         }
         return cabeceras.findById(playerId)
-                .flatMap(this::versionForHeader)
-                .map(mapper::toDomain);
+                .flatMap(header -> versionForHeader(header)
+                        .map(version -> toEffectiveDomain(version, header.getEstadoVigencia())));
     }
 
     @Override
@@ -139,13 +179,37 @@ public class QuotePublicationService implements QuotePublicationPort {
             throw new IllegalStateException(
                     "La cotización inicial persistida es incompatible con el contrato.");
         }
-        return mapper.toDomain(initial);
+        return toEffectiveDomain(initial, header.getEstadoVigencia());
     }
 
     private Optional<VersionCotizacionMercadoEntity> versionForHeader(
             CabeceraCotizacionMercadoEntity header) {
         return versiones.findById(new VersionCotizacionMercadoId(
                 header.getQuoteId(), header.getVersionActual()));
+    }
+
+    private QuoteInvalidationResult invalidationResult(CabeceraCotizacionMercadoEntity header) {
+        return new QuoteInvalidationResult(
+                header.getJugadorId(), header.getQuoteId(), header.getVersionActual(),
+                QuoteValidityStatus.INVALIDATED, header.getInvalidatedAt(),
+                header.getInvalidationReason());
+    }
+
+    private QuoteVersion toEffectiveDomain(VersionCotizacionMercadoEntity entity,
+            String headerStatus) {
+        QuoteVersion quote = mapper.toDomain(entity);
+        if (!"INVALIDATED".equals(headerStatus)
+                || quote.validityStatus() == QuoteValidityStatus.INVALIDATED) {
+            return quote;
+        }
+        return new QuoteVersion(quote.quoteId(), quote.version(), quote.playerId(),
+                quote.pricePerToken(), quote.publishedAt(), quote.validFrom(),
+                quote.validUntil(), QuoteValidityStatus.INVALIDATED,
+                quote.strategyReference());
+    }
+
+    private static TokenMarketException quoteUnavailable(String message) {
+        return new TokenMarketException(TokenMarketException.Reason.QUOTE_UNAVAILABLE, message);
     }
 
     private void lockPlayer(UUID playerId) {

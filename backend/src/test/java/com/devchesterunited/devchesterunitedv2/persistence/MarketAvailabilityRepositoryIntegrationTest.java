@@ -29,6 +29,7 @@ class MarketAvailabilityRepositoryIntegrationTest extends PostgresTestSupport {
     private UUID validPlayer;
     private UUID historicalPlayer;
     private UUID absentPlayer;
+    private UUID invalidatedPlayer;
     private String previousStatus;
     private Long previousEpoch;
 
@@ -45,11 +46,13 @@ class MarketAvailabilityRepositoryIntegrationTest extends PostgresTestSupport {
         validPlayer = UUID.randomUUID();
         historicalPlayer = UUID.randomUUID();
         absentPlayer = UUID.randomUUID();
+        invalidatedPlayer = UUID.randomUUID();
         jdbc.update("INSERT INTO equipos (id, name, league, is_active, created_at, updated_at) "
                 + "VALUES (?, 'Availability Team', 'Availability League', TRUE, ?, ?)", teamId, DB_NOW, DB_NOW);
         insertPlayer(validPlayer, "Valid Player");
         insertPlayer(historicalPlayer, "Historical Player");
         insertPlayer(absentPlayer, "Absent Quote Player");
+        insertPlayer(invalidatedPlayer, "Invalidated Quote Player");
         UUID validQuote = UUID.randomUUID();
         jdbc.update("INSERT INTO market_quote_versions "
                 + "(quote_id, version, player_id, price_per_token, published_at, valid_from, valid_until, validity_status, created_at) "
@@ -65,6 +68,16 @@ class MarketAvailabilityRepositoryIntegrationTest extends PostgresTestSupport {
                 DB_NOW.minusSeconds(3600), DB_NOW.minusSeconds(60), DB_NOW);
         jdbc.update("INSERT INTO market_quote_headers (player_id, quote_id, current_version, updated_at) "
                 + "VALUES (?, ?, 1, ?)", historicalPlayer, expiredQuote, DB_NOW);
+        UUID invalidatedQuote = UUID.randomUUID();
+        jdbc.update("INSERT INTO market_quote_versions "
+                + "(quote_id, version, player_id, price_per_token, published_at, valid_from, valid_until, validity_status, created_at) "
+                + "VALUES (?, 1, ?, 1.10, ?, ?, NULL, 'VALID', ?)",
+                invalidatedQuote, invalidatedPlayer, DB_NOW.minusSeconds(60),
+                DB_NOW.minusSeconds(60), DB_NOW);
+        jdbc.update("INSERT INTO market_quote_headers "
+                + "(player_id, quote_id, current_version, updated_at, validity_status, invalidated_at, invalidation_reason) "
+                + "VALUES (?, ?, 1, ?, 'INVALIDATED', ?, 'stale-feed')",
+                invalidatedPlayer, invalidatedQuote, DB_NOW, DB_NOW.minusSeconds(1));
     }
 
     @AfterEach
@@ -82,6 +95,18 @@ class MarketAvailabilityRepositoryIntegrationTest extends PostgresTestSupport {
                 .singleElement().satisfies(player -> {
                     assertThat(player.quoteAvailability()).isEqualTo(MarketQuoteAvailability.HISTORICAL);
                     assertThat(player.operable()).isFalse();
+                });
+    }
+
+    @Test
+    void consultaAgregadaNoPresentaUnaCotizacionInvalidadaComoComprable() {
+        var result = availability.consultarJugadores(1, 100);
+
+        assertThat(result.jugadores()).filteredOn(player -> player.playerId().equals(invalidatedPlayer))
+                .singleElement().satisfies(player -> {
+                    assertThat(player.quoteAvailability()).isEqualTo(MarketQuoteAvailability.HISTORICAL);
+                    assertThat(player.operable()).isFalse();
+                    assertThat(player.validityStatus()).isEqualTo("INVALIDATED");
                 });
     }
 

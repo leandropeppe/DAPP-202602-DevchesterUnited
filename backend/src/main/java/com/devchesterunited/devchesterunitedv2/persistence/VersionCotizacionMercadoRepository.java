@@ -28,11 +28,12 @@ public interface VersionCotizacionMercadoRepository
             + "and cotizacion.id.version = :version "
             + "and cotizacion.estadoVigencia = 'VALID' "
             + "and cotizacion.validoDesde <= :momento "
-            + "and (cotizacion.validoHasta is null or cotizacion.validoHasta >= :momento) "
+            + "and (cotizacion.validoHasta is null or cotizacion.validoHasta > :momento) "
             + "and exists (select cabecera from CabeceraCotizacionMercadoEntity cabecera "
             + "where cabecera.jugadorId = cotizacion.jugadorId "
             + "and cabecera.quoteId = cotizacion.id.quoteId "
-            + "and cabecera.versionActual = cotizacion.id.version)")
+            + "and cabecera.versionActual = cotizacion.id.version "
+            + "and cabecera.estadoVigencia = 'VALID')")
     Optional<VersionCotizacionMercadoEntity> findExactVigente(
             @Param("jugadorId") UUID jugadorId, @Param("quoteId") UUID quoteId,
             @Param("version") Long version, @Param("momento") Instant momento);

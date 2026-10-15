@@ -35,11 +35,11 @@ class TokenMarketSchemaIntegrationTest extends PostgresTestSupport {
 
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void aplicaV16DespuesDeV15YExponeElEsquemaCompleto() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("16");
+    void aplicaV16YV17DespuesDeV15YExponeElEsquemaCompleto() {
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("17");
         assertThat(jdbc.queryForList(
-                "SELECT version FROM flyway_schema_history WHERE version IN ('15', '16') ORDER BY version",
-                String.class)).containsExactly("15", "16");
+                "SELECT version FROM flyway_schema_history WHERE version IN ('15', '16', '17') ORDER BY version",
+                String.class)).containsExactly("15", "16", "17");
 
         List<String> tables = jdbc.queryForList("""
                 SELECT table_name
@@ -175,8 +175,8 @@ class TokenMarketSchemaIntegrationTest extends PostgresTestSupport {
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void flywayPuedeReejecutarseSinCrearNuevasMigraciones() {
         flyway.migrate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("16");
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE version = '16'",
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("17");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE version = '17'",
                 Integer.class)).isEqualTo(1);
     }
 

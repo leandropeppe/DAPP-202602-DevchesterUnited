@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import com.devchesterunited.devchesterunitedv2.service.dto.QuotePublicationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.QuoteValidityStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.QuotePublicationPort;
@@ -43,6 +45,75 @@ class QuotePublicationPortContractTest {
         assertThat(initial.pricePerToken()).isEqualByComparingTo("1.00");
         assertThat(initial.validUntil()).isNull();
         assertThat(initial.isValidAt(PUBLISHED_AT.plus(DurationHolder.ONE_DAY))).isTrue();
+    }
+
+    @Test
+    void historicalVersionRemainsReadableButIsNotTheCurrentVersion() {
+        InMemoryQuotePublicationPort port = new InMemoryQuotePublicationPort();
+
+        QuoteVersion initial = port.publishInitialQuote(PLAYER_ID, new BigDecimal("1.00"), true);
+        QuoteVersion replacement = port.publish(new QuotePublicationRequest(
+                PLAYER_ID, new BigDecimal("1.25"), PUBLISHED_AT.plusSeconds(60),
+                PUBLISHED_AT.plusSeconds(60), null, " valuation-v1 "));
+
+        assertThat(port.currentQuote(PLAYER_ID)).contains(replacement);
+        assertThat(port.find(initial.quoteId(), initial.version())).contains(initial);
+        assertThat(port.find(initial.quoteId(), initial.version())).contains(initial);
+    }
+
+    @Test
+    void externalValuationPublisherUsesOnlyThePublicationPortContract() {
+        QuotePublicationPort tokenMarket = new InMemoryQuotePublicationPort();
+        BigDecimal calculatedPrice = new BigDecimal("2.35");
+        Instant publishedAt = PUBLISHED_AT.plusSeconds(60);
+
+        QuoteVersion published = tokenMarket.publish(new QuotePublicationRequest(
+                PLAYER_ID, calculatedPrice, publishedAt, publishedAt,
+                publishedAt.plusSeconds(3600), "valuation-strategy-v3"));
+
+        assertThat(published.pricePerToken()).isEqualByComparingTo(calculatedPrice);
+        assertThat(published.strategyReference()).isEqualTo("valuation-strategy-v3");
+        assertThat(published.validFrom()).isEqualTo(publishedAt);
+        assertThat(published.validUntil()).isEqualTo(publishedAt.plusSeconds(3600));
+        assertThat(tokenMarket.currentQuote(PLAYER_ID)).contains(published);
+    }
+
+    @Test
+    void validityStatusesAndExpirationBoundaryNeverAcceptAnObsoleteQuote() {
+        Instant validUntil = PUBLISHED_AT.plusSeconds(60);
+
+        QuoteVersion valid = quote(QuoteValidityStatus.VALID, validUntil);
+        QuoteVersion replaced = quote(QuoteValidityStatus.REPLACED, null);
+        QuoteVersion invalidated = quote(QuoteValidityStatus.INVALIDATED, null);
+        QuoteVersion expired = quote(QuoteValidityStatus.EXPIRED, validUntil.plusSeconds(60));
+
+        assertThat(valid.isValidAt(PUBLISHED_AT.plusSeconds(59))).isTrue();
+        assertThat(valid.isValidAt(validUntil)).isFalse();
+        assertThat(replaced.isValidAt(PUBLISHED_AT.plusSeconds(1))).isFalse();
+        assertThat(invalidated.isValidAt(PUBLISHED_AT.plusSeconds(1))).isFalse();
+        assertThat(expired.isValidAt(PUBLISHED_AT.plusSeconds(1))).isFalse();
+    }
+
+    @Test
+    void exactQuoteIdentityAndVersionAreRequiredForRecovery() {
+        InMemoryQuotePublicationPort port = new InMemoryQuotePublicationPort();
+        QuoteVersion initial = port.publishInitialQuote(PLAYER_ID, new BigDecimal("1.00"), true);
+
+        assertThat(port.find(initial.quoteId(), initial.version())).contains(initial);
+        assertThat(port.find(UUID.randomUUID(), initial.version())).isEmpty();
+        assertThat(port.find(initial.quoteId(), initial.version() + 1)).isEmpty();
+    }
+
+    @Test
+    void publicationRequestNormalizesPriceDatesAndStrategyReference() {
+        QuotePublicationRequest request = new QuotePublicationRequest(
+                PLAYER_ID, new BigDecimal("1.2"), PUBLISHED_AT,
+                PUBLISHED_AT, PUBLISHED_AT.plusSeconds(60), "  valuation-v2  ");
+
+        assertThat(request.pricePerToken()).isEqualByComparingTo("1.20");
+        assertThat(request.publishedAt()).isEqualTo(PUBLISHED_AT);
+        assertThat(request.validFrom()).isEqualTo(PUBLISHED_AT);
+        assertThat(request.strategyReference()).isEqualTo("valuation-v2");
     }
 
     @Test
@@ -142,6 +213,11 @@ class QuotePublicationPortContractTest {
         }
 
         @Override
+        public QuoteInvalidationResult invalidate(QuoteInvalidationRequest request) {
+            throw new UnsupportedOperationException("No forma parte de este contrato de publicacion.");
+        }
+
+        @Override
         public Optional<QuoteVersion> currentQuote(UUID playerId) {
             List<QuoteVersion> versions = quotes.get(playerId);
             return versions == null || versions.isEmpty()
@@ -157,6 +233,11 @@ class QuotePublicationPortContractTest {
                             && candidate.version() == version)
                     .findFirst();
         }
+    }
+
+    private static QuoteVersion quote(QuoteValidityStatus status, Instant validUntil) {
+        return new QuoteVersion(UUID.randomUUID(), 1, PLAYER_ID, new BigDecimal("1.00"),
+                PUBLISHED_AT, PUBLISHED_AT, validUntil, status, null);
     }
 
     private static final class DurationHolder {
