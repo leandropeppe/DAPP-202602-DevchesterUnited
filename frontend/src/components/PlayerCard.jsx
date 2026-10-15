@@ -80,6 +80,14 @@ const PLAYER_SILHOUETTES = {
     purple: '/images/player-silhouette-purple.png'
 }
 
+const LEAGUE_LOGOS = {
+    'Premier League': '/images/leagues/premier-league.png',
+    LaLiga: '/images/leagues/la-liga.png',
+    'Serie A': '/images/leagues/serie-a.png',
+    Bundesliga: '/images/leagues/bundesliga.png',
+    'Ligue 1': '/images/leagues/ligue-1.png'
+}
+
 function noInfo (value) {
     return value === null || value === undefined || value === ''
         ? 'Sin información'
@@ -116,19 +124,24 @@ function TrophyIcon () {
         >
             <path
                 d="
-          M8 3h8v3h3v3
-          c0 3-2 5-5 5h-1v3h4v2H7v-2h4v-3h-1
-          c-3 0-5-2-5-5V6h3V3Z
-        "
+                    M8 3h8v3h3v3
+                    c0 3-2 5-5 5h-1v3h4v2H7v-2h4v-3h-1
+                    c-3 0-5-2-5-5V6h3V3Z
+                "
             />
         </svg>
     )
 }
 
-export default function PlayerCard ({ player, onOpen, interactive = true }) {
+export default function PlayerCard ({
+                                        player,
+                                        onOpen,
+                                        interactive = true
+                                    }) {
     const CardElement = interactive ? 'a' : 'article'
     const theme = getPlayerTheme(player)
     const countryCode = getCountryCode(player.nationality)
+    const leagueLogo = LEAGUE_LOGOS[player.league]
 
     const silhouetteSrc =
         PLAYER_SILHOUETTES[theme] ?? PLAYER_SILHOUETTES.blue
@@ -171,8 +184,8 @@ export default function PlayerCard ({ player, onOpen, interactive = true }) {
                 </strong>
 
                 <span>
-          {getPositionAbbreviation(player.position)}
-        </span>
+                    {getPositionAbbreviation(player.position)}
+                </span>
             </div>
 
             <div
@@ -193,23 +206,33 @@ export default function PlayerCard ({ player, onOpen, interactive = true }) {
 
                 <div className="player-card__metadata">
                     <div>
-            <span className="player-card__icon player-card__icon--outline">
-              <ShieldIcon/>
-            </span>
+                        <span className="player-card__icon player-card__icon--outline">
+                            <ShieldIcon />
+                        </span>
 
                         <span>
-              {noInfo(player.team)}
-            </span>
+                            {noInfo(player.team)}
+                        </span>
                     </div>
 
                     <div>
-            <span className="player-card__icon">
-              <TrophyIcon/>
-            </span>
+                        <span className="player-card__icon">
+                            {leagueLogo
+                                ? (
+                                    <img
+                                        src={leagueLogo}
+                                        alt=""
+                                        className="player-card__league-logo"
+                                    />
+                                )
+                                : (
+                                    <TrophyIcon />
+                                )}
+                        </span>
 
                         <span>
-              {noInfo(player.league)}
-            </span>
+                            {noInfo(player.league)}
+                        </span>
                     </div>
 
                     <div>
@@ -223,13 +246,13 @@ export default function PlayerCard ({ player, onOpen, interactive = true }) {
                             )
                             : (
                                 <span className="player-card__icon">
-                  ◉
-                </span>
+                                    ◉
+                                </span>
                             )}
 
                         <span>
-              {noInfo(player.nationality)}
-            </span>
+                            {noInfo(player.nationality)}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -240,7 +263,7 @@ export default function PlayerCard ({ player, onOpen, interactive = true }) {
                     aria-hidden="true"
                 >
                     <span>
-                      Ver estadísticas
+                        Ver estadísticas
                     </span>
 
                     <strong>

@@ -5,6 +5,7 @@
 
     position: relative;
 
+
     min-width: 0;
     min-height: 410px;
 
@@ -408,6 +409,13 @@
     box-shadow: none;
 
     object-fit: contain;
+}
+
+.player-card__league-logo {
+    width: 25px;
+    height: 25px;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 
 @media (hover: hover) and (pointer: fine) {
