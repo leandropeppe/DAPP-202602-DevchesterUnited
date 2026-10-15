@@ -5,6 +5,7 @@ import { getPlayers } from '../api/http.js'
 import { errorMessage } from './formUtils.js'
 
 const EMPTY_FILTERS = { league: '', team: '', position: '' }
+const CATALOG_FILTER_NAMES = Object.keys(EMPTY_FILTERS)
 
 const LEAGUE_OPTIONS = [
   'Premier League',
@@ -21,9 +22,34 @@ const POSITION_OPTIONS = [
   'Forward'
 ]
 
+function readCatalogLocation () {
+  const params = new URLSearchParams(window.location.search)
+  const filters = Object.fromEntries(
+    CATALOG_FILTER_NAMES.map((name) => [name, params.get(name) || ''])
+  )
+  const parsedPage = Number.parseInt(params.get('page') || '1', 10)
+
+  return {
+    filters,
+    page: Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1
+  }
+}
+
+function catalogUrl (filters, page) {
+  const params = new URLSearchParams()
+  for (const name of CATALOG_FILTER_NAMES) {
+    if (filters[name]) params.set(name, filters[name])
+  }
+  if (page > 1) params.set('page', String(page))
+
+  const query = params.toString()
+  return '/catalogo' + (query ? `?${query}` : '')
+}
+
 export default function CatalogPage ({ onNavigate = () => {} }) {
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
-  const [page, setPage] = useState(1)
+  const initialLocation = readCatalogLocation()
+  const [filters, setFilters] = useState(initialLocation.filters)
+  const [page, setPage] = useState(initialLocation.page)
 
   const [catalog, setCatalog] = useState({
     players: [],
@@ -73,7 +99,16 @@ export default function CatalogPage ({ onNavigate = () => {} }) {
   }, [])
 
   useEffect(() => {
-    loadPlayers(1, EMPTY_FILTERS)
+    function syncFromLocation () {
+      const location = readCatalogLocation()
+      setFilters(location.filters)
+      setPage(location.page)
+      loadPlayers(location.page, location.filters)
+    }
+
+    syncFromLocation()
+    window.addEventListener('popstate', syncFromLocation)
+    return () => window.removeEventListener('popstate', syncFromLocation)
   }, [loadPlayers])
 
   function updateFilter (event) {
@@ -86,17 +121,21 @@ export default function CatalogPage ({ onNavigate = () => {} }) {
   function submitFilters (event) {
     event.preventDefault()
 
+    window.history.pushState({}, '', catalogUrl(filters, 1))
     setPage(1)
     loadPlayers(1, filters)
   }
 
   function clearFilters () {
-    setFilters(EMPTY_FILTERS)
+    const nextFilters = { ...EMPTY_FILTERS }
+    window.history.pushState({}, '', catalogUrl(nextFilters, 1))
+    setFilters(nextFilters)
     setPage(1)
-    loadPlayers(1, EMPTY_FILTERS)
+    loadPlayers(1, nextFilters)
   }
 
   function changePage (nextPage) {
+    window.history.pushState({}, '', catalogUrl(filters, nextPage))
     setPage(nextPage)
     loadPlayers(nextPage, filters)
   }

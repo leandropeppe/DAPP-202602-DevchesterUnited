@@ -75,11 +75,13 @@ export default function PlayerDetailPage ({ playerId, onNavigate }) {
 
   function goBack (event) {
     event.preventDefault()
-    onNavigate('/catalogo')
+    onNavigate(window.history.state?.catalogReturn || '/catalogo')
   }
 
+  const catalogReturn = window.history.state?.catalogReturn || '/catalogo'
+
   if (state.status === 'loading') return <StatusMessage type="info">Cargando detalle del jugador…</StatusMessage>
-  if (state.status === 'error' || !player) return <section className="player-detail"><h1>No se pudo cargar el jugador</h1><StatusMessage type="error">{state.message || 'Jugador no encontrado.'}</StatusMessage><a className="button button--secondary player-detail__back" href="/catalogo" onClick={goBack}>Volver al catálogo</a></section>
+  if (state.status === 'error' || !player) return <section className="player-detail"><h1>No se pudo cargar el jugador</h1><StatusMessage type="error">{state.message || 'Jugador no encontrado.'}</StatusMessage><a className="button button--secondary player-detail__back" href={catalogReturn} onClick={goBack}>Volver al catálogo</a></section>
 
   const statistics = player.statistics
   const familyKey = { ataque: 'ofensivas', defensa: 'defensivas', pases: 'pases' }[activeTab]
@@ -89,7 +91,7 @@ export default function PlayerDetailPage ({ playerId, onNavigate }) {
   return <section className="player-detail" aria-labelledby="player-detail-title">
     <div className="player-detail__hero">
       <div className="player-detail__stadium" aria-hidden="true" />
-      <a className="player-detail__back-link" href="/catalogo" onClick={goBack}>← Volver al catálogo</a>
+      <a className="player-detail__back-link" href={catalogReturn} onClick={goBack}>← Volver al catálogo</a>
       <div className="player-detail__heading"><p className="eyebrow">Detalle del jugador</p><h1 id="player-detail-title">{displayValue(player.name)}</h1><p>{displayValue(player.team)} · {displayValue(player.league)}</p></div>
       <div className="player-detail__hero-layout"><div className="player-detail__player-card"><PlayerCard player={player} interactive={false} /></div><div className="player-detail__overview">
         <div className="player-detail__identity-grid">

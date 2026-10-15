@@ -14,7 +14,17 @@ const ROUTES = new Set(['/registro', '/login', '/catalogo'])
 const PLAYER_DETAIL_ROUTE = /^\/catalogo\/jugadores\/([^/]+)$/
 function resolveRoute (pathname) { return ROUTES.has(pathname) || PLAYER_DETAIL_ROUTE.test(pathname) ? pathname : '/login' }
 function playerIdFromRoute (route) { return route.match(PLAYER_DETAIL_ROUTE)?.[1] || '' }
-export function navigate (pathname) { window.history.pushState({}, '', pathname); window.dispatchEvent(new PopStateEvent('popstate')) }
+export function navigate (pathname) {
+  const catalogReturn = window.location.pathname === '/catalogo'
+    ? window.location.pathname + window.location.search
+    : null
+  const state = catalogReturn && /^\/catalogo\/jugadores\//.test(pathname)
+    ? { catalogReturn }
+    : {}
+
+  window.history.pushState(state, '', pathname)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
 
 function Application () {
   const [route, setRoute] = useState(() => resolveRoute(window.location.pathname))
