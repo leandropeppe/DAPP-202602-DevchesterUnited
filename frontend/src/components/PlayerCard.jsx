@@ -55,6 +55,10 @@ const COUNTRY_CODES = {
     Wales: 'GB'
 }
 
+export function getCountryCode (nationality) {
+    return COUNTRY_CODES[nationality]
+}
+
 const POSITION_THEMES = {
     Goalkeeper: 'green',
     Defender: 'red',
@@ -124,7 +128,7 @@ function TrophyIcon () {
 export default function PlayerCard ({ player, onOpen, interactive = true }) {
     const CardElement = interactive ? 'a' : 'article'
     const theme = getPlayerTheme(player)
-    const countryCode = COUNTRY_CODES[player.nationality]
+    const countryCode = getCountryCode(player.nationality)
 
     const silhouetteSrc =
         PLAYER_SILHOUETTES[theme] ?? PLAYER_SILHOUETTES.blue

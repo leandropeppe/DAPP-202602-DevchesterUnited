@@ -171,7 +171,22 @@ public class JugadorController {
                 estadisticas.tackles(),
                 estadisticas.valoracion(),
                 estadisticas.tarjetasAmarillas(),
-                estadisticas.tarjetasRojas());
+                estadisticas.tarjetasRojas(),
+                estadisticas.generales() == null ? null : new EstadisticasJugadorResponseDTO.Generales(
+                        estadisticas.generales().apps(), estadisticas.generales().subOn(), estadisticas.generales().minsPlayed(),
+                        estadisticas.generales().manOfTheMatch(), estadisticas.generales().aerialWonPerGame(), estadisticas.generales().rating(),
+                        estadisticas.generales().yellowCard(), estadisticas.generales().redCard()),
+                estadisticas.ofensivas() == null ? null : new EstadisticasJugadorResponseDTO.Ofensivas(
+                        estadisticas.ofensivas().goal(), estadisticas.ofensivas().assistTotal(), estadisticas.ofensivas().shotsPerGame(),
+                        estadisticas.ofensivas().keyPassPerGame(), estadisticas.ofensivas().dribbleWonPerGame(), estadisticas.ofensivas().foulGivenPerGame(),
+                        estadisticas.ofensivas().offsideGivenPerGame(), estadisticas.ofensivas().dispossessedPerGame(), estadisticas.ofensivas().turnoverPerGame()),
+                estadisticas.defensivas() == null ? null : new EstadisticasJugadorResponseDTO.Defensivas(
+                        estadisticas.defensivas().tacklePerGame(), estadisticas.defensivas().interceptionPerGame(), estadisticas.defensivas().foulsPerGame(),
+                        estadisticas.defensivas().offsideWonPerGame(), estadisticas.defensivas().clearancePerGame(), estadisticas.defensivas().wasDribbledPerGame(),
+                        estadisticas.defensivas().outfielderBlockPerGame(), estadisticas.defensivas().goalOwn()),
+                estadisticas.pases() == null ? null : new EstadisticasJugadorResponseDTO.Pases(
+                        estadisticas.pases().totalPassesPerGame(), estadisticas.pases().passSuccess(), estadisticas.pases().accurateCrossesPerGame(),
+                        estadisticas.pases().accurateLongPassPerGame(), estadisticas.pases().accurateThroughBallPerGame()));
     }
 
     private static void validarParametros(HttpServletRequest request) {

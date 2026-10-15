@@ -35,6 +35,26 @@ public class EstadisticasJugadorEntity {
     private Integer tarjetasAmarillas;
     @Column(name = "tarjetas_rojas")
     private Integer tarjetasRojas;
+    private Integer apps;
+    @Column(name = "sub_on") private Integer subOn;
+    @Column(name = "man_of_the_match") private Integer manOfTheMatch;
+    @Column(name = "aerial_won_per_game") private BigDecimal aerialWonPerGame;
+    @Column(name = "foul_given_per_game") private BigDecimal foulGivenPerGame;
+    @Column(name = "offside_given_per_game") private BigDecimal offsideGivenPerGame;
+    @Column(name = "dispossessed_per_game") private BigDecimal dispossessedPerGame;
+    @Column(name = "turnover_per_game") private BigDecimal turnoverPerGame;
+    @Column(name = "interception_per_game") private BigDecimal interceptionPerGame;
+    @Column(name = "fouls_per_game") private BigDecimal foulsPerGame;
+    @Column(name = "offside_won_per_game") private BigDecimal offsideWonPerGame;
+    @Column(name = "clearance_per_game") private BigDecimal clearancePerGame;
+    @Column(name = "was_dribbled_per_game") private BigDecimal wasDribbledPerGame;
+    @Column(name = "outfielder_block_per_game") private BigDecimal outfielderBlockPerGame;
+    @Column(name = "goal_own") private Integer goalOwn;
+    @Column(name = "total_passes_per_game") private BigDecimal totalPassesPerGame;
+    @Column(name = "pass_success") private BigDecimal passSuccess;
+    @Column(name = "accurate_crosses_per_game") private BigDecimal accurateCrossesPerGame;
+    @Column(name = "accurate_long_pass_per_game") private BigDecimal accurateLongPassPerGame;
+    @Column(name = "accurate_through_ball_per_game") private BigDecimal accurateThroughBallPerGame;
     @Column(name = "sync_id", nullable = false)
     private UUID syncId;
     @Column(name = "created_at", nullable = false)
@@ -58,6 +78,26 @@ public class EstadisticasJugadorEntity {
         this.valoracion = creation.valoracion;
         this.tarjetasAmarillas = creation.tarjetasAmarillas;
         this.tarjetasRojas = creation.tarjetasRojas;
+        this.apps = creation.apps;
+        this.subOn = creation.subOn;
+        this.manOfTheMatch = creation.manOfTheMatch;
+        this.aerialWonPerGame = creation.aerialWonPerGame;
+        this.foulGivenPerGame = creation.foulGivenPerGame;
+        this.offsideGivenPerGame = creation.offsideGivenPerGame;
+        this.dispossessedPerGame = creation.dispossessedPerGame;
+        this.turnoverPerGame = creation.turnoverPerGame;
+        this.interceptionPerGame = creation.interceptionPerGame;
+        this.foulsPerGame = creation.foulsPerGame;
+        this.offsideWonPerGame = creation.offsideWonPerGame;
+        this.clearancePerGame = creation.clearancePerGame;
+        this.wasDribbledPerGame = creation.wasDribbledPerGame;
+        this.outfielderBlockPerGame = creation.outfielderBlockPerGame;
+        this.goalOwn = creation.goalOwn;
+        this.totalPassesPerGame = creation.totalPassesPerGame;
+        this.passSuccess = creation.passSuccess;
+        this.accurateCrossesPerGame = creation.accurateCrossesPerGame;
+        this.accurateLongPassPerGame = creation.accurateLongPassPerGame;
+        this.accurateThroughBallPerGame = creation.accurateThroughBallPerGame;
         this.syncId = creation.syncId;
         this.creadoEn = creation.creadoEn;
         this.actualizadoEn = creation.actualizadoEn;
@@ -77,6 +117,26 @@ public class EstadisticasJugadorEntity {
         private BigDecimal valoracion;
         private Integer tarjetasAmarillas;
         private Integer tarjetasRojas;
+        private Integer apps;
+        private Integer subOn;
+        private Integer manOfTheMatch;
+        private BigDecimal aerialWonPerGame;
+        private BigDecimal foulGivenPerGame;
+        private BigDecimal offsideGivenPerGame;
+        private BigDecimal dispossessedPerGame;
+        private BigDecimal turnoverPerGame;
+        private BigDecimal interceptionPerGame;
+        private BigDecimal foulsPerGame;
+        private BigDecimal offsideWonPerGame;
+        private BigDecimal clearancePerGame;
+        private BigDecimal wasDribbledPerGame;
+        private BigDecimal outfielderBlockPerGame;
+        private Integer goalOwn;
+        private BigDecimal totalPassesPerGame;
+        private BigDecimal passSuccess;
+        private BigDecimal accurateCrossesPerGame;
+        private BigDecimal accurateLongPassPerGame;
+        private BigDecimal accurateThroughBallPerGame;
         private UUID syncId;
         private Instant creadoEn;
         private Instant actualizadoEn;
@@ -97,6 +157,26 @@ public class EstadisticasJugadorEntity {
         public Creacion valoracion(BigDecimal value) { valoracion = value; return this; }
         public Creacion tarjetasAmarillas(Integer value) { tarjetasAmarillas = value; return this; }
         public Creacion tarjetasRojas(Integer value) { tarjetasRojas = value; return this; }
+        public Creacion apps(Integer value) { apps = value; return this; }
+        public Creacion subOn(Integer value) { subOn = value; return this; }
+        public Creacion manOfTheMatch(Integer value) { manOfTheMatch = value; return this; }
+        public Creacion aerialWonPerGame(BigDecimal value) { aerialWonPerGame = value; return this; }
+        public Creacion foulGivenPerGame(BigDecimal value) { foulGivenPerGame = value; return this; }
+        public Creacion offsideGivenPerGame(BigDecimal value) { offsideGivenPerGame = value; return this; }
+        public Creacion dispossessedPerGame(BigDecimal value) { dispossessedPerGame = value; return this; }
+        public Creacion turnoverPerGame(BigDecimal value) { turnoverPerGame = value; return this; }
+        public Creacion interceptionPerGame(BigDecimal value) { interceptionPerGame = value; return this; }
+        public Creacion foulsPerGame(BigDecimal value) { foulsPerGame = value; return this; }
+        public Creacion offsideWonPerGame(BigDecimal value) { offsideWonPerGame = value; return this; }
+        public Creacion clearancePerGame(BigDecimal value) { clearancePerGame = value; return this; }
+        public Creacion wasDribbledPerGame(BigDecimal value) { wasDribbledPerGame = value; return this; }
+        public Creacion outfielderBlockPerGame(BigDecimal value) { outfielderBlockPerGame = value; return this; }
+        public Creacion goalOwn(Integer value) { goalOwn = value; return this; }
+        public Creacion totalPassesPerGame(BigDecimal value) { totalPassesPerGame = value; return this; }
+        public Creacion passSuccess(BigDecimal value) { passSuccess = value; return this; }
+        public Creacion accurateCrossesPerGame(BigDecimal value) { accurateCrossesPerGame = value; return this; }
+        public Creacion accurateLongPassPerGame(BigDecimal value) { accurateLongPassPerGame = value; return this; }
+        public Creacion accurateThroughBallPerGame(BigDecimal value) { accurateThroughBallPerGame = value; return this; }
         public Creacion syncId(UUID value) { syncId = value; return this; }
         public Creacion creadoEn(Instant value) { creadoEn = value; return this; }
         public Creacion actualizadoEn(Instant value) { actualizadoEn = value; return this; }
@@ -115,6 +195,16 @@ public class EstadisticasJugadorEntity {
     public BigDecimal getValoracion() { return valoracion; }
     public Integer getTarjetasAmarillas() { return tarjetasAmarillas; }
     public Integer getTarjetasRojas() { return tarjetasRojas; }
+    public Integer getApps() { return apps; } public Integer getSubOn() { return subOn; }
+    public Integer getManOfTheMatch() { return manOfTheMatch; } public BigDecimal getAerialWonPerGame() { return aerialWonPerGame; }
+    public BigDecimal getFoulGivenPerGame() { return foulGivenPerGame; } public BigDecimal getOffsideGivenPerGame() { return offsideGivenPerGame; }
+    public BigDecimal getDispossessedPerGame() { return dispossessedPerGame; } public BigDecimal getTurnoverPerGame() { return turnoverPerGame; }
+    public BigDecimal getInterceptionPerGame() { return interceptionPerGame; } public BigDecimal getFoulsPerGame() { return foulsPerGame; }
+    public BigDecimal getOffsideWonPerGame() { return offsideWonPerGame; } public BigDecimal getClearancePerGame() { return clearancePerGame; }
+    public BigDecimal getWasDribbledPerGame() { return wasDribbledPerGame; } public BigDecimal getOutfielderBlockPerGame() { return outfielderBlockPerGame; }
+    public Integer getGoalOwn() { return goalOwn; } public BigDecimal getTotalPassesPerGame() { return totalPassesPerGame; }
+    public BigDecimal getPassSuccess() { return passSuccess; } public BigDecimal getAccurateCrossesPerGame() { return accurateCrossesPerGame; }
+    public BigDecimal getAccurateLongPassPerGame() { return accurateLongPassPerGame; } public BigDecimal getAccurateThroughBallPerGame() { return accurateThroughBallPerGame; }
     public UUID getSyncId() { return syncId; }
     public Instant getCreadoEn() { return creadoEn; }
     public Instant getActualizadoEn() { return actualizadoEn; }
@@ -131,6 +221,26 @@ public class EstadisticasJugadorEntity {
         this.valoracion = update.valoracion;
         this.tarjetasAmarillas = update.amarillas;
         this.tarjetasRojas = update.rojas;
+        this.apps = update.apps;
+        this.subOn = update.subOn;
+        this.manOfTheMatch = update.manOfTheMatch;
+        this.aerialWonPerGame = update.aerialWonPerGame;
+        this.foulGivenPerGame = update.foulGivenPerGame;
+        this.offsideGivenPerGame = update.offsideGivenPerGame;
+        this.dispossessedPerGame = update.dispossessedPerGame;
+        this.turnoverPerGame = update.turnoverPerGame;
+        this.interceptionPerGame = update.interceptionPerGame;
+        this.foulsPerGame = update.foulsPerGame;
+        this.offsideWonPerGame = update.offsideWonPerGame;
+        this.clearancePerGame = update.clearancePerGame;
+        this.wasDribbledPerGame = update.wasDribbledPerGame;
+        this.outfielderBlockPerGame = update.outfielderBlockPerGame;
+        this.goalOwn = update.goalOwn;
+        this.totalPassesPerGame = update.totalPassesPerGame;
+        this.passSuccess = update.passSuccess;
+        this.accurateCrossesPerGame = update.accurateCrossesPerGame;
+        this.accurateLongPassPerGame = update.accurateLongPassPerGame;
+        this.accurateThroughBallPerGame = update.accurateThroughBallPerGame;
         this.syncId = update.syncId;
         this.actualizadoEn = update.ahora;
     }
@@ -147,6 +257,26 @@ public class EstadisticasJugadorEntity {
         private BigDecimal valoracion;
         private Integer amarillas;
         private Integer rojas;
+        private Integer apps;
+        private Integer subOn;
+        private Integer manOfTheMatch;
+        private BigDecimal aerialWonPerGame;
+        private BigDecimal foulGivenPerGame;
+        private BigDecimal offsideGivenPerGame;
+        private BigDecimal dispossessedPerGame;
+        private BigDecimal turnoverPerGame;
+        private BigDecimal interceptionPerGame;
+        private BigDecimal foulsPerGame;
+        private BigDecimal offsideWonPerGame;
+        private BigDecimal clearancePerGame;
+        private BigDecimal wasDribbledPerGame;
+        private BigDecimal outfielderBlockPerGame;
+        private Integer goalOwn;
+        private BigDecimal totalPassesPerGame;
+        private BigDecimal passSuccess;
+        private BigDecimal accurateCrossesPerGame;
+        private BigDecimal accurateLongPassPerGame;
+        private BigDecimal accurateThroughBallPerGame;
         private UUID syncId;
         private Instant ahora;
 
@@ -164,6 +294,26 @@ public class EstadisticasJugadorEntity {
         public Actualizacion valoracion(BigDecimal value) { valoracion = value; return this; }
         public Actualizacion amarillas(Integer value) { amarillas = value; return this; }
         public Actualizacion rojas(Integer value) { rojas = value; return this; }
+        public Actualizacion apps(Integer value) { apps = value; return this; }
+        public Actualizacion subOn(Integer value) { subOn = value; return this; }
+        public Actualizacion manOfTheMatch(Integer value) { manOfTheMatch = value; return this; }
+        public Actualizacion aerialWonPerGame(BigDecimal value) { aerialWonPerGame = value; return this; }
+        public Actualizacion foulGivenPerGame(BigDecimal value) { foulGivenPerGame = value; return this; }
+        public Actualizacion offsideGivenPerGame(BigDecimal value) { offsideGivenPerGame = value; return this; }
+        public Actualizacion dispossessedPerGame(BigDecimal value) { dispossessedPerGame = value; return this; }
+        public Actualizacion turnoverPerGame(BigDecimal value) { turnoverPerGame = value; return this; }
+        public Actualizacion interceptionPerGame(BigDecimal value) { interceptionPerGame = value; return this; }
+        public Actualizacion foulsPerGame(BigDecimal value) { foulsPerGame = value; return this; }
+        public Actualizacion offsideWonPerGame(BigDecimal value) { offsideWonPerGame = value; return this; }
+        public Actualizacion clearancePerGame(BigDecimal value) { clearancePerGame = value; return this; }
+        public Actualizacion wasDribbledPerGame(BigDecimal value) { wasDribbledPerGame = value; return this; }
+        public Actualizacion outfielderBlockPerGame(BigDecimal value) { outfielderBlockPerGame = value; return this; }
+        public Actualizacion goalOwn(Integer value) { goalOwn = value; return this; }
+        public Actualizacion totalPassesPerGame(BigDecimal value) { totalPassesPerGame = value; return this; }
+        public Actualizacion passSuccess(BigDecimal value) { passSuccess = value; return this; }
+        public Actualizacion accurateCrossesPerGame(BigDecimal value) { accurateCrossesPerGame = value; return this; }
+        public Actualizacion accurateLongPassPerGame(BigDecimal value) { accurateLongPassPerGame = value; return this; }
+        public Actualizacion accurateThroughBallPerGame(BigDecimal value) { accurateThroughBallPerGame = value; return this; }
         public Actualizacion syncId(UUID value) { syncId = value; return this; }
         public Actualizacion ahora(Instant value) { ahora = value; return this; }
     }

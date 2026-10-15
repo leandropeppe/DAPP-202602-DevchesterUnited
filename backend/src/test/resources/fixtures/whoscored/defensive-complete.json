@@ -1,0 +1,4 @@
+{
+  "paging": {"currentPage": 1, "totalPages": 1, "totalResults": 1, "resultsPerPage": 500},
+  "playerTableStats": [{"playerId": 101, "name": "Ana Perez", "teamId": 201, "teamName": "Equipo A", "tacklePerGame": 1.7, "interceptionPerGame": 0.9, "foulsPerGame": 0.6, "offsideWonPerGame": 0.1, "clearancePerGame": 2.2, "wasDribbledPerGame": 0.3, "outfielderBlockPerGame": 0.2, "goalOwn": 0}]
+}

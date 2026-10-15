@@ -1,0 +1,4 @@
+{
+  "paging": {"currentPage": 1, "totalPages": 1, "totalResults": 1, "resultsPerPage": 500},
+  "playerTableStats": [{"playerId": 101, "name": "Ana Perez", "teamId": 201, "teamName": "Equipo A", "apps": 12, "subOn": 1, "minsPlayed": 900, "manOfTheMatch": 2, "aerialWonPerGame": 1.2, "rating": 7.2, "yellowCard": 1, "redCard": 0}]
+}

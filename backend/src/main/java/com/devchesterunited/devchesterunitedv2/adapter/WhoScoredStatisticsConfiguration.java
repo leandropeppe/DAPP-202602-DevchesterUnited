@@ -18,6 +18,7 @@ public class WhoScoredStatisticsConfiguration {
     private String field;
     private boolean minApp;
     private int numberOfPlayersToPick;
+    private boolean passingEnabled;
     private Map<String, CompetitionParameters> competitions = new HashMap<>();
 
     public String getEndpoint() { return endpoint; }
@@ -34,6 +35,8 @@ public class WhoScoredStatisticsConfiguration {
     public void setMinApp(boolean value) { this.minApp = value; }
     public int getNumberOfPlayersToPick() { return numberOfPlayersToPick; }
     public void setNumberOfPlayersToPick(int value) { this.numberOfPlayersToPick = value; }
+    public boolean isPassingEnabled() { return passingEnabled; }
+    public void setPassingEnabled(boolean value) { this.passingEnabled = value; }
     public Map<String, CompetitionParameters> getCompetitions() { return competitions; }
     public void setCompetitions(Map<String, CompetitionParameters> value) {
         this.competitions = value == null ? new HashMap<>() : value;

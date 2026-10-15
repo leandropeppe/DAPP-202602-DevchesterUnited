@@ -1,309 +1,239 @@
-# Especificación de Funcionalidad: Sincronización de Estadísticas de Jugadores
+# Especificación de Funcionalidad: Sincronización Completa de Estadísticas de Jugadores
 
 **Rama de Funcionalidad (Feature Branch)**: `002-player-statistics-sync`
 
-**Fecha de Creación**: 2026-10-03
+**Fecha de Creación**: 2026-10-15
 
 **Estado**: Draft
 
-**Entrada**: Descripción del usuario: "Crear el Feature 2 correspondiente a la obtención y sincronización de estadísticas de jugadores desde WhoScored, como parte de la segunda entrega de Devchester United."
+**Entrada**: Descripción del usuario: "Ampliar la feature existente 002-player-statistics-sync para completar el modelo de estadísticas de jugadores obtenido desde WhoScored, consolidando summary, offensive, defensive y passing, evolucionando la persistencia, la API y las cuatro pestañas del detalle del jugador, sin implementar valorización."
+
+## Contexto y objetivo
+
+Esta ampliación completa el dataset de estadísticas de jugadores que ya se sincroniza desde WhoScored. Debe preservar el comportamiento vigente de adquisición, asociación de jugadores, idempotencia, atomicidad y conservación del último estado local válido.
+
+El resultado esperado es una única representación consolidada por jugador con 30 métricas, organizada en cuatro familias de dominio: generales, ofensivas, defensivas y pases. La separación por familias facilita que una futura feature de valorización seleccione y pondere métricas sin conocer el formato externo.
+
+## Clarifications
+
+### Session 2026-10-15
+
+- Q: Cuando una nueva sincronización omite legítimamente una métrica que antes tenía valor, ¿debe reemplazarse el valor persistido por `null`? → A: Sí; una sincronización válida reemplaza el valor anterior por `null`.
+- Q: ¿Qué convención de nombres debe usar la respuesta pública para las cuatro familias y sus métricas? → A: Familias y métricas en español `camelCase`, alineadas con el dominio.
 
 ## Escenarios de Usuario y Pruebas *(obligatorio)*
 
-### User Story 1 - Obtener estadísticas de las ligas soportadas (Prioridad: P1)
+### User Story 1 - Sincronizar las cuatro familias de WhoScored (Prioridad: P1)
 
-Como responsable autorizado de la plataforma, quiero ejecutar una sincronización de estadísticas desde WhoScored para las cinco principales ligas europeas, de modo que el sistema disponga de información actualizada de todos los jugadores disponibles.
+Como responsable autorizado de la plataforma, quiero sincronizar las familias `summary`, `offensive`, `defensive` y `passing` para disponer del conjunto completo de estadísticas de cada jugador.
 
-**Por qué esta prioridad**: Es el objetivo principal de la feature y habilita que las funcionalidades posteriores de cotización utilicen información estadística vigente.
+**Por qué esta prioridad**: Es el objetivo central de la ampliación y habilita datos completos para las funcionalidades posteriores.
 
-**Prueba Independiente**: Con una fuente externa controlada que contenga jugadores de las cinco competiciones, se ejecuta una sincronización y se verifica que cada jugador disponible quede representado con sus estadísticas generales, ofensivas y defensivas cuando la fuente las proporcione.
+**Prueba Independiente**: Con respuestas externas controladas para las cuatro familias, ejecutar una sincronización y verificar que cada jugador válido queda asociado a las 30 métricas, conservando `null` cuando una estadística no fue informada legítimamente.
 
 **Escenarios de Aceptación**:
 
-1. **Dado** que la fuente externa dispone de jugadores de Premier League, La Liga, Serie A, Bundesliga y Ligue 1, **cuando** se ejecuta una sincronización válida, **entonces** el sistema procesa las cinco competiciones y deja disponibles las estadísticas obtenidas para cada jugador disponible.
-2. **Dado** que una competición contiene una cantidad de jugadores distinta en dos ejecuciones, **cuando** se ejecuta la segunda sincronización, **entonces** el sistema procesa todos los jugadores disponibles en esa ejecución sin depender de una cantidad prefijada.
-3. **Dado** que la fuente entrega información general, ofensiva y defensiva en conjuntos separados, **cuando** se normalizan los datos, **entonces** las tres familias quedan asociadas al jugador correspondiente.
+1. **Dado** que las cuatro familias entregan datos válidos para un jugador, **cuando** se ejecuta la sincronización, **entonces** el jugador queda con 8 métricas generales, 9 ofensivas, 8 defensivas y 5 de pases.
+2. **Dado** que una familia contiene una métrica que también aparece en otra, **cuando** se consolida el jugador, **entonces** existe una sola métrica conceptual y persistente con la familia propietaria definida.
+3. **Dado** que `passSuccess` vale `86.44`, **cuando** se consulta la estadística, **entonces** se conserva como 86.44 por ciento y no como 0.8644.
 
 ---
 
-### User Story 2 - Mantener estadísticas consistentes y sin duplicados (Prioridad: P1)
+### User Story 2 - Mantener sincronización idempotente y consistente (Prioridad: P1)
 
-Como consumidor de los datos de jugadores, quiero que cada sincronización actualice los registros correspondientes sin duplicarlos, para poder utilizar información confiable en funcionalidades posteriores.
+Como consumidor del catálogo, quiero que la sincronización actualice el único registro estadístico del jugador sin crear duplicados ni exponer estados parciales.
 
-**Por qué esta prioridad**: La consistencia del catálogo estadístico es necesaria para que cualquier cálculo futuro de cotización parta de una única representación vigente por jugador.
+**Por qué esta prioridad**: La confiabilidad de la fuente local es necesaria para el uso posterior del dataset.
 
-**Prueba Independiente**: Se ejecuta una sincronización, se repite sin cambios en la fuente y luego se ejecuta otra con cambios en algunas estadísticas; se comprueba que no aparecen duplicados, que los datos sin cambios permanecen equivalentes y que los modificados se actualizan.
+**Prueba Independiente**: Sincronizar dos veces el mismo jugador, cambiar una métrica en la segunda ejecución y verificar que se actualiza el registro único, que las demás métricas se conservan correctamente y que un fallo no reemplaza el último estado válido.
 
 **Escenarios de Aceptación**:
 
-1. **Dado** que un jugador ya posee estadísticas sincronizadas, **cuando** una nueva sincronización contiene información actualizada del mismo jugador, **entonces** se actualiza su información existente sin crear una segunda representación.
-2. **Dado** que los datos externos no cambiaron, **cuando** se repite la sincronización, **entonces** el estado local final es equivalente al estado anterior y no se generan duplicados.
-3. **Dado** que un mismo jugador aparece en distintos conjuntos de información de la fuente, **cuando** se completa la asociación, **entonces** sus estadísticas se consolidan en un único registro lógico.
+1. **Dado** un jugador ya sincronizado, **cuando** se repite la sincronización con datos iguales, **entonces** queda una única representación consolidada.
+2. **Dado** un jugador ya sincronizado, **cuando** llega una actualización válida, **entonces** se actualizan sus estadísticas sin crear otra fila ni otra representación por familia.
+3. **Dado** que una de las cuatro familias falla, **cuando** termina la sincronización, **entonces** se informa el fallo, no se publican datos parciales y permanece el último estado local válido.
 
 ---
 
-### User Story 3 - Conservar el último estado válido ante fallos (Prioridad: P1)
+### User Story 3 - Consultar el detalle estadístico del jugador (Prioridad: P1)
 
-Como responsable de la plataforma, quiero que una sincronización fallida no exponga resultados parciales ni elimine estadísticas válidas, para mantener la confiabilidad de la información disponible.
+Como consumidor del catálogo, quiero consultar el detalle local de un jugador con sus estadísticas organizadas por familia, sin depender en tiempo real de WhoScored.
 
-**Por qué esta prioridad**: La disponibilidad de datos locales confiables debe mantenerse aunque WhoScored esté indisponible, devuelva información inválida o falle el procesamiento.
+**Por qué esta prioridad**: Expone el dataset consolidado a los consumidores y mantiene la lectura disponible aunque el proveedor externo no responda.
 
-**Prueba Independiente**: Se parte de un estado local válido, se provoca un fallo durante la obtención, normalización o persistencia y se verifica que los consumidores sigan viendo el estado válido anterior, sin mezclas parciales.
+**Prueba Independiente**: Consultar jugadores con las 30 métricas, con valores ausentes legítimos, sin estadísticas y con identificadores inexistentes.
 
 **Escenarios de Aceptación**:
 
-1. **Dado** un conjunto de estadísticas locales válido, **cuando** la fuente externa no está disponible, **entonces** la sincronización informa el fallo y conserva sin cambios el último estado local válido.
-2. **Dado** que una sincronización falla después de haber procesado parte de la información, **cuando** termina la operación, **entonces** no quedan visibles actualizaciones parciales ni una combinación inconsistente de datos nuevos y antiguos.
-3. **Dado** que la fuente devuelve información incompleta, inválida o imposible de asociar, **cuando** se intenta sincronizar, **entonces** el sistema rechaza la sincronización afectada, conserva el estado local anterior y no persiste registros corruptos.
+1. **Dado** un jugador activo con estadísticas persistidas, **cuando** se consulta su detalle, **entonces** la respuesta contiene `statistics` con las cuatro familias y sus métricas públicas.
+2. **Dado** que falta legítimamente una métrica, **cuando** se consulta el detalle, **entonces** esa métrica se representa como `null` sin inventar un valor.
+3. **Dado** un jugador sin estadísticas persistidas, **cuando** se consulta el detalle, **entonces** la respuesta mantiene `statistics: null`.
+4. **Dado** un identificador inexistente, un jugador inactivo o un equipo inactivo, **cuando** se consulta el detalle, **entonces** responde como en el contrato vigente para un recurso no disponible.
+
+---
+
+### User Story 4 - Explorar las cuatro categorías en el frontend (Prioridad: P1)
+
+Como usuario del catálogo, quiero navegar entre Resumen, Ataque, Defensa y Pases para encontrar las estadísticas agrupadas de forma comprensible.
+
+**Por qué esta prioridad**: Completa el valor visible de la sincronización y permite revisar todo el dataset sin sobrecargar una sola vista.
+
+**Prueba Independiente**: Abrir el detalle de un jugador con estadísticas, activar cada pestaña y verificar su contenido, estado activo y respuesta ante estadísticas ausentes o errores de carga.
+
+**Escenarios de Aceptación**:
+
+1. **Dado** un detalle cargado correctamente, **cuando** el usuario selecciona Resumen, Ataque, Defensa o Pases, **entonces** la pestaña se activa y muestra las métricas de su familia de forma coherente con el diseño existente.
+2. **Dado** un detalle con `statistics: null`, **cuando** se visualiza el jugador, **entonces** se informa la ausencia sin mostrar datos inventados.
+3. **Dado** un error o una carga en curso, **cuando** se abre el detalle, **entonces** se muestra el estado correspondiente y una acción clara para volver al catálogo.
+
+---
+
+### User Story 5 - Conservar el catálogo y la identidad existente (Prioridad: P2)
+
+Como responsable de la plataforma, quiero que la ampliación reutilice el matching y la sincronización existentes para no alterar jugadores ya válidos ni crear representaciones alternativas.
+
+**Por qué esta prioridad**: Reduce el riesgo de regresión en una feature ya operativa.
+
+**Prueba Independiente**: Ejecutar los escenarios vigentes de ligas, matching, detalle, ausencia de estadísticas y catálogo, comprobando que sus resultados no se deterioran.
+
+**Escenarios de Aceptación**:
+
+1. **Dado** un jugador identificado por el flujo vigente, **cuando** se sincronizan las cuatro familias, **entonces** sus estadísticas se asocian al mismo jugador existente.
+2. **Dado** el catálogo actual, **cuando** se despliega la ampliación, **entonces** se conservan su navegación, identidad y datos básicos.
 
 ### Casos límite
 
-- Una competición puede devolver cero jugadores disponibles; la sincronización debe distinguir ese resultado de un fallo de obtención y aplicar únicamente un resultado que haya sido validado como completo y válido.
-- La cantidad de jugadores puede aumentar o disminuir entre ejecuciones; el procesamiento debe incluir todos los disponibles sin truncar el resultado por una cantidad esperada.
-- Un jugador puede no disponer legítimamente de determinados valores estadísticos en la fuente; dicha ausencia no debe interpretarse como un fallo de sincronización ni debe completarse con valores inventados. La ausencia esperada de información debe distinguirse de la imposibilidad de obtener una familia de estadísticas requerida para completar la sincronización.
-- La misma persona puede aparecer repetida dentro de la información externa; la sincronización no debe crear duplicados locales.
-- Una estadística puede no estar informada para un jugador; el sistema no debe inventar valores y debe conservar la ausencia de información de forma coherente.
-- Puede ocurrir un fallo antes, durante o después del procesamiento de una competición; el resultado visible debe seguir siendo el último estado local válido.
-- Una sincronización repetida puede coincidir con otra en curso; el comportamiento de concurrencia deberá definirse durante el diseño técnico sin comprometer la atomicidad ni producir duplicados.
-
-## Extension de lectura del catalogo
-
-### User Story 4 - Consultar el detalle persistido de un jugador (Prioridad: P1)
-
-Como consumidor del catalogo, quiero consultar el detalle de un jugador con sus
-estadisticas ya sincronizadas, para obtener una respuesta local sin depender en
-tiempo real de WhoScored.
-
-**Prueba Independiente**: Con un jugador activo de un equipo activo, verificar
-que el endpoint devuelva el detalle y las estadisticas persistidas; repetir con
-un jugador sin fila de estadisticas y con jugadores inexistentes o inactivos.
-
-**Escenarios de Aceptacion**:
-
-1. **Dado** un jugador activo de un equipo activo con estadisticas persistidas,
-   **cuando** se consulta `GET /api/v1/players/{id}` usando `ply_<uuid>`,
-   **entonces** responde HTTP 200 con el detalle del jugador y un objeto
-   `statistics` con las metricas persistidas.
-2. **Dado** un jugador activo de un equipo activo sin estadisticas persistidas,
-   **cuando** se consulta su detalle, **entonces** responde HTTP 200 y
-   `statistics` es `null`.
-3. **Dado** un identificador inexistente, de un jugador inactivo o de un jugador
-   cuyo equipo esta inactivo, **cuando** se consulta el detalle, **entonces**
-   responde HTTP 404.
-4. **Dado** cualquier consulta de detalle, **entonces** los datos se obtienen
-   exclusivamente de la persistencia local y no se consulta WhoScored, no se
-   ejecuta Selenium ni se inicia una sincronizacion.
-
----
-
-### User Story 5 - Visualizar estadisticas desde el catalogo (Prioridad: P1)
-
-Como usuario del catalogo, quiero seleccionar un jugador y consultar su detalle
-con sus estadisticas, para conocer su rendimiento desde la interfaz sin buscar
-manualmente un identificador ni depender de una fuente externa.
-
-**Por que esta prioridad**: Completa el flujo visible de la feature y permite
-utilizar el detalle estadistico ya disponible desde la experiencia principal del
-catalogo.
-
-**Prueba Independiente**: Con un jugador del catalogo con estadisticas, otro
-sin estadisticas y un identificador inexistente, seleccionar cards, verificar la
-navegacion al detalle, los datos mostrados y los estados de error o ausencia.
-
-**Escenarios de Aceptacion**:
-
-1. **Dado** un jugador visible en el catalogo, **cuando** el usuario selecciona
-   su card, **entonces** se abre la pagina de detalle correspondiente y se
-   consulta el endpoint de detalle existente para ese jugador.
-2. **Dado** un detalle con estadisticas, **cuando** termina la carga, **entonces**
-   se muestran los datos basicos disponibles y minutos jugados, goles,
-   asistencias, tiros, pases clave, regates, tackles, valoracion, tarjetas
-   amarillas y tarjetas rojas.
-3. **Dado** un detalle sin estadisticas, **cuando** la respuesta indica
-   `statistics = null`, **entonces** la interfaz informa claramente que no hay
-   estadisticas disponibles sin inventar ni ocultar los datos basicos del jugador.
-4. **Dado** que la consulta esta en curso, **cuando** se muestra la pagina de
-   detalle, **entonces** la interfaz presenta un estado de carga comprensible.
-5. **Dado** que el jugador no existe o la consulta falla, **cuando** se recibe el
-   error, **entonces** la interfaz informa el problema y ofrece una forma clara
-   de volver al catalogo.
-6. **Dado** la pagina de detalle abierta, **cuando** el usuario utiliza la accion
-   de volver, **entonces** regresa al catalogo sin quedar bloqueado en el detalle.
-
----
-
-### User Story 6 - Identificar jugadores por nacionalidad en el catalogo (Prioridad: P2)
-
-Como usuario del catalogo, quiero ver la nacionalidad en cada card, para
-identificar al jugador sin mostrar un dorsal que no representa un dato fiable.
-
-**Por que esta prioridad**: Corrige una representacion enganosa del catalogo y
-utiliza un dato de jugador ya disponible, sin ampliar la adquisicion externa.
-
-**Prueba Independiente**: Con jugadores cuya nacionalidad esta disponible y con
-un dorsal ausente, verificar que las cards muestran nacionalidad y no muestran
-el dorsal ni un valor `0` como sustituto.
-
-**Escenarios de Aceptacion**:
-
-1. **Dado** un jugador con nacionalidad disponible, **cuando** se muestra su
-   card, **entonces** se visualiza la nacionalidad en el lugar destinado a la
-   identificacion complementaria.
-2. **Dado** un jugador cuyo dorsal no esta disponible, **cuando** se muestra su
-   card, **entonces** no aparece el dorsal ni un `0` derivado de una ausencia.
-3. **Dado** el cambio de presentacion de la card, **cuando** se carga el
-   catalogo, **entonces** no se realizan cambios en scraping, matching,
-   sincronizacion ni fuentes de datos para obtener el dorsal.
+- Una respuesta puede omitir legítimamente una métrica; se conserva `null`.
+- Una familia puede repetir `minsPlayed`, `rating`, `assistTotal`, `keyPassPerGame` o `passSuccess`; no se crean atributos ni columnas conceptuales duplicados.
+- La ausencia o fallo de una familia completa no debe confundirse con la ausencia de una métrica individual: el fallo de adquisición invalida la sincronización lógica y conserva el estado anterior.
+- Una respuesta externa puede estar vacía, incompleta, inválida o contener un jugador no asociable; se aplican las reglas vigentes de validación y matching.
+- Una sincronización concurrente o repetida no debe crear duplicados ni hacer visibles actualizaciones parciales.
+- Un valor decimal puede requerir una escala decimal consistente, pero no debe interpretarse como normalización estadística a `[0,1]`.
 
 ## Requisitos *(obligatorio)*
 
 ### Requisitos Funcionales
 
-- **FR-001**: El sistema DEBE obtener estadísticas de todos los jugadores disponibles de cada una de las siguientes competiciones: Premier League, La Liga, Serie A, Bundesliga y Ligue 1.
-- **FR-002**: El sistema DEBE procesar la cantidad de jugadores que la fuente externa entregue en cada ejecución, sin asumir una cantidad fija por competición.
-- **FR-003**: El sistema DEBE obtener y normalizar, como mínimo, la posición del jugador, minutos jugados, goles, asistencias, tiros, pases clave, regates, tackles, valoración general, tarjetas amarillas y tarjetas rojas.
-- **FR-004**: El sistema DEBE contemplar información estadística general, ofensiva y defensiva necesaria para las estrategias posteriores de valoración.
-- **FR-005**: Las estadísticas sincronizadas DEBEN conservar su significado individual y permanecer desacopladas de las reglas que posteriormente determinen su peso o impacto sobre la cotización de un jugador.- **FR-006**: El sistema DEBE actualizar las estadísticas de jugadores existentes cuando la nueva información corresponda al mismo jugador.
-- **FR-007**: El sistema DEBE evitar la creación de duplicados cuando un jugador ya fue sincronizado o cuando aparece en más de un conjunto de información.
-- **FR-008**: El sistema DEBE producir un resultado idempotente cuando los datos externos no hayan cambiado.
-- **FR-009**: El sistema DEBE procesar los datos de manera controlada, sin requerir mantener simultáneamente en memoria la totalidad de jugadores de las cinco competiciones.
-- **FR-010**: Cada sincronización DEBE tratarse como una única operación lógica sobre los datos persistidos.
-- **FR-011**: El sistema NO DEBE hacer visibles actualizaciones parciales si la sincronización no puede completarse correctamente.
-- **FR-012**: Ante un fallo de sincronización, el sistema DEBE conservar los últimos datos locales válidos previamente disponibles.
-- **FR-013**: Los errores, respuestas inválidas o indisponibilidad de WhoScored DEBEN gestionarse sin corromper, eliminar ni reemplazar parcialmente la información local válida.
-- **FR-014**: El mecanismo de obtención de datos externos DEBE permanecer desacoplado del caso de uso de sincronización.
-- **FR-015**: El caso de uso DEBE poder utilizar otro mecanismo de obtención de datos sin modificar su lógica funcional de sincronización.
-- **FR-016**: Los datos sincronizados DEBEN quedar disponibles para su utilización posterior por las funcionalidades de cotización, sin incluir en esta feature reglas de valorización.
-- **FR-017**: El sistema DEBE asociar las estadísticas obtenidas al Jugador existente correspondiente y NO DEBE crear una representación alternativa de Jugador como parte del modelo estadístico.
+- **FR-001**: El sistema DEBE conservar el alcance vigente de sincronización de las cinco competiciones soportadas y procesar todos los jugadores válidos disponibles sin asumir una cantidad fija.
+- **FR-002**: El sistema DEBE adquirir, validar y participar de la misma operación de sincronización para las familias `summary`, `offensive`, `defensive` y `passing`.
+- **FR-003**: El dominio DEBE representar las estadísticas mediante una composición equivalente a `MetricasEstadisticasJugador` con las familias `MetricasGenerales`, `MetricasOfensivas`, `MetricasDefensivas` y `MetricasPases`, cada una como representación de dominio independiente.
+- **FR-004**: El conjunto consolidado DEBE contener exactamente estas 8 métricas generales: `apariciones`, `ingresosSuplente`, `minutosJugados`, `vecesJugadorDelPartido`, `duelosAereosGanadosPorPartido`, `valoracion`, `tarjetasAmarillas` y `tarjetasRojas`.
+- **FR-005**: El sistema DEBE mapear desde WhoScored a las métricas generales: `apps` a `apariciones`, `subOn` a `ingresosSuplente`, `minsPlayed` a `minutosJugados`, `manOfTheMatch` a `vecesJugadorDelPartido`, `aerialWonPerGame` a `duelosAereosGanadosPorPartido`, `rating` a `valoracion`, `yellowCard` a `tarjetasAmarillas` y `redCard` a `tarjetasRojas`.
+- **FR-006**: El conjunto consolidado DEBE contener exactamente estas 9 métricas ofensivas: `goles`, `asistencias`, `tirosPorPartido`, `pasesClavePorPartido`, `regatesGanadosPorPartido`, `faltasRecibidasPorPartido`, `fuerasDeJuegoPorPartido`, `desposesionesPorPartido` y `perdidasPorPartido`.
+- **FR-007**: El sistema DEBE mapear `goal`, `assistTotal`, `shotsPerGame`, `keyPassPerGame`, `dribbleWonPerGame`, `foulGivenPerGame`, `offsideGivenPerGame`, `dispossessedPerGame` y `turnoverPerGame` a las métricas ofensivas indicadas, respectivamente.
+- **FR-008**: El conjunto consolidado DEBE contener exactamente estas 8 métricas defensivas: `tacklesPorPartido`, `intercepcionesPorPartido`, `faltasCometidasPorPartido`, `offsidesProvocadosPorPartido`, `despejesPorPartido`, `regatesRecibidosPorPartido`, `bloqueosPorPartido` y `golesEnContra`.
+- **FR-009**: El sistema DEBE mapear `tacklePerGame`, `interceptionPerGame`, `foulsPerGame`, `offsideWonPerGame`, `clearancePerGame`, `wasDribbledPerGame`, `outfielderBlockPerGame` y `goalOwn` a las métricas defensivas indicadas, respectivamente.
+- **FR-010**: El conjunto consolidado DEBE contener exactamente estas 5 métricas de pases: `pasesPorPartido`, `precisionPases`, `centrosPrecisosPorPartido`, `pasesLargosPrecisosPorPartido` y `pasesFiltradosPrecisosPorPartido`.
+- **FR-011**: El sistema DEBE mapear `totalPassesPerGame`, `passSuccess`, `accurateCrossesPerGame`, `accurateLongPassPerGame` y `accurateThroughBallPerGame` a las métricas de pases indicadas, respectivamente.
+- **FR-012**: `passSuccess` DEBE conservar semántica porcentual de 0 a 100; por ejemplo, 86.44 DEBE serializarse y persistirse como 86.44, no como 0.8644.
+- **FR-013**: Cada métrica repetida DEBE tener una única representación pública, de dominio y persistente, obtenida de la familia propietaria definida en este contrato: `minsPlayed` y `rating` en generales; `assistTotal` y `keyPassPerGame` en ofensivas; `passSuccess` en pases.
+- **FR-014**: La ausencia legítima de una métrica DEBE conservarse como `null` según las reglas existentes del dominio; en una sincronización válida, ese `null` DEBE reemplazar cualquier valor anterior de la misma métrica y no debe completarse con valores inventados, cero implícito o una conversión de escala.
+- **FR-015**: La sincronización DEBE asociar las cuatro familias al jugador existente correspondiente y no crear un Jugador alternativo.
+- **FR-016**: La sincronización DEBE ser idempotente: repetirla para un jugador existente DEBE actualizar su representación consolidada sin crear duplicados.
+- **FR-017**: Una sincronización que falle durante adquisición, validación, consolidación, staging o persistencia DEBE conservar el último estado local válido y no publicar resultados parciales.
+- **FR-018**: El staging DEBE soportar `passing` y todas las métricas nuevas, manteniendo el mismo control de errores, asociación de identidad y promoción transaccional que las familias vigentes.
+- **FR-019**: La persistencia DEBE mantener una única representación consolidada por jugador en `jugador_estadisticas`; NO DEBE crear una tabla por familia.
+- **FR-020**: La evolución del esquema DEBE realizarse mediante una nueva migración `V16`; la migración histórica `V15__Create_player_statistics_sync.sql` NO DEBE modificarse.
+- **FR-021**: Los DTO externos DEBEN permanecer dentro del Adapter y el contrato de dominio NO DEBE depender de sus estructuras.
+- **FR-022**: El adapter DEBE extender la respuesta externa solo con los campos necesarios para las 30 métricas y DEBE consumir la categoría `passing`.
+- **FR-023**: Los errores externos DEBEN traducirse a errores propios de la aplicación sin filtrar detalles del proveedor al consumidor.
+- **FR-024**: La adquisición externa DEBE continuar desacoplada del caso de uso de sincronización y no debe exigir Internet ni credenciales reales en tests.
 
-### Requisitos de lectura del detalle
+### Requisitos de lectura y API
 
-- **FR-018**: El catalogo DEBE exponer `GET /api/v1/players/{id}` con el identificador publico opaco `ply_<uuid>`.
-- **FR-019**: Para un jugador activo de un equipo activo, el detalle DEBE responder HTTP 200 y conservar los campos actuales del jugador.
-- **FR-020**: Con estadisticas persistidas, el detalle DEBE incluir `statistics` con `position`, `minutes_played`, `goals`, `assists`, `shots`, `key_passes`, `dribbles`, `tackles`, `rating`, `yellow_cards` y `red_cards`.
-- **FR-021**: Sin fila de `jugador_estadisticas`, el detalle DEBE responder HTTP 200 con `statistics: null`.
-- **FR-022**: El detalle DEBE responder HTTP 404 para jugadores inexistentes, inactivos o pertenecientes a equipos inactivos.
-- **FR-023**: La consulta DEBE leer exclusivamente datos persistidos mediante `JugadorRepository` y `EstadisticasJugadorRepository`.
-- **FR-024**: La consulta NO DEBE invocar WhoScored, Selenium, `WhoScoredStatisticsAdapter` ni sincronizaciones.
-- **FR-025**: El contrato de detalle NO DEBE exponer ids tecnicos ni metadatos de sincronizacion, y NO DEBE modificar `GET /api/v1/players`.
+- **FR-025**: El detalle del jugador DEBE conservar el endpoint y las reglas de disponibilidad vigentes, incluyendo el identificador público opaco y la lectura exclusivamente local.
+- **FR-026**: Cuando existan estadísticas, la respuesta DEBE exponer una estructura pública coherente con cuatro familias: `generales`, `ofensivas`, `defensivas` y `pases`, usando nombres de familias y métricas en español `camelCase`, sin exponer DTOs de WhoScored, identificadores de infraestructura ni metadatos internos de sincronización.
+- **FR-027**: La respuesta DEBE incluir las 30 métricas definidas, con `null` para ausencias legítimas y `precisionPases` en escala porcentual 0..100.
+- **FR-028**: Cuando no exista una fila consolidada para el jugador, la API DEBE conservar la respuesta vigente con `statistics: null`.
+- **FR-029**: La consulta de detalle NO DEBE invocar WhoScored, Selenium ni una sincronización.
+- **FR-030**: Los endpoints públicos afectados DEBEN mantener documentación OpenAPI coherente con la nueva respuesta.
 
-### Requisitos de visualizacion frontend
+### Requisitos de visualización frontend
 
-- **FR-026**: Las cards de jugadores del catalogo DEBEN permitir seleccionar un jugador y navegar a su pagina de detalle correspondiente.
-- **FR-027**: La pagina de detalle DEBE consumir el endpoint existente `GET /api/v1/players/{id}` y NO DEBE consultar WhoScored ni otra fuente externa directamente.
-- **FR-028**: La pagina de detalle DEBE mostrar los datos basicos disponibles del jugador y, cuando `statistics` no sea nulo, minutos jugados, goles, asistencias, tiros, pases clave, regates, tackles, valoracion, tarjetas amarillas y tarjetas rojas.
-- **FR-029**: La pagina de detalle DEBE presentar un estado de carga mientras espera la respuesta del endpoint.
-- **FR-030**: Ante un jugador inexistente o un error de consulta, la pagina DEBE mostrar un mensaje comprensible y una accion clara para volver al catalogo.
-- **FR-031**: Cuando `statistics = null`, la pagina DEBE informar que el jugador no tiene estadisticas disponibles y DEBE conservar visibles sus datos basicos disponibles.
-- **FR-032**: La pagina de detalle DEBE ofrecer una forma clara de regresar al catalogo.
-- **FR-033**: Las cards del catalogo NO DEBEN mostrar el dorsal/jersey number y DEBEN mostrar la nacionalidad disponible del jugador en su lugar.
-- **FR-034**: La ausencia del dorsal NO DEBE representarse como `0` ni requerir una nueva fuente, scraping o modificacion del matching para esta presentacion.
-- **FR-035**: Esta extension NO DEBE incorporar compra, venta, cotizacion, portfolio ni transacciones.
+- **FR-031**: `PlayerDetailPage` DEBE permitir activar las cuatro pestañas `Resumen`, `Ataque`, `Defensa` y `Pases`; ninguna debe permanecer deshabilitada cuando la respuesta contiene estadísticas.
+- **FR-032**: `Resumen` DEBE mostrar un subconjunto coherente de estadísticas generales y datos básicos; no es obligatorio mostrar allí las 30 métricas.
+- **FR-033**: `Ataque` DEBE mostrar las métricas ofensivas y `Defensa` DEBE mostrar las métricas defensivas, respetando la distribución del dominio.
+- **FR-034**: `Pases` DEBE mostrar las cinco métricas de pases y conservar `precisionPases` como porcentaje visible.
+- **FR-035**: La página DEBE conservar sus estados de carga, ausencia, error y regreso al catálogo, respetando el diseño, accesibilidad y convenciones visuales existentes.
+- **FR-036**: El frontend DEBE consumir únicamente el contrato documentado del backend y no debe acceder directamente a WhoScored ni a persistencia.
+
+### Requisitos de pruebas y regresión
+
+- **FR-037**: Deben mantenerse todos los tests existentes; no se deben modificar ni eliminar sin autorización explícita.
+- **FR-038**: Deben agregarse o extenderse tests sin Internet ni credenciales reales para parsing de `summary`, `offensive`, `defensive` y `passing`.
+- **FR-039**: Deben cubrirse consolidación por jugador, repetición de métricas, persistencia, actualización idempotente, staging, ausencias legítimas y fallo de una familia.
+- **FR-040**: Deben cubrirse serialización/API y comportamiento de las cuatro pestañas del frontend, además de los estados de carga, ausencia y error.
 
 ### Entidades Clave
 
-- **Jugador**: Entidad ya existente en el dominio de Devchester United. Esta feature no redefine ni reemplaza su modelado. Las estadísticas sincronizadas deben asociarse al jugador correspondiente.
-- **Estadísticas de jugador**: Información estadística normalizada obtenida desde la fuente externa y asociada a un Jugador existente. Debe contener la información necesaria para que funcionalidades posteriores puedan evaluar su rendimiento y calcular su cotización.
-- **Competición soportada**: Una de las cinco ligas europeas incluidas en el alcance de la sincronización.
-- **Sincronización**: Operación lógica que obtiene, valida, normaliza y actualiza las estadísticas asociadas a los jugadores existentes, conservando atomicidad y el último estado local válido ante fallos.
+- **Jugador**: Entidad existente a la que se asocia la información consolidada.
+- **Métricas Estadísticas del Jugador**: Composición de cuatro familias de dominio, con una representación única de las 30 métricas.
+- **Métricas Generales**: Apariciones, ingresos como suplente, minutos, jugador del partido, duelos aéreos ganados, valoración y tarjetas.
+- **Métricas Ofensivas**: Goles, asistencias, tiros, pases clave, regates, faltas recibidas, fueras de juego, desposesiones y pérdidas.
+- **Métricas Defensivas**: Tackles, intercepciones, faltas, offsides provocados, despejes, regates recibidos, bloqueos y goles en contra.
+- **Métricas de Pases**: Pases, precisión, centros precisos, pases largos precisos y pases filtrados precisos.
+- **Familia estadística externa**: Respuesta de WhoScored de tipo `summary`, `offensive`, `defensive` o `passing`, válida solo dentro del Adapter.
+- **Registro consolidado**: Única representación persistente de estadísticas asociada a un jugador.
 
 ## Criterios de Éxito *(obligatorio)*
 
-### Resultados de lectura del detalle
+### Resultados funcionales
 
-- **SC-007**: Los escenarios con estadisticas, sin estadisticas e inexistente/inactivo cumplen respectivamente HTTP 200 con objeto, HTTP 200 con `null` y HTTP 404.
-- **SC-008**: El 100% de las consultas de detalle verificadas funciona con informacion local aunque WhoScored no este disponible, sin ejecutar Selenium ni sincronizaciones.
+- **SC-001**: El 100% de las sincronizaciones válidas de prueba que contienen las cuatro familias produce exactamente 30 métricas conceptuales por jugador, distribuidas 8/9/8/5.
+- **SC-002**: El 100% de las métricas repetidas verificadas se representa una sola vez en dominio, persistencia y respuesta pública.
+- **SC-003**: El 100% de los valores `passSuccess` verificados conserva su escala porcentual original, incluyendo valores decimales como 86.44.
+- **SC-004**: En el 100% de las sincronizaciones repetidas de prueba queda una única representación por jugador y los cambios válidos actualizan el estado.
+- **SC-005**: En el 100% de los fallos inducidos de una familia no se publican datos parciales y se conserva el estado local válido anterior.
+- **SC-006**: La persistencia puede evolucionar desde el esquema vigente con V16 sin modificar V15 y sin crear tablas separadas por familia.
 
-### Resultados de visualizacion frontend
+### Resultados de API y frontend
 
-- **SC-009**: En las pruebas del flujo principal, al menos el 95% de las selecciones de cards conduce al detalle correcto del jugador en un unico intento.
-- **SC-010**: El 100% de los escenarios de carga, error/inexistencia y `statistics = null` muestra un estado comprensible y una ruta clara de recuperacion o regreso al catalogo.
-- **SC-011**: El 100% de los detalles con estadisticas muestra las diez metricas requeridas y los datos basicos disponibles sin incorporar datos inventados.
-- **SC-012**: El 100% de las cards verificadas muestra la nacionalidad disponible y no muestra el dorsal ni un `0` sustituto por ausencia de dorsal.
+- **SC-007**: El 100% de las respuestas de detalle con estadísticas expone las cuatro familias y las 30 métricas definidas con convenciones consistentes.
+- **SC-008**: El 100% de las ausencias legítimas verificadas se devuelve como `null` o se presenta como no disponible, sin valores inventados.
+- **SC-009**: En el 100% de los casos de prueba, las cuatro pestañas se pueden activar y cada una muestra la familia correspondiente.
+- **SC-010**: El 100% de los escenarios de carga, error, jugador inexistente y `statistics: null` conserva un mensaje comprensible y una recuperación clara.
+- **SC-011**: El 100% de las consultas de detalle verificadas funciona con datos locales aunque WhoScored no esté disponible.
 
-### Resultados Medibles
+### Resultados de calidad y regresión
 
-- **SC-001**: En una sincronización válida, el 100% de las cinco competiciones soportadas queda procesado y todos los jugadores válidos disponibles en la fuente quedan correctamente considerados por la sincronización.
-- **SC-002**: En ejecuciones repetidas con datos externos sin cambios, el 100% de los jugadores conserva una única representación local y el estado final de sus estadísticas es equivalente al anterior.
-- **SC-003**: En una ejecución con cambios externos válidos, el 100% de los jugadores afectados queda actualizado sin duplicar jugadores ni familias de estadísticas.
-- **SC-004**: En el 100% de las sincronizaciones fallidas de las pruebas, no quedan visibles actualizaciones parciales y se conserva íntegramente el último estado local válido.
-- **SC-005**: La solución puede procesar una competición con una cantidad variable de jugadores sin truncar el resultado por una cantidad fija definida previamente.
-- **SC-006**: Las funcionalidades posteriores pueden consultar las estadísticas sincronizadas sin depender de la disponibilidad en tiempo real de WhoScored.
+- **SC-012**: Todos los tests existentes continúan pasando sin ser eliminados ni modificados sin autorización.
+- **SC-013**: Los tests nuevos de Adapter, servicio, persistencia, API y frontend se ejecutan sin Internet ni credenciales reales.
+- **SC-014**: Las suites de compilación y pruebas del backend y frontend pasan antes de considerar terminada la ampliación.
 
 ## Supuestos
 
-- La sincronización será ejecutada por un responsable o proceso autorizado según las reglas de acceso ya existentes en el sistema; esta feature no redefine autenticación ni autorización.
-- WhoScored es la fuente externa de esta entrega y sus datos constituyen la referencia para actualizar las estadísticas locales cuando la información sea válida.
-- La identificación necesaria para reconocer al mismo jugador entre ejecuciones y conjuntos de información será resuelta durante el diseño técnico a partir de los datos disponibles, sin exponer detalles del proveedor en el dominio.
-- La ausencia de una estadística individual no invalida por sí misma al jugador; se conserva como dato no informado, salvo que la validación determine que el conjunto es inconsistente.
-- La selección de temporadas, criterios de actualización y política de concurrencia que no estén definidas por esta especificación se resolverán en `/speckit-plan` sin alterar el alcance funcional.
+- La feature amplía `002-player-statistics-sync`; no se crea una carpeta de feature nueva ni se cambia la identidad de la rama existente.
+- Se reutilizan las ligas, matching, autorización, identidad, staging, atomicidad y manejo de fallos ya definidos, salvo los cambios necesarios para incorporar `passing` y las nuevas métricas.
+- Los tipos numéricos y la escala decimal seguirán las convenciones actuales; estandarizar escala no equivale a normalizar a `[0,1]`.
+- La respuesta pública utiliza las familias y métricas del dominio en español `camelCase`, manteniendo las convenciones actuales de la API y sin exponer contratos externos.
+- La ausencia de una métrica individual es válida; la ausencia o fallo de una familia requerida para completar una sincronización es un error de la operación.
+- La futura valorización elegirá y ponderará métricas, pero no forma parte de esta ampliación.
 
-## Aclaracion de alcance frontend
+## Reglas vigentes que se conservan
 
-La presentacion de estadisticas en el frontend, antes indicada como fuera de
-alcance, queda incorporada por las User Stories 5 y 6 y los requisitos FR-026 a
-FR-035 de esta extension. La implementacion debe reutilizar la arquitectura,
-convenciones visuales y estrategia de testing frontend existentes.
-
-El backend de adquisicion, matching, sincronizacion, persistencia y contrato de
-detalle ya implementado permanece fuera de modificacion, salvo un ajuste
-estrictamente necesario para permitir el consumo del contrato desde el
-frontend. Esta extension no incorpora compra, venta, cotizacion, portfolio ni
-transacciones.
+- La sincronización continúa cubriendo Premier League, La Liga, Serie A,
+  Bundesliga y Ligue 1, con la cantidad de jugadores que entregue la fuente en
+  cada ejecución.
+- La adquisición continúa encapsulada en el Adapter mediante el mecanismo
+  vigente de WhoScored. La ampliación agrega la categoría `passing` al mismo
+  flujo y no expone sus URLs, parámetros, identificadores de infraestructura ni
+  detalles de Selenium al dominio, servicio o API pública.
+- Cada respuesta de familia debe validarse como completa según las reglas
+  vigentes antes de entrar en staging. Una respuesta estructuralmente
+  incompleta no puede promocionarse silenciosamente.
+- El matching continúa restringido a jugadores activos del equipo local
+  previamente resuelto. Las identidades ambiguas se omiten y se informan; los
+  errores técnicos, estructurales, de staging o de promoción siguen siendo
+  fatales para la operación lógica.
+- La publicación de identidades y estadísticas válidas continúa siendo
+  transaccional, idempotente y compatible con el último estado local válido.
 
 ## Fuera de Alcance
 
-- Cálculo de cotizaciones o reglas de valorización de jugadores.
-- Compra, venta o cualquier funcionalidad de mercado.
-- Presentación de estadísticas en el frontend, salvo que una historia funcional posterior la requiera explícitamente.
-- Nuevos contratos públicos de sincronización o detalles técnicos del mecanismo de obtención. El contrato de lectura de detalle definido por la User Story 4 queda dentro del alcance de esta extensión.
-# Mecanismo de adquisicion vigente (actualizacion tecnica)
-
-La adquisicion real validada de WhoScored se realiza mediante Selenium
-navegando a `/statisticsfeed/1/getplayerstatistics`, cuyo body devuelve JSON.
-Esta decision no modifica el alcance funcional ni las garantias de identidad,
-idempotencia, atomicidad, staging, rollback y persistencia local.
-
-Para cada competicion deben adquirirse las familias `summary/all`,
-`summary/offensive` y `summary/defensive`. La adquisicion concreta, la
-validacion de metadata, cualquier paginacion y la traduccion a estructuras
-internas pertenecen al Adapter. El Service no conoce Selenium, JSON, URLs,
-stage IDs, tournamentOptions ni parametros HTTP.
-
-La implementacion debe validar completitud de cada respuesta. Un resultado con
-`totalPages > 1` o `players.size != totalResults` no puede considerarse completo
-silenciosamente. La decision productiva final es `isMinApp=false` y
-`numberOfPlayersToPick=500`. El diagnostico real verifico un maximo actual de
-472 jugadores por competicion, por lo que se realiza una llamada por
-familia/competicion y no se implementa paginacion. La validacion estricta de
-completitud permanece activa: `currentPage == 1`, `totalPages == 1`, cantidad
-recibida igual a `totalResults` y `totalResults <= resultsPerPage`.
-
-El contrato ficticio `GET /statistics` con `competition`, `family`, `page`,
-`pageSize` y Bearer API key queda **superseded**. No se agrega un endpoint
-publico ni se agregan al dominio los IDs de infraestructura de las competiciones.
-
-## Decision final de identidad de jugadores WhoScored
-
-- Los candidatos se restringen exclusivamente a jugadores activos del Equipo
-  local previamente resuelto por identidad WhoScored; el resolver de jugadores
-  no vuelve a resolver equipos.
-- La equivalencia por normalizacion canonica (Unicode NFKD, eliminacion de
-  marcas, lowercase ROOT, apostrofes eliminados, guiones como espacios,
-  puntuacion eliminada y espacios colapsados) no se considera fuzzy.
-- Despues se aplican componentes nominales: apellido como tramo compartido de
-  la parte final/compuesta y nombre compatible por igualdad, prefijo o
-  similitud algoritmica; compartir un token generico no alcanza.
-- Levenshtein sobre el nombre canonico completo solo se utiliza como ultimo
-  fallback, con score minimo 0.85 y margen minimo 0.15 frente al segundo.
-- Una identidad individual ambigua o insuficiente se omite, no entra en
-  staging ni promocion, y se informa en el resultado/log. No aborta la
-  sincronizacion. Los errores tecnicos, estructurales, de equipo, staging o
-  promocion siguen siendo fatales.
-- La publicacion de todas las identidades validas sigue siendo transaccional y
-  el resultado informa adquiridos, publicados y omitidos.
-
-La validacion productiva final registro 2175 jugadores adquiridos y 1968
-publicados. El mapping aprobado de equipos WhoScored/Football-Data, versionado
-en `backend/config/whoscored-team-enrollment-approved.csv`, es un prerrequisito
-reproducible del flujo.
+- Normalización estadística a `[0,1]`.
+- Cálculo de score, valor base, factor de escala o estrategias de valorización.
+- Cotización, histórico de cotizaciones, rankings por estrategia o mercado.
+- Tokenización, compra, venta o transacciones.
+- Gráficos u otras visualizaciones no necesarias para las cuatro pestañas.
+- Nuevos endpoints públicos de sincronización.
+- Consumo de WhoScored desde el frontend o desde una capa distinta del Adapter.

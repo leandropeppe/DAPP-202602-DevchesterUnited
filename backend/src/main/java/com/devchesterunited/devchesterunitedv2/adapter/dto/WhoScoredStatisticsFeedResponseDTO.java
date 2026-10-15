@@ -41,5 +41,34 @@ public record WhoScoredStatisticsFeedResponseDTO(
             @JsonProperty("tacklePerGame") BigDecimal tacklePerGame,
             @JsonProperty("rating") BigDecimal rating,
             @JsonProperty("yellowCard") Integer yellowCard,
-            @JsonProperty("redCard") Integer redCard) { }
+            @JsonProperty("redCard") Integer redCard,
+            @JsonProperty("apps") Integer apps,
+            @JsonProperty("subOn") Integer subOn,
+            @JsonProperty("manOfTheMatch") Integer manOfTheMatch,
+            @JsonProperty("aerialWonPerGame") BigDecimal aerialWonPerGame,
+            @JsonProperty("foulGivenPerGame") BigDecimal foulGivenPerGame,
+            @JsonProperty("offsideGivenPerGame") BigDecimal offsideGivenPerGame,
+            @JsonProperty("dispossessedPerGame") BigDecimal dispossessedPerGame,
+            @JsonProperty("turnoverPerGame") BigDecimal turnoverPerGame,
+            @JsonProperty("interceptionPerGame") BigDecimal interceptionPerGame,
+            @JsonProperty("foulsPerGame") BigDecimal foulsPerGame,
+            @JsonProperty("offsideWonPerGame") BigDecimal offsideWonPerGame,
+            @JsonProperty("clearancePerGame") BigDecimal clearancePerGame,
+            @JsonProperty("wasDribbledPerGame") BigDecimal wasDribbledPerGame,
+            @JsonProperty("outfielderBlockPerGame") BigDecimal outfielderBlockPerGame,
+            @JsonProperty("goalOwn") Integer goalOwn,
+            @JsonProperty("totalPassesPerGame") BigDecimal totalPassesPerGame,
+            @JsonProperty("passSuccess") BigDecimal passSuccess,
+            @JsonProperty("accurateCrossesPerGame") BigDecimal accurateCrossesPerGame,
+            @JsonProperty("accurateLongPassPerGame") BigDecimal accurateLongPassPerGame,
+            @JsonProperty("accurateThroughBallPerGame") BigDecimal accurateThroughBallPerGame) {
+        public PlayerDTO(Long playerId, String name, Long teamId, String teamName, Integer minsPlayed,
+                Integer goal, Integer assistTotal, BigDecimal shotsPerGame, BigDecimal keyPassPerGame,
+                BigDecimal dribbleWonPerGame, BigDecimal tacklePerGame, BigDecimal rating,
+                Integer yellowCard, Integer redCard) {
+            this(playerId, name, teamId, teamName, minsPlayed, goal, assistTotal, shotsPerGame, keyPassPerGame,
+                    dribbleWonPerGame, tacklePerGame, rating, yellowCard, redCard, null, null, null, null, null, null,
+                    null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        }
+    }
 }

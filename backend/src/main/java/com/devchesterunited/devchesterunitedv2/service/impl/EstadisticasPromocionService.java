@@ -83,6 +83,16 @@ public class EstadisticasPromocionService {
                                         .valoracion(row.getValoracion())
                                         .tarjetasAmarillas(row.getTarjetasAmarillas())
                                         .tarjetasRojas(row.getTarjetasRojas())
+                                        .apps(row.getApps()).subOn(row.getSubOn()).manOfTheMatch(row.getManOfTheMatch())
+                                        .aerialWonPerGame(row.getAerialWonPerGame())
+                                        .foulGivenPerGame(row.getFoulGivenPerGame()).offsideGivenPerGame(row.getOffsideGivenPerGame())
+                                        .dispossessedPerGame(row.getDispossessedPerGame()).turnoverPerGame(row.getTurnoverPerGame())
+                                        .interceptionPerGame(row.getInterceptionPerGame()).foulsPerGame(row.getFoulsPerGame())
+                                        .offsideWonPerGame(row.getOffsideWonPerGame()).clearancePerGame(row.getClearancePerGame())
+                                        .wasDribbledPerGame(row.getWasDribbledPerGame()).outfielderBlockPerGame(row.getOutfielderBlockPerGame())
+                                        .goalOwn(row.getGoalOwn()).totalPassesPerGame(row.getTotalPassesPerGame())
+                                        .passSuccess(row.getPassSuccess()).accurateCrossesPerGame(row.getAccurateCrossesPerGame())
+                                        .accurateLongPassPerGame(row.getAccurateLongPassPerGame()).accurateThroughBallPerGame(row.getAccurateThroughBallPerGame())
                                         .syncId(syncId).creadoEn(now).actualizadoEn(now)));
                 entity.actualizar(EstadisticasJugadorEntity.Actualizacion.builder()
                         .posicion(row.getPosicion()).minutos(row.getMinutosJugados())
@@ -90,7 +100,17 @@ public class EstadisticasPromocionService {
                         .tiros(row.getTiros()).pasesClave(row.getPasesClave())
                         .regates(row.getRegates()).tackles(row.getTackles())
                         .valoracion(row.getValoracion()).amarillas(row.getTarjetasAmarillas())
-                        .rojas(row.getTarjetasRojas()).syncId(syncId).ahora(now));
+                        .rojas(row.getTarjetasRojas()).apps(row.getApps()).subOn(row.getSubOn())
+                        .manOfTheMatch(row.getManOfTheMatch()).aerialWonPerGame(row.getAerialWonPerGame())
+                        .foulGivenPerGame(row.getFoulGivenPerGame()).offsideGivenPerGame(row.getOffsideGivenPerGame())
+                        .dispossessedPerGame(row.getDispossessedPerGame()).turnoverPerGame(row.getTurnoverPerGame())
+                        .interceptionPerGame(row.getInterceptionPerGame()).foulsPerGame(row.getFoulsPerGame())
+                        .offsideWonPerGame(row.getOffsideWonPerGame()).clearancePerGame(row.getClearancePerGame())
+                        .wasDribbledPerGame(row.getWasDribbledPerGame()).outfielderBlockPerGame(row.getOutfielderBlockPerGame())
+                        .goalOwn(row.getGoalOwn()).totalPassesPerGame(row.getTotalPassesPerGame())
+                        .passSuccess(row.getPassSuccess()).accurateCrossesPerGame(row.getAccurateCrossesPerGame())
+                        .accurateLongPassPerGame(row.getAccurateLongPassPerGame()).accurateThroughBallPerGame(row.getAccurateThroughBallPerGame())
+                        .syncId(syncId).ahora(now));
                 estadisticas.save(entity);
             }
         } while (lote.hasNext());

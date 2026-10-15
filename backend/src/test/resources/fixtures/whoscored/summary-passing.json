@@ -1,0 +1,4 @@
+{
+  "paging": {"currentPage": 1, "totalPages": 1, "totalResults": 1, "resultsPerPage": 500},
+  "playerTableStats": [{"playerId": 101, "name": "Ana Perez", "teamId": 201, "teamName": "Equipo A", "totalPassesPerGame": 58.2, "passSuccess": 86.44, "accurateCrossesPerGame": 1.1, "accurateLongPassPerGame": 3.2, "accurateThroughBallPerGame": 0.4}]
+}

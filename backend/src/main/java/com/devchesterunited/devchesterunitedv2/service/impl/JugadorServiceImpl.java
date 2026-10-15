@@ -89,7 +89,15 @@ public class JugadorServiceImpl implements JugadorService {
                 entidad.getTackles(),
                 entidad.getValoracion(),
                 entidad.getTarjetasAmarillas(),
-                entidad.getTarjetasRojas());
+                entidad.getTarjetasRojas(),
+                entidad.getApps() == null && entidad.getSubOn() == null && entidad.getManOfTheMatch() == null && entidad.getAerialWonPerGame() == null ? null : new EstadisticasJugadorResultado.Generales(entidad.getApps(), entidad.getSubOn(), entidad.getMinutosJugados(),
+                        entidad.getManOfTheMatch(), entidad.getAerialWonPerGame(), entidad.getValoracion(), entidad.getTarjetasAmarillas(), entidad.getTarjetasRojas()),
+                entidad.getFoulGivenPerGame() == null && entidad.getOffsideGivenPerGame() == null && entidad.getDispossessedPerGame() == null && entidad.getTurnoverPerGame() == null ? null : new EstadisticasJugadorResultado.Ofensivas(entidad.getGoles(), entidad.getAsistencias(), entidad.getTiros(), entidad.getPasesClave(), entidad.getRegates(),
+                        entidad.getFoulGivenPerGame(), entidad.getOffsideGivenPerGame(), entidad.getDispossessedPerGame(), entidad.getTurnoverPerGame()),
+                entidad.getInterceptionPerGame() == null && entidad.getFoulsPerGame() == null && entidad.getOffsideWonPerGame() == null && entidad.getClearancePerGame() == null && entidad.getWasDribbledPerGame() == null && entidad.getOutfielderBlockPerGame() == null && entidad.getGoalOwn() == null ? null : new EstadisticasJugadorResultado.Defensivas(entidad.getTackles(), entidad.getInterceptionPerGame(), entidad.getFoulsPerGame(), entidad.getOffsideWonPerGame(),
+                        entidad.getClearancePerGame(), entidad.getWasDribbledPerGame(), entidad.getOutfielderBlockPerGame(), entidad.getGoalOwn()),
+                entidad.getTotalPassesPerGame() == null && entidad.getPassSuccess() == null && entidad.getAccurateCrossesPerGame() == null && entidad.getAccurateLongPassPerGame() == null && entidad.getAccurateThroughBallPerGame() == null ? null : new EstadisticasJugadorResultado.Pases(entidad.getTotalPassesPerGame(), entidad.getPassSuccess(), entidad.getAccurateCrossesPerGame(),
+                        entidad.getAccurateLongPassPerGame(), entidad.getAccurateThroughBallPerGame()));
     }
 
     private static UUID parsearIdPublico(String idPublico) {

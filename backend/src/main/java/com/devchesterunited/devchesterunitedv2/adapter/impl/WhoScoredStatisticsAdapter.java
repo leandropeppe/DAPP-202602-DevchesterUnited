@@ -94,6 +94,7 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         Map<FamiliaEstadistica, WhoScoredStatisticsFeedResponseDTO> respuestas =
                 new EnumMap<>(FamiliaEstadistica.class);
         for (FamiliaFeed familia : FamiliaFeed.values()) {
+            if (familia == FamiliaFeed.PASSING && !statisticsConfiguration.isPassingEnabled()) continue;
             respuestas.put(familia.familiaEstadistica(), adquirirFamilia(competicion, familia, session.driver()));
         }
         return consolidar(competicion, respuestas);
@@ -225,6 +226,7 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
             Map<FamiliaEstadistica, WhoScoredStatisticsFeedResponseDTO> respuestas) {
         Map<Long, JugadorAcumulado> jugadores = new LinkedHashMap<>();
         for (FamiliaFeed familia : FamiliaFeed.values()) {
+            if (familia == FamiliaFeed.PASSING && !statisticsConfiguration.isPassingEnabled()) continue;
             var response = respuestas.get(familia.familiaEstadistica());
             for (var player : response.players()) {
                 jugadores.computeIfAbsent(validarPlayer(player), JugadorAcumulado::new)
@@ -248,7 +250,8 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
     private enum FamiliaFeed {
         SUMMARY(FamiliaEstadistica.GENERAL, SUMMARY_CATEGORY, "all"),
         OFFENSIVE(FamiliaEstadistica.OFENSIVA, SUMMARY_CATEGORY, "offensive"),
-        DEFENSIVE(FamiliaEstadistica.DEFENSIVA, SUMMARY_CATEGORY, "defensive");
+        DEFENSIVE(FamiliaEstadistica.DEFENSIVA, SUMMARY_CATEGORY, "defensive"),
+        PASSING(FamiliaEstadistica.PASES, SUMMARY_CATEGORY, "passing");
 
         private final FamiliaEstadistica familiaEstadistica;
         private final String category;
@@ -280,6 +283,10 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         private BigDecimal rating;
         private Integer yellowCard;
         private Integer redCard;
+        private Integer apps, subOn, manOfTheMatch, goalOwn;
+        private BigDecimal aerialWonPerGame, foulGivenPerGame, offsideGivenPerGame, dispossessedPerGame, turnoverPerGame;
+        private BigDecimal interceptionPerGame, foulsPerGame, offsideWonPerGame, clearancePerGame, wasDribbledPerGame, outfielderBlockPerGame;
+        private BigDecimal totalPassesPerGame, passSuccess, accurateCrossesPerGame, accurateLongPassPerGame, accurateThroughBallPerGame;
 
         private JugadorAcumulado(long playerId) { this.playerId = playerId; }
 
@@ -309,14 +316,26 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
             rating = preferir(rating, player.rating());
             yellowCard = preferir(yellowCard, player.yellowCard());
             redCard = preferir(redCard, player.redCard());
+            apps = preferir(apps, player.apps()); subOn = preferir(subOn, player.subOn()); manOfTheMatch = preferir(manOfTheMatch, player.manOfTheMatch());
+            aerialWonPerGame = preferir(aerialWonPerGame, player.aerialWonPerGame());
+            foulGivenPerGame = preferir(foulGivenPerGame, player.foulGivenPerGame()); offsideGivenPerGame = preferir(offsideGivenPerGame, player.offsideGivenPerGame());
+            dispossessedPerGame = preferir(dispossessedPerGame, player.dispossessedPerGame()); turnoverPerGame = preferir(turnoverPerGame, player.turnoverPerGame());
+            interceptionPerGame = preferir(interceptionPerGame, player.interceptionPerGame()); foulsPerGame = preferir(foulsPerGame, player.foulsPerGame());
+            offsideWonPerGame = preferir(offsideWonPerGame, player.offsideWonPerGame()); clearancePerGame = preferir(clearancePerGame, player.clearancePerGame());
+            wasDribbledPerGame = preferir(wasDribbledPerGame, player.wasDribbledPerGame()); outfielderBlockPerGame = preferir(outfielderBlockPerGame, player.outfielderBlockPerGame()); goalOwn = preferir(goalOwn, player.goalOwn());
+            totalPassesPerGame = preferir(totalPassesPerGame, player.totalPassesPerGame()); passSuccess = preferir(passSuccess, player.passSuccess());
+            accurateCrossesPerGame = preferir(accurateCrossesPerGame, player.accurateCrossesPerGame()); accurateLongPassPerGame = preferir(accurateLongPassPerGame, player.accurateLongPassPerGame()); accurateThroughBallPerGame = preferir(accurateThroughBallPerGame, player.accurateThroughBallPerGame());
         }
 
         private RegistroEstadisticasJugador registro() {
             return new RegistroEstadisticasJugador(
                     new IdentidadEstadisticaJugador(playerId, name, null, null, teamId, teamName),
                     FamiliaEstadistica.GENERAL,
-                    new MetricasEstadisticasJugador(minsPlayed, goal, assistTotal, shotsPerGame,
-                            keyPassPerGame, dribbleWonPerGame, tacklePerGame, rating, yellowCard, redCard));
+                    new MetricasEstadisticasJugador(
+                            new com.devchesterunited.devchesterunitedv2.modelo.MetricasGenerales(apps, subOn, minsPlayed, manOfTheMatch, aerialWonPerGame, rating, yellowCard, redCard),
+                            new com.devchesterunited.devchesterunitedv2.modelo.MetricasOfensivas(goal, assistTotal, shotsPerGame, keyPassPerGame, dribbleWonPerGame, foulGivenPerGame, offsideGivenPerGame, dispossessedPerGame, turnoverPerGame),
+                            new com.devchesterunited.devchesterunitedv2.modelo.MetricasDefensivas(tacklePerGame, interceptionPerGame, foulsPerGame, offsideWonPerGame, clearancePerGame, wasDribbledPerGame, outfielderBlockPerGame, goalOwn),
+                            new com.devchesterunited.devchesterunitedv2.modelo.MetricasPases(totalPassesPerGame, passSuccess, accurateCrossesPerGame, accurateLongPassPerGame, accurateThroughBallPerGame)));
         }
 
         private static <T> T preferir(T current, T candidate) {

@@ -1,213 +1,86 @@
-# Investigacion tecnica: contrato y adquisicion de estadisticas
+# Investigación técnica: sincronización completa de estadísticas
 
-**Feature**: 002-player-statistics-sync | **Fecha**: 2026-10-10
+**Feature**: `002-player-statistics-sync`  
+**Fecha**: 2026-10-15
 
-## Decisiones cerradas
+## Decisión: conservar el puerto como snapshot completo por competición
 
-### Contrato del puerto
+**Decisión**: `ProveedorEstadisticasJugador` continúa exponiendo una operación completa por competición. El Adapter adquiere las cuatro familias, valida cada respuesta y devuelve un snapshot normalizado consolidado por `playerId`.
 
-`ProveedorEstadisticasJugador` representa una adquisicion completa por
-competicion. El Service no recibe familias separadas ni conoce
-`summary/all`, `summary/offensive` o `summary/defensive`.
+**Rationale**: evita filtrar el formato de WhoScored al Service y conserva la arquitectura vigente. El Service no necesita coordinar cuatro respuestas ni conocer categorías, URLs, Selenium o paginación.
 
-El Adapter realiza las tres adquisiciones, valida cada respuesta, traduce y
-consolida por `playerId`. Luego devuelve un snapshot completo, normalizado y
-asociado a una sola competicion. Las familias de WhoScored son un detalle
-interno del Adapter.
+**Alternativas consideradas**: exponer cuatro llamadas al Service o entregar DTOs externos. Se rechazan porque aumentan el acoplamiento, duplican reglas de error y contradicen la separación Adapter/Modelo/Service.
 
-### Paginacion
+## Decisión: cuatro adquisiciones por competición dentro del Adapter
 
-La primera implementacion no pagina `statisticsfeed`. El Adapter solicita un
-limite suficientemente alto y solo acepta una respuesta completa en una pagina
-cuando se cumple:
+**Decisión**: además de `summary/all`, `summary/offensive` y `summary/defensive`, el Adapter solicita `summary/passing` usando el parámetro `category=passing` según el contrato del proveedor ya validado.
 
-- `currentPage == 1`;
-- `totalPages == 1`;
-- `players.size == totalResults`;
-- no existen contradicciones en la metadata.
+**Rationale**: la familia de pases debe participar del mismo staging, consolidación, control de completitud y rollback. Una falla de una familia requerida invalida la sincronización lógica completa.
 
-La decision productiva es `isMinApp=false` y `numberOfPlayersToPick=500`. El
-diagnostico real verifico un maximo actual de 472 jugadores por competicion,
-por lo que se realiza una llamada por familia/competicion y no se implementa
-paginacion. Si `totalPages > 1` o la respuesta es incompleta, el
-Adapter falla de forma controlada. No se valida ni publica el snapshot parcial
-y el Service conserva el snapshot anterior. Una paginacion futura debera
-permanecer encapsulada en el Adapter y no cambiar el contrato del Service.
+**Alternativas consideradas**: hacer `passing` opcional o sincronizarlo en una segunda ejecución. Se rechazan porque producirían datasets parciales y romperían la atomicidad exigida.
 
-### Ciclo de vida Selenium
+## Decisión: mantener adquisición de una página y una sesión WebDriver
 
-Una sincronizacion completa reutiliza una unica sesion WebDriver para las cinco
-competiciones. El Adapter o su infraestructura crea y cierra la sesion. El
-cierre se garantiza ante excepciones. Selenium no cruza al Service ni al
-dominio.
+**Decisión**: conservar `isMinApp=false`, `numberOfPlayersToPick=500`, una llamada por familia y competición y una única sesión WebDriver por ejecución. Aceptar solo respuestas con `currentPage == 1`, `totalPages == 1`, `players.size == totalResults`, metadata coherente y límite dentro de la página.
 
-### Configuracion de competiciones y temporada
+**Rationale**: es el comportamiento productivo validado; el máximo observado fue 472 jugadores por competición. La futura paginación, si fuera necesaria, queda encapsulada en el Adapter.
 
-`stageId` y `tournamentOptions` son configuracion de infraestructura exclusiva
-de WhoScored:
+**Alternativas consideradas**: paginación en Service o aceptar páginas parciales. Se rechazan por acoplamiento y por riesgo de publicar snapshots incompletos.
 
-| Competicion | tournamentOptions | stageId |
-|---|---:|---:|
-| Premier League | 2 | 25544 |
-| La Liga | 4 | 25662 |
-| Serie A | 5 | 25518 |
-| Bundesliga | 3 | 25666 |
-| Ligue 1 | 22 | 25554 |
+## Decisión: composición de dominio por familia
 
-`isCurrent=true` puede enviarse al proveedor, pero no identifica por si solo la
-temporada. Los IDs no forman parte del dominio.
+**Decisión**: `MetricasEstadisticasJugador` contiene cuatro records `MetricasGenerales`, `MetricasOfensivas`, `MetricasDefensivas` y `MetricasPases`.
 
-### Fallos del proveedor
+**Rationale**: evita un record plano ambiguo, mantiene una única propiedad por métrica y prepara la futura valorización para seleccionar familias sin depender de WhoScored.
 
-JSON invalido, metadata incoherente, estructura inesperada, navegacion fallida,
-bloqueo del proveedor o adquisicion incompleta se traducen a error de
-proveedor, con detalles sanitizados. La sincronizacion se aborta, no promueve
-staging parcial y conserva el ultimo snapshot valido. No se implementan
-mecanismos de evasión, stealth ni bypass.
+**Alternativas consideradas**: un único record de 30 campos o un mapa de atributos. Se rechazan porque pierden límites semánticos, tipado y claridad de contrato.
 
-## Adquisicion validada
+## Decisión: propiedad canónica de métricas repetidas
 
-El endpoint real navegado mediante Selenium es
-`/statisticsfeed/1/getplayerstatistics`; la navegacion devuelve JSON en el body
-del navegador.
+**Decisión**: cada métrica repetida se toma únicamente de su familia propietaria:
 
-Para cada competicion el Adapter solicita:
-
-| Familia interna | category | subcategory |
-|---|---|---|
-| GENERAL | summary | all |
-| OFENSIVA | summary | offensive |
-| DEFENSIVA | summary | defensive |
-
-Parametros comunes relevantes: `statsAccumulationType=0`, `isCurrent=true`,
-`stageId`, `tournamentOptions`, `sortBy=Rating`, `field=Overall`, `isMinApp=false`
-y `numberOfPlayersToPick=500`.
-
-El diagnostico real de las cinco competiciones verifico `currentPage=1`,
-`totalPages=1`, `players.size == totalResults` y `totalResults <= resultsPerPage`
-en una unica llamada por familia/competicion. El maximo actual fue 472
-jugadores por competicion, dentro de `resultsPerPage=500`.
-
-## Mapeo conceptual de metricas
-
-La inspeccion de `MetricasEstadisticasJugador`, `RegistroEstadisticasJugador`,
-`EstadisticasJugadorEntity` y `V15__Create_player_statistics_sync.sql` confirma
-que el dominio ya tiene estos campos persistidos:
-
-| Metrica interna existente | Campo real WhoScored | Familia de origen | Estado |
-|---|---|---|---|
-| `minutosJugados` | `minsPlayed` | Summary, Offensive o Defensive | Mapeo inequívoco; consolidar el valor disponible |
-| `goles` | `goal` | Summary u Offensive | Mapeo inequívoco |
-| `asistencias` | `assistTotal` | Summary u Offensive | Mapeo inequívoco |
-| `tiros` | `shotsPerGame` | Summary u Offensive | Mapeo inequívoco |
-| `pasesClave` | `keyPassPerGame` | Offensive | Mapeo inequívoco |
-| `regates` | `dribbleWonPerGame` | Offensive | Mapeo inequívoco |
-| `tackles` | `tacklePerGame` | Defensive | Mapeo inequívoco |
-| `valoracion` | `rating` | Summary | Mapeo inequívoco |
-| `tarjetasAmarillas` | `yellowCard` | Summary | Mapeo inequívoco |
-| `tarjetasRojas` | `redCard` | Summary | Mapeo inequívoco |
-| `posicion` | No documentado en el JSON disponible | No determinada | Pendiente |
-
-### Precedencia canónica
-
-Cuando un campo aparezca en más de una familia, el Adapter utiliza siempre la
-fuente canónica siguiente y una familia secundaria no puede sobrescribirla:
-
-| Familia canónica | Métricas |
+| Métrica repetida | Familia propietaria |
 |---|---|
-| Summary | `minutosJugados <- minsPlayed`, `goles <- goal`, `asistencias <- assistTotal`, `tiros <- shotsPerGame`, `valoracion <- rating`, `tarjetasAmarillas <- yellowCard`, `tarjetasRojas <- redCard` |
-| Offensive | `pasesClave <- keyPassPerGame`, `regates <- dribbleWonPerGame` |
-| Defensive | `tackles <- tacklePerGame` |
+| `minsPlayed` | Generales |
+| `rating` | Generales |
+| `assistTotal` | Ofensivas |
+| `keyPassPerGame` | Ofensivas |
+| `passSuccess` | Pases |
 
-El Adapter puede validar coherencia entre valores redundantes para detectar
-cambios del proveedor, pero esa validación no agrega métricas ni altera la
-fuente canónica. `posicion` continúa siendo opcional y no bloquea la adquisición
-por su ausencia.
+Una familia secundaria no crea otro atributo, columna o campo de respuesta ni puede sobrescribir el valor canónico.
 
-Las métricas `aerialWonPerGame`, `manOfTheMatch`, `foulGivenPerGame`,
-`offsideGivenPerGame`, `dispossessedPerGame`, `turnoverPerGame`,
-`interceptionPerGame`, `foulsPerGame`, `offsideWonPerGame`, `clearancePerGame`,
-`wasDribbledPerGame`, `outfielderBlockPerGame` y `goalOwn` no se agregan al
-dominio. `goalOwn` no se usa como sustituto de `goles`.
+**Rationale**: satisface la unicidad conceptual y hace determinista la consolidación aun cuando WhoScored repita el mismo campo.
 
-El manejo exacto de una métrica repetida entre familias y la fuente definitiva
-de `posicion` siguen siendo decisiones de implementación pendientes si el JSON
-real no entrega una regla inequívoca.
+## Decisión: escala decimal y porcentaje de pases
 
-## Pruebas
+**Decisión**: conservar la escala decimal vigente del dominio mediante estandarización de escala, sin llamarla normalización. `passSuccess` se conserva en 0..100; 86.44 permanece 86.44.
 
-Los tests automatizados usan JSON controlado, fixtures, fakes o mocks y no
-consumen WhoScored real. Selenium real es únicamente diagnóstico/manual.
-## Decisiones de cierre frontend
+**Rationale**: la escala porcentual es semántica del proveedor y la normalización a `[0,1]` pertenece a una feature posterior.
 
-### Navegacion
+## Decisión: nulabilidad y actualización
 
-Decision: reutilizar la navegacion manual existente con la ruta
-`/catalogo/jugadores/{id}` y el evento `popstate`.
+**Decisión**: una métrica ausente legítimamente se representa como `null`. En una sincronización válida, ese `null` reemplaza el valor persistido anterior. Un fallo de adquisición, validación o promoción conserva el snapshot anterior completo.
 
-Rationale: `App.jsx` ya resuelve rutas y publica navegaciones sin una libreria
-de routing. Agregar una dependencia para una unica vista ampliaria el cambio
-sin aportar valor y podria alterar el comportamiento existente.
+**Rationale**: diferencia ausencia actual confirmada de fallo de sincronización y evita mantener valores obsoletos.
 
-Alternatives considered: mantener el detalle dentro de la misma vista del
-catalogo o agregar una libreria de routing. La primera no cumple claramente la
-separacion de pagina solicitada; la segunda no es necesaria para las
-convenciones actuales.
+## Decisión: persistencia consolidada y V16
 
-### Control navegable del catalogo
+**Decisión**: mantener una fila por jugador en `jugador_estadisticas`, agregar las nuevas columnas en `V16__Expand_player_statistics_sync.sql` y evolucionar las columnas equivalentes del staging. No se modifica V15 ni se crea una tabla por familia.
 
-Decision: conservar la tabla responsive y hacer navegable cada fila mediante un
-enlace semantico con nombre accesible e identificador opaco.
+**Rationale**: conserva la unicidad existente, simplifica upsert y permite leer un snapshot local completo sin joins entre familias.
 
-Rationale: en escritorio se mantiene el diseno visual actual y en movil las
-filas ya se comportan como cards. Un enlace permite teclado, historial y
-lectores de pantalla sin depender de un click no semantico.
+**Alternativas consideradas**: tablas separadas por familia o modificar V15. Se rechazan por la restricción explícita de migraciones y por duplicación conceptual en persistencia.
 
-Alternatives considered: reemplazar toda la tabla por cards nuevas o usar
-`onClick` sobre `tr`. Ambas opciones aumentan el alcance y la segunda degrada
-accesibilidad.
+## Decisión: contrato público y frontend
 
-### Contrato de detalle
+**Decisión**: el detalle mantiene `GET /api/v1/players/{id}`, el envoltorio actual y `statistics: null` cuando no existe fila. Cuando existe, `statistics` contiene `generales`, `ofensivas`, `defensivas` y `pases`, con nombres en español `camelCase`. `PlayerDetailPage` habilita cuatro pestañas y consume únicamente ese endpoint local.
 
-Decision: agregar solo un lector frontend para `GET /api/v1/players/{id}` y
-usar `data` como fuente del detalle, distinguiendo `statistics === null` de un
-error HTTP.
+**Rationale**: evita romper el acceso actual, mantiene DTOs externos fuera de la API y permite distribuir las métricas sin sobrecargar Resumen.
 
-Rationale: el endpoint ya existe, esta documentado y tiene pruebas E2E de
-backend para las metricas requeridas, por lo que el frontend no debe duplicar
-la logica ni modificar el contrato.
+**Alternativas consideradas**: ampliar el listado, crear endpoint nuevo o consultar WhoScored desde React. Se rechazan por regresión, duplicación y violación de arquitectura.
 
-Alternatives considered: ampliar `GET /api/v1/players` con estadisticas o
-consultar una fuente externa desde React. Ambas alternativas rompen el alcance
-y las reglas de arquitectura.
+## Decisión: estrategia de pruebas
 
-### Estados y recuperacion
+**Decisión**: agregar fixtures JSON para cada familia y tests unitarios de parsing/consolidación; tests de persistencia y staging con Testcontainers; tests de API con MockMvc; tests frontend con Vitest/Testing Library y recorrido E2E con Playwright. Ninguno consume Internet ni credenciales reales.
 
-Decision: la vista mantiene estados explicitos de carga, exito con estadisticas,
-exito sin estadisticas y error; el error muestra mensaje existente y enlace de
-regreso al catalogo.
-
-Rationale: diferencia ausencia valida de datos de un fallo de consulta y evita
-una pantalla vacia o un valor estadistico inventado.
-
-### Nacionalidad
-
-Decision: sustituir la columna Dorsal por Nacionalidad y mostrar el helper de
-ausencia ya usado por el catalogo cuando el dato no este disponible.
-
-Rationale: nacionalidad ya forma parte del dato del jugador y no requiere
-scraping, matching o persistencia adicional. El dorsal no es confiable y no se
-debe convertir su ausencia en `0`.
-
-### Estado final validado
-
-El flujo vigente no conserva el contrato HTTP ficticio ni sus DTOs, paginacion
-o parametros `competition/family/page/pageSize`. El Adapter devuelve snapshots
-completos adquiridos por Selenium con `isMinApp=false` y
-`numberOfPlayersToPick=500`; actualmente no se requiere paginacion porque las
-cinco competiciones fueron recuperadas completas con una llamada por familia.
-El mapping aprobado de equipos debe importarse desde
-`backend/config/whoscored-team-enrollment-approved.csv` antes de la primera
-sincronizacion. Los jugadores individualmente no resolubles se omiten sin
-abortar la publicacion. La evidencia productiva final fue 2175 adquiridos y
-1968 publicados.
+**Rationale**: cubre las capas donde cambia el comportamiento y respeta la Constitution, incluida la regla de no modificar ni eliminar tests existentes.

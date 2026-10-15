@@ -49,11 +49,7 @@ public class EstadisticasStagingService {
                 syncId, competicion, identidad.playerId())
                 .orElseGet(() -> new EstadisticasSyncStagingEntity(UUID.randomUUID(), syncId,
                         competicion, identidad.playerId(), identidad.nombre()));
-        var m = consolidador.conservar(
-                new com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador(
-                        entity.getMinutosJugados(), entity.getGoles(), entity.getAsistencias(), entity.getTiros(),
-                        entity.getPasesClave(), entity.getRegates(), entity.getTackles(), entity.getValoracion(),
-                        entity.getTarjetasAmarillas(), entity.getTarjetasRojas()), registro.metricas());
+        var m = registro.metricas();
         String posicion = identidad.posicion() != null ? identidad.posicion() : entity.getPosicion();
         entity.aplicar(EstadisticasSyncStagingEntity.Aplicacion.builder()
                 .jugadorId(jugadorId).equipoId(equipoId).teamId(identidad.teamId())
@@ -62,7 +58,26 @@ public class EstadisticasStagingService {
                 .minutos(m.minutosJugados()).goles(m.goles()).asistencias(m.asistencias())
                 .tiros(m.tiros()).pasesClave(m.pasesClave()).regates(m.regates())
                 .tackles(m.tackles()).valoracion(m.valoracion())
-                .amarillas(m.tarjetasAmarillas()).rojas(m.tarjetasRojas()));
+                .amarillas(m.tarjetasAmarillas()).rojas(m.tarjetasRojas())
+                .apps(m.generales().apps()).subOn(m.generales().subOn())
+                .manOfTheMatch(m.generales().manOfTheMatch())
+                .aerialWonPerGame(m.generales().aerialWonPerGame())
+                .foulGivenPerGame(m.ofensivas().foulGivenPerGame())
+                .offsideGivenPerGame(m.ofensivas().offsideGivenPerGame())
+                .dispossessedPerGame(m.ofensivas().dispossessedPerGame())
+                .turnoverPerGame(m.ofensivas().turnoverPerGame())
+                .interceptionPerGame(m.defensivas().interceptionPerGame())
+                .foulsPerGame(m.defensivas().foulsPerGame())
+                .offsideWonPerGame(m.defensivas().offsideWonPerGame())
+                .clearancePerGame(m.defensivas().clearancePerGame())
+                .wasDribbledPerGame(m.defensivas().wasDribbledPerGame())
+                .outfielderBlockPerGame(m.defensivas().outfielderBlockPerGame())
+                .goalOwn(m.defensivas().goalOwn())
+                .totalPassesPerGame(m.pases().totalPassesPerGame())
+                .passSuccess(m.pases().passSuccess())
+                .accurateCrossesPerGame(m.pases().accurateCrossesPerGame())
+                .accurateLongPassPerGame(m.pases().accurateLongPassPerGame())
+                .accurateThroughBallPerGame(m.pases().accurateThroughBallPerGame()));
         staging.save(entity);
     }
 

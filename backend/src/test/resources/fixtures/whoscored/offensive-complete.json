@@ -1,0 +1,4 @@
+{
+  "paging": {"currentPage": 1, "totalPages": 1, "totalResults": 1, "resultsPerPage": 500},
+  "playerTableStats": [{"playerId": 101, "name": "Ana Perez", "teamId": 201, "teamName": "Equipo A", "goal": 8, "assistTotal": 4, "shotsPerGame": 2.4, "keyPassPerGame": 1.8, "dribbleWonPerGame": 1.5, "foulGivenPerGame": 0.8, "offsideGivenPerGame": 0.2, "dispossessedPerGame": 0.5, "turnoverPerGame": 0.4}]
+}

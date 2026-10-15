@@ -1,142 +1,155 @@
-# Modelo de datos: estadisticas y vinculacion de identidades
+# Modelo de datos: estadísticas completas de jugadores
 
-## EstadisticasJugador
+## 1. Composición de dominio
 
-Fotografia vigente asociada por `jugador_id` al Jugador local. Los campos
-existentes son: posicion, minutos jugados, goles, asistencias, tiros, pases
-clave, regates, tackles, valoracion, tarjetas amarillas y tarjetas rojas.
+El dominio no representa las 30 métricas como un record plano ni utiliza DTOs
+de WhoScored.
 
-Las metricas individuales ausentes permanecen `NULL`. No se crean Jugador ni
-Equipo alternativos y no se agregan metricas solo porque WhoScored las devuelva.
-Las métricas estadísticas decimales normalizadas por Devchester se representan
-con escala exacta de 2 decimales y redondeo `RoundingMode.HALF_UP`; la
-precisión adicional entregada por los proveedores externos no forma parte de
-la representación normalizada del dominio. Actualmente son decimales
-`tiros`, `pasesClave`, `regates`, `tackles` y `valoracion`; los minutos, goles,
-asistencias y tarjetas conservan su representación entera.
+```java
+public record MetricasEstadisticasJugador(
+        MetricasGenerales generales,
+        MetricasOfensivas ofensivas,
+        MetricasDefensivas defensivas,
+        MetricasPases pases
+) {}
+```
 
-## Snapshot normalizado por competicion
+Cada familia es un record de dominio independiente, inmutable y con campos
+numéricos anulables según la ausencia legítima de información.
 
-El puerto entrega un snapshot completo de una competicion, no lotes separados
-por familia. El snapshot contiene registros consolidados por `playerId` y las
-metricas internas disponibles. Las familias `summary/all`,
-`summary/offensive` y `summary/defensive` son internas al Adapter.
+## 2. Familias y campos
 
-El snapshot solo puede considerarse completo si el Adapter valida cada una de
-las tres respuestas y la metadata de cada respuesta representa una pagina
-completa:
+### MetricasGenerales — 8 campos
 
-- `currentPage == 1`;
-- `totalPages == 1`;
-- `players.size == totalResults`;
-- metadata sin contradicciones.
-
-Si no se cumple, la ejecucion falla y el snapshot no entra en staging validado.
-
-## Mapeo de metricas existente
-
-| Metrica interna | Campo real WhoScored | Familia de origen |
+| Campo de dominio | Campo WhoScored | Tipo conceptual |
 |---|---|---|
-| `minutosJugados` | `minsPlayed` | Summary, Offensive o Defensive |
-| `goles` | `goal` | Summary u Offensive |
-| `asistencias` | `assistTotal` | Summary u Offensive |
-| `tiros` | `shotsPerGame` | Summary u Offensive |
-| `pasesClave` | `keyPassPerGame` | Offensive |
-| `regates` | `dribbleWonPerGame` | Offensive |
-| `tackles` | `tacklePerGame` | Defensive |
-| `valoracion` | `rating` | Summary |
-| `tarjetasAmarillas` | `yellowCard` | Summary |
-| `tarjetasRojas` | `redCard` | Summary |
-| `posicion` | No documentado en el JSON disponible | Pendiente |
+| `apariciones` | `apps` | entero anulable |
+| `ingresosSuplente` | `subOn` | entero anulable |
+| `minutosJugados` | `minsPlayed` | entero anulable |
+| `vecesJugadorDelPartido` | `manOfTheMatch` | entero anulable |
+| `duelosAereosGanadosPorPartido` | `aerialWonPerGame` | decimal anulable |
+| `valoracion` | `rating` | decimal anulable |
+| `tarjetasAmarillas` | `yellowCard` | entero anulable |
+| `tarjetasRojas` | `redCard` | entero anulable |
 
-No se mapean al dominio `aerialWonPerGame`, `manOfTheMatch`,
-`foulGivenPerGame`, `offsideGivenPerGame`, `dispossessedPerGame`,
-`turnoverPerGame`, `interceptionPerGame`, `foulsPerGame`, `offsideWonPerGame`,
-`clearancePerGame`, `wasDribbledPerGame`, `outfielderBlockPerGame` ni
-`goalOwn`. `goalOwn` no sustituye `goles`.
+### MetricasOfensivas — 9 campos
 
-La precedencia de consolidacion es fija: Summary es canonica para minutos,
-goles, asistencias, tiros, valoracion y tarjetas; Offensive es canonica para
-pases clave y regates; Defensive es canonica para tackles. Una familia
-secundaria no sobrescribe el valor canonico. La coherencia entre valores
-redundantes puede validarse sin agregar metricas de dominio. `posicion` es
-opcional y su ausencia no bloquea la adquisicion.
+| Campo de dominio | Campo WhoScored | Tipo conceptual |
+|---|---|---|
+| `goles` | `goal` | entero anulable |
+| `asistencias` | `assistTotal` | entero anulable |
+| `tirosPorPartido` | `shotsPerGame` | decimal anulable |
+| `pasesClavePorPartido` | `keyPassPerGame` | decimal anulable |
+| `regatesGanadosPorPartido` | `dribbleWonPerGame` | decimal anulable |
+| `faltasRecibidasPorPartido` | `foulGivenPerGame` | decimal anulable |
+| `fuerasDeJuegoPorPartido` | `offsideGivenPerGame` | decimal anulable |
+| `desposesionesPorPartido` | `dispossessedPerGame` | decimal anulable |
+| `perdidasPorPartido` | `turnoverPerGame` | decimal anulable |
 
-## Persistencia publicada
+### MetricasDefensivas — 8 campos
 
-`jugador_estadisticas` mantiene una fila por `jugador_id`, FK a jugadores,
-unicidad, metricas normalizadas, referencia de ejecucion y auditoria. Se
-actualiza por upsert dentro de la promocion.
+| Campo de dominio | Campo WhoScored | Tipo conceptual |
+|---|---|---|
+| `tacklesPorPartido` | `tacklePerGame` | decimal anulable |
+| `intercepcionesPorPartido` | `interceptionPerGame` | decimal anulable |
+| `faltasCometidasPorPartido` | `foulsPerGame` | decimal anulable |
+| `offsidesProvocadosPorPartido` | `offsideWonPerGame` | decimal anulable |
+| `despejesPorPartido` | `clearancePerGame` | decimal anulable |
+| `regatesRecibidosPorPartido` | `wasDribbledPerGame` | decimal anulable |
+| `bloqueosPorPartido` | `outfielderBlockPerGame` | decimal anulable |
+| `golesEnContra` | `goalOwn` | entero anulable |
 
-## Lectura del detalle de jugador
+### MetricasPases — 5 campos
 
-El detalle del Catalogo relaciona el jugador activo con cero o una fila de
-`jugador_estadisticas` mediante `jugador_id`. La fila ausente es un estado
-valido de lectura y se representa como `statistics: null`.
+| Campo de dominio | Campo WhoScored | Tipo conceptual |
+|---|---|---|
+| `pasesPorPartido` | `totalPassesPerGame` | decimal anulable |
+| `precisionPases` | `passSuccess` | decimal anulable, porcentaje 0..100 |
+| `centrosPrecisosPorPartido` | `accurateCrossesPerGame` | decimal anulable |
+| `pasesLargosPrecisosPorPartido` | `accurateLongPassPerGame` | decimal anulable |
+| `pasesFiltradosPrecisosPorPartido` | `accurateThroughBallPerGame` | decimal anulable |
 
-El contrato publico de detalle expone `position`, `minutes_played`, `goals`,
-`assists`, `shots`, `key_passes`, `dribbles`, `tackles`, `rating`,
-`yellow_cards` y `red_cards`. No forman parte del contrato `id`, `sync_id`,
-`created_at` ni `updated_at` de la persistencia de estadisticas.
+Los valores decimales conservan la escala decimal vigente mediante
+estandarización de escala. Esto no es normalización a `[0,1]`. `passSuccess`
+mantiene semántica de porcentaje: 86.44 se representa como 86.44.
 
-El detalle solo resuelve jugadores activos de equipos activos; cualquier otro
-caso se trata como recurso inexistente.
+## 3. Métricas repetidas y propiedad canónica
 
-## Modelo de presentacion frontend
+Las métricas repetidas no se agregan a más de una familia:
 
-### PlayerCatalogItem
+| Campo externo repetido | Propiedad canónica |
+|---|---|
+| `minsPlayed` | `generales.minutosJugados` |
+| `rating` | `generales.valoracion` |
+| `assistTotal` | `ofensivas.asistencias` |
+| `keyPassPerGame` | `ofensivas.pasesClavePorPartido` |
+| `passSuccess` | `pases.precisionPases` |
 
-Representacion de lectura ya entregada por el catalogo. Conserva `id`, `name`,
-`league`, `team`, `position` y `nationality` para la card/ fila navegable. El
-campo `jersey_number` deja de formar parte de la presentacion; no se agrega un
-valor por defecto cuando esta ausente.
+La consolidación ignora la copia secundaria para construir dominio, staging,
+persistencia y API. Si la fuente canónica omite el valor, el resultado es
+`null`; no se recupera desde una copia secundaria salvo que el contrato de la
+fuente defina explícitamente esa copia como equivalente futura.
 
-### PlayerDetailView
+## 4. Registro persistente consolidado
 
-Representacion de lectura derivada de `data` en `GET /api/v1/players/{id}`.
-Muestra los datos basicos disponibles del jugador y, si `statistics` es un
-objeto, las diez metricas publicas definidas en el contrato. Si es `null`, el
-estado valido es "sin estadisticas" y no se crean metricas sustitutas.
+`EstadisticasJugadorEntity` representa una fila de `jugador_estadisticas`:
 
-### Estados de la vista
+- `jugador_id`: FK a `jugadores`, único y no nulo.
+- 30 columnas de métricas, una por campo de dominio, anulables según el modelo.
+- Referencia a la ejecución de sincronización y timestamps de auditoría
+  existentes, sin exponerlos en la API.
 
-- `loading`: consulta en curso.
-- `success-with-statistics`: detalle cargado con metricas.
-- `success-without-statistics`: detalle cargado con `statistics: null`.
-- `error`: jugador inexistente, inactivo o fallo de red/HTTP, con accion de
-  regreso al catalogo.
+La tabla no se divide por familia. La promoción realiza upsert por jugador y
+reemplaza por `null` los campos ausentes de una sincronización válida.
 
-No son entidades persistentes ni modifican el modelo de dominio.
+La migración `V16__Expand_player_statistics_sync.sql` agrega las columnas que
+no existen en V15 y conserva las columnas vigentes equivalentes. V15 no se
+modifica.
 
-## Ejecucion y staging
+## 5. Snapshot y staging
 
-`estadisticas_sync` mantiene los estados `INICIADA`, `RECIBIENDO`, `VALIDADA`,
-`PUBLICADA` y `FALLIDA`, timestamps y error sanitizado.
+`SnapshotEstadisticasJugador` continúa siendo el contrato interno completo por
+competición. Cada `RegistroEstadisticasJugador` contiene identidad externa,
+identidad local resuelta y `MetricasEstadisticasJugador` consolidado.
 
-`estadisticas_sync_staging` mantiene ejecucion, competicion, IDs externos,
-identidades locales, hints normalizados, metricas consolidadas y marcas de
-familias. El staging no es visible para negocio.
+`estadisticas_sync_staging` conserva una fila técnica por ejecución,
+competición y jugador, con las 30 métricas o su ausencia, las marcas de las
+cuatro familias y los identificadores necesarios para promoción. Staging no es
+visible para consultas de negocio.
 
-## Identidades y detalles fuera del modelo
+La ejecución conserva estados `INICIADA`, `RECIBIENDO`, `VALIDADA`, `PUBLICADA`
+y `FALLIDA`. Si falla una familia o la promoción, no se publica staging parcial
+y permanece la fila consolidada anterior.
 
-`IdentidadExternaJugador(WHOSCORED, playerId)` referencia Jugador local y
-`IdentidadExternaEquipo(WHOSCORED, teamId)` referencia Equipo local.
+## 6. Relaciones e identidad
 
-`stageId`, `tournamentOptions`, `category`, `subcategory`, Selenium, WebDriver,
-rutas, cookies, headers, limites y tamanos de adquisicion son detalles del
-Adapter. No forman parte del dominio ni del contrato del Service.
+```text
+Jugador 1 ─── 0..1 EstadisticasJugadorEntity
+Jugador 1 ─── N RegistroEstadisticasJugador (solo durante snapshot/staging)
+EjecucionSync 1 ─── N EstadisticasSyncStagingEntity
+```
 
-## Atomicidad
+La identidad externa `WHOSCORED/playerId` continúa resolviéndose dentro del
+flujo vigente. Una identidad individual ambigua se omite y se informa; los
+errores técnicos, estructurales, de equipo, staging o promoción abortan la
+sincronización lógica.
 
-La adquisicion se ejecuta fuera de la transaccion de promocion. Una respuesta
-invalida, incompleta o bloqueada no publica staging parcial. Si falla la
-promocion, las identidades nuevas y las estadisticas revierten y el snapshot
-anterior permanece visible.
+## 7. Lectura pública y frontend
 
-## Estado operativo validado
+El detalle local mantiene `statistics: null` cuando no existe fila. Con fila,
+serializa:
 
-El enrollment de equipos usa identidades persistidas (WHOSCORED, teamId) y el
-mapping aprobado revisado humanamente en
-backend/config/whoscored-team-enrollment-approved.csv. El importer es
-transaccional e idempotente. El resultado productivo validado fue de 2175
-adquiridos, 1968 publicados y 207 omitidos.
+```text
+statistics.generales
+statistics.ofensivas
+statistics.defensivas
+statistics.pases
+```
+
+Todos los nombres públicos son español `camelCase`. No se exponen IDs técnicos,
+metadatos de sincronización ni nombres de DTOs externos.
+
+La vista distribuye el contenido en Resumen, Ataque, Defensa y Pases. Resumen
+puede mostrar solo un subconjunto; las otras familias muestran sus campos
+correspondientes. Una ausencia de un campo se presenta como no disponible,
+manteniendo los estados de carga, error y `statistics: null`.

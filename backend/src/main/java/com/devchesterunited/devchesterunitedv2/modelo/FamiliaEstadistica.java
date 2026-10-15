@@ -4,5 +4,6 @@ package com.devchesterunited.devchesterunitedv2.modelo;
 public enum FamiliaEstadistica {
     GENERAL,
     OFENSIVA,
-    DEFENSIVA
+    DEFENSIVA,
+    PASES
 }
