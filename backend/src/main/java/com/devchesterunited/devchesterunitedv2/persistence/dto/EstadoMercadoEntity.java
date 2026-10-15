@@ -58,4 +58,18 @@ public class EstadoMercadoEntity {
     public String getMotivoFallo() { return motivoFallo; }
     public Instant getCreadoEn() { return creadoEn; }
     public Instant getActualizadoEn() { return actualizadoEn; }
+
+    /**
+     * Persiste la reserva efectiva una sola vez, sin cambiar el estado ni la época.
+     */
+    public void inicializarReserva(BigDecimal reservaEfectiva, Instant momento) {
+        if (reservaInicialInicializada != null) {
+            return;
+        }
+        if (reservaInicialConfigurada == null) {
+            reservaInicialConfigurada = reservaEfectiva;
+        }
+        reservaInicialInicializada = reservaEfectiva;
+        actualizadoEn = momento;
+    }
 }
