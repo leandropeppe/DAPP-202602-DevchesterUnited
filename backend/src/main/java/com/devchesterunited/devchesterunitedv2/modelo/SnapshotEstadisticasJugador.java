@@ -10,10 +10,11 @@ public record SnapshotEstadisticasJugador(
 
     public SnapshotEstadisticasJugador {
         Objects.requireNonNull(competicion, "La competicion es obligatoria.");
-        registros = Objects.requireNonNull(registros, "Los registros son obligatorios.");
-        if (registros.stream().anyMatch(Objects::isNull)) {
+        List<RegistroEstadisticasJugador> registrosNoNulos = Objects.requireNonNull(registros,
+                "Los registros son obligatorios.");
+        if (registrosNoNulos.stream().anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("El snapshot no puede contener registros nulos.");
         }
-        registros = List.copyOf(registros);
+        registros = List.copyOf(registrosNoNulos);
     }
 }

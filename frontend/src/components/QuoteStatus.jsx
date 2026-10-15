@@ -20,15 +20,16 @@ function ensureMessages (message, requiredMessages) {
 }
 
 export default function QuoteStatus ({ status, price, message }) {
-  const knownStatus = Object.prototype.hasOwnProperty.call(QUOTE_STATUS_MESSAGES, status)
+  const knownStatus = Object.hasOwn(QUOTE_STATUS_MESSAGES, status)
   const isOperable = status === 'available'
   const type = isOperable ? 'success' : 'info'
   const baseMessage = message || (knownStatus ? QUOTE_STATUS_MESSAGES[status] : '')
-  const requiredMessages = isOperable
-    ? []
-    : knownStatus
+  let requiredMessages = []
+  if (!isOperable) {
+    requiredMessages = knownStatus
       ? [NON_OPERABLE_WARNING]
       : [UNKNOWN_STATUS_WARNING, NON_OPERABLE_WARNING]
+  }
   const resolvedMessage = ensureMessages(baseMessage, requiredMessages)
   const priceText = isOperable && price ? ` Precio: ${price}.` : ''
 

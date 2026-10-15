@@ -6,7 +6,6 @@ import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsConfig
 import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsConfiguration.CompetitionParameters;
 import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsException;
 import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -64,7 +62,9 @@ class WhoScoredStatisticsAdapterMultiCompetitionTest {
             return null;
         }).when(driver).get(any(String.class));
 
-        assertThatThrownBy(() -> adapter(factory).obtenerSnapshots(List.of(CompeticionEstadistica.values())))
+        var adapter = adapter(factory);
+        var competitions = List.of(CompeticionEstadistica.values());
+        assertThatThrownBy(() -> adapter.obtenerSnapshots(competitions))
                 .isInstanceOf(WhoScoredStatisticsException.class);
 
         verify(factory).create();

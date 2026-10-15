@@ -122,30 +122,32 @@ function TrophyIcon () {
 }
 
 export default function PlayerCard ({ player, onOpen, interactive = true }) {
+    const CardElement = interactive ? 'a' : 'article'
     const theme = getPlayerTheme(player)
     const countryCode = COUNTRY_CODES[player.nationality]
 
     const silhouetteSrc =
         PLAYER_SILHOUETTES[theme] ?? PLAYER_SILHOUETTES.blue
 
-    function handleOpen () {
+    function handleOpen (event) {
+        event.preventDefault()
         onOpen?.(player)
     }
 
     function handleKeyDown (event) {
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (event.key === ' ') {
             event.preventDefault()
-            handleOpen()
+            handleOpen(event)
         }
     }
 
     return (
-        <article
+        <CardElement
             className={`player-card player-card--${theme} ${
                 interactive ? '' : 'player-card--static'
             }`}
             tabIndex={interactive ? 0 : undefined}
-            role={interactive ? 'link' : undefined}
+            href={interactive ? '#' : undefined}
             onClick={interactive ? handleOpen : undefined}
             onKeyDown={interactive ? handleKeyDown : undefined}
             aria-label={
@@ -242,6 +244,6 @@ export default function PlayerCard ({ player, onOpen, interactive = true }) {
                     </strong>
                 </div>
             )}
-        </article>
+        </CardElement>
     )
 }

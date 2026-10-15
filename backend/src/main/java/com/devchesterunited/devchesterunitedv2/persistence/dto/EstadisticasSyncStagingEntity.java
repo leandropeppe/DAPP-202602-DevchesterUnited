@@ -90,29 +90,66 @@ public class EstadisticasSyncStagingEntity {
     public Integer getTarjetasAmarillas() { return tarjetasAmarillas; }
     public Integer getTarjetasRojas() { return tarjetasRojas; }
 
-    public void aplicar(UUID jugadorId, UUID equipoId, Long teamId, String nombreEquipo,
-            String posicion, String nacionalidad, String familia,
-            Integer minutos, Integer goles, Integer asistencias, BigDecimal tiros,
-            BigDecimal pasesClave, BigDecimal regates, BigDecimal tackles, BigDecimal valoracion,
-            Integer amarillas, Integer rojas) {
-        this.jugadorId = jugadorId;
-        this.equipoId = equipoId;
-        this.whoscoredTeamId = teamId;
-        this.nombreEquipo = nombreEquipo;
-        this.posicion = posicion;
-        this.nacionalidad = nacionalidad;
-        if ("GENERAL".equals(familia)) this.familiaGeneralRecibida = true;
-        if ("OFENSIVA".equals(familia)) this.familiaOfensivaRecibida = true;
-        if ("DEFENSIVA".equals(familia)) this.familiaDefensivaRecibida = true;
-        if (minutos != null) this.minutosJugados = minutos;
-        if (goles != null) this.goles = goles;
-        if (asistencias != null) this.asistencias = asistencias;
-        if (tiros != null) this.tiros = tiros;
-        if (pasesClave != null) this.pasesClave = pasesClave;
-        if (regates != null) this.regates = regates;
-        if (tackles != null) this.tackles = tackles;
-        if (valoracion != null) this.valoracion = valoracion;
-        if (amarillas != null) this.tarjetasAmarillas = amarillas;
-        if (rojas != null) this.tarjetasRojas = rojas;
+    public void aplicar(Aplicacion application) {
+        this.jugadorId = application.jugadorId;
+        this.equipoId = application.equipoId;
+        this.whoscoredTeamId = application.teamId;
+        this.nombreEquipo = application.nombreEquipo;
+        this.posicion = application.posicion;
+        this.nacionalidad = application.nacionalidad;
+        if ("GENERAL".equals(application.familia)) this.familiaGeneralRecibida = true;
+        if ("OFENSIVA".equals(application.familia)) this.familiaOfensivaRecibida = true;
+        if ("DEFENSIVA".equals(application.familia)) this.familiaDefensivaRecibida = true;
+        if (application.minutos != null) this.minutosJugados = application.minutos;
+        if (application.goles != null) this.goles = application.goles;
+        if (application.asistencias != null) this.asistencias = application.asistencias;
+        if (application.tiros != null) this.tiros = application.tiros;
+        if (application.pasesClave != null) this.pasesClave = application.pasesClave;
+        if (application.regates != null) this.regates = application.regates;
+        if (application.tackles != null) this.tackles = application.tackles;
+        if (application.valoracion != null) this.valoracion = application.valoracion;
+        if (application.amarillas != null) this.tarjetasAmarillas = application.amarillas;
+        if (application.rojas != null) this.tarjetasRojas = application.rojas;
+    }
+
+    public static final class Aplicacion {
+        private UUID jugadorId;
+        private UUID equipoId;
+        private Long teamId;
+        private String nombreEquipo;
+        private String posicion;
+        private String nacionalidad;
+        private String familia;
+        private Integer minutos;
+        private Integer goles;
+        private Integer asistencias;
+        private BigDecimal tiros;
+        private BigDecimal pasesClave;
+        private BigDecimal regates;
+        private BigDecimal tackles;
+        private BigDecimal valoracion;
+        private Integer amarillas;
+        private Integer rojas;
+
+        private Aplicacion() { }
+
+        public static Aplicacion builder() { return new Aplicacion(); }
+        public Aplicacion jugadorId(UUID value) { jugadorId = value; return this; }
+        public Aplicacion equipoId(UUID value) { equipoId = value; return this; }
+        public Aplicacion teamId(Long value) { teamId = value; return this; }
+        public Aplicacion nombreEquipo(String value) { nombreEquipo = value; return this; }
+        public Aplicacion posicion(String value) { posicion = value; return this; }
+        public Aplicacion nacionalidad(String value) { nacionalidad = value; return this; }
+        public Aplicacion familia(String value) { familia = value; return this; }
+        public Aplicacion minutos(Integer value) { minutos = value; return this; }
+        public Aplicacion goles(Integer value) { goles = value; return this; }
+        public Aplicacion asistencias(Integer value) { asistencias = value; return this; }
+        public Aplicacion tiros(BigDecimal value) { tiros = value; return this; }
+        public Aplicacion pasesClave(BigDecimal value) { pasesClave = value; return this; }
+        public Aplicacion regates(BigDecimal value) { regates = value; return this; }
+        public Aplicacion tackles(BigDecimal value) { tackles = value; return this; }
+        public Aplicacion valoracion(BigDecimal value) { valoracion = value; return this; }
+        public Aplicacion amarillas(Integer value) { amarillas = value; return this; }
+        public Aplicacion rojas(Integer value) { rojas = value; return this; }
     }
 }

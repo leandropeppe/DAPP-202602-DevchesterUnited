@@ -73,14 +73,24 @@ public class EstadisticasPromocionService {
             lote = staging.findAllBySyncId(syncId, PageRequest.of(page++, 100));
             for (EstadisticasSyncStagingEntity row : lote.getContent()) {
                 EstadisticasJugadorEntity entity = estadisticas.findByJugadorId(row.getJugadorId())
-                        .orElseGet(() -> new EstadisticasJugadorEntity(UUID.randomUUID(), row.getJugadorId(),
-                                row.getPosicion(), row.getMinutosJugados(), row.getGoles(), row.getAsistencias(),
-                                row.getTiros(), row.getPasesClave(), row.getRegates(), row.getTackles(),
-                                row.getValoracion(), row.getTarjetasAmarillas(), row.getTarjetasRojas(),
-                                syncId, now, now));
-                entity.actualizar(row.getPosicion(), row.getMinutosJugados(), row.getGoles(), row.getAsistencias(),
-                        row.getTiros(), row.getPasesClave(), row.getRegates(), row.getTackles(),
-                        row.getValoracion(), row.getTarjetasAmarillas(), row.getTarjetasRojas(), syncId, now);
+                        .orElseGet(() -> new EstadisticasJugadorEntity(
+                                EstadisticasJugadorEntity.Creacion.builder()
+                                        .id(UUID.randomUUID()).jugadorId(row.getJugadorId())
+                                        .posicion(row.getPosicion()).minutosJugados(row.getMinutosJugados())
+                                        .goles(row.getGoles()).asistencias(row.getAsistencias())
+                                        .tiros(row.getTiros()).pasesClave(row.getPasesClave())
+                                        .regates(row.getRegates()).tackles(row.getTackles())
+                                        .valoracion(row.getValoracion())
+                                        .tarjetasAmarillas(row.getTarjetasAmarillas())
+                                        .tarjetasRojas(row.getTarjetasRojas())
+                                        .syncId(syncId).creadoEn(now).actualizadoEn(now)));
+                entity.actualizar(EstadisticasJugadorEntity.Actualizacion.builder()
+                        .posicion(row.getPosicion()).minutos(row.getMinutosJugados())
+                        .goles(row.getGoles()).asistencias(row.getAsistencias())
+                        .tiros(row.getTiros()).pasesClave(row.getPasesClave())
+                        .regates(row.getRegates()).tackles(row.getTackles())
+                        .valoracion(row.getValoracion()).amarillas(row.getTarjetasAmarillas())
+                        .rojas(row.getTarjetasRojas()).syncId(syncId).ahora(now));
                 estadisticas.save(entity);
             }
         } while (lote.hasNext());

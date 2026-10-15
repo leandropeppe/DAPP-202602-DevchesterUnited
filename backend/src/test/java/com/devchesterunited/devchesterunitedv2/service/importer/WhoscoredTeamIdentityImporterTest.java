@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
@@ -33,7 +34,7 @@ class WhoscoredTeamIdentityImporterTest {
 
     @BeforeEach
     void setUp() {
-        importer = new WhoscoredTeamIdentityImporter(identities);
+        importer = new WhoscoredTeamIdentityImporter(new WhoscoredTeamIdentityPublicationService(identities));
         mappings = new ArrayList<>();
         teams = new ArrayList<>();
         for (long i = 1; i <= 96; i++) {
@@ -60,7 +61,7 @@ class WhoscoredTeamIdentityImporterTest {
                 WhoscoredTeamIdentityImporter.ImportResult::inserted,
                 WhoscoredTeamIdentityImporter.ImportResult::alreadyExisting)
                 .containsExactly(96, 96, 0);
-        verify(identities, org.mockito.Mockito.times(96)).save(any());
+        verify(identities, times(96)).save(any());
     }
 
     @Test

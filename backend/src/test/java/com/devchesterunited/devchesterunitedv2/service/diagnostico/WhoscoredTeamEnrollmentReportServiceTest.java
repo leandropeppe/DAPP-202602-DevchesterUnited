@@ -20,6 +20,7 @@ import com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugado
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -39,7 +40,7 @@ class WhoscoredTeamEnrollmentReportServiceTest {
 
     @Test
     void deduplicaPorTeamIdYCuentaJugadoresDistintos() {
-        var records = List.of(record(10, 77, "Man City"), record(11, 77, "Man City"), record(10, 77, "Man City"));
+        var records = List.of(crearRegistro(10, 77, "Man City"), crearRegistro(11, 77, "Man City"), crearRegistro(10, 77, "Man City"));
         var result = WhoscoredTeamEnrollmentReportService.deduplicate(List.of(
                 new SnapshotEstadisticasJugador(CompeticionEstadistica.PREMIER_LEAGUE, records)));
 
@@ -51,9 +52,9 @@ class WhoscoredTeamEnrollmentReportServiceTest {
     void separaElMismoTeamIdEntreCompeticiones() {
         var result = WhoscoredTeamEnrollmentReportService.deduplicate(List.of(
                 new SnapshotEstadisticasJugador(CompeticionEstadistica.PREMIER_LEAGUE,
-                        List.of(record(10, 77, "City"))),
+                        List.of(crearRegistro(10, 77, "City"))),
                 new SnapshotEstadisticasJugador(CompeticionEstadistica.LA_LIGA,
-                        List.of(record(20, 77, "City")))));
+                        List.of(crearRegistro(20, 77, "City")))));
 
         assertEquals(2, result.size());
         assertEquals(CompeticionEstadistica.PREMIER_LEAGUE, result.get(0).competicion());
@@ -80,9 +81,9 @@ class WhoscoredTeamEnrollmentReportServiceTest {
     }
 
     @Test
-    void generaUnaFilaPorEquipoYDejaCamposManualesVacios(@TempDir Path temp) throws Exception {
+    void generaUnaFilaPorEquipoYDejaCamposManualesVacios(@TempDir Path temp) throws IOException {
         var observed = new SnapshotEstadisticasJugador(CompeticionEstadistica.LA_LIGA,
-                List.of(record(10, 77, "Man City"), record(11, 77, "Man City")));
+                List.of(crearRegistro(10, 77, "Man City"), crearRegistro(11, 77, "Man City")));
         when(proveedor.obtenerSnapshots(WhoscoredTeamEnrollmentReportService.COMPETICIONES)).thenReturn(List.of(observed));
         when(equipos.findAllByActivoTrueAndLigaIgnoreCase(anyString())).thenReturn(List.of());
         when(equipos.findAllByActivoTrueAndLigaIgnoreCase("LaLiga")).thenReturn(List.of(equipo("Manchester City FC", "Man City", "MCI")));
@@ -104,11 +105,11 @@ class WhoscoredTeamEnrollmentReportServiceTest {
     }
 
     @Test
-    void siFallaElRankingDeUnEquipoPosteriorNoCreaCsvFinal(@TempDir Path temp) throws Exception {
+    void siFallaElRankingDeUnEquipoPosteriorNoCreaCsvFinal(@TempDir Path temp) {
         var first = new SnapshotEstadisticasJugador(CompeticionEstadistica.PREMIER_LEAGUE,
-                List.of(record(10, 77, "City")));
+                List.of(crearRegistro(10, 77, "City")));
         var second = new SnapshotEstadisticasJugador(CompeticionEstadistica.PREMIER_LEAGUE,
-                List.of(record(11, 88, "United")));
+                List.of(crearRegistro(11, 88, "United")));
         when(proveedor.obtenerSnapshots(WhoscoredTeamEnrollmentReportService.COMPETICIONES)).thenReturn(List.of(first, second));
         when(equipos.findAllByActivoTrueAndLigaIgnoreCase(anyString())).thenReturn(List.of());
         when(identidades.findAllByProveedor(any(ProveedorIdentidadExterna.class))).thenReturn(List.of());
@@ -127,7 +128,7 @@ class WhoscoredTeamEnrollmentReportServiceTest {
         assertFalse(Files.exists(output));
     }
 
-    private static RegistroEstadisticasJugador record(long playerId, long teamId, String teamName) {
+    private static RegistroEstadisticasJugador crearRegistro(long playerId, long teamId, String teamName) {
         return new RegistroEstadisticasJugador(new IdentidadEstadisticaJugador(
                 playerId, "Player " + playerId, null, null, teamId, teamName),
                 FamiliaEstadistica.GENERAL, new MetricasEstadisticasJugador(null, null, null, null, null, null, null, null, null, null));

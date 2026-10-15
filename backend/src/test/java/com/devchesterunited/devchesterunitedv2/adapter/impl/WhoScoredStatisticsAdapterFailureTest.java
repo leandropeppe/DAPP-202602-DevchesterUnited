@@ -34,7 +34,8 @@ class WhoScoredStatisticsAdapterFailureTest {
         when(driver.findElement(any(By.class))).thenReturn(body);
         when(body.getDomProperty("textContent")).thenReturn(fixture("summary-invalid-total-pages.json"));
 
-        assertThatThrownBy(() -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
+        var adapter = adapter(factory);
+        assertThatThrownBy(() -> adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(WhoScoredStatisticsException.class);
 
         verify(driver).get(any(String.class));
@@ -54,9 +55,12 @@ class WhoScoredStatisticsAdapterFailureTest {
         var error = org.assertj.core.api.Assertions.catchThrowable(
                 () -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE));
 
-        assertThat(error).isInstanceOf(WhoScoredStatisticsException.class);
-        assertThat(error.getMessage()).contains("No se pudo leer el JSON de statisticsfeed.")
-                .doesNotContain("whoscored.test", "stageId", "tournamentOptions", "secret");
+        assertThat(error).isInstanceOfSatisfying(WhoScoredStatisticsException.class,
+                exception -> assertThat(exception).hasMessageContaining("No se pudo leer el JSON de statisticsfeed.")
+                        .hasMessageNotContaining("whoscored.test")
+                        .hasMessageNotContaining("stageId")
+                        .hasMessageNotContaining("tournamentOptions")
+                        .hasMessageNotContaining("secret"));
         verify(driver).quit();
     }
 
@@ -71,9 +75,9 @@ class WhoScoredStatisticsAdapterFailureTest {
         var error = org.assertj.core.api.Assertions.catchThrowable(
                 () -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE));
 
-        assertThat(error).isInstanceOf(WhoScoredStatisticsException.class);
-        assertThat(error.getMessage()).isEqualTo("No se pudo leer el JSON de statisticsfeed.")
-                .doesNotContain("internal wait detail");
+        assertThat(error).isInstanceOfSatisfying(WhoScoredStatisticsException.class,
+                exception -> assertThat(exception).hasMessage("No se pudo leer el JSON de statisticsfeed.")
+                        .hasMessageNotContaining("internal wait detail"));
         verify(driver).quit();
     }
 
@@ -86,7 +90,8 @@ class WhoScoredStatisticsAdapterFailureTest {
         when(driver.findElement(any(By.class))).thenReturn(body);
         when(body.getDomProperty("textContent")).thenReturn("   ");
 
-        assertThatThrownBy(() -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
+        var adapter = adapter(factory);
+        assertThatThrownBy(() -> adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(WhoScoredStatisticsException.class)
                 .hasMessage("WhoScored devolvio un body vacio.");
         verify(driver).quit();
@@ -104,9 +109,11 @@ class WhoScoredStatisticsAdapterFailureTest {
         var error = org.assertj.core.api.Assertions.catchThrowable(
                 () -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE));
 
-        assertThat(error).isInstanceOf(WhoScoredStatisticsException.class);
-        assertThat(error.getMessage()).isEqualTo("No se pudo leer el JSON de statisticsfeed.")
-                .doesNotContain("privateToken", "secret", "malformed");
+        assertThat(error).isInstanceOfSatisfying(WhoScoredStatisticsException.class,
+                exception -> assertThat(exception).hasMessage("No se pudo leer el JSON de statisticsfeed.")
+                        .hasMessageNotContaining("privateToken")
+                        .hasMessageNotContaining("secret")
+                        .hasMessageNotContaining("malformed"));
         verify(driver).quit();
     }
 
@@ -119,7 +126,8 @@ class WhoScoredStatisticsAdapterFailureTest {
         when(driver.findElement(any(By.class))).thenReturn(body);
         when(body.getDomProperty("textContent")).thenReturn(fixture("summary-all.json"), "not-json");
 
-        assertThatThrownBy(() -> adapter(factory).obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
+        var adapter = adapter(factory);
+        assertThatThrownBy(() -> adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(WhoScoredStatisticsException.class);
         verify(driver, times(2)).get(any(String.class));
         verify(driver).quit();

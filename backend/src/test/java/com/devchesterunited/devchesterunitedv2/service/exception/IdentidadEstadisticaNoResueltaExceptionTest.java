@@ -30,8 +30,9 @@ class IdentidadEstadisticaNoResueltaExceptionTest {
                 .contains("externalId=100")
                 .contains("nombre=Jugador 0")
                 .contains("mejorCandidato=Mejor (id=id-1, score=0.91)")
-                .contains("(+1");
-        assertThat(message).doesNotContain("Equipo 10").doesNotContain("Jugador fuera de muestra");
+                .contains("(+1")
+                .doesNotContain("Equipo 10")
+                .doesNotContain("Jugador fuera de muestra");
     }
 
     @Test

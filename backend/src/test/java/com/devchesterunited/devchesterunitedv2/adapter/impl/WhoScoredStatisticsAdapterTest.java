@@ -48,7 +48,7 @@ class WhoScoredStatisticsAdapterTest {
             assertThat(registro.metricas().regates()).hasToString("2.10");
             assertThat(registro.metricas().tackles()).hasToString("1.90");
             assertThat(registro.metricas().tarjetasAmarillas()).isEqualTo(1);
-            assertThat(registro.metricas().tarjetasRojas()).isEqualTo(0);
+             assertThat(registro.metricas().tarjetasRojas()).isZero();
         });
         verify(factory).create();
         verify(driver, times(3)).get(any(String.class));
@@ -80,7 +80,7 @@ class WhoScoredStatisticsAdapterTest {
             assertThat(registro.metricas().tackles()).hasToString("1.90");
             assertThat(registro.metricas().valoracion()).hasToString("7.20");
             assertThat(registro.metricas().tarjetasAmarillas()).isEqualTo(1);
-            assertThat(registro.metricas().tarjetasRojas()).isEqualTo(0);
+            assertThat(registro.metricas().tarjetasRojas()).isZero();
         });
         verify(driver, times(3)).get(any(String.class));
         verify(driver).quit();

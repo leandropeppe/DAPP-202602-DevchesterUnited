@@ -58,36 +58,11 @@ public class SincronizacionEstadisticasJugadorServiceImpl
         try {
             syncId = ciclo.iniciar();
             ciclo.marcarRecibiendo(syncId);
-            Map<Long, IdentidadJugadorResolver.NuevaIdentidad> nuevasJugadores = new LinkedHashMap<>();
-            List<PendingSnapshot> pendientes = new ArrayList<>();
-            List<IdentidadEstadisticaNoResueltaException.Diagnostico> omitidos = new ArrayList<>();
-
-            List<SnapshotEstadisticasJugador> snapshots = validarAdquisicionCompleta(
-                    proveedor.obtenerSnapshots(List.of(CompeticionEstadistica.values())));
-            Map<Long, EquipoEntity> equiposPorWhoscoredTeamId = resolverEquipos(snapshots);
-            Set<String> competicionesEsperadas = EnumSet.allOf(CompeticionEstadistica.class).stream()
-                    .map(CompeticionEstadistica::name)
-                    .collect(java.util.stream.Collectors.toUnmodifiableSet());
-            int adquiridos = snapshots.stream().mapToInt(s -> s.registros().size()).sum();
-            for (var snapshot : snapshots) pendientes.add(prepararSnapshot(snapshot, nuevasJugadores,
-                    equiposPorWhoscoredTeamId, omitidos));
-            for (var pendiente : pendientes) {
-                staging.escribirLote(syncId, pendiente.competicion(), pendiente.entradas());
-            }
-
-            ciclo.marcarValidada(syncId);
-            staging.validarCompeticionesCompletas(syncId, competicionesEsperadas);
-            promocion.promover(syncId, nuevasJugadores.values(), List.of(), Map.of());
+            resultado = ejecutarSincronizacion(syncId);
             publicada = true;
-            resultado = new SincronizacionEstadisticasResultado(adquiridos, adquiridos - omitidos.size(),
-                    omitidos.size(), omitidos);
-            if (!omitidos.isEmpty()) {
-                LOGGER.warn("Sincronización estadística publicada: adquiridos={}, publicados={}, omitidos={}",
-                        resultado.adquiridos(), resultado.publicados(), resultado.omitidos());
-            }
         } catch (RuntimeException exception) {
             RuntimeException applicationException = traducir(exception);
-            if (syncId != null && !publicada) {
+            if (syncId != null) {
                 try {
                     ciclo.marcarFallida(syncId, applicationException);
                 } catch (RuntimeException markingFailure) {
@@ -111,6 +86,35 @@ public class SincronizacionEstadisticasJugadorServiceImpl
         }
         if (failure != null) {
             throw failure;
+        }
+        return resultado;
+    }
+
+    private SincronizacionEstadisticasResultado ejecutarSincronizacion(UUID syncId) {
+        Map<Long, IdentidadJugadorResolver.NuevaIdentidad> nuevasJugadores = new LinkedHashMap<>();
+        List<IdentidadEstadisticaNoResueltaException.Diagnostico> omitidos = new ArrayList<>();
+        List<SnapshotEstadisticasJugador> snapshots = validarAdquisicionCompleta(
+                proveedor.obtenerSnapshots(List.of(CompeticionEstadistica.values())));
+        Map<Long, EquipoEntity> equiposPorWhoscoredTeamId = resolverEquipos(snapshots);
+        Set<String> competicionesEsperadas = EnumSet.allOf(CompeticionEstadistica.class).stream()
+                .map(CompeticionEstadistica::name)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        int adquiridos = snapshots.stream().mapToInt(s -> s.registros().size()).sum();
+        List<PendingSnapshot> pendientes = snapshots.stream()
+                .map(snapshot -> prepararSnapshot(snapshot, nuevasJugadores,
+                        equiposPorWhoscoredTeamId, omitidos))
+                .toList();
+        for (var pendiente : pendientes) {
+            staging.escribirLote(syncId, pendiente.competicion(), pendiente.entradas());
+        }
+        ciclo.marcarValidada(syncId);
+        staging.validarCompeticionesCompletas(syncId, competicionesEsperadas);
+        promocion.promover(syncId, nuevasJugadores.values(), List.of(), Map.of());
+        var resultado = new SincronizacionEstadisticasResultado(adquiridos, adquiridos - omitidos.size(),
+                omitidos.size(), omitidos);
+        if (!omitidos.isEmpty()) {
+            LOGGER.warn("Sincroniz\u00f3n estad\u00edstica publicada: adquiridos={}, publicados={}, omitidos={}",
+                    resultado.adquiridos(), resultado.publicados(), resultado.omitidos());
         }
         return resultado;
     }
@@ -170,7 +174,6 @@ public class SincronizacionEstadisticasJugadorServiceImpl
                 }
                 identidad = jugadores.resolver(registro.identidad(), equipo, snapshot.competicion());
             } catch (IdentidadEstadisticaNoResueltaException exception) {
-                if (exception.diagnosticos().isEmpty()) throw exception;
                 omitidos.addAll(exception.diagnosticos());
                 continue;
             }
@@ -206,7 +209,6 @@ public class SincronizacionEstadisticasJugadorServiceImpl
                         entry.getValue().competicion()).equipo());
             } catch (IdentidadEstadisticaNoResueltaException exception) {
                 errores.addAll(exception.diagnosticos());
-                if (exception.diagnosticos().isEmpty()) throw exception;
             }
         }
         if (!errores.isEmpty()) throw new IdentidadEstadisticaNoResueltaException(errores);

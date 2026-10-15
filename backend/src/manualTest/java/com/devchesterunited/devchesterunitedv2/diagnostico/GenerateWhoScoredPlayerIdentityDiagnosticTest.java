@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.diagnostico;
 
 import com.devchesterunited.devchesterunitedv2.service.diagnostico.WhoscoredPlayerIdentityDiagnosticService;
 import java.nio.file.Path;
+import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -17,7 +18,7 @@ class GenerateWhoScoredPlayerIdentityDiagnosticTest {
     @Autowired private WhoscoredPlayerIdentityDiagnosticService service;
 
     @Test
-    void generateDiagnostic() throws Exception {
+    void generateDiagnostic() throws IOException {
         var result = service.generar(Path.of("build/reports/whoscored-player-identity-diagnostic.csv"));
         System.out.println("jugadores observados: " + result.observedPlayers());
         System.out.println("jugadores no resueltos: " + result.unresolvedPlayers());

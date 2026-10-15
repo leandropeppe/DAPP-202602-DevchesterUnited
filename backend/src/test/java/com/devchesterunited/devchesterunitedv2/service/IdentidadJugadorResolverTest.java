@@ -52,7 +52,10 @@ class IdentidadJugadorResolverTest {
         when(identidades.findByProveedorAndExternalId(any(), any())).thenReturn(Optional.empty());
         when(jugadores.findAllByEquipoIdAndActivoTrue(equipo.getId())).thenReturn(List.of());
 
-        assertThatThrownBy(() -> resolver().resolver(hint(), equipo, CompeticionEstadistica.PREMIER_LEAGUE))
+        var resolver = resolver();
+        var hint = hint();
+        var competicion = CompeticionEstadistica.PREMIER_LEAGUE;
+        assertThatThrownBy(() -> resolver.resolver(hint, equipo, competicion))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
         verify(jugadores, never()).findAllByEquipoIdAndActivoTrue(UUID.randomUUID());
     }
@@ -66,7 +69,10 @@ class IdentidadJugadorResolverTest {
                 .thenReturn(Optional.of(new com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity(
                         UUID.randomUUID(), otro, ProveedorIdentidadExterna.WHOSCORED, 44L)));
 
-        assertThatThrownBy(() -> resolver().resolver(hint(), equipo, CompeticionEstadistica.PREMIER_LEAGUE))
+        var resolver = resolver();
+        var hint = hint();
+        var competicion = CompeticionEstadistica.PREMIER_LEAGUE;
+        assertThatThrownBy(() -> resolver.resolver(hint, equipo, competicion))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
         verify(jugadores, never()).findAllByEquipoIdAndActivoTrue(equipo.getId());
     }
@@ -105,8 +111,10 @@ class IdentidadJugadorResolverTest {
         when(identidades.findByProveedorAndExternalId(any(), any())).thenReturn(Optional.empty());
         when(jugadores.findAllByEquipoIdAndActivoTrue(equipo.getId())).thenReturn(List.of(primero, segundo));
 
-        assertThatThrownBy(() -> resolver().resolver(new IdentidadEstadisticaJugador(44, "Abdul Fatawu", null,
-                "Ghana", 7L, "Equipo A"), equipo, CompeticionEstadistica.PREMIER_LEAGUE))
+        var resolver = resolver();
+        var hint = new IdentidadEstadisticaJugador(44, "Abdul Fatawu", null,
+                "Ghana", 7L, "Equipo A");
+        assertThatThrownBy(() -> resolver.resolver(hint, equipo, CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
     }
 
@@ -142,11 +150,15 @@ class IdentidadJugadorResolverTest {
         when(identidades.findByProveedorAndExternalId(any(), any())).thenReturn(Optional.empty());
         when(jugadores.findAllByEquipoIdAndActivoTrue(equipo.getId())).thenReturn(List.of(mejor, cercano));
 
-        assertThatThrownBy(() -> resolver().resolver(new IdentidadEstadisticaJugador(44, "Lionel Mesii", null, null,
-                7L, "Equipo A"), equipo, CompeticionEstadistica.PREMIER_LEAGUE))
+        var resolver = resolver();
+        var mesii = new IdentidadEstadisticaJugador(44, "Lionel Mesii", null, null,
+                7L, "Equipo A");
+        assertThatThrownBy(() -> resolver.resolver(mesii,
+                equipo, CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
-        assertThatThrownBy(() -> resolver().resolver(new IdentidadEstadisticaJugador(45, "Lionel X", null, null,
-                7L, "Equipo A"), equipo, CompeticionEstadistica.PREMIER_LEAGUE))
+        var lionelX = new IdentidadEstadisticaJugador(45, "Lionel X", null, null,
+                7L, "Equipo A");
+        assertThatThrownBy(() -> resolver.resolver(lionelX, equipo, CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
     }
 

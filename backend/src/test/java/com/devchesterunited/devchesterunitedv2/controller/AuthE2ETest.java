@@ -102,7 +102,8 @@ class AuthE2ETest extends PostgresTestSupport {
         assertThat(detalles).anySatisfy(detalle -> {
             campos(detalle, "field", "issue");
             assertThat(detalle.path("field").asText()).isEqualTo(campo);
-            assertThat(detalle.path("issue").asText()).matches("(?is).*(debe|inválid|válid|obligatori|contraseña|vacío|caracteres|formato|longitud).*");
+            assertThat(detalle.path("issue").asText())
+                    .containsPattern("(?is)(?:debe|inválid|válid|obligatori|contraseña|vacío|caracteres|formato|longitud)");
         });
     }
 

@@ -14,7 +14,8 @@ class SeleniumWebDriverFactoryTest {
         var arguments = ((List<?>) chromeOptions.get("args")).stream()
                 .map(String::valueOf).toList();
 
-        assertThat(arguments).containsExactly("--window-size=1920,1080");
-        assertThat(arguments).doesNotContain("--headless", "--headless=new", "--headless=old");
+        assertThat(arguments)
+                .containsExactly("--window-size=1920,1080")
+                .doesNotContain("--headless", "--headless=new", "--headless=old");
     }
 }

@@ -44,27 +44,62 @@ public class EstadisticasJugadorEntity {
 
     protected EstadisticasJugadorEntity() { }
 
-    public EstadisticasJugadorEntity(UUID id, UUID jugadorId, String posicion,
-            Integer minutosJugados, Integer goles, Integer asistencias,
-            BigDecimal tiros, BigDecimal pasesClave, BigDecimal regates,
-            BigDecimal tackles, BigDecimal valoracion, Integer tarjetasAmarillas,
-            Integer tarjetasRojas, UUID syncId, Instant creadoEn, Instant actualizadoEn) {
-        this.id = id;
-        this.jugadorId = jugadorId;
-        this.posicion = posicion;
-        this.minutosJugados = minutosJugados;
-        this.goles = goles;
-        this.asistencias = asistencias;
-        this.tiros = tiros;
-        this.pasesClave = pasesClave;
-        this.regates = regates;
-        this.tackles = tackles;
-        this.valoracion = valoracion;
-        this.tarjetasAmarillas = tarjetasAmarillas;
-        this.tarjetasRojas = tarjetasRojas;
-        this.syncId = syncId;
-        this.creadoEn = creadoEn;
-        this.actualizadoEn = actualizadoEn;
+    public EstadisticasJugadorEntity(Creacion creation) {
+        this.id = creation.id;
+        this.jugadorId = creation.jugadorId;
+        this.posicion = creation.posicion;
+        this.minutosJugados = creation.minutosJugados;
+        this.goles = creation.goles;
+        this.asistencias = creation.asistencias;
+        this.tiros = creation.tiros;
+        this.pasesClave = creation.pasesClave;
+        this.regates = creation.regates;
+        this.tackles = creation.tackles;
+        this.valoracion = creation.valoracion;
+        this.tarjetasAmarillas = creation.tarjetasAmarillas;
+        this.tarjetasRojas = creation.tarjetasRojas;
+        this.syncId = creation.syncId;
+        this.creadoEn = creation.creadoEn;
+        this.actualizadoEn = creation.actualizadoEn;
+    }
+
+    public static final class Creacion {
+        private UUID id;
+        private UUID jugadorId;
+        private String posicion;
+        private Integer minutosJugados;
+        private Integer goles;
+        private Integer asistencias;
+        private BigDecimal tiros;
+        private BigDecimal pasesClave;
+        private BigDecimal regates;
+        private BigDecimal tackles;
+        private BigDecimal valoracion;
+        private Integer tarjetasAmarillas;
+        private Integer tarjetasRojas;
+        private UUID syncId;
+        private Instant creadoEn;
+        private Instant actualizadoEn;
+
+        private Creacion() { }
+
+        public static Creacion builder() { return new Creacion(); }
+        public Creacion id(UUID value) { id = value; return this; }
+        public Creacion jugadorId(UUID value) { jugadorId = value; return this; }
+        public Creacion posicion(String value) { posicion = value; return this; }
+        public Creacion minutosJugados(Integer value) { minutosJugados = value; return this; }
+        public Creacion goles(Integer value) { goles = value; return this; }
+        public Creacion asistencias(Integer value) { asistencias = value; return this; }
+        public Creacion tiros(BigDecimal value) { tiros = value; return this; }
+        public Creacion pasesClave(BigDecimal value) { pasesClave = value; return this; }
+        public Creacion regates(BigDecimal value) { regates = value; return this; }
+        public Creacion tackles(BigDecimal value) { tackles = value; return this; }
+        public Creacion valoracion(BigDecimal value) { valoracion = value; return this; }
+        public Creacion tarjetasAmarillas(Integer value) { tarjetasAmarillas = value; return this; }
+        public Creacion tarjetasRojas(Integer value) { tarjetasRojas = value; return this; }
+        public Creacion syncId(UUID value) { syncId = value; return this; }
+        public Creacion creadoEn(Instant value) { creadoEn = value; return this; }
+        public Creacion actualizadoEn(Instant value) { actualizadoEn = value; return this; }
     }
 
     public UUID getId() { return id; }
@@ -84,22 +119,52 @@ public class EstadisticasJugadorEntity {
     public Instant getCreadoEn() { return creadoEn; }
     public Instant getActualizadoEn() { return actualizadoEn; }
 
-    public void actualizar(String nuevaPosicion, Integer minutos, Integer goles, Integer asistencias,
-            BigDecimal nuevosTiros, BigDecimal nuevosPasesClave, BigDecimal nuevosRegates,
-            BigDecimal nuevosTackles, BigDecimal nuevaValoracion, Integer nuevasAmarillas,
-            Integer nuevasRojas, UUID nuevaSync, Instant ahora) {
-        this.posicion = nuevaPosicion;
-        this.minutosJugados = minutos;
-        this.goles = goles;
-        this.asistencias = asistencias;
-        this.tiros = nuevosTiros;
-        this.pasesClave = nuevosPasesClave;
-        this.regates = nuevosRegates;
-        this.tackles = nuevosTackles;
-        this.valoracion = nuevaValoracion;
-        this.tarjetasAmarillas = nuevasAmarillas;
-        this.tarjetasRojas = nuevasRojas;
-        this.syncId = nuevaSync;
-        this.actualizadoEn = ahora;
+    public void actualizar(Actualizacion update) {
+        this.posicion = update.posicion;
+        this.minutosJugados = update.minutos;
+        this.goles = update.goles;
+        this.asistencias = update.asistencias;
+        this.tiros = update.tiros;
+        this.pasesClave = update.pasesClave;
+        this.regates = update.regates;
+        this.tackles = update.tackles;
+        this.valoracion = update.valoracion;
+        this.tarjetasAmarillas = update.amarillas;
+        this.tarjetasRojas = update.rojas;
+        this.syncId = update.syncId;
+        this.actualizadoEn = update.ahora;
+    }
+
+    public static final class Actualizacion {
+        private String posicion;
+        private Integer minutos;
+        private Integer goles;
+        private Integer asistencias;
+        private BigDecimal tiros;
+        private BigDecimal pasesClave;
+        private BigDecimal regates;
+        private BigDecimal tackles;
+        private BigDecimal valoracion;
+        private Integer amarillas;
+        private Integer rojas;
+        private UUID syncId;
+        private Instant ahora;
+
+        private Actualizacion() { }
+
+        public static Actualizacion builder() { return new Actualizacion(); }
+        public Actualizacion posicion(String value) { posicion = value; return this; }
+        public Actualizacion minutos(Integer value) { minutos = value; return this; }
+        public Actualizacion goles(Integer value) { goles = value; return this; }
+        public Actualizacion asistencias(Integer value) { asistencias = value; return this; }
+        public Actualizacion tiros(BigDecimal value) { tiros = value; return this; }
+        public Actualizacion pasesClave(BigDecimal value) { pasesClave = value; return this; }
+        public Actualizacion regates(BigDecimal value) { regates = value; return this; }
+        public Actualizacion tackles(BigDecimal value) { tackles = value; return this; }
+        public Actualizacion valoracion(BigDecimal value) { valoracion = value; return this; }
+        public Actualizacion amarillas(Integer value) { amarillas = value; return this; }
+        public Actualizacion rojas(Integer value) { rojas = value; return this; }
+        public Actualizacion syncId(UUID value) { syncId = value; return this; }
+        public Actualizacion ahora(Instant value) { ahora = value; return this; }
     }
 }

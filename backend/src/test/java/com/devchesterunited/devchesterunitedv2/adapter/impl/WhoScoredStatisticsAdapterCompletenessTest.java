@@ -7,7 +7,11 @@ import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsConfig
 import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsException;
 import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -68,20 +72,28 @@ class WhoScoredStatisticsAdapterCompletenessTest {
                 .contains("fallos=[totalPages != 1, playersRecibidos != totalResults]");
     }
 
-    @Test
-    void rechazaPaginaActualDistintaDeUno() {
-        var setup = setup(invalidMetadata("\"currentPage\":2"), valid(), valid());
+    @ParameterizedTest
+    @MethodSource("metadataInvalida")
+    void rechazaMetadataInvalida(String respuesta) {
+        var setup = setup(respuesta, valid(), valid());
 
         assertThatThrownBy(() -> setup.adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(WhoScoredStatisticsException.class);
     }
 
-    @Test
-    void rechazaCantidadDeJugadoresDiferenteAlTotal() {
-        var setup = setup(invalidMetadata("\"totalResults\":2"), valid(), valid());
+    private static Stream<Arguments> metadataInvalida() {
+        return Stream.of(
+                Arguments.of(invalidMetadataEstatica("\"currentPage\":2")),
+                Arguments.of(invalidMetadataEstatica("\"totalResults\":2")),
+                Arguments.of("{\"paging\":null,\"playerTableStats\":[]}"));
+    }
 
-        assertThatThrownBy(() -> setup.adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
-                .isInstanceOf(WhoScoredStatisticsException.class);
+    private static String invalidMetadataEstatica(String replacement) {
+        String response = "{\"paging\":{\"currentPage\":1,\"totalPages\":1,"
+                + "\"resultsPerPage\":500,\"totalResults\":1},"
+                + "\"playerTableStats\":[{\"playerId\":101,\"name\":\"Ana Perez\",\"teamId\":201}]}";
+        return response.replace(replacement.startsWith("\"totalResults\"")
+                ? "\"totalResults\":1" : "\"currentPage\":1", replacement);
     }
 
     @Test
@@ -111,23 +123,6 @@ class WhoScoredStatisticsAdapterCompletenessTest {
         assertThatThrownBy(() -> setup.adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(WhoScoredStatisticsException.class)
                 .hasMessageContaining("totalResults > resultsPerPage");
-    }
-
-    @Test
-    void rechazaMetadataNumericaNegativa() {
-        var setup = setup(invalidMetadata("\"resultsPerPage\":-1"), valid(), valid());
-
-        assertThatThrownBy(() -> setup.adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
-                .isInstanceOf(WhoScoredStatisticsException.class);
-    }
-
-    @Test
-    void rechazaMetadataNula() {
-        var setup = setup("{\"paging\":null,\"playerTableStats\":[]}",
-                valid(), valid());
-
-        assertThatThrownBy(() -> setup.adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
-                .isInstanceOf(WhoScoredStatisticsException.class);
     }
 
     @Test

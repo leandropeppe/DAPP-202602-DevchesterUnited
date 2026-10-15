@@ -71,7 +71,8 @@ public class IdentidadJugadorResolver {
     }
 
     private static boolean compatibleEstructural(String externo, String local) {
-        List<String> a = tokens(externo), b = tokens(local);
+        List<String> a = tokens(externo);
+        List<String> b = tokens(local);
         CommonRun run = tramoComun(a, b);
         if (run.length() == 0) return false;
         String apellido = a.get(run.leftStart());
@@ -85,16 +86,24 @@ public class IdentidadJugadorResolver {
 
     private static CommonRun tramoComun(List<String> a, List<String> b) {
         CommonRun best = new CommonRun(0, 0, 0);
-        for (int i = 0; i < a.size(); i++) for (int j = 0; j < b.size(); j++) {
-            int n = 0;
-            while (i + n < a.size() && j + n < b.size() && a.get(i + n).equals(b.get(j + n))) n++;
-            if (n > best.length() || (n == best.length() && i > best.leftStart())) best = new CommonRun(i, j, n);
+        for (int i = 0; i < a.size(); i++) {
+            for (int j = 0; j < b.size(); j++) {
+                int n = 0;
+                while (i + n < a.size() && j + n < b.size()
+                        && a.get(i + n).equals(b.get(j + n))) {
+                    n++;
+                }
+                if (n > best.length() || (n == best.length() && i > best.leftStart())) {
+                    best = new CommonRun(i, j, n);
+                }
+            }
         }
         return best;
     }
 
     private static boolean nombreCompatible(List<String> a, List<String> b) {
-        String primeroA = a.get(0), primeroB = b.get(0);
+        String primeroA = a.get(0);
+        String primeroB = b.get(0);
         if (primeroA.equals(primeroB)) return true;
         int min = Math.min(primeroA.length(), primeroB.length());
         if (min >= 3 && (primeroA.startsWith(primeroB) || primeroB.startsWith(primeroA))) return true;
@@ -129,9 +138,12 @@ public class IdentidadJugadorResolver {
 
     private static int lcs(String a, String b) {
         int[][] dp = new int[a.length() + 1][b.length() + 1];
-        for (int i = 1; i <= a.length(); i++) for (int j = 1; j <= b.length(); j++)
-            dp[i][j] = a.charAt(i - 1) == b.charAt(j - 1)
-                    ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+        for (int i = 1; i <= a.length(); i++) {
+            for (int j = 1; j <= b.length(); j++) {
+                dp[i][j] = a.charAt(i - 1) == b.charAt(j - 1)
+                        ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        }
         return dp[a.length()][b.length()];
     }
 

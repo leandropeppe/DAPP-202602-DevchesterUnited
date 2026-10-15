@@ -19,14 +19,16 @@ class SnapshotEstadisticasJugadorTest {
 
         assertThat(snapshot.competicion()).isEqualTo(CompeticionEstadistica.PREMIER_LEAGUE);
         assertThat(snapshot.registros()).containsExactly(registro);
-        assertThatThrownBy(() -> snapshot.registros().add(registro))
+        var registros = snapshot.registros();
+        assertThatThrownBy(() -> registros.add(registro))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
     void rechazaRegistrosNulos() {
+        var nullRecords = java.util.Arrays.asList((RegistroEstadisticasJugador) null);
         assertThatThrownBy(() -> new SnapshotEstadisticasJugador(
-                CompeticionEstadistica.PREMIER_LEAGUE, java.util.Arrays.asList((RegistroEstadisticasJugador) null)))
+                CompeticionEstadistica.PREMIER_LEAGUE, nullRecords))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }
