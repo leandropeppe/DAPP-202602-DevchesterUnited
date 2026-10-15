@@ -72,4 +72,37 @@ public class EstadoMercadoEntity {
         reservaInicialInicializada = reservaEfectiva;
         actualizadoEn = momento;
     }
+
+    public void pasarAInitializing(Instant momento) {
+        if (!"UNINITIALIZED".equals(status) && !"FAILED".equals(status)) {
+            throw new IllegalStateException(
+                    "Solo UNINITIALIZED o FAILED pueden pasar a INITIALIZING.");
+        }
+        status = "INITIALIZING";
+        epoch++;
+        motivoFallo = null;
+        actualizadoEn = momento;
+    }
+
+    public void marcarFailed(String motivo, Instant momento) {
+        if (!"INITIALIZING".equals(status)) {
+            throw new IllegalStateException(
+                    "Solo INITIALIZING puede pasar a FAILED.");
+        }
+        status = "FAILED";
+        epoch++;
+        motivoFallo = motivo;
+        actualizadoEn = momento;
+    }
+
+    public void marcarReady(Instant momento) {
+        if (!"INITIALIZING".equals(status)) {
+            throw new IllegalStateException(
+                    "Solo INITIALIZING puede pasar a READY.");
+        }
+        status = "READY";
+        epoch++;
+        motivoFallo = null;
+        actualizadoEn = momento;
+    }
 }
