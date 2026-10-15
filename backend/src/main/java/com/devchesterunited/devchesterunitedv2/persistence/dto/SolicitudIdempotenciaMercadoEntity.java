@@ -19,6 +19,10 @@ import java.util.UUID;
                 columnNames = {"id", "user_id"})
 })
 public class SolicitudIdempotenciaMercadoEntity {
+    public static final String STATUS_PROCESSING = "PROCESSING";
+    public static final String STATUS_CONFIRMED = "CONFIRMED";
+    public static final String STATUS_REJECTED = "REJECTED";
+    public static final String STATUS_UNCERTAIN = "UNCERTAIN";
     @Id
     @Column(nullable = false)
     private UUID id;
@@ -82,4 +86,55 @@ public class SolicitudIdempotenciaMercadoEntity {
     public UUID getReferenciaResultado() { return referenciaResultado; }
     public Instant getCreadoEn() { return creadoEn; }
     public Instant getActualizadoEn() { return actualizadoEn; }
+
+    public void confirmar(UUID token, UUID resultado, Instant ahora) {
+        validarTokenVigente(token);
+        if (!STATUS_PROCESSING.equals(status)) {
+            return;
+        }
+        if (resultado == null) {
+            throw new IllegalArgumentException("La referencia del resultado es obligatoria.");
+        }
+        status = STATUS_CONFIRMED;
+        referenciaResultado = resultado;
+        tokenEjecucion = null;
+        actualizadoEn = ahora;
+    }
+
+    public void rechazar(UUID token, Instant ahora) {
+        validarTokenVigente(token);
+        if (!STATUS_PROCESSING.equals(status)) {
+            return;
+        }
+        status = STATUS_REJECTED;
+        tokenEjecucion = null;
+        actualizadoEn = ahora;
+    }
+
+    public void marcarIncierta(UUID token, Instant ahora) {
+        validarTokenVigente(token);
+        if (!STATUS_PROCESSING.equals(status)) {
+            return;
+        }
+        status = STATUS_UNCERTAIN;
+        tokenEjecucion = null;
+        actualizadoEn = ahora;
+    }
+
+    public void reclamarNuevamente(UUID nuevoToken, Instant ahora) {
+        if (!STATUS_PROCESSING.equals(status)) {
+            throw new IllegalStateException("Solo una solicitud PROCESSING puede reclamarse.");
+        }
+        if (nuevoToken == null) {
+            throw new IllegalArgumentException("El token de ejecucion es obligatorio.");
+        }
+        tokenEjecucion = nuevoToken;
+        actualizadoEn = ahora;
+    }
+
+    private void validarTokenVigente(UUID token) {
+        if (!STATUS_PROCESSING.equals(status) || token == null || !token.equals(tokenEjecucion)) {
+            throw new IllegalStateException("El token de ejecucion ya no es vigente.");
+        }
+    }
 }

@@ -18,6 +18,11 @@ public interface SolicitudIdempotenciaMercadoRepository
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select solicitud from SolicitudIdempotenciaMercadoEntity solicitud "
+            + "where solicitud.id = :id")
+    Optional<SolicitudIdempotenciaMercadoEntity> findByIdForUpdate(@Param("id") UUID id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select solicitud from SolicitudIdempotenciaMercadoEntity solicitud "
             + "where solicitud.usuarioId = :usuarioId "
             + "and solicitud.claveIdempotencia = :claveIdempotencia")
     Optional<SolicitudIdempotenciaMercadoEntity> findByUsuarioIdAndClaveForUpdate(

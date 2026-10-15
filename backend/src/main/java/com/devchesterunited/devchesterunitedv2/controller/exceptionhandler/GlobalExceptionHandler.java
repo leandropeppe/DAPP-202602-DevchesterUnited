@@ -114,7 +114,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private static HttpStatus statusFor(TokenMarketException.Reason reason) {
         return switch (reason) {
             case MARKET_NOT_READY -> HttpStatus.SERVICE_UNAVAILABLE;
-            case ACCOUNT_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case ACCOUNT_NOT_FOUND, OPERATION_NOT_FOUND -> HttpStatus.NOT_FOUND;
             case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
             case INACTIVE_PLAYER, QUOTE_UNAVAILABLE, INSUFFICIENT_BALANCE,
                     IDEMPOTENCY_CONFLICT, STALE_REQUEST -> HttpStatus.CONFLICT;

@@ -11,7 +11,8 @@ public class TokenMarketException extends RuntimeException {
         IDEMPOTENCY_CONFLICT,
         STALE_REQUEST,
         INVALID_INPUT,
-        ACCOUNT_NOT_FOUND
+        ACCOUNT_NOT_FOUND,
+        OPERATION_NOT_FOUND
     }
 
     private final Reason reason;

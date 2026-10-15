@@ -3,12 +3,15 @@ package com.devchesterunited.devchesterunitedv2.controller;
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketBalanceResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPlayerResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPlayersResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.MarketOperationResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.PaginacionDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketAvailabilityResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketPlayerAvailability;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketAvailabilityService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketBalanceService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
+import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,10 +36,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class MarketController {
     private final MarketBalanceService balances;
     private final MarketAvailabilityService availability;
+    private final MarketIdempotencyService idempotency;
 
-    public MarketController(MarketBalanceService balances, MarketAvailabilityService availability) {
+    public MarketController(MarketBalanceService balances, MarketAvailabilityService availability,
+            MarketIdempotencyService idempotency) {
         this.balances = balances;
         this.availability = availability;
+        this.idempotency = idempotency;
     }
 
     @GetMapping("/balance")
@@ -94,6 +100,43 @@ public class MarketController {
                 new PaginacionDTO(resultado.pagina(), resultado.limite(),
                         resultado.totalPaginas(), resultado.totalRegistros()));
         return ResponseEntity.ok(new SuccessResponseDTO<>(data));
+    }
+
+    @GetMapping("/operations/{idempotency-key}")
+    @Operation(operationId = "recuperarMarketOperation", summary = "Recuperar una operacion del mercado",
+            description = "Devuelve el estado de una solicitud del usuario autenticado. Los estados pendientes o inciertos no son compraventas confirmadas.",
+            security = @SecurityRequirement(name = "BearerAuth"))
+    @ApiResponse(responseCode = "200", description = "Estado de la solicitud.",
+            content = @Content(schema = @Schema(implementation = MarketOperationResponseDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Clave de idempotencia invalida.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "401", description = "JWT ausente o invalido.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "404", description = "Solicitud inexistente para el usuario autenticado.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    public ResponseEntity<SuccessResponseDTO<MarketOperationResponseDTO>> operation(
+            @AuthenticationPrincipal Jwt jwt,
+            @Parameter(name = "idempotency-key", in = ParameterIn.PATH,
+                    description = "Clave de idempotencia de la solicitud.", required = true,
+                    schema = @Schema(type = "string", maxLength = 200, minLength = 1))
+            @org.springframework.web.bind.annotation.PathVariable("idempotency-key") String idempotencyKey) {
+        UUID usuarioId = usuarioDesde(jwt);
+        if (idempotencyKey == null || idempotencyKey.isBlank()
+                || idempotencyKey.trim().length() > 200) {
+            throw new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
+                    "La clave de idempotencia no es valida.");
+        }
+        MarketIdempotencyResult result = idempotency.recuperar(usuarioId, idempotencyKey.trim())
+                .orElseThrow(() -> new TokenMarketException(TokenMarketException.Reason.OPERATION_NOT_FOUND,
+                        "La operacion no existe."));
+        return ResponseEntity.ok(new SuccessResponseDTO<>(toPublicOperation(result)));
+    }
+
+    private static MarketOperationResponseDTO toPublicOperation(MarketIdempotencyResult result) {
+        UUID publicResultReference = result.estado() == com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStatus.CONFIRMED
+                ? result.referenciaResultado() : null;
+        return new MarketOperationResponseDTO(result.claveIdempotencia(), result.tipoOperacion(),
+                result.estado().name(), publicResultReference, result.actualizadoEn());
     }
 
     private static MarketPlayerResponseDTO mapear(MarketPlayerAvailability jugador) {
