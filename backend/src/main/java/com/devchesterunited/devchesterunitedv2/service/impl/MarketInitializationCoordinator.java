@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.service.impl;
 import com.devchesterunited.devchesterunitedv2.modelo.EstadoMercado;
 import com.devchesterunited.devchesterunitedv2.service.dto.InicializacionMercadoResultado;
 import java.util.concurrent.locks.ReentrantLock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -16,23 +17,48 @@ public class MarketInitializationCoordinator {
 
     private final MarketInitializationStateService estados;
     private final MarketInitializationBootstrap bootstrap;
+    private final InicializacionCreditosUsuariosService creditos;
+    private final MarketInitializationExecutionLock lockPersistente;
     private final ReentrantLock intentoEnCurso = new ReentrantLock();
 
+    @Autowired
+    public MarketInitializationCoordinator(
+            MarketInitializationStateService estados,
+            MarketInitializationBootstrap bootstrap,
+            InicializacionCreditosUsuariosService creditos,
+            MarketInitializationExecutionLock lockPersistente) {
+        this.estados = estados;
+        this.bootstrap = bootstrap;
+        this.creditos = creditos;
+        this.lockPersistente = lockPersistente;
+    }
+
+    /** Compatibilidad con las pruebas del coordinador fundacional de T020. */
     public MarketInitializationCoordinator(
             MarketInitializationStateService estados,
             MarketInitializationBootstrap bootstrap) {
-        this.estados = estados;
-        this.bootstrap = bootstrap;
+        this(estados, bootstrap, null, null);
     }
 
     /**
-     * Inicia o reanuda el estado y ejecuta únicamente el bootstrap T019.
-     * El resultado permanece INITIALIZING hasta que las etapas futuras existan.
+     * Inicia o reanuda la ejecución completa de inicialización. Las etapas
+     * individuales son idempotentes y pueden reanudarse después de un FAILED o
+     * de una interrupción que haya dejado el estado en INITIALIZING.
      */
     public InicializacionMercadoResultado coordinar() {
         intentoEnCurso.lock();
         try {
-            InicializacionMercadoResultado iniciado = estados.comenzarOReanudar();
+            if (lockPersistente != null) {
+                return lockPersistente.ejecutar(this::coordinarProtegido);
+            }
+            return coordinarProtegido();
+        } finally {
+            intentoEnCurso.unlock();
+        }
+    }
+
+    private InicializacionMercadoResultado coordinarProtegido() {
+        InicializacionMercadoResultado iniciado = estados.comenzarOReanudar();
             if (iniciado.estado() == EstadoMercado.READY) {
                 return iniciado;
             }
@@ -43,15 +69,20 @@ public class MarketInitializationCoordinator {
             }
 
             try {
+                if (creditos != null) {
+                    creditos.asignarAUsuariosExistentes();
+                }
                 bootstrap.bootstrap();
-                return iniciado;
+                if (creditos == null) {
+                    return iniciado;
+                }
+                return estados.marcarReady(iniciado.epoca()).orElseThrow(() ->
+                        new IllegalStateException(
+                                "La ejecución de inicialización perdió la propiedad del epoch."));
             } catch (RuntimeException | Error original) {
                 marcarFalloSinOcultarError(iniciado.epoca(), original);
                 throw original;
             }
-        } finally {
-            intentoEnCurso.unlock();
-        }
     }
 
     private void marcarFalloSinOcultarError(long epoch, Throwable original) {

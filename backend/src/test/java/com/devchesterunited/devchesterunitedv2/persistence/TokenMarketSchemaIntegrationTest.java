@@ -200,19 +200,14 @@ class TokenMarketSchemaIntegrationTest extends PostgresTestSupport {
      * Token Market y se respeta el orden de las claves foráneas.
      */
     private void limpiarTokenMarketAntesDeVerificarEstadoInicial() {
-        jdbc.update("DELETE FROM market_movements");
-        jdbc.update("DELETE FROM market_confirmed_transactions");
-        jdbc.update("DELETE FROM market_rejected_attempts");
-        jdbc.update("DELETE FROM market_idempotency_requests");
-        jdbc.update("DELETE FROM market_holdings");
-        jdbc.update("DELETE FROM market_realized_pnl");
-        jdbc.update("DELETE FROM market_quote_headers");
-        jdbc.update("DELETE FROM market_quote_versions");
-        jdbc.update("DELETE FROM market_initial_credit_grants");
-        jdbc.update("DELETE FROM market_token_issuances");
-        jdbc.update("DELETE FROM market_credit_accounts");
-        jdbc.update("DELETE FROM market_counterparties");
-        jdbc.update("DELETE FROM market_state");
+        // Las versiones de cotización son inmutables y no admiten DELETE.
+        // TRUNCATE es una operación de aislamiento exclusiva de este fixture;
+        // no modifica ni desactiva el trigger de V16.
+        jdbc.execute("TRUNCATE TABLE market_movements, market_confirmed_transactions, "
+                + "market_rejected_attempts, market_idempotency_requests, market_holdings, "
+                + "market_realized_pnl, market_quote_headers, market_quote_versions, "
+                + "market_initial_credit_grants, market_token_issuances, "
+                + "market_credit_accounts, market_counterparties, market_state CASCADE");
     }
 
     private void assertConstraintViolation(String expectedSqlState, Runnable operation) {

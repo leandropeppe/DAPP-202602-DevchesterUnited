@@ -4,6 +4,8 @@ import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorCatalogoProjection;
 import java.util.List;
 import java.util.UUID;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +16,12 @@ import org.springframework.data.repository.query.Param;
  * No normaliza acentos ni invoca lógica del dominio.
  */
 public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
+    List<JugadorEntity> findAllByActivoTrueOrderByIdAsc();
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select jugador from JugadorEntity jugador where jugador.id = :id")
+    java.util.Optional<JugadorEntity> findByIdForUpdate(@Param("id") UUID id);
+
     java.util.List<JugadorEntity> findAllByEquipoId(UUID equipoId);
     java.util.List<JugadorEntity> findAllByEquipoIdAndActivoTrue(UUID equipoId);
     // Escapar primero ! para no volver a escapar los ! introducidos para % y _.

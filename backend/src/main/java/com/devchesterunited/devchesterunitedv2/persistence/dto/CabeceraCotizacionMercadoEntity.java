@@ -45,4 +45,14 @@ public class CabeceraCotizacionMercadoEntity {
     public UUID getQuoteId() { return quoteId; }
     public Long getVersionActual() { return versionActual; }
     public Instant getActualizadoEn() { return actualizadoEn; }
+
+    /** Avanza la referencia vigente sin mutar ninguna versión histórica. */
+    public void avanzarA(UUID quoteId, Long version, Instant momento) {
+        if (quoteId == null || version == null || version <= 0 || momento == null) {
+            throw new IllegalArgumentException("La referencia vigente es inválida.");
+        }
+        this.quoteId = quoteId;
+        this.versionActual = version;
+        this.actualizadoEn = momento;
+    }
 }

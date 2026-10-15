@@ -8,11 +8,14 @@ import com.devchesterunited.devchesterunitedv2.persistence.dto.ContraparteMercad
 import com.devchesterunited.devchesterunitedv2.persistence.dto.CuentaCreditosMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadoMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.service.dto.InicializacionMercadoResultado;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.QuotePublicationPort;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MarketInitializationBootstrap {
     static final String TIPO_SUPERUSER = "SUPERUSER";
     static final BigDecimal RESERVA_POR_DEFECTO = new BigDecimal("1000000.00");
+    private static final BigDecimal COTIZACION_INICIAL = new BigDecimal("1.00");
     private static final String NOMBRE_SUPERUSER = "Token Market Superuser";
 
     private final EstadoMercadoRepository estados;
@@ -28,18 +32,47 @@ public class MarketInitializationBootstrap {
     private final CuentaCreditosMercadoRepository cuentas;
     private final Clock clock;
     private final BigDecimal reservaConfigurada;
+    private final MarketTokenIssuanceService emisionesIniciales;
+    private final QuotePublicationPort cotizacionesIniciales;
 
+    @Autowired
     public MarketInitializationBootstrap(
             EstadoMercadoRepository estados,
             ContraparteMercadoRepository contrapartes,
             CuentaCreditosMercadoRepository cuentas,
             Clock clock,
-            @Value("${token-market.initial-reserve:1000000.00}") BigDecimal reservaConfigurada) {
+            @Value("${token-market.initial-reserve:1000000.00}") BigDecimal reservaConfigurada,
+            MarketTokenIssuanceService emisionesIniciales,
+            QuotePublicationPort cotizacionesIniciales) {
         this.estados = estados;
         this.contrapartes = contrapartes;
         this.cuentas = cuentas;
         this.clock = clock;
         this.reservaConfigurada = reservaConfigurada;
+        this.emisionesIniciales = emisionesIniciales;
+        this.cotizacionesIniciales = cotizacionesIniciales;
+    }
+
+    /** Constructor conservado para las pruebas del bootstrap fundacional de T019. */
+    public MarketInitializationBootstrap(
+            EstadoMercadoRepository estados,
+            ContraparteMercadoRepository contrapartes,
+            CuentaCreditosMercadoRepository cuentas,
+            Clock clock,
+            BigDecimal reservaConfigurada) {
+        this(estados, contrapartes, cuentas, clock, reservaConfigurada, null, null);
+    }
+
+    /** Compatibilidad para consumidores que sólo incorporan T022. */
+    public MarketInitializationBootstrap(
+            EstadoMercadoRepository estados,
+            ContraparteMercadoRepository contrapartes,
+            CuentaCreditosMercadoRepository cuentas,
+            Clock clock,
+            BigDecimal reservaConfigurada,
+            MarketTokenIssuanceService emisionesIniciales) {
+        this(estados, contrapartes, cuentas, clock, reservaConfigurada,
+                emisionesIniciales, null);
     }
 
     @Transactional
@@ -72,6 +105,17 @@ public class MarketInitializationBootstrap {
             cuentas.save(new CuentaCreditosMercadoEntity(
                     UUID.randomUUID(), null, contraparte.getId(),
                     reservaEfectiva, momento, momento));
+        }
+
+        if (emisionesIniciales != null) {
+            List<UUID> jugadoresElegibles = emisionesIniciales
+                    .emitirJugadoresActivosYObtener(contraparte.getId());
+            if (cotizacionesIniciales != null) {
+                for (UUID jugadorId : jugadoresElegibles) {
+                    cotizacionesIniciales.publishInitialQuote(
+                            jugadorId, COTIZACION_INICIAL, true);
+                }
+            }
         }
 
         return new InicializacionMercadoResultado(

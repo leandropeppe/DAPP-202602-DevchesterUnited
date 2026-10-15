@@ -65,6 +65,24 @@ public class MarketInitializationStateService {
         return Optional.of(resultado(estado));
     }
 
+    /** Confirma READY únicamente para la ejecución que completó todas las etapas. */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Optional<InicializacionMercadoResultado> marcarReady(long epochEsperado) {
+        Optional<EstadoMercadoEntity> estadoBloqueado = estadoBloqueadoOpcional();
+        if (estadoBloqueado.isEmpty()) {
+            return Optional.empty();
+        }
+        EstadoMercadoEntity estado = estadoBloqueado.get();
+        if (estado.getEpoch() != epochEsperado
+                || !"INITIALIZING".equals(estado.getStatus())) {
+            return Optional.empty();
+        }
+
+        estado.marcarReady(clock.instant());
+        estados.save(estado);
+        return Optional.of(resultado(estado));
+    }
+
     private EstadoMercadoEntity estadoBloqueado() {
         return estadoBloqueadoOpcional().orElseThrow(() -> new IllegalStateException(
                 "No existe la fila singleton del estado del mercado."));

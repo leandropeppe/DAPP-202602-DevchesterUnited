@@ -18,6 +18,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJ
 import com.devchesterunited.devchesterunitedv2.persistence.mapper.JugadorMapper;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionPersistenciaException;
+import com.devchesterunited.devchesterunitedv2.service.event.JugadorActivadoEvent;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import java.time.Clock;
 import java.time.Instant;
@@ -31,6 +32,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.dao.DataAccessException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
@@ -50,12 +52,14 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     private final JdbcTemplate jdbc;
     private final Clock clock;
     private final JugadorMapper jugadorMapper;
+    private final ApplicationEventPublisher eventos;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public SincronizacionCatalogoServiceImpl(ProveedorCatalogo adapter, EquipoRepository equipos,
             IdentidadExternaEquipoRepository identidadesEquipos,
             JugadorRepository jugadores, UsuarioRepository usuarios,
             IdentidadExternaJugadorRepository identidades, JdbcTemplate jdbc, Clock clock,
-            JugadorMapper jugadorMapper) {
+            JugadorMapper jugadorMapper, ApplicationEventPublisher eventos) {
         this.adapter = adapter;
         this.equipos = equipos;
         this.identidadesEquipos = Objects.requireNonNull(identidadesEquipos,
@@ -66,6 +70,17 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
         this.jdbc = jdbc;
         this.clock = clock;
         this.jugadorMapper = Objects.requireNonNull(jugadorMapper, "jugadorMapper es obligatorio");
+        this.eventos = Objects.requireNonNull(eventos, "eventos es obligatorio");
+    }
+
+    /** Constructor compatible con las pruebas unitarias del sincronizador. */
+    public SincronizacionCatalogoServiceImpl(ProveedorCatalogo adapter, EquipoRepository equipos,
+            IdentidadExternaEquipoRepository identidadesEquipos,
+            JugadorRepository jugadores, UsuarioRepository usuarios,
+            IdentidadExternaJugadorRepository identidades, JdbcTemplate jdbc, Clock clock,
+            JugadorMapper jugadorMapper) {
+        this(adapter, equipos, identidadesEquipos, jugadores, usuarios, identidades, jdbc, clock,
+                jugadorMapper, evento -> { });
     }
 
     @Override
@@ -101,9 +116,11 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
         Map<UUID, UUID> equiposSnapshot = new HashMap<>();
         Set<UUID> jugadoresSnapshot = new HashSet<>();
+        List<UUID> jugadoresActivados = new java.util.ArrayList<>();
 
         int equiposCreados = guardarEquipos(snapshot, equiposSnapshot, ahora);
-        int jugadoresCreados = guardarJugadores(snapshot, equiposSnapshot, jugadoresSnapshot, ahora);
+        int jugadoresCreados = guardarJugadores(snapshot, equiposSnapshot, jugadoresSnapshot,
+                jugadoresActivados, ahora);
 
         equipos.flush();
         jugadores.flush();
@@ -116,6 +133,10 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
                 primerSnapshot,
                 identidadesFootballData
         );
+
+        // Se publica dentro de la transacción; el listener de mercado sólo lo
+        // procesa AFTER_COMMIT. Si esta transacción hace rollback, no hay emisión.
+        jugadoresActivados.forEach(id -> eventos.publishEvent(new JugadorActivadoEvent(id)));
 
         return new SincronizacionResultado(
                 snapshot.equipos().size(),
@@ -186,6 +207,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             CatalogoSincronizado snapshot,
             Map<UUID, UUID> equiposSnapshot,
             Set<UUID> jugadoresSnapshot,
+            List<UUID> jugadoresActivados,
             Instant ahora) {
 
         List<Long> externalIds = snapshot.jugadores().stream()
@@ -204,6 +226,8 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             IdentidadExternaJugadorEntity identidadExistente = identidadesPorExternalId.get(externalId);
             JugadorEntity anterior = identidadExistente == null ? null : identidadExistente.getJugador();
 
+            boolean activacion = anterior == null || !anterior.isActivo();
+
             if (anterior == null) {
                 jugadoresCreados++;
             }
@@ -219,6 +243,9 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
             guardarIdentidadFootballData(persistido, externalId, identidadExistente);
 
             jugadoresSnapshot.add(persistido.getId());
+            if (activacion && persistido.isActivo()) {
+                jugadoresActivados.add(persistido.getId());
+            }
         }
 
         return jugadoresCreados;

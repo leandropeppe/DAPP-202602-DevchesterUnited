@@ -109,6 +109,29 @@ class MarketInitializationStateServiceTest {
         verify(estados, org.mockito.Mockito.never()).save(any());
     }
 
+    @Test
+    void marcaReadySoloParaElEpochInitializingPropio() {
+        EstadoMercadoEntity estado = estado("INITIALIZING", 6L);
+        when(estados.findSingletonForUpdate()).thenReturn(Optional.of(estado));
+
+        var resultado = servicio.marcarReady(6L).orElseThrow();
+
+        assertThat(resultado.estado()).isEqualTo(EstadoMercado.READY);
+        assertThat(resultado.epoca()).isEqualTo(7L);
+        verify(estados).save(estado);
+    }
+
+    @Test
+    void noMarcaReadyConEpochAntiguo() {
+        EstadoMercadoEntity estado = estado("INITIALIZING", 7L);
+        when(estados.findSingletonForUpdate()).thenReturn(Optional.of(estado));
+
+        assertThat(servicio.marcarReady(6L)).isEmpty();
+        assertThat(estado.getStatus()).isEqualTo("INITIALIZING");
+        assertThat(estado.getEpoch()).isEqualTo(7L);
+        verify(estados, org.mockito.Mockito.never()).save(any());
+    }
+
     private static EstadoMercadoEntity estado(String status, long epoch) {
         return new EstadoMercadoEntity(
                 (short) 1, status, epoch, RESERVA, RESERVA, null, AHORA, AHORA);

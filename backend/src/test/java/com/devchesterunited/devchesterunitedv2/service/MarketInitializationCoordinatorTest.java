@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,7 +15,9 @@ import com.devchesterunited.devchesterunitedv2.service.dto.InicializacionMercado
 import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationBootstrap;
 import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationCoordinator;
 import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationStateService;
+import com.devchesterunited.devchesterunitedv2.service.impl.InicializacionCreditosUsuariosService;
 import java.lang.reflect.Field;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 class MarketInitializationCoordinatorTest {
@@ -107,6 +111,58 @@ class MarketInitializationCoordinatorTest {
         assertThatThrownBy(coordinador::coordinar)
                 .isSameAs(original);
         assertThat(original.getSuppressed()).containsExactly(falloPersistencia);
+    }
+
+    @Test
+    void completaCreditosBootstrapYReadySoloDespuesDeTodasLasEtapas() {
+        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        InicializacionCreditosUsuariosService creditos =
+                Mockito.mock(InicializacionCreditosUsuariosService.class);
+        InicializacionMercadoResultado iniciado = resultado(EstadoMercado.INITIALIZING, 8L);
+        InicializacionMercadoResultado listo = resultado(EstadoMercado.READY, 9L);
+        when(estados.comenzarOReanudar()).thenReturn(iniciado);
+        when(estados.marcarReady(8L)).thenReturn(Optional.of(listo));
+
+        var coordinador = new MarketInitializationCoordinator(
+                estados, bootstrap, creditos, null);
+
+        assertThat(coordinador.coordinar()).isSameAs(listo);
+
+        InOrder orden = inOrder(creditos, bootstrap, estados);
+        orden.verify(creditos).asignarAUsuariosExistentes();
+        orden.verify(bootstrap).bootstrap();
+        orden.verify(estados).marcarReady(8L);
+    }
+
+    @Test
+    void unFalloDeEtapaDejaFailedYElSiguienteIntentoReanudaSinDuplicarLaCoordinacion() {
+        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        InicializacionCreditosUsuariosService creditos =
+                Mockito.mock(InicializacionCreditosUsuariosService.class);
+        InicializacionMercadoResultado primerIntento =
+                resultado(EstadoMercado.INITIALIZING, 10L);
+        InicializacionMercadoResultado reintento =
+                resultado(EstadoMercado.INITIALIZING, 12L);
+        InicializacionMercadoResultado listo = resultado(EstadoMercado.READY, 13L);
+        when(estados.comenzarOReanudar()).thenReturn(primerIntento, reintento);
+        when(estados.marcarFailed(10L, MOTIVO_FALLO_BOOTSTRAP))
+                .thenReturn(Optional.of(resultado(EstadoMercado.FAILED, 11L)));
+        when(estados.marcarReady(12L)).thenReturn(Optional.of(listo));
+        doThrow(new IllegalStateException("fallo de créditos"))
+                .doNothing().when(creditos).asignarAUsuariosExistentes();
+
+        var coordinador = new MarketInitializationCoordinator(
+                estados, bootstrap, creditos, null);
+
+        assertThatThrownBy(coordinador::coordinar)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("fallo de créditos");
+        assertThat(coordinador.coordinar()).isSameAs(listo);
+
+        verify(estados).marcarFailed(10L, MOTIVO_FALLO_BOOTSTRAP);
+        verify(bootstrap).bootstrap();
     }
 
     @Test

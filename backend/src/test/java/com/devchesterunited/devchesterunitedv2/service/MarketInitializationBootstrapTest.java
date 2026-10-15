@@ -14,10 +14,13 @@ import com.devchesterunited.devchesterunitedv2.persistence.dto.ContraparteMercad
 import com.devchesterunited.devchesterunitedv2.persistence.dto.CuentaCreditosMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadoMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationBootstrap;
+import com.devchesterunited.devchesterunitedv2.service.impl.MarketTokenIssuanceService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.QuotePublicationPort;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +40,8 @@ class MarketInitializationBootstrapTest {
     @Mock EstadoMercadoRepository estados;
     @Mock ContraparteMercadoRepository contrapartes;
     @Mock CuentaCreditosMercadoRepository cuentas;
+    @Mock MarketTokenIssuanceService emisiones;
+    @Mock QuotePublicationPort cotizaciones;
 
     private EstadoMercadoEntity estado;
     private ContraparteMercadoEntity superuser;
@@ -159,9 +164,57 @@ class MarketInitializationBootstrapTest {
         verify(cuentas, never()).save(any(CuentaCreditosMercadoEntity.class));
     }
 
+    @Test
+    void publicaCotizacionInicialSoloParaJugadoresConEmisionValida() {
+        estado = new EstadoMercadoEntity(
+                (short) 1, "UNINITIALIZED", 1L, DEFAULT, DEFAULT, null, AHORA, AHORA);
+        when(estados.findSingletonForUpdate()).thenReturn(Optional.of(estado));
+        when(contrapartes.findByTipoContraparteForUpdate("SUPERUSER"))
+                .thenReturn(Optional.of(superuser));
+        when(cuentas.findByContraparteIdForUpdate(superuser.getId()))
+                .thenReturn(Optional.of(new CuentaCreditosMercadoEntity(
+                        UUID.randomUUID(), null, superuser.getId(), DEFAULT, AHORA, AHORA)));
+
+        UUID jugadorElegible = UUID.randomUUID();
+        when(emisiones.emitirJugadoresActivosYObtener(superuser.getId()))
+                .thenReturn(List.of(jugadorElegible));
+
+        bootstrapConT022YT023(DEFAULT).bootstrap();
+
+        verify(cotizaciones).publishInitialQuote(
+                jugadorElegible, new BigDecimal("1.00"), true);
+    }
+
+    @Test
+    void propagaFalloDeCotizacionParaEvitarCompletarElBootstrap() {
+        estado = new EstadoMercadoEntity(
+                (short) 1, "UNINITIALIZED", 1L, DEFAULT, DEFAULT, null, AHORA, AHORA);
+        when(estados.findSingletonForUpdate()).thenReturn(Optional.of(estado));
+        when(contrapartes.findByTipoContraparteForUpdate("SUPERUSER"))
+                .thenReturn(Optional.of(superuser));
+        when(cuentas.findByContraparteIdForUpdate(superuser.getId()))
+                .thenReturn(Optional.of(new CuentaCreditosMercadoEntity(
+                        UUID.randomUUID(), null, superuser.getId(), DEFAULT, AHORA, AHORA)));
+        UUID jugador = UUID.randomUUID();
+        when(emisiones.emitirJugadoresActivosYObtener(superuser.getId()))
+                .thenReturn(List.of(jugador));
+        when(cotizaciones.publishInitialQuote(jugador, new BigDecimal("1.00"), true))
+                .thenThrow(new IllegalStateException("fallo de publicación"));
+
+        assertThatThrownBy(() -> bootstrapConT022YT023(DEFAULT).bootstrap())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("fallo de publicación");
+    }
+
     private MarketInitializationBootstrap bootstrap(BigDecimal reserva) {
         return new MarketInitializationBootstrap(
                 estados, contrapartes, cuentas,
                 Clock.fixed(AHORA, ZoneOffset.UTC), reserva);
+    }
+
+    private MarketInitializationBootstrap bootstrapConT022YT023(BigDecimal reserva) {
+        return new MarketInitializationBootstrap(
+                estados, contrapartes, cuentas,
+                Clock.fixed(AHORA, ZoneOffset.UTC), reserva, emisiones, cotizaciones);
     }
 }

@@ -44,7 +44,6 @@ class MarketInitializationBootstrapIntegrationTest extends PostgresTestSupport {
         jdbc.update("DELETE FROM market_holdings");
         jdbc.update("DELETE FROM market_realized_pnl");
         jdbc.update("DELETE FROM market_quote_headers");
-        jdbc.update("DELETE FROM market_quote_versions");
         jdbc.update("DELETE FROM market_initial_credit_grants");
         jdbc.update("DELETE FROM market_token_issuances");
         jdbc.update("DELETE FROM market_credit_accounts");
@@ -160,6 +159,43 @@ class MarketInitializationBootstrapIntegrationTest extends PostgresTestSupport {
         assertThat(status()).isEqualTo("UNINITIALIZED");
     }
 
+    @Test
+    void publicaCotizacionInicialSoloParaActivosYLaReejecucionEsIdempotente() {
+        var jugadorActivo = insertarJugador(true);
+        var jugadorInactivo = insertarJugador(false);
+
+        bootstrap.bootstrap();
+
+        assertThat(count("market_token_issuances", jugadorActivo)).isEqualTo(1);
+        assertThat(longValue("SELECT issued_quantity FROM market_token_issuances "
+                + "WHERE player_id = ?", jugadorActivo)).isEqualTo(100L);
+        assertThat(count("market_quote_versions", jugadorActivo)).isEqualTo(1);
+        assertThat(decimal("SELECT price_per_token FROM market_quote_versions "
+                + "WHERE player_id = ?", jugadorActivo)).isEqualByComparingTo("1.00");
+        assertThat(count("market_quote_headers", jugadorActivo)).isEqualTo(1);
+        assertThat(count("market_token_issuances", jugadorInactivo)).isZero();
+        assertThat(count("market_quote_versions", jugadorInactivo)).isZero();
+
+        bootstrap.bootstrap();
+
+        assertThat(count("market_token_issuances", jugadorActivo)).isEqualTo(1);
+        assertThat(count("market_quote_versions", jugadorActivo)).isEqualTo(1);
+        assertThat(longValue("SELECT current_version FROM market_quote_headers "
+                + "WHERE player_id = ?", jugadorActivo)).isEqualTo(1L);
+    }
+
+    @Test
+    void fallaAtomicamenteSiUnaCotizacionInicialPersistidaEsInvalida() {
+        var jugador = insertarJugador(true);
+        insertarCotizacionInicialInvalida(jugador);
+
+        assertThatThrownBy(() -> bootstrap.bootstrap())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("inicial persistida");
+
+        assertThat(count("market_token_issuances", jugador)).isZero();
+    }
+
     private void ejecutarConcurrente(CountDownLatch preparados, CountDownLatch iniciar) {
         preparados.countDown();
         try {
@@ -209,8 +245,45 @@ class MarketInitializationBootstrapIntegrationTest extends PostgresTestSupport {
         return jdbc.queryForObject("SELECT COUNT(*) FROM " + table, Long.class);
     }
 
+    private long count(String table, java.util.UUID playerId) {
+        return jdbc.queryForObject("SELECT COUNT(*) FROM " + table
+                + " WHERE player_id = ?", Long.class, playerId);
+    }
+
     private BigDecimal decimal(String query) {
         return jdbc.queryForObject(query, BigDecimal.class);
+    }
+
+    private BigDecimal decimal(String query, java.util.UUID playerId) {
+        return jdbc.queryForObject(query, BigDecimal.class, playerId);
+    }
+
+    private long longValue(String query, java.util.UUID playerId) {
+        return jdbc.queryForObject(query, Long.class, playerId);
+    }
+
+    private java.util.UUID insertarJugador(boolean activo) {
+        java.util.UUID jugadorId = java.util.UUID.randomUUID();
+        java.util.UUID equipoId = jdbc.queryForObject(
+                "SELECT id FROM equipos LIMIT 1", java.util.UUID.class);
+        jdbc.update("INSERT INTO jugadores "
+                        + "(id, name, position, jersey_number, nationality, team_id, "
+                        + "is_active, created_at, updated_at) "
+                        + "VALUES (?, ?, 'Forward', 9, 'Argentina', ?, ?, ?, ?)",
+                jugadorId, "T023 Player " + jugadorId, equipoId, activo, NOW, NOW);
+        return jugadorId;
+    }
+
+    private void insertarCotizacionInicialInvalida(java.util.UUID jugadorId) {
+        java.util.UUID quoteId = java.util.UUID.randomUUID();
+        jdbc.update("INSERT INTO market_quote_versions "
+                        + "(quote_id, version, player_id, price_per_token, published_at, "
+                        + "valid_from, valid_until, validity_status, strategy_reference, created_at) "
+                        + "VALUES (?, 1, ?, 2.00, ?, ?, NULL, 'VALID', NULL, ?)",
+                quoteId, jugadorId, NOW, NOW, NOW);
+        jdbc.update("INSERT INTO market_quote_headers "
+                        + "(player_id, quote_id, current_version, updated_at) VALUES (?, ?, 1, ?)",
+                jugadorId, quoteId, NOW);
     }
 
     private Long epoch() {

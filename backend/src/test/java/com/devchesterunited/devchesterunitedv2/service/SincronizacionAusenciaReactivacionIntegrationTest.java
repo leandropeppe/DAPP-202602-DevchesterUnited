@@ -11,6 +11,7 @@ import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
 import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationBootstrap;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -46,9 +47,12 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
     @Autowired EquipoRepository equipos;
     @Autowired IdentidadExternaEquipoRepository identidadesEquipos;
     @Autowired JugadorRepository jugadores;
+    @Autowired MarketInitializationBootstrap bootstrap;
 
     @BeforeEach
     void limpiarFixturesExternos() {
+        jdbc.update("DELETE FROM market_token_issuances WHERE player_id IN "
+                + "(SELECT jugador_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("DELETE FROM equipos WHERE id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("UPDATE equipos SET is_active = true");
@@ -62,6 +66,9 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
         CatalogoSincronizado entidadOriginalReaparece = snapshot(false);
         when(adapter.sincronizar()).thenReturn(inicial, sinEntidadOriginal, entidadOriginalReaparece);
 
+        // Deja creada la SUPERUSER antes de que el primer snapshot publique
+        // activaciones. El listener se ejecuta AFTER_COMMIT.
+        bootstrap.bootstrap();
         servicio.sincronizar();
 
         var equipoInicial = equipoPorExternalId(EQUIPO_AUSENTE);
@@ -70,6 +77,7 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
                 .map(JugadorEntity::getId).sorted().toList();
         assertThat(jugadoresIdsIniciales).hasSize(2);
         assertThat(jugadores.contar(null, "Equipo Original 0", null)).isEqualTo(2);
+        assertThat(emisionesDeJugadoresOriginales()).isEqualTo(2L);
 
         servicio.sincronizar();
 
@@ -103,6 +111,7 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
         assertThat(equipoPorExternalId(EQUIPO_REEMPLAZO).isActivo()).isFalse();
         assertThat(activosExternos()).isEqualTo(96L);
         assertThat(duplicadosExternalId()).isZero();
+        assertThat(emisionesDeJugadoresOriginales()).isEqualTo(2L);
     }
 
     private long activosExternos() {
@@ -132,6 +141,13 @@ class SincronizacionAusenciaReactivacionIntegrationTest extends PostgresTestSupp
                     HAVING count(*) > 1
                 ) duplicados
                 """, Long.class);
+    }
+
+    private long emisionesDeJugadoresOriginales() {
+        return jdbc.queryForObject("SELECT count(*) FROM market_token_issuances "
+                + "WHERE player_id IN (SELECT jugador_id FROM identidades_externas_jugador "
+                + "WHERE proveedor = 'FOOTBALL_DATA' AND external_id IN (?, ?))",
+                Long.class, JUGADOR_AUSENTE_BASE, JUGADOR_AUSENTE_BASE + 1);
     }
 
     private UUID jugadorIdPorExternalId(long externalId) {

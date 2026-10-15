@@ -98,6 +98,22 @@ class MarketInitializationStateServiceIntegrationTest {
         assertThat(reason()).isNull();
     }
 
+    @Test
+    void recuperaDesdeFailedYConfirmaReadySoloAlFinalizarLasEtapas() {
+        estados.comenzarOReanudar();
+        estados.marcarFailed(2L, "fallo recuperable");
+
+        var reintento = estados.comenzarOReanudar();
+        assertThat(reintento.estado()).isEqualTo(EstadoMercado.INITIALIZING);
+        assertThat(reintento.epoca()).isEqualTo(4L);
+
+        var listo = estados.marcarReady(4L).orElseThrow();
+        assertThat(listo.estado()).isEqualTo(EstadoMercado.READY);
+        assertThat(listo.epoca()).isEqualTo(5L);
+        assertThat(status()).isEqualTo("READY");
+        assertThat(epoch()).isEqualTo(5L);
+    }
+
     private Long epoch() {
         return jdbc.queryForObject("SELECT epoch FROM market_state", Long.class);
     }
