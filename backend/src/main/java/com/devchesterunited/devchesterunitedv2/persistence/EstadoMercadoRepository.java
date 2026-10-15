@@ -23,6 +23,10 @@ public interface EstadoMercadoRepository extends JpaRepository<EstadoMercadoEnti
     @Query("select estado from EstadoMercadoEntity estado where estado.id = 1")
     Optional<EstadoMercadoEntity> findSingletonForUpdate();
 
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("select estado from EstadoMercadoEntity estado where estado.id = 1")
+    Optional<EstadoMercadoEntity> findSingletonForRead();
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select estado from EstadoMercadoEntity estado where estado.id = :id")
     Optional<EstadoMercadoEntity> findByIdForUpdate(@Param("id") Short id);

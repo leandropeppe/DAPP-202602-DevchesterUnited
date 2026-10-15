@@ -74,12 +74,12 @@ description: "Lista de tareas para la implementación de Token Market"
 
 **Prueba independiente**: Un usuario solo puede ver jugadores activos con disponibilidad actual de cotización/tokens; la inicialización incompleta y las cotizaciones ausentes/obsoletas se representan correctamente.
 
-- [ ] T026 [P] [US2] Agregar pruebas unitarias para barreras compartidas/exclusivas del estado del mercado, épocas de estado, manejo de jugadores inactivos, cotizaciones ausentes y marcado de precios históricos en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T027 [P] [US2] Agregar pruebas de seguridad MockMvc para acceso no autenticado, listado autenticado del mercado y exclusión de operaciones del superusuario interno en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
-- [ ] T028 Implementar servicios de estado del mercado y disponibilidad de jugadores bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, usando locks compartidos de estado para lecturas normales y el contrato estable de estado activo del jugador.
-- [ ] T029 Implementar DTOs de saldo y jugador de mercado bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y DTOs de servicio bajo `service/dto/`, reutilizando las convenciones existentes de paginación y respuestas.
-- [ ] T030 Implementar los endpoints de lectura de saldo y jugadores del mercado en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/`, incluyendo cotización actual, marcador histórico, tokens disponibles y semántica de disponibilidad del mercado de `contracts/market-api.md`.
-- [ ] T031 Agregar documentación OpenAPI y del manejador de errores para mercado no listo, cotización ausente, jugador inactivo y errores de autorización mediante `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/exceptionhandler/` y el controlador del mercado.
+- [x] T026 [P] [US2] Agregar pruebas unitarias para barreras compartidas/exclusivas del estado del mercado, épocas de estado, manejo de jugadores inactivos, cotizaciones ausentes y marcado de precios históricos en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [x] T027 [P] [US2] Agregar pruebas de seguridad MockMvc para acceso no autenticado, listado autenticado del mercado y exclusión de operaciones del superusuario interno en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
+- [x] T028 Implementar servicios de estado del mercado y disponibilidad de jugadores bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, usando locks compartidos de estado para lecturas normales y el contrato estable de estado activo del jugador.
+- [x] T029 Implementar DTOs de saldo y jugador de mercado bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y DTOs de servicio bajo `service/dto/`, reutilizando las convenciones existentes de paginación y respuestas.
+- [x] T030 Implementar los endpoints de lectura de saldo y jugadores del mercado en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/`, incluyendo cotización actual, marcador histórico, tokens disponibles y semántica de disponibilidad del mercado de `contracts/market-api.md`.
+- [x] T031 Agregar documentación OpenAPI y del manejador de errores para mercado no listo, cotización ausente, jugador inactivo y errores de autorización mediante `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/exceptionhandler/` y el controlador del mercado.
 
 **Punto de control**: La información de solo lectura del mercado está autenticada, delimitada y es consistente con la inicialización y el estado del jugador.
 

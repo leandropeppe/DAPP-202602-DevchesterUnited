@@ -9,7 +9,9 @@ public class TokenMarketException extends RuntimeException {
         INSUFFICIENT_BALANCE,
         MARKET_NOT_READY,
         IDEMPOTENCY_CONFLICT,
-        STALE_REQUEST
+        STALE_REQUEST,
+        INVALID_INPUT,
+        ACCOUNT_NOT_FOUND
     }
 
     private final Reason reason;
