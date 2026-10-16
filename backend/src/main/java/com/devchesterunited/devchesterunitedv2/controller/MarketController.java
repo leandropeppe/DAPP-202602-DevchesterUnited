@@ -4,6 +4,8 @@ import com.devchesterunited.devchesterunitedv2.controller.dto.MarketBalanceRespo
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPlayerResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPlayersResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketOperationResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPurchaseRequestDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPurchaseResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.PaginacionDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketAvailabilityResult;
@@ -11,6 +13,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.MarketPlayerAvailabil
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketAvailabilityService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketBalanceService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPurchaseService;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,11 +24,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.UUID;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,12 +44,14 @@ public class MarketController {
     private final MarketBalanceService balances;
     private final MarketAvailabilityService availability;
     private final MarketIdempotencyService idempotency;
+    private final MarketPurchaseService purchases;
 
     public MarketController(MarketBalanceService balances, MarketAvailabilityService availability,
-            MarketIdempotencyService idempotency) {
+            MarketIdempotencyService idempotency, MarketPurchaseService purchases) {
         this.balances = balances;
         this.availability = availability;
         this.idempotency = idempotency;
+        this.purchases = purchases;
     }
 
     @GetMapping("/balance")
@@ -102,6 +111,33 @@ public class MarketController {
         return ResponseEntity.ok(new SuccessResponseDTO<>(data));
     }
 
+    @PostMapping("/purchases")
+    @Operation(operationId = "comprarTokens", summary = "Comprar tokens de un jugador",
+            description = "Ejecuta una compra atomica usando la cotizacion exacta indicada por el usuario.",
+            security = @SecurityRequirement(name = "BearerAuth"))
+    @ApiResponse(responseCode = "200", description = "Compra confirmada o solicitud pendiente.",
+            content = @Content(schema = @Schema(implementation = MarketPurchaseResponseDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Solicitud o Idempotency-Key invalida.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "401", description = "JWT ausente o invalido.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "404", description = "Cuenta de mercado inexistente.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "409", description = "Cotizacion, saldo, inventario o idempotencia en conflicto.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "503", description = "Mercado no operativo.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    public ResponseEntity<SuccessResponseDTO<MarketPurchaseResponseDTO>> purchase(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody MarketPurchaseRequestDTO request) {
+        UUID usuarioId = usuarioDesde(jwt);
+        String clave = normalizeIdempotencyKey(idempotencyKey);
+        var result = purchases.comprar(request.toDomain(usuarioId, clave));
+        return ResponseEntity.ok(new SuccessResponseDTO<>(
+                MarketPurchaseResponseDTO.fromDomain(result)));
+    }
+
     @GetMapping("/operations/{idempotency-key}")
     @Operation(operationId = "recuperarMarketOperation", summary = "Recuperar una operacion del mercado",
             description = "Devuelve el estado de una solicitud del usuario autenticado. Los estados pendientes o inciertos no son compraventas confirmadas.",
@@ -157,6 +193,15 @@ public class MarketController {
         } catch (IllegalArgumentException exception) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Credenciales invalidas.");
         }
+    }
+
+    private static String normalizeIdempotencyKey(String idempotencyKey) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()
+                || idempotencyKey.trim().length() > 200) {
+            throw new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
+                    "La clave de idempotencia no es valida.");
+        }
+        return idempotencyKey.trim();
     }
 
     private static void exigirMercadoOperativo(boolean operativa) {

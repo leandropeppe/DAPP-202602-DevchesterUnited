@@ -117,6 +117,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             case ACCOUNT_NOT_FOUND, OPERATION_NOT_FOUND -> HttpStatus.NOT_FOUND;
             case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
             case INACTIVE_PLAYER, QUOTE_UNAVAILABLE, INSUFFICIENT_BALANCE,
+                    INSUFFICIENT_INVENTORY,
                     IDEMPOTENCY_CONFLICT, STALE_REQUEST -> HttpStatus.CONFLICT;
         };
     }

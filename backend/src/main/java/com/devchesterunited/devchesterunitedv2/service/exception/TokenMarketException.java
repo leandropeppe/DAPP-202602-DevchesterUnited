@@ -7,6 +7,7 @@ public class TokenMarketException extends RuntimeException {
         INACTIVE_PLAYER,
         QUOTE_UNAVAILABLE,
         INSUFFICIENT_BALANCE,
+        INSUFFICIENT_INVENTORY,
         MARKET_NOT_READY,
         IDEMPOTENCY_CONFLICT,
         STALE_REQUEST,

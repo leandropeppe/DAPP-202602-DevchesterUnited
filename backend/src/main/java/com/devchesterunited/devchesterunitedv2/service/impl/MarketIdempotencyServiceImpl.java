@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.service.impl;
 import com.devchesterunited.devchesterunitedv2.persistence.SolicitudIdempotenciaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.SolicitudIdempotenciaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyClaim;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStatus;
 import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
@@ -47,6 +48,12 @@ public class MarketIdempotencyServiceImpl implements MarketIdempotencyService {
     @Override
     @Transactional
     public MarketIdempotencyResult reclamar(MarketIdempotencyRequest request) {
+        return reclamarConPropiedad(request).resultado();
+    }
+
+    @Override
+    @Transactional
+    public MarketIdempotencyClaim reclamarConPropiedad(MarketIdempotencyRequest request) {
         validarIdentidadYClave(request);
         String normalizedKey = request.claveIdempotencia().trim();
         String operation = normalizeOperation(request.tipoOperacion());
@@ -54,9 +61,11 @@ public class MarketIdempotencyServiceImpl implements MarketIdempotencyService {
         Instant now = clock.instant();
 
         if (!executionLock.tryAcquire(request.usuarioId(), normalizedKey)) {
-            return solicitudes.findByUsuarioIdAndClaveIdempotencia(request.usuarioId(), normalizedKey)
+            MarketIdempotencyResult result = solicitudes
+                    .findByUsuarioIdAndClaveIdempotencia(request.usuarioId(), normalizedKey)
                     .map(entity -> recoverWhileBusy(entity, operation, hash))
                     .orElseGet(() -> pendiente(request, operation, hash, now));
+            return new MarketIdempotencyClaim(result, false);
         }
 
         Optional<SolicitudIdempotenciaMercadoEntity> existing =
@@ -70,8 +79,9 @@ public class MarketIdempotencyServiceImpl implements MarketIdempotencyService {
             if (SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING.equals(entity.getStatus())
                     && !now.isBefore(entity.getActualizadoEn().plus(processingTimeout))) {
                 entity.reclamarNuevamente(UUID.randomUUID(), now);
+                return new MarketIdempotencyClaim(toResult(entity), true);
             }
-            return toResult(entity);
+            return new MarketIdempotencyClaim(toResult(entity), false);
         }
 
         UUID executionToken = UUID.randomUUID();
@@ -79,7 +89,7 @@ public class MarketIdempotencyServiceImpl implements MarketIdempotencyService {
                 UUID.randomUUID(), request.usuarioId(), normalizedKey, operation, hash,
                 SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING, executionToken, null, now, now);
         try {
-            return toResult(solicitudes.saveAndFlush(entity));
+            return new MarketIdempotencyClaim(toResult(solicitudes.saveAndFlush(entity)), true);
         } catch (DataIntegrityViolationException exception) {
             throw new TokenMarketException(TokenMarketException.Reason.IDEMPOTENCY_CONFLICT,
                     "La solicitud de idempotencia ya existe.");

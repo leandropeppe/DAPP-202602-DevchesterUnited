@@ -10,6 +10,7 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.math.RoundingMode;
 
 @Entity
 @Table(name = "market_holdings")
@@ -55,4 +56,24 @@ public class TenenciaMercadoEntity {
     public Long getQuantity() { return quantity; }
     public BigDecimal getCostoAdquisicion() { return costoAdquisicion; }
     public Instant getActualizadoEn() { return actualizadoEn; }
+
+    /** Adds a purchase to the stored total acquisition cost, not to an average. */
+    public void aplicarCompra(Long cantidadComprada, BigDecimal costoCompra, Instant momento) {
+        if (cantidadComprada == null || cantidadComprada <= 0 || costoCompra == null
+                || costoCompra.signum() <= 0 || momento == null) {
+            throw new IllegalArgumentException("La compra de la tenencia no es válida.");
+        }
+        long nuevaCantidad;
+        try {
+            nuevaCantidad = Math.addExact(quantity, cantidadComprada);
+        } catch (ArithmeticException exception) {
+            throw new IllegalArgumentException("La cantidad de la tenencia excede el límite.",
+                    exception);
+        }
+        BigDecimal nuevoCosto = costoAdquisicion.add(costoCompra)
+                .setScale(8, RoundingMode.UNNECESSARY);
+        quantity = nuevaCantidad;
+        costoAdquisicion = nuevoCosto;
+        actualizadoEn = momento;
+    }
 }

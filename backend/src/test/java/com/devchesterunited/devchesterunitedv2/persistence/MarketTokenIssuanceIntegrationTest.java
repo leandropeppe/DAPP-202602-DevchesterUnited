@@ -27,6 +27,7 @@ class MarketTokenIssuanceIntegrationTest extends PostgresTestSupport {
 
     private UUID playerId;
     private UUID counterpartyId;
+    private boolean counterpartyCreated;
 
     @AfterEach
     void cleanup() {
@@ -34,7 +35,7 @@ class MarketTokenIssuanceIntegrationTest extends PostgresTestSupport {
             jdbc.update("DELETE FROM market_token_issuances WHERE player_id = ?", playerId);
             jdbc.update("DELETE FROM jugadores WHERE id = ?", playerId);
         }
-        if (counterpartyId != null) {
+        if (counterpartyId != null && counterpartyCreated) {
             jdbc.update("DELETE FROM market_counterparties WHERE id = ?", counterpartyId);
         }
     }
@@ -89,11 +90,17 @@ class MarketTokenIssuanceIntegrationTest extends PostgresTestSupport {
 
     private void fixture(boolean active) {
         playerId = UUID.randomUUID();
-        counterpartyId = UUID.randomUUID();
         UUID teamId = jdbc.queryForObject("SELECT id FROM equipos ORDER BY id LIMIT 1", UUID.class);
-        jdbc.update("INSERT INTO market_counterparties "
-                + "(id, counterparty_type, display_name, created_at) VALUES (?, 'SUPERUSER', ?, ?)",
-                counterpartyId, "T022 Superuser", NOW);
+        var existing = jdbc.query("SELECT id FROM market_counterparties "
+                        + "WHERE counterparty_type = 'SUPERUSER' LIMIT 1",
+                (rs, row) -> rs.getObject(1, UUID.class));
+        counterpartyCreated = existing.isEmpty();
+        counterpartyId = counterpartyCreated ? UUID.randomUUID() : existing.get(0);
+        if (counterpartyCreated) {
+            jdbc.update("INSERT INTO market_counterparties "
+                    + "(id, counterparty_type, display_name, created_at) VALUES (?, 'SUPERUSER', ?, ?)",
+                    counterpartyId, "T022 Superuser", NOW);
+        }
         jdbc.update("INSERT INTO jugadores "
                 + "(id, name, position, jersey_number, nationality, team_id, is_active, "
                 + "created_at, updated_at) VALUES (?, 'T022 Player', 'Forward', 9, 'Argentina', ?, ?, ?, ?)",

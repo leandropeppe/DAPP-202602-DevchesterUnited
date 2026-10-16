@@ -42,8 +42,10 @@ class TokenMarketInitializationPersistenceIntegrationTest extends PostgresTestSu
             jdbc.update("DELETE FROM usuarios WHERE id = ?", fixture.userId());
         }
         for (Fixture fixture : fixtures) {
-            jdbc.update("DELETE FROM market_counterparties WHERE id = ?",
-                    fixture.counterpartyId());
+            if (fixture.counterpartyCreated()) {
+                jdbc.update("DELETE FROM market_counterparties WHERE id = ?",
+                        fixture.counterpartyId());
+            }
         }
         fixtures.clear();
     }
@@ -167,15 +169,18 @@ class TokenMarketInitializationPersistenceIntegrationTest extends PostgresTestSu
                 + "(id, name, position, jersey_number, nationality, team_id, is_active, "
                 + "created_at, updated_at) VALUES (?, ?, 'Forward', 99, 'Argentina', ?, TRUE, ?, ?)",
                 playerId, "T017 Player " + playerId.toString().substring(0, 8), teamId, NOW, NOW);
-        UUID requestedCounterpartyId = UUID.randomUUID();
-        jdbc.update("INSERT INTO market_counterparties "
-                + "(id, counterparty_type, display_name, created_at) "
-                + "VALUES (?, 'SUPERUSER', 'Mercado', ?) "
-                + "ON CONFLICT DO NOTHING", requestedCounterpartyId, NOW);
-        UUID counterpartyId = jdbc.queryForObject(
-                "SELECT id FROM market_counterparties WHERE counterparty_type = 'SUPERUSER'",
-                UUID.class);
-        Fixture fixture = new Fixture(userId, counterpartyId, accountId, playerId);
+        List<UUID> existingCounterparties = jdbc.query(
+                "SELECT id FROM market_counterparties WHERE counterparty_type = 'SUPERUSER' LIMIT 1",
+                (rs, row) -> rs.getObject(1, UUID.class));
+        boolean counterpartyCreated = existingCounterparties.isEmpty();
+        UUID counterpartyId = counterpartyCreated ? UUID.randomUUID() : existingCounterparties.get(0);
+        if (counterpartyCreated) {
+            jdbc.update("INSERT INTO market_counterparties "
+                            + "(id, counterparty_type, display_name, created_at) "
+                            + "VALUES (?, 'SUPERUSER', 'Mercado', ?)", counterpartyId, NOW);
+        }
+        Fixture fixture = new Fixture(userId, counterpartyId, accountId, playerId,
+                counterpartyCreated);
         fixtures.add(fixture);
         return fixture;
     }
@@ -323,13 +328,14 @@ class TokenMarketInitializationPersistenceIntegrationTest extends PostgresTestSu
         }
     }
 
-    private record Fixture(UUID userId, UUID counterpartyId, UUID accountId, UUID playerId) {
+    private record Fixture(UUID userId, UUID counterpartyId, UUID accountId, UUID playerId,
+            boolean counterpartyCreated) {
         private Fixture withSameUser() {
-            return new Fixture(userId, UUID.randomUUID(), UUID.randomUUID(), playerId);
+            return new Fixture(userId, UUID.randomUUID(), UUID.randomUUID(), playerId, false);
         }
 
         private Fixture withNewAccountId() {
-            return new Fixture(userId, counterpartyId, UUID.randomUUID(), playerId);
+            return new Fixture(userId, counterpartyId, UUID.randomUUID(), playerId, false);
         }
     }
 

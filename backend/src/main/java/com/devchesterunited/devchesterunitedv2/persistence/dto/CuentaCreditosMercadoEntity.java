@@ -63,10 +63,24 @@ public class CuentaCreditosMercadoEntity {
     public Instant getActualizadoEn() { return actualizadoEn; }
 
     public void acreditar(BigDecimal importe, Instant momento) {
-        if (importe == null || importe.signum() <= 0 || importe.scale() > 2) {
-            throw new IllegalArgumentException("El importe a acreditar debe ser positivo.");
-        }
+        validarImporte(importe, momento);
         balance = balance.add(importe);
         actualizadoEn = momento;
+    }
+
+    public void debitar(BigDecimal importe, Instant momento) {
+        validarImporte(importe, momento);
+        if (balance.compareTo(importe) < 0) {
+            throw new IllegalStateException("El saldo de créditos es insuficiente.");
+        }
+        balance = balance.subtract(importe);
+        actualizadoEn = momento;
+    }
+
+    private void validarImporte(BigDecimal importe, Instant momento) {
+        if (importe == null || importe.signum() <= 0 || importe.scale() > 2
+                || momento == null) {
+            throw new IllegalArgumentException("El importe a acreditar debe ser positivo.");
+        }
     }
 }

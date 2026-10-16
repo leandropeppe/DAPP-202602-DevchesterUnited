@@ -61,4 +61,15 @@ public class EmisionTokensMercadoEntity {
     public Long getCantidadInventario() { return cantidadInventario; }
     public Instant getCreadoEn() { return creadoEn; }
     public Instant getActualizadoEn() { return actualizadoEn; }
+
+    public void decrementarInventario(Long cantidad, Instant momento) {
+        if (cantidad == null || cantidad <= 0 || momento == null) {
+            throw new IllegalArgumentException("La cantidad a descontar debe ser positiva.");
+        }
+        if (cantidadInventario < cantidad) {
+            throw new IllegalStateException("El inventario de tokens es insuficiente.");
+        }
+        cantidadInventario -= cantidad;
+        actualizadoEn = momento;
+    }
 }

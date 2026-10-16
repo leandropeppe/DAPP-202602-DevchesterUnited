@@ -22,6 +22,10 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
     @Query("select jugador from JugadorEntity jugador where jugador.id = :id")
     java.util.Optional<JugadorEntity> findByIdForUpdate(@Param("id") UUID id);
 
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("select jugador from JugadorEntity jugador where jugador.id = :id")
+    java.util.Optional<JugadorEntity> findByIdForRead(@Param("id") UUID id);
+
     java.util.List<JugadorEntity> findAllByEquipoId(UUID equipoId);
     java.util.List<JugadorEntity> findAllByEquipoIdAndActivoTrue(UUID equipoId);
     // Escapar primero ! para no volver a escapar los ! introducidos para % y _.
