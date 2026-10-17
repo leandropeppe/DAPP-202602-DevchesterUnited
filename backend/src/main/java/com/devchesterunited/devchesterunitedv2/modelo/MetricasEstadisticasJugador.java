@@ -35,14 +35,4 @@ public record MetricasEstadisticasJugador(MetricasGenerales generales, MetricasO
     public Integer tarjetasRojas() { return generales.redCard(); }
     private static BigDecimal decimal(BigDecimal value) { return value == null ? null : value.setScale(2, RoundingMode.HALF_UP); }
 
-    private static BigDecimal normalizarDecimal(BigDecimal valor) {
-        return valor == null ? null : valor.setScale(2, RoundingMode.HALF_UP);
-    }
-
-    private static void validarNoNegativo(Number valor, String campo) {
-        if (valor instanceof BigDecimal decimal && decimal.signum() < 0
-                || valor instanceof Integer entero && entero < 0) {
-            throw new IllegalArgumentException("La métrica " + campo + " no puede ser negativa.");
-        }
-    }
 }

@@ -24,9 +24,10 @@ class MetricasEstadisticasJugadorComposicionTest {
 
     @Test
     void rechazaMetricasNegativasYPorcentajeFueraDeRango() {
+        var porcentajeFueraDeRango = new BigDecimal("100.01");
         assertThrows(IllegalArgumentException.class,
                 () -> new MetricasGenerales(-1, null, null, null, null, null, null, null));
         assertThrows(IllegalArgumentException.class,
-                () -> new MetricasPases(null, new BigDecimal("100.01"), null, null, null));
+                () -> new MetricasPases(null, porcentajeFueraDeRango, null, null, null));
     }
 }

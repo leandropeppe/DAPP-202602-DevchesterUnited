@@ -21,14 +21,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class EstadisticasStagingService {
     private final EstadisticasSyncRepository ejecuciones;
     private final EstadisticasSyncStagingRepository staging;
-    private final ConsolidadorEstadisticasJugador consolidador;
 
     public EstadisticasStagingService(EstadisticasSyncRepository ejecuciones,
             EstadisticasSyncStagingRepository staging,
             ConsolidadorEstadisticasJugador consolidador) {
         this.ejecuciones = ejecuciones;
         this.staging = staging;
-        this.consolidador = consolidador;
     }
 
     @Transactional

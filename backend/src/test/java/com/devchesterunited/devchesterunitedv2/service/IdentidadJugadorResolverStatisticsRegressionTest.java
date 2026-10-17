@@ -34,10 +34,10 @@ class IdentidadJugadorResolverStatisticsRegressionTest {
         when(jugadores.findAllByEquipoIdAndActivoTrue(equipo.getId())).thenReturn(List.of(
                 new JugadorEntity(UUID.randomUUID(), "Alex Smith", equipo.getId(), "Forward", 9, "Argentina", true),
                 new JugadorEntity(UUID.randomUUID(), "Alex Smith", equipo.getId(), "Forward", 10, "Argentina", true)));
+        var resolver = new IdentidadJugadorResolver(jugadores, identidades);
+        var identidad = new IdentidadEstadisticaJugador(99L, "Alex Smith", "Forward", "Argentina", 7L, "Equipo");
 
-        assertThatThrownBy(() -> new IdentidadJugadorResolver(jugadores, identidades).resolver(
-                new IdentidadEstadisticaJugador(99L, "Alex Smith", "Forward", "Argentina", 7L, "Equipo"),
-                equipo, CompeticionEstadistica.PREMIER_LEAGUE))
+        assertThatThrownBy(() -> resolver.resolver(identidad, equipo, CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
     }
 }

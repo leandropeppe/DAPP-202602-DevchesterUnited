@@ -2,7 +2,7 @@ package com.devchesterunited.devchesterunitedv2.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasJugadorRepository;
@@ -24,7 +24,7 @@ class JugadorDetalleLocalStatisticsContractTest {
     @Test
     void leeSoloElJugadorYLaFilaLocalSinInvocarProveedor() {
         UUID id = UUID.randomUUID();
-        JugadorCatalogoProjection jugador = org.mockito.Mockito.mock(JugadorCatalogoProjection.class);
+        JugadorCatalogoProjection jugador = mock(JugadorCatalogoProjection.class);
         when(jugadores.buscarActivoPorId(id)).thenReturn(Optional.of(jugador));
         when(jugador.getId()).thenReturn(id);
         when(jugador.getNombre()).thenReturn("Jugador");

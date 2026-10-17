@@ -18,7 +18,7 @@ export function navigate (pathname) {
   const catalogReturn = window.location.pathname === '/catalogo'
     ? window.location.pathname + window.location.search
     : null
-  const state = catalogReturn && /^\/catalogo\/jugadores\//.test(pathname)
+  const state = catalogReturn && pathname.startsWith('/catalogo/jugadores/')
     ? { catalogReturn }
     : {}
 

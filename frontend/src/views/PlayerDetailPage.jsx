@@ -45,6 +45,13 @@ function statisticValue (statistics, family, key) {
   return displayValue(undefined)
 }
 
+function tabLabel (tab) {
+  if (tab === 'resumen') return 'Resumen'
+  if (tab === 'ataque') return 'Ataque'
+  if (tab === 'defensa') return 'Defensa'
+  return 'Pases'
+}
+
 function DetailIcon ({ type }) {
   if (type === 'yellow-card' || type === 'red-card') return <span className={`stat-icon-card stat-icon-card--${type === 'yellow-card' ? 'yellow' : 'red'}`} aria-hidden="true" />
   const icons = { clock: '◷', ball: '●', assist: '↗', target: '◎', pass: '⌁', dribble: '↝', shield: '◇', star: '☆' }
@@ -102,6 +109,6 @@ export default function PlayerDetailPage ({ playerId, onNavigate }) {
         {statistics ? <div className="player-detail__highlights"><div className="highlight-stat"><span>Minutos jugados</span><strong>{statisticValue(statistics, 'generales', 'minsPlayed')}</strong></div><div className="highlight-stat"><span>Goles</span><strong>{statisticValue(statistics, 'ofensivas', 'goal')}</strong></div><div className="highlight-stat"><span>Valoración</span><strong>{statisticValue(statistics, 'generales', 'rating')}</strong></div></div> : null}
       </div></div>
     </div>
-    {statistics ? <section className="player-statistics" aria-labelledby="statistics-title"><div className="player-statistics__heading"><h2 id="statistics-title">Estadísticas</h2><div className="statistics-tabs" role="tablist" aria-label="Categorías de estadísticas">{['resumen', ...Object.keys(FAMILIES)].map(tab => <button key={tab} className={'statistics-tab' + (activeTab === tab ? ' statistics-tab--active' : '')} type="button" role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}>{tab === 'resumen' ? 'Resumen' : tab === 'ataque' ? 'Ataque' : tab === 'defensa' ? 'Defensa' : 'Pases'}</button>)}</div></div><dl className="statistics-grid">{activeTab === 'resumen' ? SUMMARY.map(([familyName, key, label, icon]) => <div className="statistic-card" key={key}><div className="statistic-card__top"><span className="statistic-card__icon"><DetailIcon type={icon} /></span><dt>{label}</dt></div><dd>{statisticValue(statistics, familyName, key)}</dd><div className="statistic-card__accent" aria-hidden="true" /></div>) : FAMILIES[activeTab].map(([key, label]) => <div className="statistic-card" key={key}><dt>{label}</dt><dd>{statisticValue(family, familyKey, key)}</dd><div className="statistic-card__accent" aria-hidden="true" /></div>)}</dl></section> : <StatusMessage type="info">Este jugador no tiene estadísticas disponibles.</StatusMessage>}
+    {statistics ? <section className="player-statistics" aria-labelledby="statistics-title"><div className="player-statistics__heading"><h2 id="statistics-title">Estadísticas</h2><div className="statistics-tabs" role="tablist" aria-label="Categorías de estadísticas">{['resumen', ...Object.keys(FAMILIES)].map(tab => <button key={tab} className={'statistics-tab' + (activeTab === tab ? ' statistics-tab--active' : '')} type="button" role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)}>{tabLabel(tab)}</button>)}</div></div><dl className="statistics-grid">{activeTab === 'resumen' ? SUMMARY.map(([familyName, key, label, icon]) => <div className="statistic-card" key={key}><div className="statistic-card__top"><span className="statistic-card__icon"><DetailIcon type={icon} /></span><dt>{label}</dt></div><dd>{statisticValue(statistics, familyName, key)}</dd><div className="statistic-card__accent" aria-hidden="true" /></div>) : FAMILIES[activeTab].map(([key, label]) => <div className="statistic-card" key={key}><dt>{label}</dt><dd>{statisticValue(family, familyKey, key)}</dd><div className="statistic-card__accent" aria-hidden="true" /></div>)}</dl></section> : <StatusMessage type="info">Este jugador no tiene estadísticas disponibles.</StatusMessage>}
   </section>
 }

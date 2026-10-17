@@ -283,10 +283,26 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         private BigDecimal rating;
         private Integer yellowCard;
         private Integer redCard;
-        private Integer apps, subOn, manOfTheMatch, goalOwn;
-        private BigDecimal aerialWonPerGame, foulGivenPerGame, offsideGivenPerGame, dispossessedPerGame, turnoverPerGame;
-        private BigDecimal interceptionPerGame, foulsPerGame, offsideWonPerGame, clearancePerGame, wasDribbledPerGame, outfielderBlockPerGame;
-        private BigDecimal totalPassesPerGame, passSuccess, accurateCrossesPerGame, accurateLongPassPerGame, accurateThroughBallPerGame;
+        private Integer apps;
+        private Integer subOn;
+        private Integer manOfTheMatch;
+        private Integer goalOwn;
+        private BigDecimal aerialWonPerGame;
+        private BigDecimal foulGivenPerGame;
+        private BigDecimal offsideGivenPerGame;
+        private BigDecimal dispossessedPerGame;
+        private BigDecimal turnoverPerGame;
+        private BigDecimal interceptionPerGame;
+        private BigDecimal foulsPerGame;
+        private BigDecimal offsideWonPerGame;
+        private BigDecimal clearancePerGame;
+        private BigDecimal wasDribbledPerGame;
+        private BigDecimal outfielderBlockPerGame;
+        private BigDecimal totalPassesPerGame;
+        private BigDecimal passSuccess;
+        private BigDecimal accurateCrossesPerGame;
+        private BigDecimal accurateLongPassPerGame;
+        private BigDecimal accurateThroughBallPerGame;
 
         private JugadorAcumulado(long playerId) { this.playerId = playerId; }
 
