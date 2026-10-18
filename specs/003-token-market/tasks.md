@@ -148,8 +148,8 @@ description: "Lista de tareas para la implementación de Token Market"
 
 **Prueba independiente**: El portfolio muestra promedio ponderado y valor actual de las posiciones abiertas, conserva P/L realizado después del cierre y marca cotizaciones actuales ausentes sin presentar totales incompletos como actuales.
 
-- [ ] T056 [P] [US5] Agregar pruebas unitarias para valores de portfolio con promedio ponderado, P/L realizado tras cerrar posiciones, P/L no realizado, presentación de cotización histórica, manejo de cotización ausente y completitud del resultado combinado en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T057 Implementar servicios de agregación y valoración del portfolio bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, usando cotizaciones vigentes actuales solo para el valor actual y conservando agregados realizados independientemente de las tenencias abiertas.
+- [x] T056 [P] [US5] Agregar pruebas unitarias para valores de portfolio con promedio ponderado, P/L realizado tras cerrar posiciones, P/L no realizado, presentación de cotización histórica, manejo de cotización ausente y completitud del resultado combinado en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [x] T057 Implementar servicios de agregación y valoración del portfolio bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`, usando cotizaciones vigentes actuales solo para el valor actual y conservando agregados realizados independientemente de las tenencias abiertas.
 - [ ] T058 Agregar DTOs de portfolio bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y DTOs de servicio bajo `service/dto/`, incluyendo posiciones abiertas, costos, estado de cotización, P/L realizado/no realizado e indicadores de completitud.
 - [ ] T059 Agregar el endpoint autenticado de portfolio bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/` y pruebas de aislamiento MockMvc bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
 
