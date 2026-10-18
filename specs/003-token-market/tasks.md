@@ -137,8 +137,8 @@ description: "Lista de tareas para la implementación de Token Market"
 - [x] T051 Agregar pruebas PostgreSQL/Testcontainers para ventas concurrentes que compiten por una tenencia y la reserva finita del superusuario, demostrando ausencia de saldo negativo, sobreventa o movimiento parcial en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
 - [x] T052 Implementar la orquestación de ventas usando el mismo orden determinista de locks y ejecutor de idempotencia que la compra bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
 - [x] T053 Implementar la reducción de costo mediante promedio ponderado, ganancia/pérdida realizada, puesta en cero de la posición final y persistencia de movimientos/historial bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
-- [ ] T054 Agregar DTOs de solicitud/respuesta de venta y endpoint autenticado de venta bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y `controller/`, reutilizando las reglas exactas de cotización y pertenencia JWT.
-- [ ] T055 Agregar pruebas MockMvc para venta parcial, venta final, tenencia/reserva insuficientes, jugador inactivo, cotización obsoleta, reintento idempotente y rechazo de acceso entre usuarios bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
+- [x] T054 Agregar DTOs de solicitud/respuesta de venta y endpoint autenticado de venta bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y `controller/`, reutilizando las reglas exactas de cotización y pertenencia JWT.
+- [x] T055 Agregar pruebas MockMvc para venta parcial, venta final, tenencia/reserva insuficientes, jugador inactivo, cotización obsoleta, reintento idempotente y rechazo de acceso entre usuarios bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
 
 **Punto de control**: La venta es atómica, está limitada por la reserva finita, contempla el costo ponderado y es auditable.
 

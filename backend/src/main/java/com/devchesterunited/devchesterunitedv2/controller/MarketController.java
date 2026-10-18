@@ -6,6 +6,8 @@ import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPlayersRespo
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketOperationResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPurchaseRequestDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPurchaseResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.MarketSaleRequestDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.MarketSaleResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.PaginacionDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketAvailabilityResult;
@@ -14,6 +16,7 @@ import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketAvailabi
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketBalanceService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPurchaseService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketSaleService;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,13 +48,16 @@ public class MarketController {
     private final MarketAvailabilityService availability;
     private final MarketIdempotencyService idempotency;
     private final MarketPurchaseService purchases;
+    private final MarketSaleService sales;
 
     public MarketController(MarketBalanceService balances, MarketAvailabilityService availability,
-            MarketIdempotencyService idempotency, MarketPurchaseService purchases) {
+            MarketIdempotencyService idempotency, MarketPurchaseService purchases,
+            MarketSaleService sales) {
         this.balances = balances;
         this.availability = availability;
         this.idempotency = idempotency;
         this.purchases = purchases;
+        this.sales = sales;
     }
 
     @GetMapping("/balance")
@@ -136,6 +142,33 @@ public class MarketController {
         var result = purchases.comprar(request.toDomain(usuarioId, clave));
         return ResponseEntity.ok(new SuccessResponseDTO<>(
                 MarketPurchaseResponseDTO.fromDomain(result)));
+    }
+
+    @PostMapping("/sales")
+    @Operation(operationId = "venderTokens", summary = "Vender tokens de un jugador",
+            description = "Ejecuta una venta atomica usando la cotizacion exacta indicada por el usuario.",
+            security = @SecurityRequirement(name = "BearerAuth"))
+    @ApiResponse(responseCode = "200", description = "Venta confirmada o solicitud pendiente.",
+            content = @Content(schema = @Schema(implementation = MarketSaleResponseDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Solicitud o Idempotency-Key invalida.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "401", description = "JWT ausente o invalido.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "404", description = "Cuenta de mercado inexistente.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "409", description = "Cotizacion, tenencia, reserva o idempotencia en conflicto.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "503", description = "Mercado no operativo.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    public ResponseEntity<SuccessResponseDTO<MarketSaleResponseDTO>> sale(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody MarketSaleRequestDTO request) {
+        UUID usuarioId = usuarioDesde(jwt);
+        String clave = normalizeIdempotencyKey(idempotencyKey);
+        var result = sales.vender(request.toDomain(usuarioId, clave));
+        return ResponseEntity.ok(new SuccessResponseDTO<>(
+                MarketSaleResponseDTO.fromDomain(result)));
     }
 
     @GetMapping("/operations/{idempotency-key}")
