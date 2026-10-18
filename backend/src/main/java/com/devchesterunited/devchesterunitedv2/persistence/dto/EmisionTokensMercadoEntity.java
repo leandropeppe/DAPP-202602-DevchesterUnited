@@ -72,4 +72,22 @@ public class EmisionTokensMercadoEntity {
         cantidadInventario -= cantidad;
         actualizadoEn = momento;
     }
+
+    public void incrementarInventario(Long cantidad, Instant momento) {
+        if (cantidad == null || cantidad <= 0 || momento == null) {
+            throw new IllegalArgumentException("La cantidad a incrementar debe ser positiva.");
+        }
+        long nuevoInventario;
+        try {
+            nuevoInventario = Math.addExact(cantidadInventario, cantidad);
+        } catch (ArithmeticException exception) {
+            throw new IllegalArgumentException("El inventario de tokens excede el lÃ­mite.",
+                    exception);
+        }
+        if (nuevoInventario > cantidadEmitida) {
+            throw new IllegalStateException("El inventario de tokens excede la emisiÃ³n.");
+        }
+        cantidadInventario = nuevoInventario;
+        actualizadoEn = momento;
+    }
 }

@@ -1,5 +1,4 @@
----
-
+cd ..
 description: "Lista de tareas para la implementación de Token Market"
 ---
 
@@ -134,10 +133,10 @@ description: "Lista de tareas para la implementación de Token Market"
 
 **Prueba independiente**: Una venta válida transfiere tokens al superusuario y créditos al usuario, actualiza el costo ponderado restante y la ganancia/pérdida realizada, y nunca se ejecuta parcialmente.
 
-- [ ] T050 [P] [US4] Agregar pruebas de servicio para validación de venta, tenencias del usuario, suficiencia de reserva, asignación de costo de venta parcial, cierre de posición final, cotización exacta y comportamiento todo o nada en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
-- [ ] T051 Agregar pruebas PostgreSQL/Testcontainers para ventas concurrentes que compiten por una tenencia y la reserva finita del superusuario, demostrando ausencia de saldo negativo, sobreventa o movimiento parcial en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
-- [ ] T052 Implementar la orquestación de ventas usando el mismo orden determinista de locks y ejecutor de idempotencia que la compra bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
-- [ ] T053 Implementar la reducción de costo mediante promedio ponderado, ganancia/pérdida realizada, puesta en cero de la posición final y persistencia de movimientos/historial bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
+- [x] T050 [P] [US4] Agregar pruebas de servicio para validación de venta, tenencias del usuario, suficiencia de reserva, asignación de costo de venta parcial, cierre de posición final, cotización exacta y comportamiento todo o nada en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/`.
+- [x] T051 Agregar pruebas PostgreSQL/Testcontainers para ventas concurrentes que compiten por una tenencia y la reserva finita del superusuario, demostrando ausencia de saldo negativo, sobreventa o movimiento parcial en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/persistence/`.
+- [x] T052 Implementar la orquestación de ventas usando el mismo orden determinista de locks y ejecutor de idempotencia que la compra bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
+- [x] T053 Implementar la reducción de costo mediante promedio ponderado, ganancia/pérdida realizada, puesta en cero de la posición final y persistencia de movimientos/historial bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/`.
 - [ ] T054 Agregar DTOs de solicitud/respuesta de venta y endpoint autenticado de venta bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y `controller/`, reutilizando las reglas exactas de cotización y pertenencia JWT.
 - [ ] T055 Agregar pruebas MockMvc para venta parcial, venta final, tenencia/reserva insuficientes, jugador inactivo, cotización obsoleta, reintento idempotente y rechazo de acceso entre usuarios bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
 

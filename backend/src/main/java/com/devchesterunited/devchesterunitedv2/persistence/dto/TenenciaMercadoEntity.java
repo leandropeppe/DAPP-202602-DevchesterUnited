@@ -76,4 +76,39 @@ public class TenenciaMercadoEntity {
         costoAdquisicion = nuevoCosto;
         actualizadoEn = momento;
     }
+
+    /**
+     * Reduces a holding using its proportional acquisition cost and returns
+     * the realized P/L for the sale. The stored cost has eight decimals and
+     * proportional allocations use deterministic half-even rounding.
+     */
+    public BigDecimal aplicarVenta(Long cantidadVendida, BigDecimal importeVenta,
+            Instant momento) {
+        if (cantidadVendida == null || cantidadVendida <= 0 || importeVenta == null
+                || importeVenta.signum() <= 0 || momento == null) {
+            throw new IllegalArgumentException("La venta de la tenencia no es vÃ¡lida.");
+        }
+        if (quantity == null || quantity <= 0 || cantidadVendida > quantity) {
+            throw new IllegalStateException("La tenencia no alcanza para la venta.");
+        }
+
+        BigDecimal costoVendido;
+        BigDecimal costoRestante;
+        if (cantidadVendida.equals(quantity)) {
+            costoVendido = costoAdquisicion;
+            costoRestante = BigDecimal.ZERO.setScale(8);
+        } else {
+            costoVendido = costoAdquisicion.multiply(BigDecimal.valueOf(cantidadVendida))
+                    .divide(BigDecimal.valueOf(quantity), 8, RoundingMode.HALF_EVEN)
+                    .setScale(8, RoundingMode.UNNECESSARY);
+            costoRestante = costoAdquisicion.subtract(costoVendido);
+        }
+
+        BigDecimal pnl = importeVenta.setScale(8, RoundingMode.UNNECESSARY)
+                .subtract(costoVendido).setScale(8, RoundingMode.UNNECESSARY);
+        quantity -= cantidadVendida;
+        costoAdquisicion = quantity == 0 ? BigDecimal.ZERO.setScale(8) : costoRestante;
+        actualizadoEn = momento;
+        return pnl;
+    }
 }

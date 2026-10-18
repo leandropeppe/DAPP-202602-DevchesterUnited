@@ -10,6 +10,7 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
+import java.math.RoundingMode;
 
 @Entity
 @Table(name = "market_realized_pnl")
@@ -41,4 +42,12 @@ public class PnLRealizadoMercadoEntity {
     public UsuarioEntity getUsuario() { return usuario; }
     public BigDecimal getPnlRealizado() { return pnlRealizado; }
     public Instant getActualizadoEn() { return actualizadoEn; }
+
+    public void acumular(BigDecimal pnl, Instant momento) {
+        if (pnl == null || momento == null) {
+            throw new IllegalArgumentException("La P/L realizada y el instante son obligatorios.");
+        }
+        pnlRealizado = pnlRealizado.add(pnl).setScale(8, RoundingMode.UNNECESSARY);
+        actualizadoEn = momento;
+    }
 }
