@@ -165,7 +165,7 @@ description: "Lista de tareas para la implementación de Token Market"
 - [x] T061 Implementar persistencia inmutable y servicios de consulta de transacciones confirmadas bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/` y `service/impl/`, incluyendo snapshot del nombre del jugador, versión de cotización, contraparte, referencia de idempotencia y P/L realizado.
 - [x] T062 Implementar persistencia separada de auditoría interna de rechazos y servicio restringido bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/` y `service/impl/`, excluyendo credenciales, JWT y payloads sensibles.
 - [x] T063 Agregar DTOs del historial de transacciones, validación de filtros/paginación y endpoint autenticado del historial personal bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/dto/` y `controller/`.
-- [ ] T064 Agregar pruebas MockMvc de historial solo confirmado, filtros, paginación, orden más reciente primero, exclusión de rechazos, exclusión de pendientes y denegación de acceso entre usuarios bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
+- [x] T064 Agregar pruebas MockMvc de historial solo confirmado, filtros, paginación, orden más reciente primero, exclusión de rechazos, exclusión de pendientes y denegación de acceso entre usuarios bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/`.
 
 **Punto de control**: El historial confirmado es inmutable y personal; la auditoría de rechazos es separada e interna.
 
@@ -175,7 +175,7 @@ description: "Lista de tareas para la implementación de Token Market"
 
 **Prueba independiente**: Un usuario autenticado puede completar el flujo del mercado y distinguir estados de carga, rechazo, cotización ausente/histórica, pendiente e incierto.
 
-- [ ] T065 [P] [US9] Agregar funciones tipadas del cliente API del mercado bajo `frontend/src/api/` para saldo, jugadores/cotizaciones, compra, venta, recuperación de operaciones, portfolio e historial de transacciones.
+- [x] T065 [P] [US9] Agregar funciones tipadas del cliente API del mercado bajo `frontend/src/api/` para saldo, jugadores/cotizaciones, compra, venta, recuperación de operaciones, portfolio e historial de transacciones.
 - [ ] T066 [P] [US9] Agregar componentes reutilizables de carga, error, cotización obsoleta, pendiente y operación incierta bajo `frontend/src/components/`.
 - [ ] T067 [P] [US9] Agregar vistas de listado de mercado/jugadores y saldo bajo `frontend/src/views/`, reutilizando el estado de autenticación de `frontend/src/session/` y los estilos existentes.
 - [ ] T068 [P] [US9] Agregar vistas de confirmación de compra/venta bajo `frontend/src/views/` y `frontend/src/components/`, mostrando versión de cotización aceptada, cantidad, total y estado de rechazo.
