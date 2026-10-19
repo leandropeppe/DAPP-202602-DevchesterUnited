@@ -9,16 +9,19 @@ import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPurchaseResp
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketSaleRequestDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketSaleResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPortfolioResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.MarketTransactionsResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.PaginacionDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketAvailabilityResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketPlayerAvailability;
+import com.devchesterunited.devchesterunitedv2.service.dto.MarketTransactionFilter;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketAvailabilityService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketBalanceService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPurchaseService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketSaleService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPortfolioService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketTransactionService;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,8 +31,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.UUID;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -52,16 +58,20 @@ public class MarketController {
     private final MarketPurchaseService purchases;
     private final MarketSaleService sales;
     private final MarketPortfolioService portfolios;
+    private final MarketTransactionService transactions;
 
+    @Autowired
     public MarketController(MarketBalanceService balances, MarketAvailabilityService availability,
             MarketIdempotencyService idempotency, MarketPurchaseService purchases,
-            MarketSaleService sales, MarketPortfolioService portfolios) {
+            MarketSaleService sales, MarketPortfolioService portfolios,
+            MarketTransactionService transactions) {
         this.balances = balances;
         this.availability = availability;
         this.idempotency = idempotency;
         this.purchases = purchases;
         this.sales = sales;
         this.portfolios = portfolios;
+        this.transactions = transactions;
     }
 
     @GetMapping("/portfolio")
@@ -78,6 +88,51 @@ public class MarketController {
         var result = portfolios.consultar(usuarioId);
         return ResponseEntity.ok(new SuccessResponseDTO<>(
                 MarketPortfolioResponseDTO.fromDomain(result)));
+    }
+
+    @GetMapping("/transactions")
+    @Operation(operationId = "consultarMarketTransactions",
+            summary = "Consultar historial de transacciones",
+            description = "Devuelve solo transacciones confirmadas del usuario autenticado. "
+                    + "El filtro from es inclusivo y to es exclusivo.",
+            security = @SecurityRequirement(name = "BearerAuth"))
+    @ApiResponse(responseCode = "200", description = "Historial confirmado del usuario autenticado.",
+            content = @Content(schema = @Schema(implementation = MarketTransactionsResponseDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Filtros o paginacion invalidos.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "401", description = "JWT ausente o invalido.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    public ResponseEntity<SuccessResponseDTO<MarketTransactionsResponseDTO>> transactions(
+            @AuthenticationPrincipal Jwt jwt,
+            @Parameter(name = "playerId", in = ParameterIn.QUERY,
+                    description = "Identificador UUID del jugador.",
+                    schema = @Schema(type = "string", format = "uuid"))
+            @RequestParam(required = false) String playerId,
+            @Parameter(name = "type", in = ParameterIn.QUERY,
+                    description = "Tipo de operacion: PURCHASE o SALE.",
+                    schema = @Schema(type = "string", allowableValues = {"PURCHASE", "SALE"}))
+            @RequestParam(required = false) String type,
+            @Parameter(name = "from", in = ParameterIn.QUERY,
+                    description = "Instante ISO-8601 inclusivo.",
+                    schema = @Schema(type = "string", format = "date-time"))
+            @RequestParam(required = false) String from,
+            @Parameter(name = "to", in = ParameterIn.QUERY,
+                    description = "Instante ISO-8601 exclusivo.",
+                    schema = @Schema(type = "string", format = "date-time"))
+            @RequestParam(required = false) String to,
+            @Parameter(name = "page", in = ParameterIn.QUERY,
+                    description = "Pagina desde 1.",
+                    schema = @Schema(type = "integer", minimum = "1", defaultValue = "1"))
+            @RequestParam(defaultValue = "1") String page,
+            @Parameter(name = "limit", in = ParameterIn.QUERY,
+                    description = "Registros por pagina, entre 1 y 100.",
+                    schema = @Schema(type = "integer", minimum = "1", maximum = "100", defaultValue = "20"))
+            @RequestParam(defaultValue = "20") String limit) {
+        UUID usuarioId = usuarioDesde(jwt);
+        MarketTransactionFilter filtro = transactionFilter(playerId, type, from, to, page, limit);
+        var result = transactions.consultar(usuarioId, filtro);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(
+                MarketTransactionsResponseDTO.fromDomain(result)));
     }
 
     @GetMapping("/balance")
@@ -235,6 +290,65 @@ public class MarketController {
                 jugador.quoteId() == null ? null : jugador.quoteId().toString(), jugador.quoteVersion(),
                 jugador.pricePerToken(), jugador.validityStatus(), jugador.quoteAvailability().name(),
                 jugador.validFrom(), jugador.validUntil());
+    }
+
+    private static MarketTransactionFilter transactionFilter(String playerId, String type,
+            String from, String to, String page, String limit) {
+        UUID jugador = optionalUuid(playerId, "playerId");
+        Instant desde = optionalInstant(from, "from");
+        Instant hasta = optionalInstant(to, "to");
+        int pagina = requiredInteger(page, "page");
+        int limite = requiredInteger(limit, "limit");
+        try {
+            return new MarketTransactionFilter(jugador, optionalText(type), desde, hasta,
+                    pagina, limite);
+        } catch (IllegalArgumentException exception) {
+            throw invalidTransactionFilter();
+        }
+    }
+
+    private static UUID optionalUuid(String value, String parameter) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return UUID.fromString(value.trim());
+        } catch (IllegalArgumentException exception) {
+            throw invalidTransactionFilter(parameter);
+        }
+    }
+
+    private static Instant optionalInstant(String value, String parameter) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Instant.parse(value.trim());
+        } catch (DateTimeParseException | NullPointerException exception) {
+            throw invalidTransactionFilter(parameter);
+        }
+    }
+
+    private static int requiredInteger(String value, String parameter) {
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException | NullPointerException exception) {
+            throw invalidTransactionFilter(parameter);
+        }
+    }
+
+    private static String optionalText(String value) {
+        return value == null ? null : value.trim();
+    }
+
+    private static TokenMarketException invalidTransactionFilter(String parameter) {
+        return new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
+                "El filtro " + parameter + " no es valido.");
+    }
+
+    private static TokenMarketException invalidTransactionFilter() {
+        return new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
+                "Los filtros del historial no son validos.");
     }
 
     private static UUID usuarioDesde(Jwt jwt) {

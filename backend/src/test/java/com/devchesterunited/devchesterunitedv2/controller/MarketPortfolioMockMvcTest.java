@@ -20,6 +20,7 @@ import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempote
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPortfolioService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPurchaseService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketSaleService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketTransactionService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -55,6 +56,7 @@ class MarketPortfolioMockMvcTest {
     @MockitoBean private MarketPurchaseService purchases;
     @MockitoBean private MarketSaleService sales;
     @MockitoBean private MarketPortfolioService portfolios;
+    @MockitoBean private MarketTransactionService transactions;
 
     @Test
     void usuarioAutenticadoConsultaSuPortfolioConPosicionYEnvoltorioSuccess() throws Exception {
