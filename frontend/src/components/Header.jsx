@@ -29,6 +29,16 @@ export default function Header ({ route, session, onNavigate }) {
             </a>
           ))}
           {session.jwt ? (
+            <a
+              className="primary-nav__link"
+              href="/market"
+              aria-current={route === '/market' ? 'page' : undefined}
+              onClick={(event) => go(event, '/market')}
+            >
+              Mercado
+            </a>
+          ) : null}
+          {session.jwt ? (
             <button className="nav-action" type="button" onClick={() => { session.logout(); onNavigate('/login') }}>
               Cerrar sesión
             </button>

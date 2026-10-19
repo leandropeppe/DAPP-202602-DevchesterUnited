@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import MarketStateMessage from '../src/components/MarketStateMessage.jsx'
 import OperationStatus from '../src/components/OperationStatus.jsx'
 import QuoteStatus from '../src/components/QuoteStatus.jsx'
+import MarketPlayerCard from '../src/components/MarketPlayerCard.jsx'
+import { quotePresentationStatus } from '../src/market/marketState.js'
 
 describe('componentes de estado del mercado', () => {
   it('muestra el estado de carga como información accesible', () => {
@@ -115,5 +117,44 @@ describe('componentes de estado del mercado', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('no se puede determinar')
     expect(screen.getByRole('alert')).not.toHaveTextContent('confirmada')
+  })
+
+  it.each([
+    [{ quoteStatus: 'VALID', quoteAvailability: 'CURRENT', operable: true }, 'available'],
+    [{ quoteStatus: 'VALID', quoteAvailability: 'UNKNOWN', operable: true }, 'unknown'],
+    [{ quoteStatus: 'VALID', quoteAvailability: 'CURRENT', operable: false }, 'unknown'],
+    [{ quoteStatus: 'UNKNOWN', quoteAvailability: 'CURRENT', operable: true }, 'unknown'],
+    [{ quoteStatus: 'VALID', quoteAvailability: null, operable: true }, 'unknown'],
+    [{ quoteStatus: 'VALID', quoteAvailability: 'ABSENT', operable: true }, 'unavailable'],
+    [{ quoteStatus: 'VALID', quoteAvailability: 'HISTORICAL', operable: true }, 'historical'],
+    [{ quoteStatus: 'REPLACED', quoteAvailability: 'CURRENT', operable: false }, 'replaced'],
+    [{ quoteStatus: 'INVALIDATED', quoteAvailability: 'CURRENT', operable: false }, 'invalidated'],
+    [{ quoteStatus: 'EXPIRED', quoteAvailability: 'CURRENT', operable: false }, 'expired']
+  ])('presenta de forma conservadora la combinación de cotización %#', (quote, expected) => {
+    expect(quotePresentationStatus(quote)).toBe(expected)
+  })
+
+  it('no presenta como operable una cotización desconocida', () => {
+    render(
+      <MarketPlayerCard
+        player={{
+          id: 'ply_11111111-1111-4111-8111-111111111111',
+          name: 'Jugador de prueba',
+          team: 'Equipo',
+          league: 'Liga',
+          player_active: true,
+          team_active: true,
+          tokens_available: 10,
+          operable: true,
+          quote_status: 'VALID',
+          quote_availability: 'UNKNOWN',
+          price_per_token: 1,
+          quote_version: 1
+        }}
+      />
+    )
+
+    expect(screen.getByText('No operable')).toBeInTheDocument()
+    expect(screen.getByRole('status')).not.toHaveTextContent('Cotización disponible')
   })
 })

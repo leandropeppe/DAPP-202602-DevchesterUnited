@@ -176,8 +176,8 @@ description: "Lista de tareas para la implementación de Token Market"
 **Prueba independiente**: Un usuario autenticado puede completar el flujo del mercado y distinguir estados de carga, rechazo, cotización ausente/histórica, pendiente e incierto.
 
 - [x] T065 [P] [US9] Agregar funciones tipadas del cliente API del mercado bajo `frontend/src/api/` para saldo, jugadores/cotizaciones, compra, venta, recuperación de operaciones, portfolio e historial de transacciones.
-- [ ] T066 [P] [US9] Agregar componentes reutilizables de carga, error, cotización obsoleta, pendiente y operación incierta bajo `frontend/src/components/`.
-- [ ] T067 [P] [US9] Agregar vistas de listado de mercado/jugadores y saldo bajo `frontend/src/views/`, reutilizando el estado de autenticación de `frontend/src/session/` y los estilos existentes.
+- [x] T066 [P] [US9] Agregar componentes reutilizables de carga, error, cotización obsoleta, pendiente y operación incierta bajo `frontend/src/components/`.
+- [x] T067 [P] [US9] Agregar vistas de listado de mercado/jugadores y saldo bajo `frontend/src/views/`, reutilizando el estado de autenticación de `frontend/src/session/` y los estilos existentes.
 - [ ] T068 [P] [US9] Agregar vistas de confirmación de compra/venta bajo `frontend/src/views/` y `frontend/src/components/`, mostrando versión de cotización aceptada, cantidad, total y estado de rechazo.
 - [ ] T069 [P] [US9] Agregar vistas de portfolio e historial con filtros/paginación bajo `frontend/src/views/` y `frontend/src/components/`, mostrando precios históricos y resultados realizados después del cierre de posiciones.
 - [ ] T070 [US9] Agregar pruebas unitarias frontend para mapeo de API/cliente y todos los estados del mercado en `frontend/tests/market-api.test.js` y `frontend/tests/market-views.test.jsx`, usando la configuración Vitest existente en `frontend/vite.config.js`; Vitest ya está declarado en `frontend/package.json`, por lo que no instalar ni modificar dependencias.
