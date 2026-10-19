@@ -8,6 +8,7 @@ import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPurchaseRequ
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPurchaseResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketSaleRequestDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.MarketSaleResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.MarketPortfolioResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.PaginacionDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketAvailabilityResult;
@@ -17,6 +18,7 @@ import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketBalanceS
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPurchaseService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketSaleService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPortfolioService;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,15 +51,33 @@ public class MarketController {
     private final MarketIdempotencyService idempotency;
     private final MarketPurchaseService purchases;
     private final MarketSaleService sales;
+    private final MarketPortfolioService portfolios;
 
     public MarketController(MarketBalanceService balances, MarketAvailabilityService availability,
             MarketIdempotencyService idempotency, MarketPurchaseService purchases,
-            MarketSaleService sales) {
+            MarketSaleService sales, MarketPortfolioService portfolios) {
         this.balances = balances;
         this.availability = availability;
         this.idempotency = idempotency;
         this.purchases = purchases;
         this.sales = sales;
+        this.portfolios = portfolios;
+    }
+
+    @GetMapping("/portfolio")
+    @Operation(operationId = "consultarMarketPortfolio", summary = "Consultar portfolio de mercado",
+            description = "Devuelve las posiciones y rentabilidad del usuario autenticado.",
+            security = @SecurityRequirement(name = "BearerAuth"))
+    @ApiResponse(responseCode = "200", description = "Portfolio del usuario autenticado.",
+            content = @Content(schema = @Schema(implementation = MarketPortfolioResponseDTO.class)))
+    @ApiResponse(responseCode = "401", description = "JWT ausente o invalido.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    public ResponseEntity<SuccessResponseDTO<MarketPortfolioResponseDTO>> portfolio(
+            @AuthenticationPrincipal Jwt jwt) {
+        UUID usuarioId = usuarioDesde(jwt);
+        var result = portfolios.consultar(usuarioId);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(
+                MarketPortfolioResponseDTO.fromDomain(result)));
     }
 
     @GetMapping("/balance")

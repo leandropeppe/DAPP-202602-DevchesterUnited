@@ -17,6 +17,7 @@ import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketBalanceS
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPurchaseService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketSaleService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPortfolioService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -42,12 +43,13 @@ class MarketPurchaseControllerTest {
     @Mock private MarketIdempotencyService idempotency;
     @Mock private MarketPurchaseService purchases;
     @Mock private MarketSaleService sales;
+    @Mock private MarketPortfolioService portfolios;
 
     private MarketController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new MarketController(balances, availability, idempotency, purchases, sales);
+        controller = new MarketController(balances, availability, idempotency, purchases, sales, portfolios);
     }
 
     @Test

@@ -33,7 +33,7 @@ public class SecurityConfig {
                     access.requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll();
                     access.requestMatchers(HttpMethod.POST, "/api/v1/auth/apikey").authenticated();
                     access.requestMatchers(HttpMethod.GET, "/api/v1/market/balance", "/api/v1/market/players",
-                            "/api/v1/market/operations/**")
+                            "/api/v1/market/operations/**", "/api/v1/market/portfolio")
                             .authenticated();
                     access.requestMatchers(HttpMethod.POST, "/api/v1/market/purchases")
                             .authenticated();
