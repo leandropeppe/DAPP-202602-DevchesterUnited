@@ -21,6 +21,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStat
 import com.devchesterunited.devchesterunitedv2.service.dto.QuoteValidityStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.impl.MarketIdempotencyParameterHasher;
 import com.devchesterunited.devchesterunitedv2.service.impl.MarketPurchaseServiceImpl;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPurchasePersistenceService;
@@ -231,7 +232,7 @@ class MarketPurchaseServiceImplTest extends MarketPurchaseServiceContractTest {
         public MarketIdempotencyResult confirmar(UUID id, UUID token, UUID reference) {
             MarketIdempotencyResult previous = states.get("purchase-key");
             MarketIdempotencyResult result = confirmed(id, reference,
-                    previous == null ? "quantity=1" : previous.hashParametros());
+                    previous == null ? hash(request(1L)) : previous.hashParametros());
             states.put("purchase-key", result);
             return result;
         }
@@ -247,7 +248,7 @@ class MarketPurchaseServiceImplTest extends MarketPurchaseServiceContractTest {
         void put(MarketIdempotencyStatus status, UUID reference) {
             requestId = UUID.randomUUID();
             states.put("purchase-key", new MarketIdempotencyResult(requestId, USER_ID,
-                    "purchase-key", "PURCHASE", "quantity=1", status, null, reference, NOW));
+                    "purchase-key", "PURCHASE", hash(request(1L)), status, null, reference, NOW));
         }
 
         UUID requestId() { return requestId; }
@@ -266,7 +267,12 @@ class MarketPurchaseServiceImplTest extends MarketPurchaseServiceContractTest {
         }
 
         private String hash(MarketIdempotencyRequest request) {
-            return "quantity=" + request.cantidad();
+            return MarketIdempotencyParameterHasher.hash(request);
+        }
+
+        private MarketIdempotencyRequest request(long quantity) {
+            return new MarketIdempotencyRequest(USER_ID, "purchase-key", "PURCHASE",
+                    PLAYER_ID, quantity, QUOTE_ID, 1L);
         }
     }
 }

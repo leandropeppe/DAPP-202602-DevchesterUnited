@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyRejectionFinalizationPort;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
 import java.time.Instant;
 import java.util.Optional;
@@ -32,7 +33,8 @@ class MarketOperationRecoveryMockMvcTest extends PostgresTestSupport {
     private static final String KEY = "purchase-123";
 
     @Autowired MockMvc mvc;
-    @MockitoBean MarketIdempotencyService idempotency;
+    @MockitoBean(extraInterfaces = MarketIdempotencyRejectionFinalizationPort.class)
+    MarketIdempotencyService idempotency;
 
     @Test
     void rechazaJwtAusenteEInvalido() throws Exception {

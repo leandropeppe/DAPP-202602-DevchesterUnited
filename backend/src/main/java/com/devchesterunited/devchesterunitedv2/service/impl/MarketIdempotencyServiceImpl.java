@@ -6,7 +6,10 @@ import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyRequ
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyClaim;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.MarketRejectionFinalizationResult;
 import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyRejectionFinalizationPort;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyExecutionPort;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
 import java.time.Clock;
 import java.time.Duration;
@@ -21,7 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /** Persistencia y transiciones locales de idempotencia coordinadas por lock transaccional. */
 @Service
-public class MarketIdempotencyServiceImpl implements MarketIdempotencyService {
+public class MarketIdempotencyServiceImpl implements MarketIdempotencyService,
+        MarketIdempotencyRejectionFinalizationPort, MarketIdempotencyExecutionPort {
     private final SolicitudIdempotenciaMercadoRepository solicitudes;
     private final Clock clock;
     private final Duration processingTimeout;
@@ -133,6 +137,41 @@ public class MarketIdempotencyServiceImpl implements MarketIdempotencyService {
             throw staleRequest();
         }
         return toResult(entity);
+    }
+
+    /** Finaliza sin abrir otra transacción y permite distinguir un no-op de una transición. */
+    @Override
+    @Transactional
+    public MarketRejectionFinalizationResult rechazarParaFinalizacion(
+            UUID solicitudId, UUID tokenEjecucion) {
+        SolicitudIdempotenciaMercadoEntity entity = findWithoutLock(solicitudId);
+        if (!executionLock.tryAcquire(entity.getUsuarioId(), entity.getClaveIdempotencia())) {
+            return new MarketRejectionFinalizationResult(toResult(entity), false);
+        }
+        entity = findForTransition(solicitudId);
+        if (!SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING.equals(entity.getStatus())
+                || tokenEjecucion == null
+                || !tokenEjecucion.equals(entity.getTokenEjecucion())) {
+            return new MarketRejectionFinalizationResult(toResult(entity), false);
+        }
+        entity.rechazar(tokenEjecucion, clock.instant());
+        return new MarketRejectionFinalizationResult(toResult(entity), true);
+    }
+
+    /** Reacquire el advisory lock y valida el token mientras el núcleo sigue abierto. */
+    @Override
+    @Transactional
+    public void asegurarPropiedadDeEjecucion(UUID solicitudId, UUID tokenEjecucion) {
+        SolicitudIdempotenciaMercadoEntity entity = findWithoutLock(solicitudId);
+        if (!executionLock.tryAcquire(entity.getUsuarioId(), entity.getClaveIdempotencia())) {
+            throw staleRequest();
+        }
+        entity = findForTransition(solicitudId);
+        if (!SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING.equals(entity.getStatus())
+                || tokenEjecucion == null
+                || !tokenEjecucion.equals(entity.getTokenEjecucion())) {
+            throw staleRequest();
+        }
     }
 
     @Override

@@ -24,6 +24,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStat
 import com.devchesterunited.devchesterunitedv2.service.dto.QuoteValidityStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.impl.MarketIdempotencyParameterHasher;
 import com.devchesterunited.devchesterunitedv2.service.impl.MarketSaleServiceImpl;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketQuoteValidationService;
@@ -286,7 +287,7 @@ class MarketSaleServiceImplTest {
         }
 
         private String hash(MarketIdempotencyRequest request) {
-            return "quantity=" + request.cantidad();
+            return MarketIdempotencyParameterHasher.hash(request);
         }
     }
 }
