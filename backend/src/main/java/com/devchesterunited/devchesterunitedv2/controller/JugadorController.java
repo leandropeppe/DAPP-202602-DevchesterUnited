@@ -6,14 +6,20 @@ import com.devchesterunited.devchesterunitedv2.controller.dto.EstadisticasJugado
 import com.devchesterunited.devchesterunitedv2.controller.dto.JugadorDetalleResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.JugadoresResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.ValuacionHistoryResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.ValuacionResponseDTO;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.JugadorService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.CotizacionConsultaService;
 import com.devchesterunited.devchesterunitedv2.service.dto.EstadisticasJugadorResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.JugadorDetalleResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.JugadorResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.JugadoresResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.ValuacionDTO;
+import com.devchesterunited.devchesterunitedv2.service.dto.ValuacionHistoricoDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Set;
+import java.util.UUID;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -34,9 +40,11 @@ public class JugadorController {
             Set.of("league", "team", "position", "page", "limit");
 
     private final JugadorService servicio;
+    private final CotizacionConsultaService cotizacionConsulta;
 
-    public JugadorController(JugadorService servicio) {
+    public JugadorController(JugadorService servicio, CotizacionConsultaService cotizacionConsulta) {
         this.servicio = servicio;
+        this.cotizacionConsulta = cotizacionConsulta;
     }
 
     @Operation(
@@ -129,6 +137,51 @@ public class JugadorController {
         return ResponseEntity.ok(new SuccessResponseDTO<>(respuesta));
     }
 
+    @Operation(operationId = "consultarCotizacionActualJugador",
+            summary = "Consultar cotización actual de un jugador")
+    @ApiResponse(responseCode = "200", description = "Cotización actual de la estrategia seleccionada.")
+    @ApiResponse(responseCode = "400", description = "Identificador o estrategia inválidos.",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "404", description = "Jugador o cotización no encontrada.",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
+    @GetMapping("/players/{playerId}/valuation")
+    public ResponseEntity<SuccessResponseDTO<ValuacionResponseDTO>> consultarCotizacionActual(
+            @PathVariable String playerId,
+            @RequestParam(name = "strategyId", required = false) String strategyId,
+            @RequestParam(name = "strategyVersion", required = false) Integer strategyVersion) {
+        return ResponseEntity.ok(new SuccessResponseDTO<>(mapear(cotizacionConsulta.consultarActual(
+                parsearIdPublico(playerId), strategyId, strategyVersion))));
+    }
+
+    @Operation(operationId = "consultarHistoricoCotizacionJugador",
+            summary = "Consultar histórico de cotización de un jugador")
+    @ApiResponse(responseCode = "200", description = "Histórico más reciente al más antiguo.")
+    @ApiResponse(responseCode = "400", description = "Identificador, estrategia o paginación inválidos.",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "404", description = "Jugador o histórico no encontrado.",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
+    @GetMapping("/players/{playerId}/valuation/history")
+    public ResponseEntity<SuccessResponseDTO<ValuacionHistoryResponseDTO>> consultarHistorico(
+            @PathVariable String playerId,
+            @RequestParam(name = "strategyId", required = false) String strategyId,
+            @RequestParam(name = "strategyVersion", required = false) Integer strategyVersion,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "limit", defaultValue = "20") int limit) {
+        return ResponseEntity.ok(new SuccessResponseDTO<>(mapear(cotizacionConsulta.consultarHistorico(
+                parsearIdPublico(playerId), strategyId, strategyVersion, page, limit))));
+    }
+
+    private static ValuacionResponseDTO mapear(ValuacionDTO valuacion) {
+        return new ValuacionResponseDTO(valuacion.playerId(), valuacion.score(), valuacion.value(),
+                valuacion.calculatedAt(), valuacion.strategyId(), valuacion.strategyVersion(), valuacion.visible(),
+                valuacion.strategyType(), valuacion.position(), valuacion.trace());
+    }
+
+    private static ValuacionHistoryResponseDTO mapear(ValuacionHistoricoDTO historico) {
+        return new ValuacionHistoryResponseDTO(historico.items().stream().map(JugadorController::mapear).toList(),
+                historico.page(), historico.limit(), historico.total());
+    }
+
     private static JugadoresResponseDTO mapear(JugadoresResultado resultado) {
         return new JugadoresResponseDTO(
                 resultado.jugadores().stream().map(JugadorController::mapear).toList(),
@@ -140,7 +193,7 @@ public class JugadorController {
     private static com.devchesterunited.devchesterunitedv2.controller.dto.JugadorResponseDTO mapear(JugadorResultado jugador) {
         return new com.devchesterunited.devchesterunitedv2.controller.dto.JugadorResponseDTO(
                 "ply_" + jugador.id(), jugador.nombre(), jugador.liga(), jugador.equipo(), jugador.posicion(),
-                jugador.dorsal(), jugador.nacionalidad());
+                jugador.dorsal(), jugador.nacionalidad(), jugador.valuation());
     }
 
     private static JugadorDetalleResponseDTO mapearDetalle(JugadorDetalleResultado jugador) {
@@ -152,7 +205,8 @@ public class JugadorController {
                 jugador.posicion(),
                 jugador.dorsal(),
                 jugador.nacionalidad(),
-                mapearEstadisticas(jugador.estadisticas()));
+                mapearEstadisticas(jugador.estadisticas()),
+                jugador.valuation());
     }
 
     private static EstadisticasJugadorResponseDTO mapearEstadisticas(
@@ -197,6 +251,17 @@ public class JugadorController {
             if (entrada.getValue().length != 1) {
                 throw invalido("No se permiten parámetros repetidos.");
             }
+        }
+    }
+
+    private static UUID parsearIdPublico(String idPublico) {
+        if (idPublico == null || !idPublico.startsWith("ply_")) {
+            throw invalido("Identificador de jugador inválido.");
+        }
+        try {
+            return UUID.fromString(idPublico.substring("ply_".length()));
+        } catch (IllegalArgumentException exception) {
+            throw invalido("Identificador de jugador inválido.");
         }
     }
 

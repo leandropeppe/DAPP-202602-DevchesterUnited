@@ -62,7 +62,8 @@ public class JugadorServiceImpl implements JugadorService {
                 jugador.getPosicion(),
                 jugador.getDorsal() == null ? 0 : jugador.getDorsal(),
                 jugador.getNacionalidad(),
-                estadisticas);
+                estadisticas,
+                jugador.getValuation());
     }
 
     private static JugadorResultado aRespuesta(JugadorCatalogoProjection entidad) {
@@ -73,7 +74,8 @@ public class JugadorServiceImpl implements JugadorService {
                 entidad.getEquipo(),
                 entidad.getPosicion(),
                 entidad.getDorsal() == null ? 0 : entidad.getDorsal(),
-                entidad.getNacionalidad()
+                entidad.getNacionalidad(),
+                entidad.getValuation()
         );
     }
 

@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.persistence;
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorCatalogoProjection;
 import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -140,6 +141,55 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
         assertThat(repositorio.buscar(null, null, null, 6, 2)).isEmpty();
         assertThat(repositorio.buscar(null, null, null, 100, 2)).isEmpty();
         assertThat(repositorio.contar(null, null, null)).isEqualTo(6);
+    }
+
+    @Test
+    void cotizacionVisibleOrdenaAntesDePaginarYDejaAusentesAlFinal() {
+        String estrategiaId = "TEST_VISIBLE";
+        Integer version = 1;
+        jdbc.update("""
+                INSERT INTO estrategias_valorizacion
+                    (id, version, nombre, tipo, habilitada_para_calculo, es_provisoria,
+                     valor_base, factor_escala, configuracion_json)
+                VALUES (?, ?, 'Estrategia de prueba', 'GENERAL', TRUE, FALSE, 0, 100, '{}')
+                ON CONFLICT (id, version) DO NOTHING
+                """, estrategiaId, version);
+        jdbc.update("""
+                INSERT INTO estrategia_visible (singleton_id, estrategia_id, estrategia_version, updated_at)
+                VALUES (1, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT (singleton_id) DO UPDATE
+                    SET estrategia_id = EXCLUDED.estrategia_id,
+                        estrategia_version = EXCLUDED.estrategia_version,
+                        updated_at = EXCLUDED.updated_at
+                """, estrategiaId, version);
+        UUID ejecucion = UUID.randomUUID();
+        jdbc.update("""
+                INSERT INTO ejecuciones_valorizacion
+                    (id, tipo, snapshot_at, iniciada_at, estado)
+                VALUES (?, 'MANUAL', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'COMPLETADA')
+                """, ejecucion);
+        jdbc.update("""
+                INSERT INTO cotizacion_actual_estrategia
+                    (jugador_id, estrategia_id, estrategia_version, ejecucion_id, score, cotizacion,
+                     valor_base, factor_escala, calculada_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                """, id(1), estrategiaId, version, ejecucion,
+                new BigDecimal("0.1"), new BigDecimal("10"), new BigDecimal("0"), new BigDecimal("100"));
+        jdbc.update("""
+                INSERT INTO cotizacion_actual_estrategia
+                    (jugador_id, estrategia_id, estrategia_version, ejecucion_id, score, cotizacion,
+                     valor_base, factor_escala, calculada_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                """, id(3), estrategiaId, version, ejecucion,
+                new BigDecimal("0.2"), new BigDecimal("20"), new BigDecimal("0"), new BigDecimal("100"));
+
+        assertThat(ids(repositorio.buscar(null, null, null, 0, 2)))
+                .containsExactly(id(3), id(1));
+        assertThat(ids(repositorio.buscar(null, null, null, 2, 10)))
+                .containsExactly(id(2), id(4), id(5), id(6));
+        assertThat(repositorio.buscar(null, null, null, 0, 10).get(0).getValuation())
+                .isEqualByComparingTo("20.0000");
+        assertThat(repositorio.buscar(null, null, null, 0, 10).get(2).getValuation()).isNull();
     }
 
     @Test

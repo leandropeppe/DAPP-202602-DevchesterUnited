@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import CatalogPage from '../src/views/CatalogPage.jsx'
+import PlayerCard from '../src/components/PlayerCard.jsx'
 
 function jsonResponse (body, status = 200) {
   return {
@@ -24,7 +25,8 @@ describe('cards del catalogo', () => {
           team: 'Madrid',
           position: 'Forward',
           nationality: 'Argentina',
-          jersey_number: null
+          jersey_number: null,
+          valuation: 58.91
         }],
         pagination: { current_page: 1, total_pages: 1, total_records: 1 }
       }
@@ -35,9 +37,16 @@ describe('cards del catalogo', () => {
 
     const playerLink = await screen.findByRole('link', { name: /Jugador Uno/i })
     expect(screen.getByText('Argentina')).toBeInTheDocument()
+    expect(screen.getByText('59')).toBeInTheDocument()
     expect(screen.queryByText(/Dorsal/i)).not.toBeInTheDocument()
     expect(screen.queryByText('0')).not.toBeInTheDocument()
     fireEvent.click(playerLink)
     expect(onNavigate).toHaveBeenCalledWith('/catalogo/jugadores/ply-1')
+  })
+
+  it('muestra guion cuando la cotizacion es null', () => {
+    render(<PlayerCard player={{ name: 'Sin cotizacion', position: 'Forward', valuation: null }} />)
+
+    expect(screen.getByText('-')).toBeInTheDocument()
   })
 })

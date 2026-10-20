@@ -278,7 +278,7 @@ class JugadorE2ETest {
         assertThat(datos.path("players").isArray()).isTrue();
         for (JsonNode jugador : datos.path("players")) {
             assertThat(jugador.fieldNames()).toIterable().containsExactlyInAnyOrder("id", "name",
-                    "league", "team", "position", "jersey_number", "nationality");
+                    "league", "team", "position", "jersey_number", "nationality", "valuation");
             assertThat(jugador.path("id").isTextual()).isTrue();
             assertThat(jugador.path("id").asText()).matches("ply_[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}");
             for (String campo : List.of("name", "league", "team", "nationality")) {

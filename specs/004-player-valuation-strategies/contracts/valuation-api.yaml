@@ -1,0 +1,179 @@
+openapi: 3.0.3
+info:
+  title: Devchester United - Player valuations
+  version: 1.0.0
+  description: Read-only current valuations and valuation history.
+servers:
+  - url: /
+paths:
+  /api/v1/players/{playerId}/valuation:
+    get:
+      operationId: consultarCotizacionActualJugador
+      summary: Get the current valuation of a player
+      description: If strategyId and strategyVersion are omitted, the result belongs to the currently visible strategy. If either explicit filter is supplied, both must identify one exact strategy and version; no other strategy is mixed into the response.
+      parameters:
+        - $ref: '#/components/parameters/PlayerId'
+        - $ref: '#/components/parameters/StrategyId'
+        - $ref: '#/components/parameters/StrategyVersion'
+      responses:
+        '200':
+          description: Current valuation for the selected strategy and version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessValuationResponse'
+        '400':
+          description: Invalid player identifier or incomplete strategy/version selection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Player or valuation for the selected strategy and version was not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/players/{playerId}/valuation/history:
+    get:
+      operationId: consultarHistoricoCotizacionJugador
+      summary: Get the valuation history of a player
+      description: If strategyId and strategyVersion are omitted, only the series belonging to the currently visible strategy is returned. Explicit filters select exactly one strategy and version. Items are ordered from newest to oldest.
+      parameters:
+        - $ref: '#/components/parameters/PlayerId'
+        - $ref: '#/components/parameters/StrategyId'
+        - $ref: '#/components/parameters/StrategyVersion'
+        - name: page
+          in: query
+          required: false
+          description: One-based page number.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of history items per page.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: The selected immutable history series, ordered newest first.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessValuationHistoryResponse'
+        '400':
+          description: Invalid player identifier, pagination, or incomplete strategy/version selection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Player was not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    PlayerId:
+      name: playerId
+      in: path
+      required: true
+      description: Public player identifier used by the player catalog.
+      schema:
+        type: string
+    StrategyId:
+      name: strategyId
+      in: query
+      required: false
+      description: Explicit strategy identifier. Omit together with strategyVersion to use the visible strategy.
+      schema:
+        type: string
+    StrategyVersion:
+      name: strategyVersion
+      in: query
+      required: false
+      description: Explicit strategy version. It must be supplied together with strategyId.
+      schema:
+        type: integer
+        minimum: 1
+  schemas:
+    Valuation:
+      type: object
+      required: [playerId, score, value, calculatedAt, strategyId, strategyVersion, visible, strategyType, trace]
+      properties:
+        playerId:
+          type: string
+        score:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+        value:
+          type: number
+          format: double
+          description: Numeric valuation unit; no currency is implied by this contract.
+        calculatedAt:
+          type: string
+          format: date-time
+        strategyId:
+          type: string
+        strategyVersion:
+          type: integer
+          minimum: 1
+        visible:
+          type: boolean
+          description: Whether this result belongs to the visible strategy used by the default selection.
+        strategyType:
+          type: string
+          enum: [GENERAL, POSICIONAL]
+        position:
+          type: string
+          nullable: true
+        trace:
+          type: object
+          additionalProperties: true
+          description: Structured calculation trace, including normalization, relevant ranges, penalties, missing negative metrics, and calculation decisions.
+    SuccessValuationResponse:
+      type: object
+      required: [status, data]
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          $ref: '#/components/schemas/Valuation'
+    SuccessValuationHistoryResponse:
+      type: object
+      required: [status, data]
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          required: [items, page, limit, total]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Valuation'
+            page:
+              type: integer
+              minimum: 1
+            limit:
+              type: integer
+              minimum: 1
+            total:
+              type: integer
+              minimum: 0
+    ErrorResponse:
+      type: object
+      additionalProperties: true
+      description: Error envelope returned by the existing global exception handler.

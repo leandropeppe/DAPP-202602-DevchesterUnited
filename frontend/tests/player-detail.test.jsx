@@ -18,6 +18,7 @@ const player = {
   team: 'Madrid',
   position: 'Forward',
   nationality: 'Argentina',
+  valuation: 58.91,
   statistics: {
     position: 'Forward',
     minutes_played: 1234,
@@ -48,7 +49,18 @@ describe('detalle frontend de jugador', () => {
     expect(screen.getAllByText('1.234')).toHaveLength(2)
     expect(screen.getAllByText('Valoración')).toHaveLength(2)
     expect(screen.getAllByText('7,89')).toHaveLength(2)
+    expect(screen.getByText('59')).toBeInTheDocument()
+    expect(screen.getByText('58,91')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Volver al catálogo/i })).toHaveAttribute('href', '/catalogo')
+  })
+
+  it('muestra guion cuando la cotizacion visible es null', async () => {
+    global.fetch = vi.fn().mockResolvedValue(jsonResponse({ data: { ...player, valuation: null } }))
+
+    render(<PlayerDetailPage playerId="ply-1" onNavigate={vi.fn()} />)
+
+    expect(await screen.findByRole('heading', { name: 'Jugador Uno', level: 1 })).toBeInTheDocument()
+    expect(screen.getAllByText('-')).toHaveLength(2)
   })
 
   it('informa cuando el jugador no tiene estadisticas', async () => {

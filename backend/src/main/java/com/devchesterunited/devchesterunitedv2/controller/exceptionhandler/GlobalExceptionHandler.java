@@ -20,12 +20,24 @@ import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
 import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionPersistenciaException;
 import com.devchesterunited.devchesterunitedv2.service.exception.JugadorNoEncontradoException;
+import com.devchesterunited.devchesterunitedv2.service.exception.CotizacionNoEncontradaException;
+import com.devchesterunited.devchesterunitedv2.service.exception.ConsultaValorizacionInvalidaException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(JugadorNoEncontradoException.class)
     public ResponseEntity<Object> playerNotFound(JugadorNoEncontradoException exception) {
         return response(HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(CotizacionNoEncontradaException.class)
+    public ResponseEntity<Object> valuationNotFound(CotizacionNoEncontradaException exception) {
+        return response(HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ConsultaValorizacionInvalidaException.class)
+    public ResponseEntity<Object> invalidValuationQuery(ConsultaValorizacionInvalidaException exception) {
+        return response(HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(SincronizacionEnCursoException.class)

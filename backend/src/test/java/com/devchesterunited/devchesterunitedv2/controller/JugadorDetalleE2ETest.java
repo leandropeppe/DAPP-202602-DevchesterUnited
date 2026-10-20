@@ -57,7 +57,8 @@ class JugadorDetalleE2ETest {
         JsonNode data = exito(JUGADOR_CON_ESTADISTICAS);
         JsonNode jugador = data.path("data");
         assertThat(jugador.fieldNames()).toIterable().containsExactlyInAnyOrder(
-                "id", "name", "league", "team", "position", "jersey_number", "nationality", "statistics");
+                "id", "name", "league", "team", "position", "jersey_number", "nationality", "statistics", "valuation");
+        assertThat(jugador.path("valuation").isNull()).isTrue();
         assertThat(jugador.path("id").asText()).isEqualTo(idPublico(JUGADOR_CON_ESTADISTICAS));
         assertThat(jugador.path("name").asText()).isEqualTo("Jugador Con Estadisticas");
         assertThat(jugador.path("league").asText()).isEqualTo("Liga detalle");
@@ -110,7 +111,8 @@ class JugadorDetalleE2ETest {
         assertThat(data.path("players")).hasSize(2);
         for (JsonNode jugador : data.path("players")) {
             assertThat(jugador.fieldNames()).toIterable().containsExactlyInAnyOrder(
-                    "id", "name", "league", "team", "position", "jersey_number", "nationality");
+                    "id", "name", "league", "team", "position", "jersey_number", "nationality", "valuation");
+            assertThat(jugador.path("valuation").isNull()).isTrue();
             assertThat(jugador.has("statistics")).isFalse();
         }
     }

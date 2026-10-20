@@ -21,6 +21,11 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
     String FROM_Y_FILTROS = """
             FROM jugadores j
             JOIN equipos e ON e.id = j.team_id
+            LEFT JOIN estrategia_visible ev ON ev.singleton_id = 1
+            LEFT JOIN cotizacion_actual_estrategia cae
+              ON cae.jugador_id = j.id
+             AND cae.estrategia_id = ev.estrategia_id
+             AND cae.estrategia_version = ev.estrategia_version
             WHERE j.is_active = TRUE
               AND e.is_active = TRUE
               AND (CAST(:liga AS text) IS NULL OR e.league ILIKE
@@ -38,12 +43,18 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
                    e.name AS equipo,
                    j.position AS posicion,
                    j.jersey_number AS dorsal,
-                   j.nationality AS nacionalidad
+                   j.nationality AS nacionalidad,
+                   cae.cotizacion AS valuation
             """;
 
     String FROM_CATALOGO_ACTIVO = """
             FROM jugadores j
             JOIN equipos e ON e.id = j.team_id
+            LEFT JOIN estrategia_visible ev ON ev.singleton_id = 1
+            LEFT JOIN cotizacion_actual_estrategia cae
+              ON cae.jugador_id = j.id
+             AND cae.estrategia_id = ev.estrategia_id
+             AND cae.estrategia_version = ev.estrategia_version
             WHERE j.id = :id
               AND j.is_active = TRUE
               AND e.is_active = TRUE
@@ -54,7 +65,7 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
 
     /** Offset basado en cero; orden fijo, independiente de cualquier entrada del cliente. */
     @Query(value = COLUMNAS_CATALOGO + FROM_Y_FILTROS
-            + " ORDER BY id ASC LIMIT :limite OFFSET :offset", nativeQuery = true)
+            + " ORDER BY valuation DESC NULLS LAST, id ASC LIMIT :limite OFFSET :offset", nativeQuery = true)
     List<JugadorCatalogoProjection> buscar(@Param("liga") String liga,
             @Param("equipo") String equipo,
             @Param("posicion") String posicion,

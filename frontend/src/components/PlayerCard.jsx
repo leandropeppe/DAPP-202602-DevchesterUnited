@@ -180,7 +180,7 @@ export default function PlayerCard ({
 
             <div className="player-card__rating">
                 <strong>
-                    -
+                    {formatCardValuation(player.valuation)}
                 </strong>
 
                 <span>
@@ -273,4 +273,12 @@ export default function PlayerCard ({
             )}
         </CardElement>
     )
+}
+
+function formatCardValuation (value) {
+    if (value === null || value === undefined || value === '') return '-'
+    const number = Number(value)
+    return Number.isFinite(number)
+        ? String(Math.round(number))
+        : '-'
 }
