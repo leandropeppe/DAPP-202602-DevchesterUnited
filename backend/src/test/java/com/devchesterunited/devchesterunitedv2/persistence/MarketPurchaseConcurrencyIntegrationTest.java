@@ -259,7 +259,8 @@ class MarketPurchaseConcurrencyIntegrationTest extends PostgresTestSupport {
 
         jdbc.update("INSERT INTO market_state (id, status, epoch, created_at, updated_at) "
                 + "VALUES (1, 'READY', 2, ?, ?) ON CONFLICT (id) DO UPDATE "
-                + "SET status = 'READY', updated_at = EXCLUDED.updated_at", NOW, NOW);
+                + "SET status = 'READY', updated_at = GREATEST(market_state.created_at, "
+                + "EXCLUDED.updated_at)", NOW, NOW);
         jdbc.update("INSERT INTO jugadores (id, name, position, jersey_number, nationality, "
                 + "team_id, is_active, created_at, updated_at) VALUES (?, 'Concurrency Player', "
                 + "'Forward', 9, 'Argentina', ?, TRUE, ?, ?)", playerId, teamId, NOW, NOW);

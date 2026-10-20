@@ -61,7 +61,8 @@ class MarketPurchasePersistenceIntegrationTest extends PostgresTestSupport {
                 + "(id, user_id, counterparty_id, balance, created_at, updated_at) "
                 + "VALUES (?, NULL, ?, 0.00, ?, ?) ON CONFLICT DO NOTHING",
                 UUID.randomUUID(), counterpartyId, NOW, NOW);
-        jdbc.update("UPDATE market_credit_accounts SET balance = 0.00, updated_at = ? "
+        jdbc.update("UPDATE market_credit_accounts SET balance = 0.00, "
+                + "updated_at = GREATEST(created_at, ?) "
                 + "WHERE counterparty_id = ?", NOW, counterpartyId);
         jdbc.update("INSERT INTO market_token_issuances "
                 + "(player_id, counterparty_id, issued_quantity, inventory_quantity, created_at, "

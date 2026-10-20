@@ -51,7 +51,8 @@ class MarketPurchaseServiceIntegrationTest extends PostgresTestSupport {
 
         jdbc.update("INSERT INTO market_state "
                 + "(id, status, epoch, created_at, updated_at) VALUES (1, 'READY', 2, ?, ?) "
-                + "ON CONFLICT (id) DO UPDATE SET status = 'READY', updated_at = EXCLUDED.updated_at",
+                + "ON CONFLICT (id) DO UPDATE SET status = 'READY', "
+                + "updated_at = GREATEST(market_state.created_at, EXCLUDED.updated_at)",
                 NOW, NOW);
         jdbc.update("INSERT INTO usuarios "
                 + "(id, username, email, password_hash, created_at, updated_at) "

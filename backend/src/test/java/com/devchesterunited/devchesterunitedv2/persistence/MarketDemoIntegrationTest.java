@@ -2,7 +2,6 @@ package com.devchesterunited.devchesterunitedv2.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketPortfolioResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketPurchaseRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketSaleRequest;
@@ -22,10 +21,30 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 /** T073: demostracion reproducible aislada con cuatro usuarios y cinco jugadores. */
 @SpringBootTest(properties = "token-market.initialization.auto-start=false")
-class MarketDemoIntegrationTest extends PostgresTestSupport {
+@Testcontainers
+class MarketDemoIntegrationTest {
+    @Container
+    private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16")
+            .withDatabaseName("devchester_market_demo_test")
+            .withUsername("test")
+            .withPassword("test");
+
+    @DynamicPropertySource
+    static void databaseProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
+        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+    }
+
     @Autowired private JdbcTemplate jdbc;
     @Autowired private QuotePublicationPort quotes;
     @Autowired private MarketPurchaseService purchases;
