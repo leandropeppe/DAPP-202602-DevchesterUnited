@@ -117,7 +117,11 @@ export default function LoginPage ({ onNavigate, session }) {
                   className="auth-password-toggle"
                   type="button"
                   tabIndex={-1}
-                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-label={
+                    showPassword
+                        ? 'Ocultar clave'
+                        : 'Mostrar clave'
+                  }
                   aria-pressed={showPassword}
                   onClick={() => setShowPassword((visible) => !visible)}
               >

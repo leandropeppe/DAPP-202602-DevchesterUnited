@@ -257,8 +257,8 @@ export default function RegistrationPage ({ onNavigate }) {
                     tabIndex={-1}
                     aria-label={
                       showPassword
-                          ? 'Ocultar contraseña'
-                          : 'Mostrar contraseña'
+                          ? 'Ocultar clave'
+                          : 'Mostrar clave'
                     }
                     aria-pressed={showPassword}
                     onClick={() =>
