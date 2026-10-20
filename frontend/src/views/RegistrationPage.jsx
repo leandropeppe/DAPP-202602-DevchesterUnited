@@ -27,7 +27,8 @@ export default function RegistrationPage ({ onNavigate }) {
   const [form, setForm] = useState({
     username: '',
     email: '',
-    password: ''
+    password: '',
+    passwordConfirmation: ''
   })
 
   const [state, setState] = useState({
@@ -37,6 +38,7 @@ export default function RegistrationPage ({ onNavigate }) {
   })
 
   const [showPassword, setShowPassword] = useState(false)
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false)
 
   function update (event) {
     setForm({
@@ -60,6 +62,10 @@ export default function RegistrationPage ({ onNavigate }) {
       details.push(
           'La contraseña debe tener entre 8 y 72 caracteres e incluir mayúscula, minúscula y número.'
       )
+    }
+
+    if (form.password !== form.passwordConfirmation) {
+      details.push('Las contraseñas no coinciden.')
     }
 
     return details
@@ -87,7 +93,13 @@ export default function RegistrationPage ({ onNavigate }) {
     })
 
     try {
-      const response = await register(form)
+      const registrationData = {
+        username: form.username,
+        email: form.email,
+        password: form.password
+      }
+
+      const response = await register(registrationData)
 
       setState({
         status: 'success',
@@ -157,20 +169,20 @@ export default function RegistrationPage ({ onNavigate }) {
               </label>
 
               <div className="auth-input">
-              <span
-                  className="auth-input__icon"
-                  aria-hidden="true"
-              >
-                <svg viewBox="0 0 24 24">
-                  <circle
-                      cx="12"
-                      cy="8"
-                      r="4"
-                  />
+                <span
+                    className="auth-input__icon"
+                    aria-hidden="true"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <circle
+                        cx="12"
+                        cy="8"
+                        r="4"
+                    />
 
-                  <path d="M4 21a8 8 0 0116 0" />
-                </svg>
-              </span>
+                    <path d="M4 21a8 8 0 0116 0" />
+                  </svg>
+                </span>
 
                 <input
                     id="register-username"
@@ -189,22 +201,22 @@ export default function RegistrationPage ({ onNavigate }) {
               </label>
 
               <div className="auth-input">
-              <span
-                  className="auth-input__icon"
-                  aria-hidden="true"
-              >
-                <svg viewBox="0 0 24 24">
-                  <rect
-                      x="3"
-                      y="5"
-                      width="18"
-                      height="14"
-                      rx="2"
-                  />
+                <span
+                    className="auth-input__icon"
+                    aria-hidden="true"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <rect
+                        x="3"
+                        y="5"
+                        width="18"
+                        height="14"
+                        rx="2"
+                    />
 
-                  <path d="M4 7l8 6 8-6" />
-                </svg>
-              </span>
+                    <path d="M4 7l8 6 8-6" />
+                  </svg>
+                </span>
 
                 <input
                     id="register-email"
@@ -224,22 +236,22 @@ export default function RegistrationPage ({ onNavigate }) {
               </label>
 
               <div className="auth-input">
-              <span
-                  className="auth-input__icon"
-                  aria-hidden="true"
-              >
-                <svg viewBox="0 0 24 24">
-                  <rect
-                      x="5"
-                      y="10"
-                      width="14"
-                      height="11"
-                      rx="2"
-                  />
+                <span
+                    className="auth-input__icon"
+                    aria-hidden="true"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <rect
+                        x="5"
+                        y="10"
+                        width="14"
+                        height="11"
+                        rx="2"
+                    />
 
-                  <path d="M8 10V7a4 4 0 018 0v3" />
-                </svg>
-              </span>
+                    <path d="M8 10V7a4 4 0 018 0v3" />
+                  </svg>
+                </span>
 
                 <input
                     id="register-password"
@@ -266,6 +278,58 @@ export default function RegistrationPage ({ onNavigate }) {
                     }
                 >
                   <EyeIcon visible={showPassword} />
+                </button>
+              </div>
+            </div>
+
+            <div className="field">
+              <label htmlFor="register-password-confirmation">
+                Confirmar contraseña
+              </label>
+
+              <div className="auth-input">
+                <span
+                    className="auth-input__icon"
+                    aria-hidden="true"
+                >
+                  <svg viewBox="0 0 24 24">
+                    <rect
+                        x="5"
+                        y="10"
+                        width="14"
+                        height="11"
+                        rx="2"
+                    />
+
+                    <path d="M8 10V7a4 4 0 018 0v3" />
+                  </svg>
+                </span>
+
+                <input
+                    id="register-password-confirmation"
+                    name="passwordConfirmation"
+                    type={showPasswordConfirmation ? 'text' : 'password'}
+                    value={form.passwordConfirmation}
+                    onChange={update}
+                    autoComplete="new-password"
+                    required
+                />
+
+                <button
+                    className="auth-password-toggle"
+                    type="button"
+                    tabIndex={-1}
+                    aria-label={
+                      showPasswordConfirmation
+                          ? 'Ocultar confirmación'
+                          : 'Mostrar confirmación'
+                    }
+                    aria-pressed={showPasswordConfirmation}
+                    onClick={() =>
+                        setShowPasswordConfirmation((visible) => !visible)
+                    }
+                >
+                  <EyeIcon visible={showPasswordConfirmation} />
                 </button>
               </div>
             </div>
@@ -316,8 +380,8 @@ export default function RegistrationPage ({ onNavigate }) {
               }
 
               <span aria-hidden="true">
-              →
-            </span>
+                →
+              </span>
             </button>
           </form>
 
