@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /** Registra las definiciones de dominio después de que Flyway cree sus tablas. */
 public class EstrategiaValorizacionBootstrap {
+    private static final String TIPO_GENERAL = "GENERAL";
+
     private final EstrategiaValorizacionRepository estrategias;
     private final EstrategiaVisibleRepository visibles;
     private final EstrategiasIniciales iniciales;
@@ -46,13 +48,13 @@ public class EstrategiaValorizacionBootstrap {
     }
 
     private static String nombre(EstrategiaValorizacion estrategia) {
-        return estrategia.id().equals("GENERAL") ? "General v" + estrategia.version()
+        return estrategia.id().equals(TIPO_GENERAL) ? "General v" + estrategia.version()
                 : "Positional v" + estrategia.version();
     }
 
     private static String configuracionJson(EstrategiaValorizacion estrategia) {
-        String[] posiciones = estrategia.tipo().name().equals("GENERAL")
-                ? new String[] {"GENERAL"} : new String[] {"DL", "MC", "DF", "PO"};
+        String[] posiciones = estrategia.tipo().name().equals(TIPO_GENERAL)
+                ? new String[] {TIPO_GENERAL} : new String[] {"DL", "MC", "DF", "PO"};
         StringBuilder json = new StringBuilder("{\"id\":\"").append(estrategia.id())
                 .append("\",\"version\":").append(estrategia.version())
                 .append(",\"esProvisoria\":").append(estrategia.esProvisoria())
@@ -73,7 +75,7 @@ public class EstrategiaValorizacionBootstrap {
     }
 
     private static String factoresMercadoJson(EstrategiaValorizacion estrategia) {
-        if (estrategia.tipo().name().equals("GENERAL")) return "{}";
+        if (estrategia.tipo().name().equals(TIPO_GENERAL)) return "{}";
         String[] posiciones = {"DL", "MC", "DF", "PO"};
         return java.util.Arrays.stream(posiciones)
                 .map(posicion -> "\"" + posicion + "\":" + estrategia.factorMercadoPosicion(posicion).toPlainString())
