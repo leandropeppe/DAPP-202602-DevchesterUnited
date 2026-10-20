@@ -191,9 +191,9 @@ description: "Lista de tareas para la implementación de Token Market"
 
 **Prueba independiente**: Los fixtures controlados producen portfolios comparables, cambios posteriores de cotización, ventas, resultados realizados/no realizados e historiales personales sin mezclarse con datos reales.
 
-- [ ] T072 [P] [US10] Definir builders de fixtures aislados y exclusivos de pruebas para cuatro usuarios y cinco jugadores bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/` y/o `backend/src/test/resources/`, marcando claramente los datos como exclusivos de demostración.
-- [ ] T073 [US10] Agregar la prueba reproducible de demostración controlada para cotizaciones iniciales, compras, versiones posteriores diferentes, comparación de portfolios, ventas, resultados realizados/no realizados, posiciones cerradas e historiales bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/`.
-- [ ] T074 [P] [US10] Agregar cobertura de datos/carga de demostración frontend bajo `frontend/tests/market-demo.test.jsx` sin insertar fixtures en APIs de producción ni datos del catálogo real.
+- [x] T072 [P] [US10] Definir builders de fixtures aislados y exclusivos de pruebas para cuatro usuarios y cinco jugadores bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/` y/o `backend/src/test/resources/`, marcando claramente los datos como exclusivos de demostración.
+- [x] T073 [US10] Agregar la prueba reproducible de demostración controlada para cotizaciones iniciales, compras, versiones posteriores diferentes, comparación de portfolios, ventas, resultados realizados/no realizados, posiciones cerradas e historiales bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/`.
+- [x] T074 [P] [US10] Agregar cobertura de datos/carga de demostración frontend bajo `frontend/tests/market-demo.test.jsx` sin insertar fixtures en APIs de producción ni datos del catálogo real.
 - [ ] T075 [P] [US10] Agregar un escenario posterior y separado de verificación de integración bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/service/` que se ejecute solo cuando estén disponibles Player Statistics Sync y Player Valuation reales, consuma sus salidas y nunca implemente scraping, persistencia de estadísticas ni cálculo de precios en Token Market; esta tarea no debe bloquear T073 ni la validación independiente de Token Market.
 
 **Punto de control**: La demostración controlada y la verificación real entre features están explícitamente separadas.
