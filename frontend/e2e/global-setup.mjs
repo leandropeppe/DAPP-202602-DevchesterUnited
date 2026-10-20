@@ -56,18 +56,38 @@ export default async function globalSetup () {
 
   const logPath = resolve(runtimeDir, 'backend.log')
   const logHandle = openSync(logPath, 'a')
+
   const backend = spawn('java', ['-Duser.timezone=UTC', '-jar', jarPath], {
     cwd: repositoryDir,
     env: {
       ...process.env,
+
       DB_URL: 'jdbc:postgresql://127.0.0.1:15432/devchester_e2e',
       DB_USERNAME: 'e2e_user',
       DB_PASSWORD: 'e2e_password',
+
       JWT_SECRET: 'ZGV2Y2hlc3Rlci1lMmUtc3ludGhldGljLWp3dC1zZWNyZXQ=',
+
       SPRING_PROFILES_ACTIVE: 'local',
       SERVER_PORT: '18080',
       FOOTBALL_DATA_API_KEY: '',
-      TZ: 'UTC'
+      TZ: 'UTC',
+
+      VALORIZACION_GENERAL_VALOR_BASE: '1',
+      VALORIZACION_GENERAL_FACTOR_ESCALA: '99',
+
+      VALORIZACION_POSITIONAL_VALOR_BASE: '1',
+      VALORIZACION_POSITIONAL_FACTOR_ESCALA: '99',
+
+      VALORIZACION_POSITIONAL_FACTOR_MERCADO_DL: '1.15',
+      VALORIZACION_POSITIONAL_FACTOR_MERCADO_MC: '1.05',
+      VALORIZACION_POSITIONAL_FACTOR_MERCADO_DF: '0.95',
+      VALORIZACION_POSITIONAL_FACTOR_MERCADO_PO: '0.90',
+
+      VALORIZACION_ELEGIBILIDAD_CONFIGURADA: 'true',
+      VALORIZACION_ELEGIBILIDAD_MINIMO_PARTIDOS: '0',
+      VALORIZACION_ELEGIBILIDAD_MINIMO_MINUTOS: '0'
+
     },
     stdio: ['ignore', logHandle, logHandle],
     windowsHide: true
