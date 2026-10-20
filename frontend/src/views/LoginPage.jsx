@@ -100,27 +100,28 @@ export default function LoginPage ({ onNavigate, session }) {
             <div className="auth-input">
               <span className="auth-input__icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24">
-                  <rect x="5" y="10" width="14" height="11" rx="2" />
-                  <path d="M8 10V7a4 4 0 018 0v3" />
+                  <rect x="5" y="10" width="14" height="11" rx="2"/>
+                  <path d="M8 10V7a4 4 0 018 0v3"/>
                 </svg>
               </span>
               <input
-                id="login-password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                value={form.password}
-                onChange={update}
-                autoComplete="current-password"
-                required
+                  id="login-password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={update}
+                  autoComplete="current-password"
+                  required
               />
               <button
-                className="auth-password-toggle"
-                type="button"
-                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                aria-pressed={showPassword}
-                onClick={() => setShowPassword((visible) => !visible)}
+                  className="auth-password-toggle"
+                  type="button"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={showPassword}
+                  onClick={() => setShowPassword((visible) => !visible)}
               >
-                <EyeIcon visible={showPassword} />
+                <EyeIcon visible={showPassword}/>
               </button>
             </div>
           </div>
@@ -128,9 +129,9 @@ export default function LoginPage ({ onNavigate, session }) {
           <StatusMessage type={state.status}>{state.message}</StatusMessage>
 
           <button
-            className="button button--primary auth-submit"
-            type="submit"
-            disabled={state.status === 'loading'}
+              className="button button--primary auth-submit"
+              type="submit"
+              disabled={state.status === 'loading'}
           >
             {state.status === 'loading' ? 'Ingresando…' : 'Iniciar sesión'}
             <span aria-hidden="true">→</span>
