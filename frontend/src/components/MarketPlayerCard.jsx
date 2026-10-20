@@ -10,7 +10,7 @@ function formatPrice (price) {
   return Number(price).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export default function MarketPlayerCard ({ player }) {
+export default function MarketPlayerCard ({ player, onPurchase, onSale }) {
   const quoteStatus = quotePresentationStatus(player)
   const price = formatPrice(player.price_per_token)
   const operable = isMarketPlayerOperable(player)
@@ -33,6 +33,14 @@ export default function MarketPlayerCard ({ player }) {
         <div><dt>Versión</dt><dd>{displayValue(player.quote_version)}</dd></div>
       </dl>
       <QuoteStatus status={quoteStatus} price={price} />
+      {operable
+        ? (
+          <div className="market-player-card__actions">
+            <button className="button button--primary" type="button" onClick={() => onPurchase?.(player)}>Comprar</button>
+            <button className="button button--secondary" type="button" onClick={() => onSale?.(player)}>Vender</button>
+          </div>
+        )
+        : null}
       {!player.player_active || !player.team_active
         ? <p className="market-player-card__notice">El jugador o su equipo no están activos.</p>
         : null}

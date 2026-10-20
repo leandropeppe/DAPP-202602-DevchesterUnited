@@ -25,12 +25,14 @@ export function normalizeQuoteStatus (status) {
   return QUOTE_STATUS_ALIASES[String(status).toUpperCase()] || 'unknown'
 }
 
-export function quotePresentationStatus ({ quoteStatus, quoteAvailability, operable } = {}) {
+export function quotePresentationStatus (player = {}) {
+  const quoteStatus = player.quoteStatus ?? player.quote_status
+  const quoteAvailability = player.quoteAvailability ?? player.quote_availability
   const availability = String(quoteAvailability || '').toUpperCase()
   const status = String(quoteStatus || '').toUpperCase()
   if (availability === 'ABSENT') return 'unavailable'
   if (availability === 'HISTORICAL') return 'historical'
-  if (availability === 'CURRENT' && status === 'VALID' && operable === true) return 'available'
+  if (availability === 'CURRENT' && status === 'VALID' && player.operable === true) return 'available'
   const normalizedStatus = normalizeQuoteStatus(status)
   return normalizedStatus === 'available' ? 'unknown' : normalizedStatus
 }

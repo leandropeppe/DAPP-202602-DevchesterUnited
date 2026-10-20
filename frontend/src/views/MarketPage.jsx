@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getMarketBalance, getMarketPlayers } from '../api/http.js'
 import MarketPlayerCard from '../components/MarketPlayerCard.jsx'
+import MarketOperationPanel from '../components/MarketOperationPanel.jsx'
 import MarketStateMessage from '../components/MarketStateMessage.jsx'
 import { useSession } from '../session/SessionContext.jsx'
 import { errorMessage } from './formUtils.js'
@@ -18,12 +19,13 @@ function formatBalance (balance) {
   })
 }
 
-export default function MarketPage () {
+export default function MarketPage ({ onNavigate = () => {} }) {
   const session = useSession()
   const [page, setPage] = useState(1)
   const [balance, setBalance] = useState(null)
   const [market, setMarket] = useState(EMPTY_MARKET)
   const [state, setState] = useState({ status: 'loading', message: '' })
+  const [operation, setOperation] = useState(null)
 
   const loadMarket = useCallback(async (requestedPage, jwt) => {
     if (!jwt || session.isJwtExpired) return
@@ -71,6 +73,11 @@ export default function MarketPage () {
   const players = Array.isArray(market.players) ? market.players : []
   const totalPages = Number(pagination.total_pages || 0)
 
+  function go (event, path) {
+    event.preventDefault()
+    onNavigate(path)
+  }
+
   return (
     <section className="market-page" aria-labelledby="market-title">
       <header className="market-hero">
@@ -85,6 +92,11 @@ export default function MarketPage () {
         </div>
       </header>
 
+      <div className="market-page__links">
+        <a className="button button--secondary" href="/market/portfolio" onClick={(event) => go(event, '/market/portfolio')}>Ver portfolio</a>
+        <a className="button button--secondary" href="/market/transactions" onClick={(event) => go(event, '/market/transactions')}>Ver historial</a>
+      </div>
+
       {state.status === 'loading' ? <MarketStateMessage status="loading" /> : null}
       {state.status === 'error' || state.status === 'unavailable'
         ? <MarketStateMessage status={state.status} message={state.message} />
@@ -93,8 +105,10 @@ export default function MarketPage () {
         ? <output className="empty-state">No hay jugadores disponibles en el mercado.</output>
         : null}
       {players.length > 0
-        ? <div className="market-player-grid">{players.map((player) => <MarketPlayerCard key={player.id} player={player} />)}</div>
+        ? <div className="market-player-grid">{players.map((player) => <MarketPlayerCard key={player.id} player={player} onPurchase={(selected) => setOperation({ player: selected, type: 'PURCHASE' })} onSale={(selected) => setOperation({ player: selected, type: 'SALE' })} />)}</div>
         : null}
+
+      {operation ? <MarketOperationPanel player={operation.player} type={operation.type} jwt={session.jwt} onClose={() => setOperation(null)} /> : null}
 
       <nav className="pagination" aria-label="Paginación del mercado">
         <button className="button button--secondary" type="button"
