@@ -13,6 +13,7 @@ export function usernameValidationMessage () {
   const policy = (import.meta.env.VITE_USERNAME_POLICY || 'strict').toLowerCase()
   const min = Number(import.meta.env.VITE_USERNAME_MIN_LENGTH || 3)
   const max = Number(import.meta.env.VITE_USERNAME_MAX_LENGTH || 30)
+
   return policy === 'strict'
       ? `El nombre de usuario debe tener entre ${min} y ${max} caracteres alfanuméricos.`
       : `El nombre de usuario debe tener entre ${min} y ${max} caracteres y no contener espacios.`
@@ -24,9 +25,14 @@ export function validateEmail (value) {
 
 export function validateRegistrationPassword (value) {
   const bytes = new TextEncoder().encode(value).length
-  return value.length >= 8 && value.length <= 72 && bytes <= 72 &&
-    /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value) &&
-    !/^\s|\s$/.test(value)
+
+  return value.length >= 8 &&
+      value.length <= 72 &&
+      bytes <= 72 &&
+      /[a-z]/.test(value) &&
+      /[A-Z]/.test(value) &&
+      /\d/.test(value) &&
+      !/^\s|\s$/.test(value)
 }
 
 export function errorMessage (error) {
@@ -35,6 +41,7 @@ export function errorMessage (error) {
   if (error.status === 401) return error.message || 'La sesión o la credencial no es válida.'
   if (error.status === 409) return error.message || 'La operación entra en conflicto con otra solicitud.'
   if (error.status === 503) return error.message || 'El servicio no está disponible temporalmente.'
+
   return error.message || 'No fue posible completar la operación.'
 }
 

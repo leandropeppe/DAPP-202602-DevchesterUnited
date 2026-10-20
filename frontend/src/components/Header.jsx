@@ -12,13 +12,24 @@ export default function Header ({ route, session, onNavigate }) {
     <header className="site-header">
       <div className="site-header__inner">
         <a className="brand" href="/catalogo" onClick={(event) => go(event, '/catalogo')}>
-          <span className="brand__mark" aria-hidden="true">DU</span>
-          <span>Devchester United</span>
+          <img
+              className="brand__logo"
+              src="/images/devchester-logo-icon.png"
+              alt=""
+              aria-hidden="true"
+          />
+          <span className="brand__wordmark">
+            <strong>
+              <span className="brand__dev">Dev</span>chester
+            </strong>
+            <small>UNITED</small>
+          </span>
         </a>
+
         <nav className="primary-nav" aria-label="Navegación principal">
           {items.map(([path, label]) => (
-            <a
-              className="primary-nav__link"
+              <a
+                  className="primary-nav__link"
               key={path}
               href={path}
               aria-label={path === '/login' ? 'login' : undefined}
@@ -29,7 +40,14 @@ export default function Header ({ route, session, onNavigate }) {
             </a>
           ))}
           {session.jwt ? (
-            <button className="nav-action" type="button" onClick={() => { session.logout(); onNavigate('/login') }}>
+            <button
+              className="nav-action"
+              type="button"
+              onClick={() => {
+                session.logout()
+                onNavigate('/login')
+              }}
+            >
               Cerrar sesión
             </button>
           ) : null}
