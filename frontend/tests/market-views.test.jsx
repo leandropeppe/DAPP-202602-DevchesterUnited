@@ -1,10 +1,58 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { render, screen, within } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MarketStateMessage from '../src/components/MarketStateMessage.jsx'
 import OperationStatus from '../src/components/OperationStatus.jsx'
 import QuoteStatus from '../src/components/QuoteStatus.jsx'
 import MarketPlayerCard from '../src/components/MarketPlayerCard.jsx'
+import MarketPage from '../src/views/MarketPage.jsx'
 import { quotePresentationStatus } from '../src/market/marketState.js'
+
+const marketApi = vi.hoisted(() => ({
+  getMarketBalance: vi.fn(),
+  getMarketPlayers: vi.fn()
+}))
+const marketSession = vi.hoisted(() => ({ jwt: 'jwt-market', isJwtExpired: false }))
+
+vi.mock('../src/api/http.js', () => marketApi)
+vi.mock('../src/session/SessionContext.jsx', () => ({
+  useSession: () => marketSession
+}))
+
+const currentPlayer = {
+  id: 'ply_11111111-1111-4111-8111-111111111111',
+  name: 'Jugador vigente',
+  league: 'Liga',
+  team: 'Equipo',
+  player_active: true,
+  team_active: true,
+  tokens_available: 25,
+  operable: true,
+  quote_status: 'VALID',
+  quote_availability: 'CURRENT',
+  quote_id: '22222222-2222-4222-8222-222222222222',
+  quote_version: 7,
+  price_per_token: 12.5
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  marketSession.jwt = 'jwt-market'
+  marketSession.isJwtExpired = false
+  marketApi.getMarketBalance.mockResolvedValue({ data: { balance: 1500 } })
+  marketApi.getMarketPlayers.mockResolvedValue({
+    data: {
+      players: [currentPlayer, {
+        ...currentPlayer,
+        id: 'ply_33333333-3333-4333-8333-333333333333',
+        name: 'Jugador histórico',
+        quote_status: 'REPLACED',
+        quote_availability: 'HISTORICAL',
+        operable: false
+      }],
+      pagination: { current_page: 1, total_pages: 1, total_records: 2 }
+    }
+  })
+})
 
 describe('componentes de estado del mercado', () => {
   it('muestra el estado de carga como información accesible', () => {
@@ -156,5 +204,30 @@ describe('componentes de estado del mercado', () => {
 
     expect(screen.getByText('No operable')).toBeInTheDocument()
     expect(screen.getByRole('status')).not.toHaveTextContent('Cotización disponible')
+  })
+
+  it('renderiza saldo, cotización vigente y cotización histórica sin habilitar la histórica', async () => {
+    render(<MarketPage onNavigate={vi.fn()} />)
+
+    expect(await screen.findByRole('heading', { name: 'Mercado de jugadores' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Saldo disponible')).toHaveTextContent('1.500,00')
+    expect(screen.getByRole('button', { name: 'Comprar' })).toBeInTheDocument()
+    const historicalCard = screen.getByRole('heading', { name: 'Jugador histórico' }).closest('article')
+    expect(historicalCard).not.toBeNull()
+    expect(historicalCard.querySelector('button')).toBeNull()
+    const historicalStatus = within(historicalCard).getByRole('status')
+    expect(historicalStatus).toHaveTextContent('Cotización histórica.')
+    expect(historicalStatus).toHaveTextContent('no está disponible para operar.')
+    expect(marketApi.getMarketBalance).toHaveBeenCalledWith('jwt-market')
+    expect(marketApi.getMarketPlayers).toHaveBeenCalledWith({ jwt: 'jwt-market', filters: { page: 1, limit: 20 } })
+  })
+
+  it('no consulta el mercado sin JWT', async () => {
+    marketSession.jwt = null
+    render(<MarketPage onNavigate={vi.fn()} />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/iniciá sesión/i)
+    expect(marketApi.getMarketBalance).not.toHaveBeenCalled()
+    expect(marketApi.getMarketPlayers).not.toHaveBeenCalled()
   })
 })
