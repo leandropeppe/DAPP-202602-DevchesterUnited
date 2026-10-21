@@ -24,7 +24,14 @@ public enum MetricaValorizacion {
     RED_CARDS(stats -> decimal(stats.generales().redCard())),
     DISPOSSESSED(stats -> stats.ofensivas().dispossessedPerGame()),
     OFFSIDES_GIVEN(stats -> stats.ofensivas().offsideGivenPerGame()),
-    WAS_DRIBBLED(stats -> stats.defensivas().wasDribbledPerGame());
+    WAS_DRIBBLED(stats -> stats.defensivas().wasDribbledPerGame()),
+    AERIAL_WON(stats -> stats.generales().aerialWonPerGame()),
+    FOUL_GIVEN(stats -> stats.ofensivas().foulGivenPerGame()),
+    TURNOVER(stats -> stats.ofensivas().turnoverPerGame()),
+    OFFSIDES_WON(stats -> stats.defensivas().offsideWonPerGame()),
+    GOAL_OWN(stats -> decimal(stats.defensivas().goalOwn())),
+    ACCURATE_CROSSES(stats -> stats.pases().accurateCrossesPerGame()),
+    THROUGH_BALLS(stats -> stats.pases().accurateThroughBallPerGame());
 
     private final Function<MetricasEstadisticasJugador, BigDecimal> extractor;
 

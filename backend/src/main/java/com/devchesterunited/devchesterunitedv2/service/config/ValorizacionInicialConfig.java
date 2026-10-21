@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.service.config;
 
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaGeneralV1;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaPosicionalV1;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaPosicionalV2;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
 import java.util.List;
 import java.util.Map;
@@ -29,10 +30,13 @@ public class ValorizacionInicialConfig {
             @Value("${valorizacion.positional.factor-mercado.mc:1.05}") java.math.BigDecimal factorMc,
             @Value("${valorizacion.positional.factor-mercado.df:0.95}") java.math.BigDecimal factorDf,
             @Value("${valorizacion.positional.factor-mercado.po:0.90}") java.math.BigDecimal factorPo) {
+        EstrategiaPosicionalV1 v1 = new EstrategiaPosicionalV1(positionalValorBase, positionalFactorEscala,
+                        Map.of("DL", factorDl, "MC", factorMc, "DF", factorDf, "PO", factorPo));
+        EstrategiaPosicionalV2 v2 = new EstrategiaPosicionalV2();
         List<EstrategiaValorizacion> habilitadas = List.of(
                 new EstrategiaGeneralV1(generalValorBase, generalFactorEscala),
-                new EstrategiaPosicionalV1(positionalValorBase, positionalFactorEscala,
-                        Map.of("DL", factorDl, "MC", factorMc, "DF", factorDf, "PO", factorPo)));
-        return new EstrategiasIniciales(habilitadas, "POSITIONAL", 1);
+                v1,
+                v2);
+        return new EstrategiasIniciales(habilitadas, "POSITIONAL", 2);
     }
 }

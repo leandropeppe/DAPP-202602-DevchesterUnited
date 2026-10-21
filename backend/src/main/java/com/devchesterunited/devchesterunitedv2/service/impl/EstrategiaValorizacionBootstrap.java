@@ -41,7 +41,10 @@ public class EstrategiaValorizacionBootstrap {
                         estrategia.valorBase(), estrategia.factorEscala(), configuracionJson(estrategia)));
             }
         }
-        if (visibles.buscar().isEmpty()) {
+        EstrategiaVisibleEntity visible = visibles.buscar().orElse(null);
+        boolean debeActualizarDefault = visible == null
+                || ("POSITIONAL".equals(visible.getEstrategiaId()) && visible.getEstrategiaVersion() == 1);
+        if (debeActualizarDefault) {
             visibles.save(new EstrategiaVisibleEntity(iniciales.estrategiaVisibleId(),
                     iniciales.estrategiaVisibleVersion(), Instant.now(clock)));
         }

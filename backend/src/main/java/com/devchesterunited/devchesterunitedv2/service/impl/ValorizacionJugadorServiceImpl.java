@@ -180,7 +180,8 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
                     .append(jsonNumber(n.valorBruto())).append(",\"minimo\":").append(jsonNumber(n.minimo()))
                     .append(",\"maximo\":").append(jsonNumber(n.maximo())).append(",\"valorNormalizado\":")
                     .append(jsonNumber(n.valorNormalizado())).append(",\"alcance\":\"").append(escape(n.alcance()))
-                    .append("\",\"estado\":\"").append(n.estado()).append("\"}");
+                    .append("\",\"estado\":\"").append(n.estado()).append("\",\"metodo\":\"")
+                    .append(escape(n.metodo())).append("\"}");
         }
         return json.append("],\"penalizacionesAplicadas\":").append(jsonArrayMetricas(resultado.penalizacionesAplicadas())).append('}').toString();
     }

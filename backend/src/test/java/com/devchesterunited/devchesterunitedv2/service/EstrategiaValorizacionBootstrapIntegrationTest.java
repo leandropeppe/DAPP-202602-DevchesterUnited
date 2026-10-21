@@ -39,7 +39,7 @@ class EstrategiaValorizacionBootstrapIntegrationTest extends PostgresTestSupport
     }
 
     @Test
-    void inicializaLasDosEstrategiasYLaVisiblePosicional() {
+    void inicializaLasTresEstrategiasYLaVisiblePosicionalV2() {
         bootstrap.sincronizar();
 
         assertThat(estrategias.findById(new com.devchesterunited.devchesterunitedv2.persistence.dto.EstrategiaValorizacionKey("GENERAL", 1)))
@@ -57,9 +57,14 @@ class EstrategiaValorizacionBootstrapIntegrationTest extends PostgresTestSupport
                     assertThat(e.getConfiguracionJson()).contains("\"PO\"", "\"provisoria\":true",
                             "\"factoresMercado\":{\"DL\":1.15,\"MC\":1.05,\"DF\":0.95,\"PO\":0.90}");
                 });
+        assertThat(estrategias.findById(new com.devchesterunited.devchesterunitedv2.persistence.dto.EstrategiaValorizacionKey("POSITIONAL", 2)))
+                .get().satisfies(e -> {
+                    assertThat(e.isHabilitadaParaCalculo()).isTrue();
+                    assertThat(e.getConfiguracionJson()).doesNotContain("RATING").contains("\"DL\":1");
+                });
         assertThat(visibles.buscar()).get().satisfies(v -> {
             assertThat(v.getEstrategiaId()).isEqualTo("POSITIONAL");
-            assertThat(v.getEstrategiaVersion()).isEqualTo(1);
+            assertThat(v.getEstrategiaVersion()).isEqualTo(2);
         });
     }
 
@@ -68,7 +73,7 @@ class EstrategiaValorizacionBootstrapIntegrationTest extends PostgresTestSupport
         bootstrap.sincronizar();
         bootstrap.sincronizar();
 
-        assertThat(estrategias.count()).isEqualTo(2);
+        assertThat(estrategias.count()).isEqualTo(3);
         assertThat(visibles.count()).isEqualTo(1);
         assertThatCode(() -> valorizacion.ejecutarManual(ConfiguracionElegibilidad.sinUmbral()))
                 .doesNotThrowAnyException();

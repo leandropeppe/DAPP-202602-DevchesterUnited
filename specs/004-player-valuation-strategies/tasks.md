@@ -196,6 +196,14 @@ El MVP recomendado es Phase 1 + Phase 2 + US1 (T001–T022): calcular GENERAL v1
 - [x] T047 Registrar GENERAL v1 y POSITIONAL v1 en un bootstrap idempotente posterior a Flyway, usando los valores externos y sin modificar filas existentes.
 - [x] T048 Agregar validacion previa de estrategias persistidas y pruebas de integracion para base vacia, visible inicial, idempotencia y valorizacion sin violacion de FK.
 
+### Incremento POSITIONAL v2
+
+- [x] T049 Implementar `EstrategiaPosicionalV2` con z-score por posición, sigmoide, métricas por 90, bloques, confiabilidad progresiva y sin rating/factor de mercado.
+- [x] T050 Registrar POSITIONAL v2 sin eliminar V1 y seleccionar v2 como estrategia visible/default, manteniendo GENERAL v1.
+- [x] T051 Verificar persistencia, histórico, consultas por defecto y consulta explícita de POSITIONAL v1 mediante la selección versionada existente.
+- [x] T052 Agregar pruebas de V2 para nulls, desviación cero, inversión de métricas, confiabilidad, score acotado y bootstrap de v2.
+- [x] T053 Ejecutar tests backend, tests/build/verify frontend y revisar tareas de calidad disponibles.
+
 - Estado de implementación: T001–T042 completadas y verificadas; T043–T045 completadas y verificadas; T046 permanece pendiente por autenticación externa de SonarCloud.
 - Todas las tareas siguen el formato `- [ ] Txxx [P?] [USx?] descripción con ruta exacta`.
 - Ninguna tarea agrega usuario ADMIN, roles, autorización administrativa o endpoint para cambiar estrategia visible.
