@@ -94,7 +94,7 @@ function noInfo (value) {
         : value
 }
 
-function getPlayerTheme (player) {
+export function getPlayerTheme (player) {
     return POSITION_THEMES[player.position] ?? 'neutral'
 }
 
@@ -276,8 +276,12 @@ export default function PlayerCard ({
 }
 
 function formatCardValuation (value) {
-    if (value === null || value === undefined || value === '') return '-'
+    if (value === null || value === undefined || value === '') {
+        return '-'
+    }
+
     const number = Number(value)
+
     return Number.isFinite(number)
         ? String(Math.round(number))
         : '-'
