@@ -6,7 +6,6 @@ import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport
 import com.devchesterunited.devchesterunitedv2.persistence.dto.CotizacionActualEstrategiaEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EjecucionValorizacionEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EstrategiaValorizacionEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.HistoricoCotizacionEstrategiaEntity;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;

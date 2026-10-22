@@ -9,7 +9,8 @@ import org.junit.jupiter.api.Test;
 class ValorizacionEjecucionConfigTest {
     @Test
     void requiereConfiguracionExplicita() {
-        assertThatThrownBy(() -> new ValorizacionEjecucionConfig(false, "", "").configuracionElegibilidad())
+        var config = new ValorizacionEjecucionConfig(false, "", "");
+        assertThatThrownBy(config::configuracionElegibilidad)
                 .isInstanceOf(IllegalStateException.class);
     }
 

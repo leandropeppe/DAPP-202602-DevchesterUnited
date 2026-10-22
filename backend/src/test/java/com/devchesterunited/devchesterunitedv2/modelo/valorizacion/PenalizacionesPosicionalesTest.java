@@ -19,8 +19,6 @@ class PenalizacionesPosicionalesTest {
     @Test
     void conservaRojaSignificativaYWasDribbledSegunPosicion() {
         String[] posiciones = {"DL", "MC", "DF"};
-        String[] scoresPrevios = {".90", ".90", ".90"};
-        String[] scoresFinales = {"1.00", ".95", ".86"};
         for (int i = 0; i < posiciones.length; i++) {
             String posicion = posiciones[i];
             assertEquals(d(".10"), estrategia.pesosPenalizacion(posicion).get(MetricaValorizacion.RED_CARDS));

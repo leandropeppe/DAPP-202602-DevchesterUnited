@@ -9,18 +9,21 @@ import org.junit.jupiter.api.Test;
 class ConfiguracionEstrategiaTest {
     @Test
     void rechazaPesosQueNoSumanCienPorCiento() {
+        var pesos = Map.of(MetricaValorizacion.GOALS, new BigDecimal(".99"));
+        var penalizaciones = Map.<MetricaValorizacion, BigDecimal>of();
         assertThrows(IllegalArgumentException.class, () -> new ConfiguracionEstrategia("GENERAL", 1,
-                TipoEstrategiaValorizacion.GENERAL, false,
-                Map.of(MetricaValorizacion.GOALS, new BigDecimal(".99")), Map.of(), BigDecimal.ZERO, BigDecimal.ONE));
+                TipoEstrategiaValorizacion.GENERAL, false, pesos, penalizaciones, BigDecimal.ZERO, BigDecimal.ONE));
     }
 
     @Test
     void rechazaMetricasNulasYPenalizacionesNegativas() {
+        var penalizacionesVacias = Map.<MetricaValorizacion, BigDecimal>of();
         assertThrows(IllegalArgumentException.class, () -> new ConfiguracionEstrategia("GENERAL", 1,
-                TipoEstrategiaValorizacion.GENERAL, false, null, Map.of(), BigDecimal.ZERO, BigDecimal.ONE));
+                TipoEstrategiaValorizacion.GENERAL, false, null, penalizacionesVacias, BigDecimal.ZERO, BigDecimal.ONE));
+        var pesos = Map.of(MetricaValorizacion.GOALS, BigDecimal.ONE);
+        var penalizaciones = Map.of(MetricaValorizacion.RED_CARDS, new BigDecimal("-.01"));
         assertThrows(IllegalArgumentException.class, () -> new ConfiguracionEstrategia("GENERAL", 1,
                 TipoEstrategiaValorizacion.GENERAL, false,
-                Map.of(MetricaValorizacion.GOALS, BigDecimal.ONE),
-                Map.of(MetricaValorizacion.RED_CARDS, new BigDecimal("-.01")), BigDecimal.ZERO, BigDecimal.ONE));
+                pesos, penalizaciones, BigDecimal.ZERO, BigDecimal.ONE));
     }
 }

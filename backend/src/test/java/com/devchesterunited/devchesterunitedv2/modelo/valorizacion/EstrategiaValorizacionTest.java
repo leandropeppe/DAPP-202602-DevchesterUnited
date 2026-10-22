@@ -3,7 +3,6 @@ package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.devchesterunited.devchesterunitedv2.valorizacion.ValorizacionFixtures;
 import java.math.BigDecimal;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -22,9 +21,11 @@ class EstrategiaValorizacionTest {
 
     @Test
     void rechazaPesosQueNoSumanCienPorCiento() {
+        var pesos = Map.of(MetricaValorizacion.RATING, new BigDecimal("0.9"));
+        var penalizaciones = Map.<MetricaValorizacion, BigDecimal>of();
         assertThrows(IllegalArgumentException.class, () -> new ConfiguracionEstrategia(
                 "INVALID", 1, TipoEstrategiaValorizacion.GENERAL, false,
-                Map.of(MetricaValorizacion.RATING, new BigDecimal("0.9")), Map.of(),
+                pesos, penalizaciones,
                 BigDecimal.ONE, BigDecimal.ONE));
     }
 }
