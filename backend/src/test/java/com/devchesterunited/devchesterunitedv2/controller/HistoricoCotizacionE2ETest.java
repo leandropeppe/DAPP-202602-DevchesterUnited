@@ -56,16 +56,28 @@ class HistoricoCotizacionE2ETest extends PostgresTestSupport {
 
     @Test
     void sinSeleccionDevuelveSoloSerieVisibleOrdenadaYExplicitaSoloGeneral() throws Exception {
-        JsonNode visible = json(mvc.perform(get("/api/v1/players/ply_" + PLAYER + "/valuation/history")).andExpect(status().isOk()));
+        JsonNode visible = json(mvc.perform(get("/api/v1/players/ply_" + PLAYER + "/quotes")).andExpect(status().isOk()));
         assertThat(visible.path("data").path("items")).hasSize(2);
         assertThat(visible.path("data").path("items").get(0).path("score").decimalValue()).isEqualByComparingTo(".80");
         assertThat(visible.path("data").path("items").get(1).path("score").decimalValue()).isEqualByComparingTo(".70");
         assertThat(visible.path("data").path("items").get(0).path("strategyId").asText()).isEqualTo("POSITIONAL");
 
-        JsonNode general = json(mvc.perform(get("/api/v1/players/ply_" + PLAYER + "/valuation/history")
+        JsonNode general = json(mvc.perform(get("/api/v1/players/ply_" + PLAYER + "/quotes")
                 .param("strategyId", "GENERAL").param("strategyVersion", "1")).andExpect(status().isOk()));
         assertThat(general.path("data").path("items")).hasSize(1);
         assertThat(general.path("data").path("items").get(0).path("strategyId").asText()).isEqualTo("GENERAL");
+    }
+
+    @Test
+    void rutaAnteriorYaNoEstaExpuestaYPaginacionSeConserva() throws Exception {
+        mvc.perform(get("/api/v1/players/ply_" + PLAYER + "/valuation/history"))
+                .andExpect(status().isNotFound());
+
+        JsonNode pagina = json(mvc.perform(get("/api/v1/players/ply_" + PLAYER + "/quotes")
+                .param("page", "2").param("limit", "1")).andExpect(status().isOk()));
+        assertThat(pagina.path("data").path("items")).hasSize(1);
+        assertThat(pagina.path("data").path("total").asLong()).isEqualTo(2);
+        assertThat(pagina.path("data").path("page").asInt()).isEqualTo(2);
     }
 
     private JsonNode json(org.springframework.test.web.servlet.ResultActions result) throws Exception {

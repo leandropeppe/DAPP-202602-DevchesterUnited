@@ -34,7 +34,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/v1/players/{playerId}/valuation/history:
+  /api/v1/players/{playerId}/quotes:
     get:
       operationId: consultarHistoricoCotizacionJugador
       summary: Get the valuation history of a player

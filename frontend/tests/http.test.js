@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getPlayers, HttpError, register, request } from '../src/api/http.js'
+import { getPlayers, getPlayerValuationHistory, HttpError, register, request } from '../src/api/http.js'
 
 function jsonResponse (body, status = 200) {
   return {
@@ -55,6 +55,14 @@ describe('cliente HTTP Devchester', () => {
       status,
       message: `error-${status}`
     })
+  })
+
+  it('consulta el histórico mediante la ruta quotes', async () => {
+    global.fetch = vi.fn().mockResolvedValue(jsonResponse({ status: 'success', data: { items: [] } }))
+
+    await getPlayerValuationHistory('ply-1', { page: 2, limit: 10, strategyId: 'POSITIONAL', strategyVersion: 2 })
+
+    expect(fetch.mock.calls[0][0]).toBe('/api/v1/players/ply-1/quotes?page=2&limit=10&strategyId=POSITIONAL&strategyVersion=2')
   })
 
   it('traduce un fallo de red en 503', async () => {

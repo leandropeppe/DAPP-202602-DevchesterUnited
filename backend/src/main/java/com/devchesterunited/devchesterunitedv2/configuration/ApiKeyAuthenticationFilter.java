@@ -27,6 +27,9 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     private static final RequestMatcher ENDPOINT_SINCRONIZACION =
             PathPatternRequestMatcher.withDefaults()
                     .matcher(HttpMethod.POST, "/api/v1/catalog/sync");
+    private static final RequestMatcher ENDPOINT_RECALCULO =
+            PathPatternRequestMatcher.withDefaults()
+                    .matcher(HttpMethod.POST, "/api/v1/quotes/recalculate");
     private final ApiKeyService apiKeys;
     private final SecurityErrorHandler errors;
 
@@ -69,6 +72,6 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private static boolean esEndpointAdministrativo(HttpServletRequest request) {
-        return ENDPOINT_SINCRONIZACION.matches(request);
+        return ENDPOINT_SINCRONIZACION.matches(request) || ENDPOINT_RECALCULO.matches(request);
     }
 }

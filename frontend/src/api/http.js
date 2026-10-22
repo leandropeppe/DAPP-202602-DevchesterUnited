@@ -189,7 +189,7 @@ export const getPlayerValuationHistory = (
   return request(
       '/players/' +
       encodeURIComponent(id) +
-      '/valuation/history?' +
+      '/quotes?' +
       params.toString()
   )
 }

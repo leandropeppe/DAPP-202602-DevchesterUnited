@@ -13,4 +13,6 @@ public interface JugadorCatalogoProjection {
     Integer getDorsal();
     String getNacionalidad();
     BigDecimal getValuation();
+    String getStrategyId();
+    Integer getStrategyVersion();
 }

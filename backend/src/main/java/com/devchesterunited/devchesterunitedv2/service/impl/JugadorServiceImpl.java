@@ -10,11 +10,13 @@ import com.devchesterunited.devchesterunitedv2.service.dto.EstadisticasJugadorRe
 import com.devchesterunited.devchesterunitedv2.service.dto.JugadorDetalleResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.JugadorResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.JugadoresResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.JugadorRankingResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.PaginacionResultado;
 import com.devchesterunited.devchesterunitedv2.service.exception.JugadorNoEncontradoException;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,6 +66,23 @@ public class JugadorServiceImpl implements JugadorService {
                 jugador.getNacionalidad(),
                 estadisticas,
                 jugador.getValuation());
+    }
+
+    @Override
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    public List<JugadorRankingResultado> consultarRanking(int limite) {
+        if (limite < 1 || limite > 100) {
+            throw new IllegalArgumentException("El limite debe estar entre 1 y 100.");
+        }
+        List<JugadorCatalogoProjection> jugadores = repositorio.buscarRanking(limite);
+        return IntStream.range(0, jugadores.size())
+                .mapToObj(indice -> {
+                    JugadorCatalogoProjection jugador = jugadores.get(indice);
+                    return new JugadorRankingResultado(indice + 1, jugador.getId(), jugador.getNombre(),
+                            jugador.getPosicion(), jugador.getEquipo(), jugador.getValuation(),
+                            jugador.getStrategyId(), jugador.getStrategyVersion());
+                })
+                .toList();
     }
 
     private static JugadorResultado aRespuesta(JugadorCatalogoProjection entidad) {

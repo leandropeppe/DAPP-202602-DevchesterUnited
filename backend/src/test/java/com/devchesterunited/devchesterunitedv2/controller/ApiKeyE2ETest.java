@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -32,6 +34,7 @@ class ApiKeyE2ETest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper mapper;
     @Autowired JwtEncoder jwtEncoder;
+    @MockBean com.devchesterunited.devchesterunitedv2.configuration.ValorizacionScheduler scheduler;
     @Value("${spring.datasource.url}") String jdbcUrl;
     private final List<String> usuarios = new ArrayList<>();
 
@@ -75,6 +78,19 @@ class ApiKeyE2ETest {
         String inexistente = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3JfMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIn0.invalid";
         error(generar(inexistente), 401);
         assertThat(valido).isNotBlank();
+    }
+
+    @Test
+    void recalculoRequiereApiKeyYDelegaEnElScheduler() throws Exception {
+        error(mvc.perform(post("/api/v1/quotes/recalculate")), 401);
+        error(mvc.perform(post("/api/v1/quotes/recalculate").header("X-API-KEY", "dev_key_" + "a".repeat(43))), 401);
+
+        String apiKey = cuerpo(generar(registrarYLogin().jwt()).andExpect(status().isOk()))
+                .path("data").path("api_key").asText();
+        cuerpo(mvc.perform(post("/api/v1/quotes/recalculate").header("X-API-KEY", apiKey))
+                .andExpect(status().isOk()));
+
+        verify(scheduler).ejecutarSemanal();
     }
 
     @Test

@@ -8,6 +8,9 @@ import com.devchesterunited.devchesterunitedv2.controller.dto.JugadoresResponseD
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.ValuacionHistoryResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.ValuacionResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.JugadorRankingResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.dto.RankingJugadoresResponseDTO;
+import com.devchesterunited.devchesterunitedv2.configuration.ValorizacionScheduler;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.JugadorService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.CotizacionConsultaService;
 import com.devchesterunited.devchesterunitedv2.service.dto.EstadisticasJugadorResultado;
@@ -16,6 +19,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.JugadorResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.JugadoresResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.ValuacionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.ValuacionHistoricoDTO;
+import com.devchesterunited.devchesterunitedv2.service.dto.JugadorRankingResultado;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Set;
@@ -26,8 +30,10 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -41,10 +47,13 @@ public class JugadorController {
 
     private final JugadorService servicio;
     private final CotizacionConsultaService cotizacionConsulta;
+    private final ValorizacionScheduler valorizacionScheduler;
 
-    public JugadorController(JugadorService servicio, CotizacionConsultaService cotizacionConsulta) {
+    public JugadorController(JugadorService servicio, CotizacionConsultaService cotizacionConsulta,
+            ValorizacionScheduler valorizacionScheduler) {
         this.servicio = servicio;
         this.cotizacionConsulta = cotizacionConsulta;
+        this.valorizacionScheduler = valorizacionScheduler;
     }
 
     @Operation(
@@ -137,6 +146,23 @@ public class JugadorController {
         return ResponseEntity.ok(new SuccessResponseDTO<>(respuesta));
     }
 
+    @Operation(operationId = "consultarRankingJugadores", summary = "Consultar ranking de jugadores",
+            description = "Devuelve los jugadores ordenados por cotización persistida de la estrategia activa.")
+    @ApiResponse(responseCode = "200", description = "Ranking ordenado de mayor a menor cotización.")
+    @ApiResponse(responseCode = "400", description = "Límite inválido.",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
+    @GetMapping("/players/ranking")
+    public ResponseEntity<SuccessResponseDTO<RankingJugadoresResponseDTO>> consultarRanking(
+            @Parameter(name = "limit", in = ParameterIn.QUERY, description = "Cantidad máxima de jugadores.",
+                    schema = @Schema(type = "integer", minimum = "1", maximum = "100", defaultValue = "20"))
+            @RequestParam(name = "limit", defaultValue = "20") int limit) {
+        if (limit < 1 || limit > 100) {
+            throw invalido("El límite no es válido.");
+        }
+        return ResponseEntity.ok(new SuccessResponseDTO<>(new RankingJugadoresResponseDTO(
+                servicio.consultarRanking(limit).stream().map(JugadorController::mapear).toList())));
+    }
+
     @Operation(operationId = "consultarCotizacionActualJugador",
             summary = "Consultar cotización actual de un jugador")
     @ApiResponse(responseCode = "200", description = "Cotización actual de la estrategia seleccionada.")
@@ -160,7 +186,7 @@ public class JugadorController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
     @ApiResponse(responseCode = "404", description = "Jugador o histórico no encontrado.",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
-    @GetMapping("/players/{playerId}/valuation/history")
+    @GetMapping("/players/{playerId}/quotes")
     public ResponseEntity<SuccessResponseDTO<ValuacionHistoryResponseDTO>> consultarHistorico(
             @PathVariable String playerId,
             @RequestParam(name = "strategyId", required = false) String strategyId,
@@ -169,6 +195,18 @@ public class JugadorController {
             @RequestParam(name = "limit", defaultValue = "20") int limit) {
         return ResponseEntity.ok(new SuccessResponseDTO<>(mapear(cotizacionConsulta.consultarHistorico(
                 parsearIdPublico(playerId), strategyId, strategyVersion, page, limit))));
+    }
+
+    @Operation(operationId = "recalcularCotizaciones", summary = "Recalcular cotizaciones",
+            description = "Ejecuta manualmente el mismo caso de uso y la misma configuración de elegibilidad del scheduler.",
+            security = @SecurityRequirement(name = "ApiKeyAuth"))
+    @ApiResponse(responseCode = "200", description = "Recalculo ejecutado correctamente.")
+    @ApiResponse(responseCode = "401", description = "API Key ausente o inválida.",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
+    @PostMapping("/quotes/recalculate")
+    public ResponseEntity<SuccessResponseDTO<String>> recalcularCotizaciones() {
+        valorizacionScheduler.ejecutarSemanal();
+        return ResponseEntity.ok(new SuccessResponseDTO<>("Cotizaciones recalculadas correctamente"));
     }
 
     private static ValuacionResponseDTO mapear(ValuacionDTO valuacion) {
@@ -180,6 +218,12 @@ public class JugadorController {
     private static ValuacionHistoryResponseDTO mapear(ValuacionHistoricoDTO historico) {
         return new ValuacionHistoryResponseDTO(historico.items().stream().map(JugadorController::mapear).toList(),
                 historico.page(), historico.limit(), historico.total());
+    }
+
+    private static JugadorRankingResponseDTO mapear(JugadorRankingResultado jugador) {
+        return new JugadorRankingResponseDTO(jugador.rank(), "ply_" + jugador.playerId(), jugador.nombre(),
+                jugador.posicion(), jugador.equipo(), jugador.cotizacion(), jugador.strategyId(),
+                jugador.strategyVersion());
     }
 
     private static JugadoresResponseDTO mapear(JugadoresResultado resultado) {

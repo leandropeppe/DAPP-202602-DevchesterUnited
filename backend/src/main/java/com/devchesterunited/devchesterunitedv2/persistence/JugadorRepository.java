@@ -44,7 +44,9 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
                    j.position AS posicion,
                    j.jersey_number AS dorsal,
                    j.nationality AS nacionalidad,
-                   cae.cotizacion AS valuation
+                   cae.cotizacion AS valuation,
+                   ev.estrategia_id AS strategyId,
+                   ev.estrategia_version AS strategyVersion
             """;
 
     String FROM_CATALOGO_ACTIVO = """
@@ -58,6 +60,19 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
             WHERE j.id = :id
               AND j.is_active = TRUE
               AND e.is_active = TRUE
+            """;
+
+    String FROM_RANKING = """
+            FROM jugadores j
+            JOIN equipos e ON e.id = j.team_id
+            JOIN estrategia_visible ev ON ev.singleton_id = 1
+            JOIN cotizacion_actual_estrategia cae
+              ON cae.jugador_id = j.id
+             AND cae.estrategia_id = ev.estrategia_id
+             AND cae.estrategia_version = ev.estrategia_version
+            WHERE j.is_active = TRUE
+              AND e.is_active = TRUE
+              AND cae.cotizacion IS NOT NULL
             """;
 
     @Query(value = COLUMNAS_CATALOGO + FROM_CATALOGO_ACTIVO, nativeQuery = true)
@@ -77,4 +92,8 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
     long contar(@Param("liga") String liga,
             @Param("equipo") String equipo,
             @Param("posicion") String posicion);
+
+    @Query(value = COLUMNAS_CATALOGO + FROM_RANKING
+            + " ORDER BY cae.cotizacion DESC, j.id ASC LIMIT :limite", nativeQuery = true)
+    List<JugadorCatalogoProjection> buscarRanking(@Param("limite") int limite);
 }
