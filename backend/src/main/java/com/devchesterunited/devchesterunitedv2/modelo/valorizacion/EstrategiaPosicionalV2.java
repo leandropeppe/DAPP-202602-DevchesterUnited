@@ -9,6 +9,8 @@ import java.util.Map;
 public final class EstrategiaPosicionalV2 implements EstrategiaValorizacion {
     public enum Bloque { PRODUCCION, CREACION, AMENAZA, IMPACTO, DISCIPLINA, DISTRIBUCION, TECNICO, AMENAZA_DEFENSIVA }
 
+    static final BigDecimal PENDIENTE_SIGMOIDE = BigDecimal.valueOf(0.65);
+    static final BigDecimal LIMITE_NORMALIZACION_MAN_OF_THE_MATCH = BigDecimal.valueOf(0.75);
     private static final BigDecimal BASE = BigDecimal.ONE;
     private static final BigDecimal ESCALA = BigDecimal.valueOf(99);
     private static final BigDecimal CONFIABILIDAD_MINUTOS = BigDecimal.valueOf(300);
@@ -46,6 +48,14 @@ public final class EstrategiaPosicionalV2 implements EstrategiaValorizacion {
         if (minutos == null || minutos <= 0) return BigDecimal.ZERO;
         return BigDecimal.valueOf(minutos).divide(BigDecimal.valueOf(minutos)
                 .add(CONFIABILIDAD_MINUTOS), 8, java.math.RoundingMode.HALF_UP);
+    }
+
+    BigDecimal pendienteSigmoide() {
+        return PENDIENTE_SIGMOIDE;
+    }
+
+    BigDecimal limiteNormalizacionManOfTheMatch() {
+        return LIMITE_NORMALIZACION_MAN_OF_THE_MATCH;
     }
 
     private Map<MetricaValorizacion, BigDecimal> aplanar(String posicion, boolean penalizaciones) {

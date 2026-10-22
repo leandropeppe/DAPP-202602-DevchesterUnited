@@ -112,30 +112,13 @@ public final class MotorValorizacion {
             BigDecimal score = BigDecimal.ZERO;
             for (Map.Entry<EstrategiaPosicionalV2.Bloque, BigDecimal> bloque : pesosBloque.entrySet()) {
                 Map<MetricaValorizacion, BigDecimal> metricas = estrategia.metricasPorBloque(posicion).getOrDefault(bloque.getKey(), Map.of());
-                BigDecimal suma = BigDecimal.ZERO;
-                int validas = 0;
-                for (MetricaValorizacion metrica : metricas.keySet()) {
-                    BigDecimal valor = valorV2(metrica, jugador);
-                    Distribucion d = distribuciones.get(metrica);
-                    if (valor == null || d == null) {
-                        trazas.add(trazaV2(metrica, valor, d, BigDecimal.valueOf(.5), posicion, ResultadoNormalizacion.Estado.AUSENTE));
-                        continue;
-                    }
-                    BigDecimal normalizado = d.desviacion().signum() == 0
-                            ? BigDecimal.valueOf(.5)
-                            : sigmoide((valor.doubleValue() - d.media().doubleValue()) / d.desviacion().doubleValue());
-                    boolean inversa = bloque.getKey() == EstrategiaPosicionalV2.Bloque.DISCIPLINA;
-                    if (inversa) {
-                        normalizado = BigDecimal.ONE.subtract(normalizado);
-                        penalizaciones.add(metrica);
-                    }
-                    trazas.add(trazaV2(metrica, valor, d, normalizado, posicion,
-                            d.desviacion().signum() == 0 ? ResultadoNormalizacion.Estado.CONSTANTE : ResultadoNormalizacion.Estado.CALCULADO));
-                    suma = suma.add(normalizado);
-                    validas++;
+                BigDecimal scoreBloque;
+                if (bloque.getKey() == EstrategiaPosicionalV2.Bloque.AMENAZA_DEFENSIVA) {
+                    scoreBloque = scoreAmenazaDefensiva(estrategia, jugador, distribuciones, trazas, posicion);
+                } else {
+                    scoreBloque = scoreBloqueV2(estrategia, jugador, bloque.getKey(), metricas,
+                            distribuciones, trazas, penalizaciones, posicion);
                 }
-                BigDecimal scoreBloque = validas == 0 ? BigDecimal.valueOf(.5)
-                        : suma.divide(BigDecimal.valueOf(validas), 8, RoundingMode.HALF_UP);
                 score = score.add(scoreBloque.multiply(bloque.getValue()));
             }
             BigDecimal antes = score.max(BigDecimal.ZERO).min(BigDecimal.ONE);
@@ -184,12 +167,123 @@ public final class MotorValorizacion {
         return valor.multiply(BigDecimal.valueOf(90)).divide(BigDecimal.valueOf(minutos), 8, RoundingMode.HALF_UP);
     }
 
-    private static BigDecimal sigmoide(double z) { return BigDecimal.valueOf(1.0 / (1.0 + Math.exp(-z))); }
+    private static BigDecimal scoreBloqueV2(EstrategiaPosicionalV2 estrategia, JugadorEstadistico jugador,
+            EstrategiaPosicionalV2.Bloque bloque, Map<MetricaValorizacion, BigDecimal> metricas,
+            Map<MetricaValorizacion, Distribucion> distribuciones, List<ResultadoNormalizacion> trazas,
+            List<MetricaValorizacion> penalizaciones, String posicion) {
+        BigDecimal suma = BigDecimal.ZERO;
+        int validas = 0;
+        for (MetricaValorizacion metrica : metricas.keySet()) {
+            BigDecimal valor = valorV2(metrica, jugador);
+            Distribucion distribucion = distribuciones.get(metrica);
+            if (valor == null || distribucion == null) {
+                trazas.add(trazaV2(metrica, valor, distribucion, BigDecimal.valueOf(.5), posicion,
+                        ResultadoNormalizacion.Estado.AUSENTE, metodoV2(bloque, metrica)));
+                continue;
+            }
+            BigDecimal normalizado = normalizadoV2(estrategia, metrica, valor, distribucion);
+            boolean inversa = bloque == EstrategiaPosicionalV2.Bloque.DISCIPLINA;
+            if (inversa) {
+                normalizado = BigDecimal.ONE.subtract(normalizado);
+                penalizaciones.add(metrica);
+            }
+            trazas.add(trazaV2(metrica, valor, distribucion, normalizado, posicion,
+                    distribucion.desviacion().signum() == 0 ? ResultadoNormalizacion.Estado.CONSTANTE
+                            : ResultadoNormalizacion.Estado.CALCULADO,
+                    metodoV2(bloque, metrica)));
+            suma = suma.add(normalizado);
+            validas++;
+        }
+        return validas == 0 ? BigDecimal.valueOf(.5)
+                : suma.divide(BigDecimal.valueOf(validas), 8, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Amenaza defensiva: cuatro subfamilias independientes para no contar varias veces
+     * la misma dimensión de actividad defensiva. Las métricas ausentes se omiten dentro
+     * de su subfamilia y las subfamilias vacías se omiten del promedio final.
+     */
+    private static BigDecimal scoreAmenazaDefensiva(EstrategiaPosicionalV2 estrategia, JugadorEstadistico jugador,
+            Map<MetricaValorizacion, Distribucion> distribuciones, List<ResultadoNormalizacion> trazas,
+            String posicion) {
+        List<List<MetricaValorizacion>> subfamilias = List.of(
+                List.of(MetricaValorizacion.TACKLES, MetricaValorizacion.INTERCEPTIONS, MetricaValorizacion.BLOCKS),
+                List.of(MetricaValorizacion.CLEARANCES),
+                List.of(MetricaValorizacion.AERIAL_WON),
+                List.of(MetricaValorizacion.OFFSIDES_WON));
+        BigDecimal sumaSubfamilias = BigDecimal.ZERO;
+        int subfamiliasValidas = 0;
+        for (List<MetricaValorizacion> subfamilia : subfamilias) {
+            BigDecimal suma = BigDecimal.ZERO;
+            int validas = 0;
+            for (MetricaValorizacion metrica : subfamilia) {
+                BigDecimal valor = valorV2(metrica, jugador);
+                Distribucion distribucion = distribuciones.get(metrica);
+                if (valor == null || distribucion == null) {
+                    trazas.add(trazaV2(metrica, valor, distribucion, BigDecimal.valueOf(.5), posicion,
+                            ResultadoNormalizacion.Estado.AUSENTE, metodoSubfamilia(metrica)));
+                    continue;
+                }
+                BigDecimal normalizado = normalizadoV2(estrategia, metrica, valor, distribucion);
+                trazas.add(trazaV2(metrica, valor, distribucion, normalizado, posicion,
+                        distribucion.desviacion().signum() == 0 ? ResultadoNormalizacion.Estado.CONSTANTE
+                                : ResultadoNormalizacion.Estado.CALCULADO,
+                        metodoSubfamilia(metrica)));
+                suma = suma.add(normalizado);
+                validas++;
+            }
+            if (validas > 0) {
+                sumaSubfamilias = sumaSubfamilias.add(suma.divide(BigDecimal.valueOf(validas), 8, RoundingMode.HALF_UP));
+                subfamiliasValidas++;
+            }
+        }
+        return subfamiliasValidas == 0 ? BigDecimal.valueOf(.5)
+                : sumaSubfamilias.divide(BigDecimal.valueOf(subfamiliasValidas), 8, RoundingMode.HALF_UP);
+    }
+
+    private static BigDecimal normalizadoV2(EstrategiaPosicionalV2 estrategia, MetricaValorizacion metrica,
+            BigDecimal valor, Distribucion distribucion) {
+        if (distribucion.desviacion().signum() == 0) {
+            return BigDecimal.valueOf(.5);
+        }
+        double z = (valor.doubleValue() - distribucion.media().doubleValue())
+                / distribucion.desviacion().doubleValue();
+        BigDecimal normalizado = BigDecimal.valueOf(1.0 / (1.0
+                + Math.exp(-estrategia.pendienteSigmoide().doubleValue() * z)));
+        if (metrica == MetricaValorizacion.MAN_OF_THE_MATCH) {
+            normalizado = normalizado.min(estrategia.limiteNormalizacionManOfTheMatch());
+        }
+        return normalizado;
+    }
+
+    private static String metodoV2(EstrategiaPosicionalV2.Bloque bloque, MetricaValorizacion metrica) {
+        return "Z_SCORE_SIGMOIDE_K_0_65";
+    }
+
+    private static String metodoSubfamilia(MetricaValorizacion metrica) {
+        if (metrica == MetricaValorizacion.TACKLES || metrica == MetricaValorizacion.INTERCEPTIONS
+                || metrica == MetricaValorizacion.BLOCKS) {
+            return "Z_SCORE_SIGMOIDE_K_0_65_AMENAZA_DEFENSIVA_CONTENCION";
+        }
+        if (metrica == MetricaValorizacion.CLEARANCES) {
+            return "Z_SCORE_SIGMOIDE_K_0_65_AMENAZA_DEFENSIVA_DESPEJES";
+        }
+        if (metrica == MetricaValorizacion.AERIAL_WON) {
+            return "Z_SCORE_SIGMOIDE_K_0_65_AMENAZA_DEFENSIVA_AEREO";
+        }
+        return "Z_SCORE_SIGMOIDE_K_0_65_AMENAZA_DEFENSIVA_LECTURA_LINEA";
+    }
 
     private static ResultadoNormalizacion trazaV2(MetricaValorizacion metrica, BigDecimal valor, Distribucion d,
             BigDecimal normalizado, String posicion, ResultadoNormalizacion.Estado estado) {
         return new ResultadoNormalizacion(metrica, valor, d == null ? null : d.media(), d == null ? null : d.desviacion(),
-                normalizado, "POSICION", posicion, estado, "Z_SCORE_SIGMOIDE");
+                normalizado, "POSICION", posicion, estado, "Z_SCORE_SIGMOIDE_K_0_65");
+    }
+
+    private static ResultadoNormalizacion trazaV2(MetricaValorizacion metrica, BigDecimal valor, Distribucion d,
+            BigDecimal normalizado, String posicion, ResultadoNormalizacion.Estado estado, String metodo) {
+        return new ResultadoNormalizacion(metrica, valor, d == null ? null : d.media(), d == null ? null : d.desviacion(),
+                normalizado, "POSICION", posicion, estado, metodo);
     }
 
     private Map<String, List<JugadorEstadistico>> poblaciones(EstrategiaValorizacion estrategia,
