@@ -8,7 +8,7 @@
 
 El feature calcula y conserva resultados de valorización independientes para todas las estrategias habilitadas a partir de estadísticas deportivas persistidas. Inicialmente se habilitarán GENERAL v1 y POSITIONAL v1. Una estrategia visible/oficial determina qué serie se devuelve por defecto, pero no limita los cálculos.
 
-La lógica se ubicará en el dominio y será orquestada por servicios existentes de la aplicación. El cálculo no dependerá de tokenización, compra, venta o portfolio. La persistencia seguirá el patrón Repository/JPA/Flyway ya utilizado por el backend y las consultas públicas respetarán el contrato REST/OpenAPI existente.
+La lógica se ubicará en el dominio y será orquestada por servicios existentes de la aplicación. El cálculo no dependerá de tokenización, compra, venta o portfolio. La persistencia seguirá el patrón Repository/JPA/Flyway ya utilizado por el backend y las consultas, el ranking y el recálculo manual respetarán el contrato REST/OpenAPI existente.
 
 ## Technical Context
 
@@ -22,7 +22,7 @@ La lógica se ubicará en el dominio y será orquestada por servicios existentes
 
 **Target Platform**: Servicio backend ejecutado en JVM 21
 
-**Project Type**: Web service backend con procesos periódicos y ejecución manual interna
+**Project Type**: Web service backend con procesos periódicos, ejecución manual protegida por API key y consumo desde el frontend existente
 
 **Performance Goals**: Completar una valorización sobre toda la población elegible disponible sin que jugadores no elegibles interrumpan el proceso; evitar consultas por jugador para rangos de normalización y persistencia parcial
 
@@ -38,7 +38,7 @@ La lógica se ubicará en el dominio y será orquestada por servicios existentes
 - **PASS**: La orquestación de estadísticas y persistencia queda en `service`, `persistence` y contratos internos; no se agregan llamadas externas al dominio.
 - **PASS**: La fuente de estadísticas existente se consume mediante representaciones internas normalizadas; no se incorpora scraping nuevo.
 - **PASS**: Las nuevas entidades persistidas tendrán migración Flyway, repositorios separados y pruebas unitarias/integración.
-- **PASS**: Las consultas de cotización se documentan mediante OpenAPI v3. No se expone cambio de estrategia visible con autorización administrativa.
+- **PASS**: Las consultas de cotización, el ranking y el recálculo manual protegido se documentan mediante OpenAPI v3. No se expone cambio de estrategia visible con autorización administrativa.
 - **PASS**: Se conservarán tests existentes y se agregarán casos felices y de borde; no se modificarán ni eliminarán tests existentes.
 - **PASS**: La feature no crea dependencia funcional con tokenización, compra, venta, wallets, portfolios o balances.
 
@@ -76,13 +76,13 @@ backend/src/test/java/com/devchesterunited/devchesterunitedv2/
 └── controller/*Cotizacion*E2ETest.java
 ```
 
-**Structure Decision**: Se mantiene el backend existente organizado por capas. El dominio será independiente de infraestructura; el servicio coordinará jugadores, estadísticas y repositorios; las consultas REST utilizarán DTOs propios; las tablas de cotización e histórico se agregarán mediante Flyway. No se modifica el frontend porque las pantallas quedan fuera de alcance.
+**Structure Decision**: Se mantiene el backend existente organizado por capas. El dominio será independiente de infraestructura; el servicio coordinará jugadores, estadísticas y repositorios; las consultas REST, el ranking y el recálculo manual utilizarán DTOs y seguridad propios; las tablas de cotización e histórico se agregarán mediante Flyway. El frontend existente se adapta únicamente al endpoint canónico del histórico, sin agregar una pantalla administrativa.
 
 ### Constitution Check — Post-Design Re-evaluation
 
 - **PASS**: `research.md` resuelve las decisiones de arquitectura y datos faltantes sin fijar un umbral funcional de partidos/minutos.
 - **PASS**: `data-model.md` mantiene históricos separados por estrategia/version, múltiples estrategias habilitadas, una estrategia visible única y trazabilidad de métricas faltantes.
-- **PASS**: `contracts/valuation-api.yaml` limita la superficie pública a consultas y no agrega administración de roles o estrategias.
+- **PASS**: `contracts/valuation-api.yaml` documenta consultas, ranking y recálculo manual protegido, sin agregar administración de roles o estrategias.
 - **PASS**: `quickstart.md` exige pruebas unitarias, integración y contrato sin APIs reales ni modificación de tests existentes.
 - **PASS**: No se requiere complejidad adicional ni excepción a la organización Package by Layer.
 

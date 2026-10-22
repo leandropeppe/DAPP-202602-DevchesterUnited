@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Devchester United - Player valuations
   version: 1.0.0
-  description: Read-only current valuations and valuation history.
+  description: Current valuations, valuation history, player ranking, and API-key protected manual recalculation.
 servers:
   - url: /
 paths:
@@ -79,7 +79,60 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/players/ranking:
+    get:
+      operationId: consultarRankingJugadores
+      summary: Get the player ranking
+      description: Returns players ordered by the persisted valuation of the visible strategy.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of players.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Ranking ordered from highest to lowest valuation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessRankingResponse'
+        '400':
+          description: Invalid ranking limit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/quotes/recalculate:
+    post:
+      operationId: recalcularCotizaciones
+      summary: Recalculate player valuations
+      description: Executes manually the same use case and eligibility configuration used by the weekly scheduler.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Recalculation executed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessageResponse'
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
   parameters:
     PlayerId:
       name: playerId
@@ -173,6 +226,53 @@ components:
             total:
               type: integer
               minimum: 0
+    SuccessRankingResponse:
+      type: object
+      required: [status, data]
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          required: [players]
+          properties:
+            players:
+              type: array
+              items:
+                $ref: '#/components/schemas/RankingPlayer'
+    RankingPlayer:
+      type: object
+      required: [rank, playerId, cotizacion, strategyId, strategyVersion]
+      properties:
+        rank:
+          type: integer
+        playerId:
+          type: string
+        nombre:
+          type: string
+        posicion:
+          type: string
+        equipo:
+          type: string
+        cotizacion:
+          type: number
+          format: double
+          nullable: true
+        strategyId:
+          type: string
+        strategyVersion:
+          type: integer
+          minimum: 1
+    SuccessMessageResponse:
+      type: object
+      required: [status, data]
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: string
     ErrorResponse:
       type: object
       additionalProperties: true

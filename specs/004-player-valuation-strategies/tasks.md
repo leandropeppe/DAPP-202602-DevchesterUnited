@@ -204,7 +204,16 @@ El MVP recomendado es Phase 1 + Phase 2 + US1 (T001–T022): calcular GENERAL v1
 - [x] T052 Agregar pruebas de V2 para nulls, desviación cero, inversión de métricas, confiabilidad, score acotado y bootstrap de v2.
 - [x] T053 Ejecutar tests backend, tests/build/verify frontend y revisar tareas de calidad disponibles.
 
+### Incremento de API, ranking y adaptación de consumidores
+
+- [x] T054 [US3] Reemplazar la consulta histórica obsoleta `/players/{id}/valuation/history` por `GET /players/{id}/quotes`, manteniendo filtros `strategyId`/`strategyVersion`, paginación y separación de series en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/JugadorController.java`.
+- [x] T055 [US3] Exponer `GET /players/ranking` con límite validado y orden por cotización persistida de la estrategia visible, incluyendo sus DTOs, servicio y repositorio en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/`, `service/` y `persistence/`.
+- [x] T056 [US4] Exponer `POST /quotes/recalculate` para ejecutar manualmente el mismo caso de uso del scheduler, protegido por `X-API-KEY`, en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/JugadorController.java` y la configuración de seguridad.
+- [x] T057 [P] Documentar los endpoints de histórico, ranking y recálculo, sus respuestas y seguridad en las anotaciones OpenAPI/Swagger, y verificar los perfiles Swagger en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/` y `backend/src/test/java/com/devchesterunited/devchesterunitedv2/controller/OpenApiProfilesE2ETest.java`.
+- [x] T058 [P] Adaptar el cliente y la pantalla de detalle del frontend para consumir `/players/{id}/quotes` con paginación y filtros de estrategia, actualizando `frontend/src/api/http.js`, `frontend/src/views/PlayerDetailPage.jsx` y sus pruebas.
+
 - Estado de implementación: T001–T042 completadas y verificadas; T043–T045 completadas y verificadas; T046 permanece pendiente por autenticación externa de SonarCloud.
+- Estado del incremento de API: T054–T058 completadas y verificadas junto con la implementación actual.
 - Todas las tareas siguen el formato `- [ ] Txxx [P?] [USx?] descripción con ruta exacta`.
-- Ninguna tarea agrega usuario ADMIN, roles, autorización administrativa o endpoint para cambiar estrategia visible.
+- Ninguna tarea agrega usuario ADMIN, roles, autorización administrativa o endpoint para cambiar estrategia visible; el recálculo manual usa exclusivamente API key.
 - La migración debe seleccionar la próxima versión Flyway disponible durante T001/T005; no fijar V17.

@@ -126,6 +126,16 @@ Como responsable operativo, necesito que la valorización pueda ejecutarse seman
 - **FR-031**: La administración posterior de la estrategia visible MUST poder agregarse sin modificar el modelo fundamental de cálculo, cotización actual e histórico, pero este feature MUST excluir usuario ADMIN, roles, autorización administrativa y pantalla de administración.
 - **FR-032**: El cálculo MUST quedar desacoplado de tokenización, emisión, compra, venta, wallets, portfolios, balances, ganancias, pérdidas, marketplace, trading y reglas monetarias.
 
+### Public API Surface
+
+La superficie HTTP del feature queda definida por los siguientes endpoints:
+
+- `GET /api/v1/players/{id}/quotes`: devuelve el histórico de cotizaciones del jugador. Sin `strategyId` y `strategyVersion` devuelve la serie de la estrategia visible; con ambos filtros devuelve únicamente la estrategia/version solicitada y admite paginación.
+- `GET /api/v1/players/ranking`: devuelve el ranking de jugadores ordenado por la cotización persistida de la estrategia visible, con un límite configurable.
+- `POST /api/v1/quotes/recalculate`: ejecuta manualmente el mismo caso de uso que la valorización semanal y requiere la API key del sistema.
+
+El endpoint histórico canónico es `/players/{id}/quotes`; no se utiliza `/valuation/history`.
+
 ### Key Entities
 
 - **Estrategia de valorización**: definición identificable y versionada de una fórmula, sus métricas, pesos, penalizaciones, habilitación para cálculo y tratamiento posicional.

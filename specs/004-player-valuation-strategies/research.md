@@ -52,7 +52,7 @@
 
 ### D9. Contratos públicos mínimos
 
-- **Decisión**: Se documentarán consultas bajo `/api/v1/players/{id}/valuation` y `/api/v1/players/{id}/valuation/history`, con un parámetro opcional de estrategia/version. Sin parámetro se usa la estrategia visible. La ejecución manual queda como caso de uso interno.
+- **Decisión**: Se documentarán consultas bajo `/api/v1/players/{id}/valuation` y `/api/v1/players/{id}/quotes`, con un parámetro opcional de estrategia/version. Sin parámetro se usa la estrategia visible. El ranking se expone bajo `/api/v1/players/ranking` y la ejecución manual bajo `POST /api/v1/quotes/recalculate`, protegida por API key y delegando en el mismo caso de uso semanal.
 - **Racional**: La especificación exige consultas y comparación opcional, pero excluye administración y autorización para cambiar estrategia visible.
 - **Alternativas consideradas**: Exponer endpoints administrativos. Se descarta por estar fuera de alcance.
 
