@@ -23,8 +23,7 @@ public class EstadisticasStagingService {
     private final EstadisticasSyncStagingRepository staging;
 
     public EstadisticasStagingService(EstadisticasSyncRepository ejecuciones,
-            EstadisticasSyncStagingRepository staging,
-            ConsolidadorEstadisticasJugador consolidador) {
+            EstadisticasSyncStagingRepository staging) {
         this.ejecuciones = ejecuciones;
         this.staging = staging;
     }

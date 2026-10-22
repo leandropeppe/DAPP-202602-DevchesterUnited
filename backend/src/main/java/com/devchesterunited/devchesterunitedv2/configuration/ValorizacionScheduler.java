@@ -43,7 +43,10 @@ public class ValorizacionScheduler {
                     exception
             );
 
-            throw exception;
+            throw new IllegalStateException(
+                    "Falló la ejecución programada de valorización de jugadores",
+                    exception
+            );
         }
     }
 }

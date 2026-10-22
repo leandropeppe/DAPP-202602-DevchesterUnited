@@ -59,9 +59,9 @@ class ComparacionEstrategiasIntegrationTest extends PostgresTestSupport {
         assertThat(historicos.findByJugadorIdAndEstrategiaIdAndEstrategiaVersionOrderByCalculadaAtDesc(
                 PLAYER_ID, "POSITIONAL", 1)).hasSize(1);
         assertThat(historicos.findByJugadorIdAndEstrategiaIdAndEstrategiaVersionOrderByCalculadaAtDesc(
-                PLAYER_ID, "GENERAL", 1).get(0).getScore().compareTo(d(".40"))).isZero();
+                PLAYER_ID, "GENERAL", 1).get(0).getScore()).isEqualByComparingTo(d(".40"));
         assertThat(historicos.findByJugadorIdAndEstrategiaIdAndEstrategiaVersionOrderByCalculadaAtDesc(
-                PLAYER_ID, "POSITIONAL", 1).get(0).getScore().compareTo(d(".80"))).isZero();
+                PLAYER_ID, "POSITIONAL", 1).get(0).getScore()).isEqualByComparingTo(d(".80"));
     }
 
     private static HistoricoCotizacionEstrategiaEntity historico(UUID ejecucion, String estrategia,

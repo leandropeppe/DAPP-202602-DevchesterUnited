@@ -15,9 +15,10 @@ public class ValorizacionInicialConfig {
     public EstrategiasIniciales estrategiasIniciales(
             java.math.BigDecimal generalValorBase, java.math.BigDecimal generalFactorEscala,
             java.math.BigDecimal positionalValorBase, java.math.BigDecimal positionalFactorEscala) {
-        return estrategiasIniciales(generalValorBase, generalFactorEscala, positionalValorBase,
-                positionalFactorEscala, new java.math.BigDecimal("1.15"), new java.math.BigDecimal("1.05"),
-                new java.math.BigDecimal("0.95"), new java.math.BigDecimal("0.90"));
+        return crearEstrategiasIniciales(generalValorBase, generalFactorEscala, positionalValorBase,
+                positionalFactorEscala, Map.of("DL", new java.math.BigDecimal("1.15"),
+                        "MC", new java.math.BigDecimal("1.05"), "DF", new java.math.BigDecimal("0.95"),
+                        "PO", new java.math.BigDecimal("0.90")));
     }
 
     @Bean
@@ -30,8 +31,16 @@ public class ValorizacionInicialConfig {
             @Value("${valorizacion.positional.factor-mercado.mc:1.05}") java.math.BigDecimal factorMc,
             @Value("${valorizacion.positional.factor-mercado.df:0.95}") java.math.BigDecimal factorDf,
             @Value("${valorizacion.positional.factor-mercado.po:0.90}") java.math.BigDecimal factorPo) {
+        return crearEstrategiasIniciales(generalValorBase, generalFactorEscala, positionalValorBase,
+                positionalFactorEscala, Map.of("DL", factorDl, "MC", factorMc, "DF", factorDf, "PO", factorPo));
+    }
+
+    private EstrategiasIniciales crearEstrategiasIniciales(
+            java.math.BigDecimal generalValorBase, java.math.BigDecimal generalFactorEscala,
+            java.math.BigDecimal positionalValorBase, java.math.BigDecimal positionalFactorEscala,
+            Map<String, java.math.BigDecimal> factoresMercado) {
         EstrategiaPosicionalV1 v1 = new EstrategiaPosicionalV1(positionalValorBase, positionalFactorEscala,
-                        Map.of("DL", factorDl, "MC", factorMc, "DF", factorDf, "PO", factorPo));
+                factoresMercado);
         EstrategiaPosicionalV2 v2 = new EstrategiaPosicionalV2();
         List<EstrategiaValorizacion> habilitadas = List.of(
                 new EstrategiaGeneralV1(generalValorBase, generalFactorEscala),

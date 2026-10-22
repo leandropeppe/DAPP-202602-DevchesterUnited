@@ -24,7 +24,6 @@ public final class EstrategiaPosicionalV1 implements EstrategiaValorizacion {
         }
         this.factoresMercado = Map.copyOf(new LinkedHashMap<>(factoresMercado));
     }
-    private static final BigDecimal B = new BigDecimal("0.01");
     private static Map<MetricaValorizacion, BigDecimal> pesos(String posicion) {
         return switch (normalizar(posicion)) {
             case "DL" -> Map.of(goals(), d(".35"), assists(), d(".10"), shots(), d(".18"), keyPasses(), d(".12"), dribbles(), d(".10"), rating(), d(".15"));

@@ -133,8 +133,7 @@ export default function RegistrationPage ({ onNavigate }) {
 
             <div className="auth-brand__name">
               <strong>
-                <span>Dev</span>
-                chester
+                <span>Dev</span>chester
               </strong>
 
               <small>UNITED</small>

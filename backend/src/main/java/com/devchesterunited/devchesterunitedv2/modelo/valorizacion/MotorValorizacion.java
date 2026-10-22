@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +11,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public final class MotorValorizacion {
+    private static final String CAMPO_POSICION = "POSICION";
+    private static final String METODO_V2 = "Z_SCORE_SIGMOIDE_K_0_65";
+
     public List<ResultadoValorizacion> calcular(EstrategiaValorizacion estrategia,
             List<JugadorEstadistico> jugadores, ConfiguracionElegibilidad elegibilidad) {
         if (estrategia instanceof EstrategiaPosicionalV2 v2) {
@@ -81,11 +83,10 @@ public final class MotorValorizacion {
                 && (minutos == null || minutos < configuracion.minimoMinutos())) {
             causas.add("MUESTRA_MINUTOS_INSUFICIENTE");
         }
-        for (MetricaValorizacion metrica : estrategia.pesosPositivos(jugador.posicion()).keySet()) {
-            if (metrica.extraer(jugador.metricas()) == null) {
-                causas.add("METRICA_POSITIVA_AUSENTE:" + metrica.name());
-            }
-        }
+        estrategia.pesosPositivos(jugador.posicion()).keySet().stream()
+                .filter(metrica -> metrica.extraer(jugador.metricas()) == null)
+                .map(metrica -> "METRICA_POSITIVA_AUSENTE:" + metrica.name())
+                .forEach(causas::add);
         List<MetricaValorizacion> negativasAusentes = estrategia.pesosPenalizacion(jugador.posicion()).keySet().stream()
                 .filter(metrica -> metrica.extraer(jugador.metricas()) == null).toList();
         return new ResultadoElegibilidad(jugador.jugadorId(), estrategia.id(), estrategia.version(),
@@ -178,7 +179,7 @@ public final class MotorValorizacion {
             Distribucion distribucion = distribuciones.get(metrica);
             if (valor == null || distribucion == null) {
                 trazas.add(trazaV2(metrica, valor, distribucion, BigDecimal.valueOf(.5), posicion,
-                        ResultadoNormalizacion.Estado.AUSENTE, metodoV2(bloque, metrica)));
+                        ResultadoNormalizacion.Estado.AUSENTE, METODO_V2));
                 continue;
             }
             BigDecimal normalizado = normalizadoV2(estrategia, metrica, valor, distribucion);
@@ -190,7 +191,7 @@ public final class MotorValorizacion {
             trazas.add(trazaV2(metrica, valor, distribucion, normalizado, posicion,
                     distribucion.desviacion().signum() == 0 ? ResultadoNormalizacion.Estado.CONSTANTE
                             : ResultadoNormalizacion.Estado.CALCULADO,
-                    metodoV2(bloque, metrica)));
+                    METODO_V2));
             suma = suma.add(normalizado);
             validas++;
         }
@@ -256,10 +257,6 @@ public final class MotorValorizacion {
         return normalizado;
     }
 
-    private static String metodoV2(EstrategiaPosicionalV2.Bloque bloque, MetricaValorizacion metrica) {
-        return "Z_SCORE_SIGMOIDE_K_0_65";
-    }
-
     private static String metodoSubfamilia(MetricaValorizacion metrica) {
         if (metrica == MetricaValorizacion.TACKLES || metrica == MetricaValorizacion.INTERCEPTIONS
                 || metrica == MetricaValorizacion.BLOCKS) {
@@ -275,15 +272,9 @@ public final class MotorValorizacion {
     }
 
     private static ResultadoNormalizacion trazaV2(MetricaValorizacion metrica, BigDecimal valor, Distribucion d,
-            BigDecimal normalizado, String posicion, ResultadoNormalizacion.Estado estado) {
-        return new ResultadoNormalizacion(metrica, valor, d == null ? null : d.media(), d == null ? null : d.desviacion(),
-                normalizado, "POSICION", posicion, estado, "Z_SCORE_SIGMOIDE_K_0_65");
-    }
-
-    private static ResultadoNormalizacion trazaV2(MetricaValorizacion metrica, BigDecimal valor, Distribucion d,
             BigDecimal normalizado, String posicion, ResultadoNormalizacion.Estado estado, String metodo) {
         return new ResultadoNormalizacion(metrica, valor, d == null ? null : d.media(), d == null ? null : d.desviacion(),
-                normalizado, "POSICION", posicion, estado, metodo);
+                normalizado, CAMPO_POSICION, posicion, estado, metodo);
     }
 
     private Map<String, List<JugadorEstadistico>> poblaciones(EstrategiaValorizacion estrategia,
@@ -303,7 +294,7 @@ public final class MotorValorizacion {
 
     private static Map<MetricaValorizacion, Rango> rangos(EstrategiaValorizacion estrategia,
             List<JugadorEstadistico> poblacion, String posicion) {
-        Map<MetricaValorizacion, Rango> rangos = new HashMap<>();
+        Map<MetricaValorizacion, Rango> rangos = new EnumMap<>(MetricaValorizacion.class);
         estrategia.pesosPositivos(posicion).keySet().forEach(metrica -> rangos.put(metrica, rango(metrica, poblacion)));
         estrategia.pesosPenalizacion(posicion).keySet().forEach(metrica -> rangos.putIfAbsent(metrica, rango(metrica, poblacion)));
         return rangos;
@@ -338,7 +329,7 @@ public final class MotorValorizacion {
     }
 
     private static String alcance(EstrategiaValorizacion estrategia) {
-        return estrategia.tipo() == TipoEstrategiaValorizacion.GENERAL ? "GLOBAL" : "POSICION";
+        return estrategia.tipo() == TipoEstrategiaValorizacion.GENERAL ? "GLOBAL" : CAMPO_POSICION;
     }
 
     private static String clavePoblacion(EstrategiaValorizacion estrategia, String posicion) {

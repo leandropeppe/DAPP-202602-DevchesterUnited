@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -34,7 +34,7 @@ class ApiKeyE2ETest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper mapper;
     @Autowired JwtEncoder jwtEncoder;
-    @MockBean com.devchesterunited.devchesterunitedv2.configuration.ValorizacionScheduler scheduler;
+    @MockitoBean com.devchesterunited.devchesterunitedv2.configuration.ValorizacionScheduler scheduler;
     @Value("${spring.datasource.url}") String jdbcUrl;
     private final List<String> usuarios = new ArrayList<>();
 

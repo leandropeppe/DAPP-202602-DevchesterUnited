@@ -34,12 +34,13 @@ class EstrategiaPosicionalV2Test {
         JugadorEstadistico bajo = ValorizacionFixtures.jugador("Forward", 1, new BigDecimal("7.0"));
         var resultados = motor.calcular(estrategia, List.of(completo, bajo), ConfiguracionElegibilidad.sinUmbral());
 
-        assertThat(resultados).hasSize(2);
-        assertThat(resultados).allSatisfy(r -> {
-            assertThat(r.score()).isBetween(BigDecimal.ZERO, BigDecimal.ONE);
-            assertThat(r.valor()).isBetween(BigDecimal.ONE, BigDecimal.valueOf(100));
-            assertThat(r.normalizaciones()).allSatisfy(n -> assertThat(n.metodo()).contains("Z_SCORE_SIGMOIDE_K_0_65"));
-        });
+        assertThat(resultados).hasSize(2).allSatisfy(r -> assertThat(r).matches(
+                resultado -> resultado.score().compareTo(BigDecimal.ZERO) >= 0
+                        && resultado.score().compareTo(BigDecimal.ONE) <= 0
+                        && resultado.valor().compareTo(BigDecimal.ONE) >= 0
+                        && resultado.valor().compareTo(BigDecimal.valueOf(100)) <= 0
+                        && resultado.normalizaciones().stream()
+                                .allMatch(n -> n.metodo().contains("Z_SCORE_SIGMOIDE_K_0_65"))));
     }
 
     @Test
@@ -101,8 +102,8 @@ class EstrategiaPosicionalV2Test {
         JugadorEstadistico dos = ValorizacionFixtures.jugador("Midfielder", 2, new BigDecimal("7"));
         var resultados = motor.calcular(estrategia, List.of(uno, dos), ConfiguracionElegibilidad.sinUmbral());
 
-        assertThat(resultados).isNotEmpty();
-        assertThat(resultados).allSatisfy(r -> assertThat(r.normalizaciones()).anyMatch(n -> n.estado() == ResultadoNormalizacion.Estado.CONSTANTE));
+        assertThat(resultados).isNotEmpty().allSatisfy(r -> assertThat(r.normalizaciones())
+                .anyMatch(n -> n.estado() == ResultadoNormalizacion.Estado.CONSTANTE));
     }
 
     private static JugadorEstadistico defensor(int motm, BigDecimal tackles, BigDecimal interceptions,

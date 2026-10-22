@@ -40,7 +40,10 @@ public class EstadisticasScheduler {
                     exception
             );
 
-            throw exception;
+            throw new IllegalStateException(
+                    "Falló la sincronización semanal de estadísticas desde WhoScored",
+                    exception
+            );
         }
     }
 }

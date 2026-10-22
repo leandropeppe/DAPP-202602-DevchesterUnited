@@ -9,6 +9,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasJugadorRe
 import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasJugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.JugadorEstadistico;
 import com.devchesterunited.devchesterunitedv2.service.impl.SnapshotEstadisticoService;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -30,7 +31,7 @@ class SnapshotEstadisticoServiceTest {
         var snapshot = servicio.capturar();
 
         assertThat(snapshot.jugadores()).singleElement()
-                .extracting(jugador -> jugador.posicion())
+                .extracting(JugadorEstadistico::posicion)
                 .isEqualTo("Forward");
         assertThat(snapshot.jugadores().getFirst().metricas().generales().rating())
                 .isEqualByComparingTo(BigDecimal.TEN);
@@ -45,7 +46,7 @@ class SnapshotEstadisticoServiceTest {
         var snapshot = servicio.capturar();
 
         assertThat(snapshot.jugadores()).singleElement()
-                .extracting(jugador -> jugador.posicion())
+                .extracting(JugadorEstadistico::posicion)
                 .isNull();
     }
 

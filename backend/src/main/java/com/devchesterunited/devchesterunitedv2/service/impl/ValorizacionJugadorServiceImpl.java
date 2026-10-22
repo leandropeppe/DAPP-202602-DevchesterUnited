@@ -98,12 +98,7 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
                     List<ResultadoValorizacion> calculados = motor.calcular(estrategia,
                             snapshot.jugadores(), configuracionElegibilidad);
                     for (ResultadoValorizacion resultado : calculados) {
-                        try {
-                            persistir(resultado, estrategia, ejecucionId, snapshot.capturadoEn());
-                            resultados.add(resultado);
-                        } catch (RuntimeException exception) {
-                            fallas.add(falla(resultado.jugadorId(), estrategia, exception));
-                        }
+                        persistirResultado(resultado, estrategia, ejecucionId, snapshot.capturadoEn(), resultados, fallas);
                     }
                 } catch (RuntimeException exception) {
                     falloGlobal[0] = true;
@@ -117,6 +112,16 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
             });
         }
         return new ResultadoEjecucion(ejecucionId, snapshot.capturadoEn(), resultados, fallas);
+    }
+
+    private void persistirResultado(ResultadoValorizacion resultado, EstrategiaValorizacion estrategia,
+            UUID ejecucionId, Instant capturadaEn, List<ResultadoValorizacion> resultados, List<String> fallas) {
+        try {
+            persistir(resultado, estrategia, ejecucionId, capturadaEn);
+            resultados.add(resultado);
+        } catch (RuntimeException exception) {
+            fallas.add(falla(resultado.jugadorId(), estrategia, exception));
+        }
     }
 
     private void validarCatalogoPersistido() {

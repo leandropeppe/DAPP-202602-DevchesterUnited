@@ -11,6 +11,10 @@ public final class EstrategiaPosicionalV2 implements EstrategiaValorizacion {
 
     static final BigDecimal PENDIENTE_SIGMOIDE = BigDecimal.valueOf(0.65);
     static final BigDecimal LIMITE_NORMALIZACION_MAN_OF_THE_MATCH = BigDecimal.valueOf(0.75);
+    private static final String FORWARD = "Forward";
+    private static final String MIDFIELDER = "Midfielder";
+    private static final String DEFENDER = "Defender";
+    private static final String GOALKEEPER = "Goalkeeper";
     private static final BigDecimal BASE = BigDecimal.ONE;
     private static final BigDecimal ESCALA = BigDecimal.valueOf(99);
     private static final BigDecimal CONFIABILIDAD_MINUTOS = BigDecimal.valueOf(300);
@@ -76,17 +80,17 @@ public final class EstrategiaPosicionalV2 implements EstrategiaValorizacion {
     public static String normalizarPosicion(String posicion) {
         if (posicion == null) return "";
         return switch (posicion) {
-            case "DL" -> "Forward"; case "MC" -> "Midfielder"; case "DF" -> "Defender"; case "PO" -> "Goalkeeper";
+            case "DL" -> FORWARD; case "MC" -> MIDFIELDER; case "DF" -> DEFENDER; case "PO" -> GOALKEEPER;
             default -> posicion;
         };
     }
 
     private static Map<String, Map<Bloque, BigDecimal>> pesosBloque() {
         Map<String, Map<Bloque, BigDecimal>> m = new LinkedHashMap<>();
-        m.put("Forward", pesos(Bloque.PRODUCCION, .30, Bloque.CREACION, .25, Bloque.AMENAZA, .20, Bloque.IMPACTO, .15, Bloque.DISCIPLINA, .10));
-        m.put("Midfielder", pesos(Bloque.PRODUCCION, .20, Bloque.CREACION, .25, Bloque.AMENAZA, .20, Bloque.IMPACTO, .25, Bloque.DISCIPLINA, .10));
-        m.put("Defender", pesos(Bloque.PRODUCCION, .10, Bloque.CREACION, .20, Bloque.AMENAZA_DEFENSIVA, .35, Bloque.IMPACTO, .25, Bloque.DISCIPLINA, .10));
-        m.put("Goalkeeper", pesos(Bloque.PRODUCCION, .10, Bloque.DISTRIBUCION, .35, Bloque.TECNICO, .20, Bloque.IMPACTO, .25, Bloque.DISCIPLINA, .10));
+        m.put(FORWARD, pesos(Bloque.PRODUCCION, .30, Bloque.CREACION, .25, Bloque.AMENAZA, .20, Bloque.IMPACTO, .15, Bloque.DISCIPLINA, .10));
+        m.put(MIDFIELDER, pesos(Bloque.PRODUCCION, .20, Bloque.CREACION, .25, Bloque.AMENAZA, .20, Bloque.IMPACTO, .25, Bloque.DISCIPLINA, .10));
+        m.put(DEFENDER, pesos(Bloque.PRODUCCION, .10, Bloque.CREACION, .20, Bloque.AMENAZA_DEFENSIVA, .35, Bloque.IMPACTO, .25, Bloque.DISCIPLINA, .10));
+        m.put(GOALKEEPER, pesos(Bloque.PRODUCCION, .10, Bloque.DISTRIBUCION, .35, Bloque.TECNICO, .20, Bloque.IMPACTO, .25, Bloque.DISCIPLINA, .10));
         return Map.copyOf(m);
     }
 
@@ -98,19 +102,19 @@ public final class EstrategiaPosicionalV2 implements EstrategiaValorizacion {
 
     private static Map<String, Map<Bloque, Map<MetricaValorizacion, BigDecimal>>> metricas() {
         Map<String, Map<Bloque, Map<MetricaValorizacion, BigDecimal>>> m = new LinkedHashMap<>();
-        m.put("Forward", bloques(
+        m.put(FORWARD, bloques(
                 Bloque.PRODUCCION, GOALS_ASSISTS, Bloque.CREACION, CREACION, Bloque.AMENAZA, AMENAZA,
                 Bloque.IMPACTO, Map.of(MetricaValorizacion.MAN_OF_THE_MATCH, BigDecimal.ONE, MetricaValorizacion.FOUL_GIVEN, BigDecimal.ONE),
                 Bloque.DISCIPLINA, DISCIPLINA));
-        m.put("Midfielder", bloques(
+        m.put(MIDFIELDER, bloques(
                 Bloque.PRODUCCION, GOALS_ASSISTS, Bloque.CREACION, Map.of(MetricaValorizacion.KEY_PASSES, BigDecimal.ONE, MetricaValorizacion.PASS_SUCCESS, BigDecimal.ONE, MetricaValorizacion.TOTAL_PASSES, BigDecimal.ONE, MetricaValorizacion.LONG_PASSES, BigDecimal.ONE, MetricaValorizacion.THROUGH_BALLS, BigDecimal.ONE),
                 Bloque.AMENAZA, Map.of(MetricaValorizacion.SHOTS, BigDecimal.ONE, MetricaValorizacion.DRIBBLES, BigDecimal.ONE),
                 Bloque.IMPACTO, Map.of(MetricaValorizacion.TACKLES, BigDecimal.ONE, MetricaValorizacion.INTERCEPTIONS, BigDecimal.ONE, MetricaValorizacion.MAN_OF_THE_MATCH, BigDecimal.ONE), Bloque.DISCIPLINA, DISCIPLINA));
-        m.put("Defender", bloques(
+        m.put(DEFENDER, bloques(
                 Bloque.PRODUCCION, GOALS_ASSISTS, Bloque.CREACION, Map.of(MetricaValorizacion.TOTAL_PASSES, BigDecimal.ONE, MetricaValorizacion.PASS_SUCCESS, BigDecimal.ONE, MetricaValorizacion.THROUGH_BALLS, BigDecimal.ONE),
                 Bloque.AMENAZA_DEFENSIVA, Map.of(MetricaValorizacion.TACKLES, BigDecimal.ONE, MetricaValorizacion.INTERCEPTIONS, BigDecimal.ONE, MetricaValorizacion.CLEARANCES, BigDecimal.ONE, MetricaValorizacion.BLOCKS, BigDecimal.ONE, MetricaValorizacion.AERIAL_WON, BigDecimal.ONE, MetricaValorizacion.OFFSIDES_WON, BigDecimal.ONE),
                 Bloque.IMPACTO, Map.of(MetricaValorizacion.MAN_OF_THE_MATCH, BigDecimal.ONE), Bloque.DISCIPLINA, Map.of(MetricaValorizacion.FOULS, BigDecimal.ONE, MetricaValorizacion.WAS_DRIBBLED, BigDecimal.ONE, MetricaValorizacion.GOAL_OWN, BigDecimal.ONE, MetricaValorizacion.YELLOW_CARDS, BigDecimal.ONE, MetricaValorizacion.RED_CARDS, BigDecimal.ONE)));
-        m.put("Goalkeeper", bloques(
+        m.put(GOALKEEPER, bloques(
                 Bloque.PRODUCCION, GOALS_ASSISTS, Bloque.DISTRIBUCION, Map.of(MetricaValorizacion.PASS_SUCCESS, BigDecimal.ONE, MetricaValorizacion.TOTAL_PASSES, BigDecimal.ONE, MetricaValorizacion.LONG_PASSES, BigDecimal.ONE, MetricaValorizacion.THROUGH_BALLS, BigDecimal.ONE),
                 Bloque.TECNICO, Map.of(MetricaValorizacion.AERIAL_WON, BigDecimal.ONE), Bloque.IMPACTO, Map.of(MetricaValorizacion.MAN_OF_THE_MATCH, BigDecimal.ONE),
                 Bloque.DISCIPLINA, Map.of(MetricaValorizacion.FOULS, BigDecimal.ONE, MetricaValorizacion.YELLOW_CARDS, BigDecimal.ONE, MetricaValorizacion.RED_CARDS, BigDecimal.ONE)));

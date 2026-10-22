@@ -957,7 +957,7 @@ export default function PlayerDetailPage ({
                       ↻
                     </span>
 
-                      Ver evolución
+                      {' '}Ver evolución
                     </button>
 
                   </div>
