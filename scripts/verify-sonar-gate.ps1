@@ -3,6 +3,7 @@ param(
     [string]$ProjectKey = 'leandropeppe_DAPP-202602-DevchesterUnited',
     [string]$HostUrl = 'https://sonarcloud.io',
     [string]$Token = $env:SONAR_TOKEN,
+    [string]$Branch = $env:GITHUB_REF_NAME,
     [int]$MaxOpenIssues = 20
 )
 
@@ -16,6 +17,17 @@ if ([string]::IsNullOrWhiteSpace($Token)) {
 $normalizedHost = $HostUrl.TrimEnd('/')
 $basicValue = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${Token}:"))
 $headers = @{ Authorization = "Basic $basicValue" }
+$encodedBranch = if ([string]::IsNullOrWhiteSpace($Branch)) {
+    $null
+} else {
+    [Uri]::EscapeDataString($Branch)
+}
+
+if ([string]::IsNullOrWhiteSpace($Branch)) {
+    Write-Output 'SonarCloud branch: (default project)'
+} else {
+    Write-Output "SonarCloud branch: $Branch"
+}
 
 function Invoke-SonarApi {
     param([Parameter(Mandatory)][string]$Uri)
@@ -23,6 +35,9 @@ function Invoke-SonarApi {
 }
 
 $gateUri = "$normalizedHost/api/qualitygates/project_status?projectKey=$([Uri]::EscapeDataString($ProjectKey))"
+if ($null -ne $encodedBranch) {
+    $gateUri += "&branch=$encodedBranch"
+}
 $gate = Invoke-SonarApi -Uri $gateUri
 $gateStatus = [string]$gate.projectStatus.status
 
@@ -31,6 +46,9 @@ $page = 1
 $pageSize = 500
 do {
     $issuesUri = "$normalizedHost/api/issues/search?componentKeys=$([Uri]::EscapeDataString($ProjectKey))&resolved=false&ps=$pageSize&p=$page"
+    if ($null -ne $encodedBranch) {
+        $issuesUri += "&branch=$encodedBranch"
+    }
     $response = Invoke-SonarApi -Uri $issuesUri
     foreach ($issue in @($response.issues)) {
         [void]$issues.Add($issue)

@@ -133,7 +133,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: pwsh
-        run: ./scripts/verify-sonar-gate.ps1 -ProjectKey 'leandropeppe_DAPP-202602-DevchesterUnited'
+        run: ./scripts/verify-sonar-gate.ps1 -ProjectKey 'leandropeppe_DAPP-202602-DevchesterUnited' -Branch '${{ github.ref_name }}'
 
   e2e:
     name: Playwright E2E
