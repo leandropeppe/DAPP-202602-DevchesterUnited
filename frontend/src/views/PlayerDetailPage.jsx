@@ -12,6 +12,9 @@ import PlayerCard, {
 import StatusMessage
   from '../components/StatusMessage.jsx'
 
+import { getTeamLogo }
+  from '../config/teamLogos.js'
+
 import {
   getPlayerDetail,
   getPlayerValuationHistory
@@ -882,6 +885,12 @@ export default function PlayerDetailPage ({
   const playerTheme =
       getPlayerTheme(player)
 
+  const teamLogo =
+      getTeamLogo(
+          player.league,
+          player.team
+      )
+
   return (
       <section
           className="player-detail"
@@ -1035,14 +1044,28 @@ export default function PlayerDetailPage ({
 
                 <div className="detail-info-card">
 
-                <span className="detail-info-card__icon">
-                  ◇
-                </span>
+                  <span className="detail-info-card__icon">
+                    {
+                      teamLogo
+                          ? (
+                              <img
+                                  src={teamLogo}
+                                  alt=""
+                                  className="detail-info-card__team-logo"
+                              />
+                          )
+                          : (
+                              <span aria-hidden="true">
+                                ◇
+                              </span>
+                          )
+                    }
+                  </span>
 
                   <div>
-                  <span className="player-detail__label">
-                    Posición
-                  </span>
+                    <span className="player-detail__label">
+                      Posición
+                    </span>
 
                     <strong>
                       {displayValue(

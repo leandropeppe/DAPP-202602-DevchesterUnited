@@ -1,4 +1,5 @@
 import '../styles/playerCard.css'
+import { getTeamLogo } from '../config/teamLogos'
 
 const COUNTRY_CODES = {
     Argentina: 'AR',
@@ -142,6 +143,7 @@ export default function PlayerCard ({
     const theme = getPlayerTheme(player)
     const countryCode = getCountryCode(player.nationality)
     const leagueLogo = LEAGUE_LOGOS[player.league]
+    const teamLogo = getTeamLogo(player.league, player.team)
 
     const silhouetteSrc =
         PLAYER_SILHOUETTES[theme] ?? PLAYER_SILHOUETTES.blue
@@ -206,8 +208,18 @@ export default function PlayerCard ({
 
                 <div className="player-card__metadata">
                     <div>
-                        <span className="player-card__icon player-card__icon--outline">
-                            <ShieldIcon />
+                        <span className="player-card__metadata-icon">
+                            {teamLogo
+                                ? (
+                                    <img
+                                        src={teamLogo}
+                                        alt=""
+                                        className="player-card__team-logo"
+                                    />
+                                )
+                                : (
+                                    <ShieldIcon/>
+                                )}
                         </span>
 
                         <span>
@@ -216,7 +228,7 @@ export default function PlayerCard ({
                     </div>
 
                     <div>
-                        <span className="player-card__icon">
+                        <span className="player-card__metadata-icon">
                             {leagueLogo
                                 ? (
                                     <img
@@ -226,7 +238,7 @@ export default function PlayerCard ({
                                     />
                                 )
                                 : (
-                                    <TrophyIcon />
+                                    <TrophyIcon/>
                                 )}
                         </span>
 
@@ -236,19 +248,19 @@ export default function PlayerCard ({
                     </div>
 
                     <div>
-                        {countryCode
-                            ? (
-                                <img
-                                    src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
-                                    alt=""
-                                    className="player-card__flag"
-                                />
-                            )
-                            : (
-                                <span className="player-card__icon">
-                                    ◉
-                                </span>
-                            )}
+                        <span className="player-card__metadata-icon">
+                            {countryCode
+                                ? (
+                                    <img
+                                        src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
+                                        alt=""
+                                        className="player-card__flag"
+                                    />
+                                )
+                                : (
+                                     <span>◉</span>
+                                )}
+                        </span>
 
                         <span>
                             {noInfo(player.nationality)}
@@ -275,7 +287,7 @@ export default function PlayerCard ({
     )
 }
 
-function formatCardValuation (value) {
+function formatCardValuation(value) {
     if (value === null || value === undefined || value === '') {
         return '-'
     }
