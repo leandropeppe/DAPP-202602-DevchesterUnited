@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { getMarketOperation, purchaseMarketTokens, sellMarketTokens } from '../api/http.js'
 import OperationStatus from './OperationStatus.jsx'
 import { isMarketPlayerOperable, marketPlayerUuid } from '../market/marketState.js'
@@ -15,12 +15,12 @@ function newIdempotencyKey () {
 
 const MAX_MARKET_QUANTITY = 100
 
-function quantityValidationMessage (value) {
+function quantityValidationMessage (value, maxQuantity = MAX_MARKET_QUANTITY) {
   if (value === '') return 'Ingresá una cantidad de tokens.'
   const parsed = Number(value)
   if (!Number.isInteger(parsed)) return 'La cantidad debe ser un número entero.'
   if (parsed < 1) return 'La cantidad debe ser al menos 1 token.'
-  if (parsed > MAX_MARKET_QUANTITY) return `La cantidad no puede superar ${MAX_MARKET_QUANTITY} tokens.`
+  if (parsed > maxQuantity) return `La cantidad no puede superar ${maxQuantity} tokens.`
   return ''
 }
 
@@ -46,21 +46,31 @@ function operationLookupResponse (response) {
   return data
 }
 
-export default function MarketOperationPanel ({ player, type, jwt, onClose }) {
+export default function MarketOperationPanel ({ player, type, jwt, onClose, panelRef, maxQuantity = MAX_MARKET_QUANTITY, availableQuantity, onConfirmed }) {
   const [quantity, setQuantity] = useState('1')
   const [confirmed, setConfirmed] = useState(false)
   const [state, setState] = useState({ status: 'idle', message: '' })
   const [result, setResult] = useState(null)
   const [needsRecovery, setNeedsRecovery] = useState(false)
   const [idempotencyKey] = useState(newIdempotencyKey)
+  const confirmedNotified = useRef(false)
 
   const playerId = marketPlayerUuid(player.id)
   const canOperate = isMarketPlayerOperable(player) && playerId && player.quote_id && player.quote_version && player.price_per_token !== null && player.price_per_token !== undefined
   const quantityNumber = Number(quantity)
-  const quantityError = quantityValidationMessage(quantity)
+  const quantityLimit = Math.min(MAX_MARKET_QUANTITY, Math.max(0, Number(maxQuantity) || 0))
+  const quantityError = quantityValidationMessage(quantity, quantityLimit)
   const quantityValid = quantityError === ''
   const estimatedTotal = Number(player.price_per_token) * quantityNumber
+  const isSale = type === 'SALE'
   const operationLabel = type === 'PURCHASE' ? 'Compra' : 'Venta'
+
+  function notifyConfirmed (operation) {
+    if (operation.status === 'CONFIRMED' && !confirmedNotified.current) {
+      confirmedNotified.current = true
+      onConfirmed?.(operation)
+    }
+  }
 
   async function submit (event) {
     event.preventDefault()
@@ -85,6 +95,7 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose }) {
       const operation = operationResponse(response)
       setResult(operation)
       setNeedsRecovery(!['CONFIRMED', 'REJECTED'].includes(operation.status))
+      notifyConfirmed(operation)
       setState({ status: 'success', message: '' })
     } catch (error) {
       if (error.incompleteData) {
@@ -102,6 +113,7 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose }) {
       const operation = operationLookupResponse(response)
       setResult((current) => ({ ...current, ...operation }))
       setNeedsRecovery(operation.status === 'PROCESSING' || operation.status === 'UNCERTAIN' || !['CONFIRMED', 'REJECTED'].includes(operation.status))
+      notifyConfirmed(operation)
       setState({ status: 'success', message: '' })
     } catch (error) {
       setState({ status: 'error', message: errorMessage(error) })
@@ -109,7 +121,7 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose }) {
   }
 
   return (
-    <section className="market-operation-panel card" aria-labelledby="operation-panel-title">
+    <section ref={panelRef} className="market-operation-panel card" tabIndex={-1} aria-labelledby="operation-panel-title">
       <div className="market-operation-panel__heading">
         <div>
           <p className="eyebrow">Confirmar operación</p>
@@ -137,7 +149,7 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose }) {
             id="market-operation-quantity"
             type="number"
             min="1"
-            max="100"
+            max={quantityLimit}
             step="1"
             value={quantity}
             onChange={(event) => {
@@ -145,9 +157,12 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose }) {
               setState((current) => current.status === 'error' ? { status: 'idle', message: '' } : current)
             }}
             aria-invalid={!quantityValid}
-            aria-describedby="market-operation-quantity-message"
+            aria-describedby={`market-operation-quantity-availability market-operation-quantity-message`}
             disabled={!canOperate || state.status === 'loading' || Boolean(result)}
           />
+          {isSale
+            ? <span id="market-operation-quantity-availability">Disponible para vender: {availableQuantity} tokens</span>
+            : null}
           {!quantityValid ? <span id="market-operation-quantity-message" className="field-error" role="alert">{quantityError}</span> : null}
         </label>
         <label className="market-operation-confirmation">

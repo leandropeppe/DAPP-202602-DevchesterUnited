@@ -76,7 +76,11 @@ class MarketPortfolioMockMvcTest {
                 .andExpect(jsonPath("$.data.realized_pnl").value(1.0))
                 .andExpect(jsonPath("$.data.unrealized_pnl").value(3.0))
                 .andExpect(jsonPath("$.data.combined_result").value(4.0))
-                .andExpect(jsonPath("$.data.combined_result_complete").value(true));
+                .andExpect(jsonPath("$.data.combined_result_complete").value(true))
+                .andExpect(jsonPath("$.data.open_players").value(1))
+                .andExpect(jsonPath("$.data.total_tokens").value(3))
+                .andExpect(jsonPath("$.data.total_pending_acquisition_cost").value(3.0))
+                .andExpect(jsonPath("$.data.total_current_value").value(6.0));
 
         verify(portfolios).consultar(USER_A);
     }
@@ -92,7 +96,11 @@ class MarketPortfolioMockMvcTest {
                 .andExpect(jsonPath("$.data.realized_pnl").value(2.5))
                 .andExpect(jsonPath("$.data.unrealized_pnl").value(0.0))
                 .andExpect(jsonPath("$.data.combined_result").value(2.5))
-                .andExpect(jsonPath("$.data.combined_result_complete").value(true));
+                .andExpect(jsonPath("$.data.combined_result_complete").value(true))
+                .andExpect(jsonPath("$.data.open_players").value(0))
+                .andExpect(jsonPath("$.data.total_tokens").value(0))
+                .andExpect(jsonPath("$.data.total_pending_acquisition_cost").value(0.0))
+                .andExpect(jsonPath("$.data.total_current_value").value(0.0));
     }
 
     @Test
@@ -122,7 +130,11 @@ class MarketPortfolioMockMvcTest {
                 .andExpect(jsonPath("$.data.open_positions[2].unit_price").doesNotExist())
                 .andExpect(jsonPath("$.data.unrealized_pnl").doesNotExist())
                 .andExpect(jsonPath("$.data.combined_result").doesNotExist())
-                .andExpect(jsonPath("$.data.combined_result_complete").value(false));
+                .andExpect(jsonPath("$.data.combined_result_complete").value(false))
+                .andExpect(jsonPath("$.data.open_players").value(3))
+                .andExpect(jsonPath("$.data.total_tokens").value(7))
+                .andExpect(jsonPath("$.data.total_pending_acquisition_cost").value(7.0))
+                .andExpect(jsonPath("$.data.total_current_value").value(org.hamcrest.Matchers.nullValue()));
     }
 
     @Test

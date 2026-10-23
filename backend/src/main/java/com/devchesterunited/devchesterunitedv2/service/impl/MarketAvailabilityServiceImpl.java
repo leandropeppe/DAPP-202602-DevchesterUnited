@@ -32,7 +32,10 @@ public class MarketAvailabilityServiceImpl implements MarketAvailabilityService 
     }
 
     @Override
-    @Transactional(readOnly = true)
+    // findSingletonForRead usa PESSIMISTIC_READ y Hibernate lo traduce a
+    // SELECT ... FOR SHARE. PostgreSQL no permite ese lock dentro de una
+    // transaccion marcada como read-only a nivel de conexion.
+    @Transactional
     public MarketAvailabilityResult consultarJugadores(int pagina, int limite) {
         validarPaginacion(pagina, limite);
         var estado = estados.findSingletonForRead().orElseThrow(() ->

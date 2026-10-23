@@ -14,10 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
-@Transactional
 class MarketAvailabilityRepositoryIntegrationTest extends PostgresTestSupport {
     private static final OffsetDateTime DB_NOW =
             OffsetDateTime.now(ZoneOffset.UTC).minusSeconds(10);
@@ -84,6 +82,14 @@ class MarketAvailabilityRepositoryIntegrationTest extends PostgresTestSupport {
     void restore() {
         jdbc.update("UPDATE market_state SET status = ?, epoch = ? WHERE id = 1",
                 previousStatus, previousEpoch);
+    }
+
+    @Test
+    void consultaAgregadaNoFallaPorTransaccionReadOnlyConBloqueoDeEstado() {
+        var result = availability.consultarJugadores(1, 20);
+
+        assertThat(result.estado().name()).isEqualTo("READY");
+        assertThat(result.jugadores()).isNotEmpty();
     }
 
     @Test

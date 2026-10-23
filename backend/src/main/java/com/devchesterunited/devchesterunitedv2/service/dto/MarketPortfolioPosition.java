@@ -14,7 +14,19 @@ public record MarketPortfolioPosition(
         MarketQuoteAvailability disponibilidadCotizacion,
         Optional<MarketPortfolioQuote> cotizacion,
         Optional<BigDecimal> valorActual,
-        Optional<BigDecimal> pnlNoRealizado) {
+        Optional<BigDecimal> pnlNoRealizado,
+        String nombreJugador,
+        String equipo,
+        String liga) {
+
+    public MarketPortfolioPosition(UUID jugadorId, long cantidad, BigDecimal costoTotalPendiente,
+            BigDecimal costoPromedioPonderado, MarketQuoteAvailability disponibilidadCotizacion,
+            Optional<MarketPortfolioQuote> cotizacion, Optional<BigDecimal> valorActual,
+            Optional<BigDecimal> pnlNoRealizado) {
+        this(jugadorId, cantidad, costoTotalPendiente, costoPromedioPonderado,
+                disponibilidadCotizacion, cotizacion, valorActual, pnlNoRealizado,
+                null, null, null);
+    }
 
     public MarketPortfolioPosition {
         Objects.requireNonNull(jugadorId);
@@ -27,5 +39,12 @@ public record MarketPortfolioPosition(
         Objects.requireNonNull(cotizacion);
         Objects.requireNonNull(valorActual);
         Objects.requireNonNull(pnlNoRealizado);
+    }
+
+    public MarketPortfolioPosition conDescripcion(String nombreJugador, String equipo,
+            String liga) {
+        return new MarketPortfolioPosition(jugadorId, cantidad, costoTotalPendiente,
+                costoPromedioPonderado, disponibilidadCotizacion, cotizacion, valorActual,
+                pnlNoRealizado, nombreJugador, equipo, liga);
     }
 }

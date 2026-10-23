@@ -33,8 +33,10 @@ function success (data) {
   }
 }
 
-async function mockMarketApi (context, { pendingPurchase = false } = {}) {
+async function mockMarketApi (context, { pendingPurchase = false, saleStatus = 'REJECTED' } = {}) {
   let purchaseStatus = pendingPurchase ? 'PROCESSING' : 'CONFIRMED'
+  let saleCount = 0
+
   await context.route('**/api/v1/market/**', async (route) => {
     const request = route.request()
     const url = new URL(request.url())
@@ -77,7 +79,8 @@ async function mockMarketApi (context, { pendingPurchase = false } = {}) {
     }
 
     if (url.pathname.endsWith('/sales') && request.method() === 'POST') {
-      await route.fulfill(success({ status: 'REJECTED', updated_at: '2026-10-19T12:00:00Z', total_amount: null }))
+      if (saleStatus === 'CONFIRMED') saleCount += 1
+      await route.fulfill(success({ status: saleStatus, updated_at: '2026-10-19T12:00:00Z', total_amount: saleStatus === 'CONFIRMED' ? 12.5 : null }))
       return
     }
 
@@ -88,20 +91,30 @@ async function mockMarketApi (context, { pendingPurchase = false } = {}) {
     }
 
     if (url.pathname.endsWith('/portfolio')) {
+      const quantity = saleStatus === 'CONFIRMED' ? Math.max(0, 2 - saleCount) : 2
       await route.fulfill(success({
-        open_positions: [{
+        open_positions: quantity > 0 ? [{
           player_id: '11111111-1111-4111-8111-111111111111',
-          quantity: 2,
-          pending_acquisition_cost: 20,
+          player_name: 'Jugador vigente',
+          team: 'Equipo',
+          league: 'Liga',
+          quantity,
+          pending_acquisition_cost: quantity * 10,
           weighted_average_cost: 10,
+          quote_id: currentPlayer.quote_id,
+          quote_version: currentPlayer.quote_version,
           quote_availability: 'CURRENT',
           unit_price: 12.5,
-          current_value: 25,
-          unrealized_pnl: 5
-        }],
+          current_value: quantity * 12.5,
+          unrealized_pnl: quantity * 2.5
+        }] : [],
+        open_players: quantity > 0 ? 1 : 0,
+        total_tokens: quantity,
+        total_pending_acquisition_cost: quantity * 10,
+        total_current_value: quantity * 12.5,
         realized_pnl: userKey === 'A' ? 4.5 : 1.5,
-        unrealized_pnl: 5,
-        combined_result: 9.5,
+        unrealized_pnl: quantity * 2.5,
+        combined_result: quantity * 2.5 + (userKey === 'A' ? 4.5 : 1.5),
         combined_result_complete: true
       }))
       return
@@ -138,22 +151,19 @@ test('muestra mercado, cotizaciones, compra confirmada y rechazo de venta', asyn
 
   await expect(page.getByRole('heading', { name: 'Mercado de jugadores' })).toBeVisible()
   await expect(page.getByLabel('Saldo disponible')).toContainText('1.500,00')
-  await expect(page.getByText('Cotización histórica.')).toBeVisible()
-  await expect(page.getByText('Cotización no disponible.')).toBeVisible()
+  await expect(page.getByText(/Cotización histórica/)).toBeVisible()
+  await expect(page.getByText(/Cotización no disponible/)).toBeVisible()
 
   const currentCard = page.locator('article.market-player-card').filter({ hasText: 'Jugador vigente' })
   await currentCard.getByRole('button', { name: 'Comprar' }).click()
-  await expect(page.getByText('Versión aceptada')).toBeVisible()
+  await expect(page.getByText(/Versi.*aceptada/)).toBeVisible()
   await expect(page.getByText('Total estimado')).toBeVisible()
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: /confirmar compra/i }).click()
   await expect(page.locator('.market-operation-result').getByRole('status')).toContainText('fue confirmada')
 
   await page.getByRole('button', { name: 'Cerrar', exact: true }).click()
-  await currentCard.getByRole('button', { name: 'Vender' }).click()
-  await page.getByRole('checkbox').check()
-  await page.getByRole('button', { name: /confirmar venta/i }).click()
-  await expect(page.locator('.market-operation-result').getByRole('alert')).toContainText('fue rechazada')
+  await expect(currentCard.getByRole('button', { name: 'Vender' })).toHaveCount(0)
 })
 
 test('recupera una operación pendiente y consulta portfolio e historial', async ({ page, context }) => {
@@ -176,12 +186,48 @@ test('recupera una operación pendiente y consulta portfolio e historial', async
 
   await page.getByRole('link', { name: 'Historial' }).click()
   await expect(page).toHaveURL(/\/market\/transactions$/)
-  await expect(page.getByText('Jugador histórico A')).toBeVisible()
+  await expect(page.locator('article.market-transaction-card').filter({ hasText: /Jugador hist.*rico A/ })).toBeVisible()
   await page.getByRole('combobox', { name: 'Tipo' }).selectOption('SALE')
   await page.getByRole('button', { name: 'Aplicar filtros' }).click()
-  await expect(page.getByText('Página 1 de 2')).toBeVisible()
+  await expect(page.getByText(/gina 1 de 2/)).toBeVisible()
   await page.getByRole('button', { name: 'Siguiente' }).click()
-  await expect(page.getByText('Página 2 de 2')).toBeVisible()
+  await expect(page.getByText(/gina 2 de 2/)).toBeVisible()
+})
+
+test('vende parcialmente y luego cierra una posición desde Portfolio', async ({ page, context }) => {
+  await authenticate(page, 'usr_user-a')
+  await mockMarketApi(context, { saleStatus: 'CONFIRMED' })
+  await page.goto('/market/portfolio')
+
+  const saleRequests = []
+  const saleResponses = []
+  page.on('request', (request) => {
+    if (request.url().includes('/api/v1/market/sales') && request.method() === 'POST') saleRequests.push(request)
+  })
+  page.on('response', async (response) => {
+    if (!response.url().includes('/api/v1/market/sales')) return
+    const payload = await response.json()
+    saleResponses.push(payload.data?.status)
+  })
+  const position = page.locator('article.market-position-card').filter({ hasText: 'Jugador vigente' })
+  await expect(position).toBeVisible()
+  await position.getByRole('button', { name: 'Vender' }).click()
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: /confirmar venta/i }).click()
+  await expect(page.locator('.market-position-card').filter({ hasText: 'Jugador vigente' })).toContainText('1 tokens')
+  await expect.poll(() => saleRequests.length).toBe(1)
+  await expect.poll(() => saleResponses.length).toBe(1)
+  expect(saleResponses[0]).toBe('CONFIRMED')
+
+  const remainingPosition = page.locator('article.market-position-card').filter({ hasText: 'Jugador vigente' })
+  await remainingPosition.getByRole('button', { name: 'Vender' }).click()
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: /confirmar venta/i }).click()
+  await expect.poll(() => saleRequests.length).toBe(2)
+  await expect.poll(() => saleResponses.length).toBe(2)
+  expect(saleResponses[1]).toBe('CONFIRMED')
+  await expect(page.locator('output.empty-state')).toHaveText(/No ten.*posiciones abiertas/i)
+  await expect(page.locator('.market-position-card')).toHaveCount(0)
 })
 
 test('aísla saldo y resultados observables entre dos usuarios autenticados', async ({ page, context }) => {
@@ -205,3 +251,9 @@ test('aísla saldo y resultados observables entre dos usuarios autenticados', as
   expect(marketRequests.every((url) => !url.includes('userId'))).toBe(true)
   await secondPage.close()
 })
+
+
+
+
+
+

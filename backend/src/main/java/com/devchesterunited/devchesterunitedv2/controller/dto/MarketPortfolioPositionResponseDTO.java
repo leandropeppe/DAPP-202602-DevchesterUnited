@@ -12,6 +12,12 @@ import java.util.UUID;
 
 /** Vista publica de una posicion abierta del portfolio. */
 public record MarketPortfolioPositionResponseDTO(
+        @JsonProperty("player_name")
+        String nombreJugador,
+        @JsonProperty("team")
+        String equipo,
+        @JsonProperty("league")
+        String liga,
         @JsonProperty("player_id")
         UUID jugadorId,
         @JsonProperty("quantity")
@@ -76,6 +82,9 @@ public record MarketPortfolioPositionResponseDTO(
         }
 
         return new MarketPortfolioPositionResponseDTO(
+                position.nombreJugador(),
+                position.equipo(),
+                position.liga(),
                 position.jugadorId(),
                 position.cantidad(),
                 position.costoTotalPendiente(),

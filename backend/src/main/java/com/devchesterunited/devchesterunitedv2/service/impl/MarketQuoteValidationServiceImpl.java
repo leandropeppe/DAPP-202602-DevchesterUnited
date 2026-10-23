@@ -33,7 +33,11 @@ public class MarketQuoteValidationServiceImpl implements MarketQuoteValidationSe
     }
 
     @Override
-    @Transactional(readOnly = true)
+    // findSingletonForRead usa PESSIMISTIC_READ (SELECT ... FOR SHARE).
+    // La transaccion debe permanecer de solo lectura a nivel funcional, pero
+    // no puede marcar la conexion PostgreSQL como read-only mientras adquiere
+    // ese lock compartido.
+    @Transactional
     public QuoteVersion validar(UUID playerId, UUID quoteId, long version) {
         validarEntrada(playerId, quoteId, version);
         EstadoMercado estado = estados.findSingletonForRead()

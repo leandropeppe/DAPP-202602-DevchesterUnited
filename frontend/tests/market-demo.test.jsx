@@ -55,6 +55,9 @@ beforeEach(() => {
     data: {
       open_positions: [{
         player_id: DEMO_PLAYERS[0].id.slice(4),
+        player_name: DEMO_PLAYERS[0].name,
+        team: DEMO_PLAYERS[0].team,
+        league: DEMO_PLAYERS[0].league,
         quantity: 6,
         pending_acquisition_cost: 6,
         weighted_average_cost: 1,
@@ -65,6 +68,10 @@ beforeEach(() => {
         current_value: 9,
         unrealized_pnl: 3
       }],
+      open_players: 1,
+      total_tokens: 6,
+      total_pending_acquisition_cost: 6,
+      total_current_value: 9,
       realized_pnl: 2,
       unrealized_pnl: 3,
       combined_result: 5,
@@ -118,7 +125,7 @@ describe('demostracion controlada T073/T074', () => {
     render(<MarketTransactionsPage />)
     expect(await screen.findByRole('heading', { name: 'Historial de transacciones' })).toBeInTheDocument()
     expect(screen.getByText('Venta')).toBeInTheDocument()
-    const transactionSnapshot = screen.getByText(/T073 Demo Player 1/)
+    const transactionSnapshot = screen.getAllByText(/T073 Demo Player 1/).at(-1)
     expect(transactionSnapshot).toHaveTextContent('T073 Demo Player 1')
     expect(marketApi.getMarketTransactions).toHaveBeenCalledWith({
       jwt: 'jwt-demo-user-1',

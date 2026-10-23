@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { getMarketBalance, getMarketPlayers } from '../api/http.js'
 import MarketPlayerCard from '../components/MarketPlayerCard.jsx'
 import MarketOperationPanel from '../components/MarketOperationPanel.jsx'
@@ -26,21 +26,38 @@ export default function MarketPage ({ onNavigate = () => {} }) {
   const [market, setMarket] = useState(EMPTY_MARKET)
   const [state, setState] = useState({ status: 'loading', message: '' })
   const [operation, setOperation] = useState(null)
+  const operationPanelRef = useRef(null)
 
   const loadMarket = useCallback(async (requestedPage, jwt) => {
     if (!jwt || session.isJwtExpired) return
     setState({ status: 'loading', message: '' })
     try {
-      const [balanceResponse, playersResponse] = await Promise.all([
+      const [balanceResult, playersResult] = await Promise.allSettled([
         getMarketBalance(jwt),
         getMarketPlayers({ jwt, filters: { page: requestedPage, limit: 20 } })
       ])
-      setBalance(balanceResponse?.data?.balance ?? null)
-      setMarket(playersResponse?.data || EMPTY_MARKET)
+
+      if (balanceResult.status === 'fulfilled') {
+        setBalance(balanceResult.value?.data?.balance ?? null)
+      } else {
+        setBalance(null)
+      }
+
+      if (playersResult.status === 'fulfilled') {
+        setMarket(playersResult.value?.data || EMPTY_MARKET)
+      } else {
+        setMarket(EMPTY_MARKET)
+      }
+
+      if (balanceResult.status === 'rejected') {
+        throw balanceResult.reason
+      }
+      if (playersResult.status === 'rejected') {
+        throw playersResult.reason
+      }
+
       setState({ status: 'success', message: '' })
     } catch (error) {
-      setBalance(null)
-      setMarket(EMPTY_MARKET)
       setState({
         status: error?.status === 503 ? 'unavailable' : 'error',
         message: errorMessage(error)
@@ -56,6 +73,18 @@ export default function MarketPage ({ onNavigate = () => {} }) {
     void loadMarket(page, session.jwt)
     return undefined
   }, [loadMarket, page, session.isJwtExpired, session.jwt])
+
+  useEffect(() => {
+    const panel = operationPanelRef.current
+    if (!operation || !panel) return
+
+    const prefersReducedMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    panel.scrollIntoView?.({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      block: 'start'
+    })
+    panel.focus({ preventScroll: true })
+  }, [operation])
 
   if (!session.jwt || session.isJwtExpired) {
     return (
@@ -105,10 +134,10 @@ export default function MarketPage ({ onNavigate = () => {} }) {
         ? <output className="empty-state">No hay jugadores disponibles en el mercado.</output>
         : null}
       {players.length > 0
-        ? <div className="market-player-grid">{players.map((player) => <MarketPlayerCard key={player.id} player={player} onPurchase={(selected) => setOperation({ player: selected, type: 'PURCHASE' })} onSale={(selected) => setOperation({ player: selected, type: 'SALE' })} />)}</div>
+        ? <div className="market-player-grid">{players.map((player) => <MarketPlayerCard key={player.id} player={player} onPurchase={(selected) => setOperation({ player: selected, type: 'PURCHASE' })} />)}</div>
         : null}
 
-      {operation ? <MarketOperationPanel player={operation.player} type={operation.type} jwt={session.jwt} onClose={() => setOperation(null)} /> : null}
+      {operation ? <MarketOperationPanel panelRef={operationPanelRef} player={operation.player} type={operation.type} jwt={session.jwt} onClose={() => setOperation(null)} /> : null}
 
       <nav className="pagination" aria-label="Paginación del mercado">
         <button className="button button--secondary" type="button"

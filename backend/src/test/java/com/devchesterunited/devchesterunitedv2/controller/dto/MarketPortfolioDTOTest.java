@@ -75,6 +75,11 @@ class MarketPortfolioDTOTest {
         assertThat(json.get("combined_result_complete").asBoolean()).isFalse();
         assertThat(json.has("unrealized_pnl")).isFalse();
         assertThat(json.has("combined_result")).isFalse();
+        assertThat(json.get("open_players").asLong()).isEqualTo(1L);
+        assertThat(json.get("total_tokens").asLong()).isEqualTo(3L);
+        assertThat(json.get("total_pending_acquisition_cost").decimalValue())
+                .isEqualByComparingTo("4.50000000");
+        assertThat(json.get("total_current_value").isNull()).isTrue();
     }
 
     @Test
@@ -97,6 +102,29 @@ class MarketPortfolioDTOTest {
         assertThat(json.get("combined_result").decimalValue())
                 .isEqualByComparingTo(new BigDecimal("3.00000000"));
         assertThat(json.get("combined_result_complete").asBoolean()).isTrue();
+        assertThat(json.get("open_players").asLong()).isEqualTo(0L);
+        assertThat(json.get("total_tokens").asLong()).isEqualTo(0L);
+        assertThat(json.get("total_pending_acquisition_cost").decimalValue())
+                .isEqualByComparingTo("0");
+        assertThat(json.get("total_current_value").decimalValue())
+                .isEqualByComparingTo("0");
+    }
+
+    @Test
+    void serializaDescripcionCanonicaDeLaPosicion() throws Exception {
+        MarketPortfolioPosition position = new MarketPortfolioPosition(
+                PLAYER_ID, 3L, new BigDecimal("4.50000000"), new BigDecimal("1.50000000"),
+                MarketQuoteAvailability.CURRENT, Optional.empty(),
+                Optional.of(new BigDecimal("6.00000000")),
+                Optional.of(new BigDecimal("1.50000000")),
+                "Kenny Tete", "Fulham", "Premier League");
+
+        var json = mapper.readTree(mapper.writeValueAsString(
+                MarketPortfolioPositionResponseDTO.fromDomain(position)));
+
+        assertThat(json.get("player_name").asText()).isEqualTo("Kenny Tete");
+        assertThat(json.get("team").asText()).isEqualTo("Fulham");
+        assertThat(json.get("league").asText()).isEqualTo("Premier League");
     }
 
     private MarketPortfolioPosition currentPosition() {

@@ -184,6 +184,21 @@ Como responsable del producto, quiero ejecutar una demostración controlada con 
 3. **Given** que finaliza la demostración controlada, **When** se consultan los historiales, **Then** las transacciones confirmadas, referencias de cotización y resultados son reproducibles, y los datos de prueba permanecen identificados y separados de los reales.
 4. **Given** que Player Statistics Sync y Player Valuation están disponibles, **When** se ejecuta la verificación de integración con estadísticas reales y cotizaciones publicadas por esas features, **Then** Token Market consume sus contratos sin realizar scraping, persistir estadísticas ni calcular precios internamente.
 
+### Historia de usuario 11 - Consultar un portfolio totalizado y operarlo visualmente (Prioridad: P2)
+
+Como usuario autenticado, quiero ver un resumen completo de mi cartera, identificar cada jugador por su nombre y vender desde mis posiciones, para controlar mis tenencias sin volver al listado general del mercado.
+
+**Prueba independiente**: Consultar una cartera con varias posiciones, cotizaciones actuales e historicas, vender parcial y totalmente desde el portfolio y comprobar que los totales, el saldo, las posiciones y el historial conservan la semantica contable existente.
+
+**Escenarios de aceptacion**:
+
+1. **Given** una cartera con posiciones abiertas, **When** el usuario consulta el portfolio, **Then** observa jugadores distintos, tokens totales, costo pendiente total, valor actual total cuando pueda determinarse y P/L realizada, no realizada y combinada segun la completitud de las valuaciones.
+2. **Given** posiciones con datos descriptivos canonicos, **When** se muestran, **Then** cada posicion presenta nombre real y equipo/liga cuando esten disponibles, conservando el UUID para identificacion tecnica.
+3. **Given** una posicion con cotizacion vigente, **When** el usuario inicia una venta desde el portfolio, **Then** se reutiliza el formulario de operacion existente con la cotizacion exacta, la version y un maximo de `min(100, tokens disponibles)`.
+4. **Given** que una posicion no tiene cotizacion operable, **When** se muestra, **Then** no ofrece una venta ejecutable ni transforma una cotizacion historica o ausente en actual.
+5. **Given** operaciones confirmadas de compra y venta, **When** el usuario consulta los graficos, **Then** la interfaz visualiza solamente datos propios confirmados y no trata una pagina parcial del historial como el historial completo.
+6. **Given** una cotizacion desconocida o una respuesta incompleta, **When** se calculan resumen y graficos, **Then** los valores insuficientes permanecen null o se excluyen explicitamente, nunca se presentan como cero sin explicacion.
+
 ### Casos límite
 
 - El registro público intenta crear o seleccionar la identidad de superusuario.
@@ -267,6 +282,16 @@ Como responsable del producto, quiero ejecutar una demostración controlada con 
 - **FR-051**: Cuando Player Statistics Sync y Player Valuation estén disponibles, el sistema DEBE permitir verificar la integración del escenario con estadísticas reales y cotizaciones publicadas por esas features, sin incorporar scraping, persistencia de estadísticas ni cálculo de precios a Token Market.
 - **FR-052**: Los datos del escenario de demostración DEBEN identificarse como datos de prueba y mantenerse separados de los datos reales; la preparación técnica de fixtures o seeds queda para la etapa Plan.
 
+ - **FR-053**: El Portfolio DEBE incluir un resumen de jugadores distintos con posiciones abiertas, tokens totales y costo pendiente total para toda la cartera del usuario autenticado.
+ - **FR-054**: El Portfolio DEBE incluir el valor actual total cuando todas las posiciones puedan valorarse con cotizaciones vigentes; si falta informacion suficiente, el campo DEBE ser null y no cero.
+ - **FR-055**: El Portfolio DEBE conservar la semantica existente de P/L realizada, P/L no realizada, resultado combinado y completitud, calculada exclusivamente en backend.
+ - **FR-056**: Cada posicion del Portfolio DEBE poder presentar nombre canonico del jugador y equipo/liga cuando esten disponibles, manteniendo el identificador estable para operaciones.
+ - **FR-057**: La pantalla Mercado DEBE ofrecer Comprar y NO DEBE ofrecer Vender; la pantalla Portfolio DEBE ofrecer Vender solamente para posiciones con cotizacion operable.
+ - **FR-058**: La venta iniciada desde el Portfolio DEBE reutilizar el flujo de venta existente, enviar jugador, cantidad, quote_id, quote_version e Idempotency-Key, y limitar la cantidad visible a `min(100, tokens disponibles)`.
+ - **FR-059**: Una venta confirmada desde el Portfolio DEBE provocar la recarga de la cartera y conservar las garantias de saldo, tenencia, idempotencia, concurrencia, seguridad y estados inciertos del backend.
+ - **FR-060**: La interfaz DEBE mostrar graficos de distribucion de valor actual, costo pendiente frente a valor actual y actividad temporal de compras/ventas confirmadas usando datos reales del usuario.
+ - **FR-061**: Los graficos DEBEN ofrecer estados de carga, error y ausencia de datos, ser responsive, incluir titulo/resumen y una tabla equivalente accesible, y NO DEBEN presentar cotizaciones desconocidas ni historial paginado incompleto como ceros o totales.
+
 ### Entidades principales
 
 - **Superusuario interno**: Identidad protegida que actúa como contraparte única del mercado y posee la reserva de créditos y los tokens emitidos inicialmente.
@@ -282,6 +307,7 @@ Como responsable del producto, quiero ejecutar una demostración controlada con 
 
 ## Criterios de éxito *(obligatorio)*
 
+
 ### Resultados medibles
 
 - **SC-001**: En el 100% de las inicializaciones repetidas de prueba, cada usuario recibe créditos iniciales como máximo una vez, cada jugador elegible conserva una única emisión de 100 tokens y existe una única identidad de superusuario.
@@ -295,6 +321,12 @@ Como responsable del producto, quiero ejecutar una demostración controlada con 
 - **SC-009**: El escenario de demostración con cuatro usuarios y cinco jugadores puede repetirse con datos de prueba identificados, produciendo portfolios comparables, ventas y resultados realizados y no realizados verificables.
 - **SC-010**: Los usuarios pueden completar una consulta de portfolio e historial sin acceder a datos de otro usuario y pueden distinguir visualmente cotizaciones vigentes, históricas, inexistentes y operaciones pendientes.
 - **SC-011**: Cuando estén disponibles Player Statistics Sync y Player Valuation, la verificación de integración utiliza estadísticas reales y cotizaciones publicadas por esas features sin que Token Market realice scraping, persista estadísticas ni calcule precios.
+
+ - **SC-012**: En el 100% de las respuestas de Portfolio con posiciones de prueba, los totales de jugadores, tokens y costo pendiente coinciden con toda la cartera del usuario, no con una pagina parcial.
+ - **SC-013**: En el 100% de los casos con alguna posicion sin cotizacion vigente, el valor actual total, P/L no realizada o resultado combinado incompleto se representa como null/no disponible y no como cero contable.
+ - **SC-014**: En el 100% de las posiciones con datos canonicos disponibles, la interfaz muestra nombre real y no utiliza el UUID como texto principal.
+ - **SC-015**: En el 100% de las ventas iniciadas desde Portfolio, la cantidad no supera `min(100, tokens disponibles)`, se envia la cotizacion exacta y una venta confirmada actualiza cartera e historial sin duplicacion.
+ - **SC-016**: En el 100% de las pruebas de graficos, la distribucion, comparacion y actividad usan datos propios confirmados, distinguen ausencia de valuacion y ofrecen una alternativa tabular accesible.
 
 ## Supuestos
 

@@ -10,7 +10,7 @@ function formatPrice (price) {
   return Number(price).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export default function MarketPlayerCard ({ player, onPurchase, onSale }) {
+export default function MarketPlayerCard ({ player, onPurchase }) {
   const quoteStatus = quotePresentationStatus(player)
   const price = formatPrice(player.price_per_token)
   const operable = isMarketPlayerOperable(player)
@@ -37,7 +37,6 @@ export default function MarketPlayerCard ({ player, onPurchase, onSale }) {
         ? (
           <div className="market-player-card__actions">
             <button className="button button--primary" type="button" onClick={() => onPurchase?.(player)}>Comprar</button>
-            <button className="button button--secondary" type="button" onClick={() => onSale?.(player)}>Vender</button>
           </div>
         )
         : null}

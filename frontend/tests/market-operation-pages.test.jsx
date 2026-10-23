@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MarketOperationPanel from '../src/components/MarketOperationPanel.jsx'
@@ -44,7 +44,17 @@ beforeEach(() => {
   vi.clearAllMocks()
   marketApi.purchaseMarketTokens.mockResolvedValue({ data: completeOperation })
   marketApi.getMarketPortfolio.mockResolvedValue({
-    data: { open_positions: [], realized_pnl: 0, unrealized_pnl: null, combined_result: null, combined_result_complete: false }
+    data: {
+      open_positions: [],
+      open_players: 0,
+      total_tokens: 0,
+      total_pending_acquisition_cost: 0,
+      total_current_value: 0,
+      realized_pnl: 0,
+      unrealized_pnl: null,
+      combined_result: null,
+      combined_result_complete: false
+    }
   })
   marketApi.getMarketTransactions.mockResolvedValue({
     data: { transactions: [], pagination: { current_page: 1, page_size: 20, total_pages: 0, total_records: 0 } }
@@ -122,11 +132,167 @@ describe('validación estructural de portfolio e historial', () => {
     expect(screen.queryByText(/posiciones abiertas/i)).not.toBeInTheDocument()
   })
 
+  it('desplaza y enfoca el formulario de venta respetando reduced motion', async () => {
+    const user = userEvent.setup()
+    const scrollIntoView = vi.fn()
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView
+    const originalMatchMedia = window.matchMedia
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView })
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true })
+    marketApi.getMarketPortfolio.mockResolvedValueOnce({
+      data: {
+        open_positions: [{
+          player_id: '11111111-1111-4111-8111-111111111111',
+          player_name: 'Jugador real',
+          quantity: 3,
+          quote_availability: 'CURRENT',
+          quote_id: '22222222-2222-4222-8222-222222222222',
+          quote_version: 4,
+          unit_price: 1
+        }],
+        open_players: 1,
+        total_tokens: 3,
+        total_pending_acquisition_cost: 3,
+        total_current_value: 3,
+        realized_pnl: 0,
+        unrealized_pnl: 0,
+        combined_result: 0,
+        combined_result_complete: true
+      }
+    })
+
+    try {
+      render(<MarketPortfolioPage />)
+      await user.click(await screen.findByRole('button', { name: 'Vender' }))
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' })
+      const panel = screen.getByRole('heading', { name: 'Venta de Jugador real' }).closest('section')
+      expect(document.activeElement).toBe(panel)
+    } finally {
+      Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: originalScrollIntoView })
+      window.matchMedia = originalMatchMedia
+    }
+  })
+
   it('acepta campos opcionales nulos en un portfolio válido', async () => {
     render(<MarketPortfolioPage />)
 
     expect(await screen.findByRole('heading', { name: /mi portfolio/i })).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('muestra datos canónicos y limita la venta a los tokens disponibles', async () => {
+    const user = userEvent.setup()
+    marketApi.getMarketPortfolio.mockResolvedValueOnce({
+      data: {
+        open_positions: [{
+          player_id: '11111111-1111-4111-8111-111111111111',
+          player_name: 'Jugador real',
+          team: 'Equipo real',
+          league: 'Liga real',
+          quantity: 2,
+          pending_acquisition_cost: 20,
+          weighted_average_cost: 10,
+          quote_availability: 'CURRENT',
+          quote_id: '22222222-2222-4222-8222-222222222222',
+          quote_version: 4,
+          unit_price: 12,
+          current_value: 24,
+          unrealized_pnl: 4
+        }],
+        open_players: 1,
+        total_tokens: 2,
+        total_pending_acquisition_cost: 20,
+        total_current_value: 24,
+        realized_pnl: 0,
+        unrealized_pnl: 4,
+        combined_result: 4,
+        combined_result_complete: true
+      }
+    })
+
+    render(<MarketPortfolioPage />)
+    expect(await screen.findByRole('heading', { name: 'Jugador real' })).toBeInTheDocument()
+    expect(screen.getByText('Equipo real · Liga real')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Vender' }))
+    expect(screen.getByRole('heading', { name: 'Venta de Jugador real' })).toBeInTheDocument()
+    expect(screen.getByRole('spinbutton')).toHaveAttribute('max', '2')
+    expect(screen.getByText('Disponible para vender: 2 tokens')).toBeInTheDocument()
+  })
+
+  it('rechaza 4 tokens cuando la tenencia disponible es 3 y permite 3', async () => {
+    const user = userEvent.setup()
+    render(<MarketOperationPanel player={player} type="SALE" jwt="jwt-test" onClose={vi.fn()} availableQuantity={3} maxQuantity={3} />)
+
+    expect(screen.getByText('Disponible para vender: 3 tokens')).toBeInTheDocument()
+    expect(screen.getByRole('spinbutton')).toHaveAttribute('max', '3')
+    await user.clear(screen.getByRole('spinbutton'))
+    await user.type(screen.getByRole('spinbutton'), '4')
+    expect(screen.getByRole('button', { name: /confirmar venta/i })).toBeDisabled()
+    expect(screen.getByRole('alert')).toHaveTextContent('3')
+
+    await user.clear(screen.getByRole('spinbutton'))
+    await user.type(screen.getByRole('spinbutton'), '3')
+    expect(screen.getByRole('button', { name: /confirmar venta/i })).toBeDisabled()
+    await user.click(screen.getByRole('checkbox'))
+    expect(screen.getByRole('button', { name: /confirmar venta/i })).toBeEnabled()
+  })
+
+  it('mantiene el maximo de 100 cuando la tenencia supera 100 tokens', () => {
+    render(<MarketOperationPanel player={player} type="SALE" jwt="jwt-test" onClose={vi.fn()} availableQuantity={150} maxQuantity={100} />)
+
+    expect(screen.getByText('Disponible para vender: 150 tokens')).toBeInTheDocument()
+    expect(screen.getByRole('spinbutton')).toHaveAttribute('max', '100')
+  })
+
+  it('recarga el portfolio después de confirmar una venta', async () => {
+    const user = userEvent.setup()
+    const initialPortfolio = {
+      data: {
+        open_positions: [{
+          player_id: '11111111-1111-4111-8111-111111111111',
+          player_name: 'Jugador vendido',
+          quantity: 2,
+          quote_availability: 'CURRENT',
+          quote_id: '22222222-2222-4222-8222-222222222222',
+          quote_version: 4,
+          unit_price: 1
+        }],
+        open_players: 1,
+        total_tokens: 2,
+        total_pending_acquisition_cost: 2,
+        total_current_value: 2,
+        realized_pnl: 0,
+        unrealized_pnl: 0,
+        combined_result: 0,
+        combined_result_complete: true
+      }
+    }
+    const refreshedPortfolio = {
+      ...initialPortfolio,
+      data: {
+        ...initialPortfolio.data,
+        open_positions: [{ ...initialPortfolio.data.open_positions[0], quantity: 1 }],
+        total_tokens: 1,
+        total_pending_acquisition_cost: 1,
+        total_current_value: 1
+      }
+    }
+    marketApi.getMarketPortfolio
+      .mockResolvedValueOnce(initialPortfolio)
+      .mockResolvedValueOnce(refreshedPortfolio)
+    marketApi.sellMarketTokens.mockResolvedValueOnce({ data: { ...completeOperation, status: 'CONFIRMED' } })
+
+    render(<MarketPortfolioPage />)
+    await user.click(await screen.findByRole('button', { name: 'Vender' }))
+    await user.click(screen.getByRole('checkbox'))
+    await user.click(screen.getByRole('button', { name: /confirmar venta/i }))
+
+    await waitFor(() => expect(marketApi.sellMarketTokens).toHaveBeenCalledWith(expect.objectContaining({
+      body: expect.objectContaining({ quantity: 1, player_id: '11111111-1111-4111-8111-111111111111' })
+    })))
+    await waitFor(() => expect(marketApi.getMarketPortfolio).toHaveBeenCalledTimes(2))
+    expect(await screen.findByText('1 tokens')).toBeInTheDocument()
   })
 
   it('no presenta como vacío un historial sin paginación obligatoria', async () => {
@@ -159,5 +325,120 @@ describe('validación estructural de portfolio e historial', () => {
 
     expect(await screen.findByText(/tipo de operación no reconocido/i)).toBeInTheDocument()
     expect(screen.queryByText('Venta')).not.toBeInTheDocument()
+  })
+
+  it('formatea fechas en la zona horaria local y muestra fallback para fechas inválidas', async () => {
+    const originalDateTimeFormat = Intl.DateTimeFormat
+    const dateTimeFormat = vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(function (locale, options) {
+      return new originalDateTimeFormat(locale, { ...options, timeZone: 'America/Argentina/Buenos_Aires' })
+    })
+    marketApi.getMarketTransactions.mockResolvedValueOnce({
+      data: {
+        transactions: [
+          { transaction_id: 'tx-date', confirmed_at: '2026-10-23T01:50:54.259253Z', player_name_snapshot: 'Kenny Tete', player_id: '11111111-1111-4111-8111-111111111111', operation_type: 'SALE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: 0 },
+          { transaction_id: 'tx-null-date', confirmed_at: null, player_name_snapshot: 'Jugador sin fecha', player_id: '22222222-2222-4222-8222-222222222222', operation_type: 'PURCHASE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: null },
+          { transaction_id: 'tx-invalid-date', confirmed_at: 'fecha inválida', player_name_snapshot: 'Jugador con fecha inválida', player_id: '33333333-3333-4333-8333-333333333333', operation_type: 'SALE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: 0 }
+        ],
+        pagination: { current_page: 1, page_size: 20, total_pages: 1, total_records: 3 }
+      }
+    })
+
+    try {
+      render(<MarketTransactionsPage />)
+      expect(await screen.findByText('22/10/2026, 22:50:54')).toBeInTheDocument()
+      expect(screen.getAllByText('Fecha no disponible')).toHaveLength(2)
+      expect(dateTimeFormat).toHaveBeenCalledWith('es-AR', expect.objectContaining({ second: '2-digit', hour12: false }))
+    } finally {
+      dateTimeFormat.mockRestore()
+    }
+  })
+
+  it('muestra nombres sin UUID y filtra por el player_id seleccionado', async () => {
+    const user = userEvent.setup()
+    const firstPlayerId = '11111111-1111-4111-8111-111111111111'
+    const secondPlayerId = '22222222-2222-4222-8222-222222222222'
+    marketApi.getMarketTransactions.mockResolvedValueOnce({
+      data: {
+        transactions: [
+          { transaction_id: 'tx-1', confirmed_at: '2026-10-19T12:00:00Z', player_name_snapshot: 'Kenny Tete', player_id: firstPlayerId, operation_type: 'SALE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: 0 },
+          { transaction_id: 'tx-2', confirmed_at: '2026-10-18T12:00:00Z', player_name_snapshot: 'Kenny Tete', player_id: secondPlayerId, operation_type: 'PURCHASE', quantity: 2, unit_price: 1, total_amount: 2, quote_version: 1, realized_pnl: null },
+          { transaction_id: 'tx-3', confirmed_at: '2026-10-17T12:00:00Z', player_name_snapshot: null, player_id: '33333333-3333-4333-8333-333333333333', operation_type: 'SALE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: 0 }
+        ],
+        pagination: { current_page: 1, page_size: 20, total_pages: 1, total_records: 3 }
+      }
+    })
+    render(<MarketTransactionsPage />)
+
+    const playerSelect = await screen.findByRole('combobox', { name: /buscar jugador por nombre/i })
+    expect(within(playerSelect).getByRole('option', { name: 'Jugador sin nombre disponible' })).toHaveValue('33333333-3333-4333-8333-333333333333')
+    const transactionCards = await screen.findAllByRole('article')
+    expect(transactionCards.some((card) => within(card).queryByText('Jugador sin nombre disponible'))).toBe(true)
+    expect(screen.getAllByText('Kenny Tete')).toHaveLength(2)
+    expect(screen.queryByText(firstPlayerId)).not.toBeInTheDocument()
+    expect(screen.queryByText(secondPlayerId)).not.toBeInTheDocument()
+
+    expect(within(playerSelect).getByRole('option', { name: 'Kenny Tete (1)' })).toHaveValue(firstPlayerId)
+    expect(within(playerSelect).getByRole('option', { name: 'Kenny Tete (2)' })).toHaveValue(secondPlayerId)
+    await user.selectOptions(playerSelect, firstPlayerId)
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Tipo' }), 'SALE')
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-10-19T10:00' } })
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2026-10-20T10:00' } })
+    expect(playerSelect).toHaveValue(firstPlayerId)
+    expect(screen.getByRole('combobox', { name: 'Tipo' })).toHaveValue('SALE')
+    expect(screen.getByLabelText('Desde')).toHaveValue('2026-10-19T10:00')
+    expect(screen.getByLabelText('Hasta')).toHaveValue('2026-10-20T10:00')
+    marketApi.getMarketTransactions.mockResolvedValueOnce({ data: { transactions: [], pagination: { current_page: 1, page_size: 20, total_pages: 0, total_records: 0 } } })
+    await user.click(screen.getByRole('button', { name: 'Aplicar filtros' }))
+
+    await waitFor(() => expect(marketApi.getMarketTransactions).toHaveBeenCalledWith({
+      jwt: 'jwt-test',
+      filters: {
+        playerId: firstPlayerId,
+        type: 'SALE',
+        from: new Date('2026-10-19T10:00').toISOString(),
+        to: new Date('2026-10-20T10:00').toISOString(),
+        page: 1,
+        limit: 20
+      }
+    }))
+
+    marketApi.getMarketTransactions.mockResolvedValueOnce({ data: { transactions: [], pagination: { current_page: 1, page_size: 20, total_pages: 0, total_records: 0 } } })
+    await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    await waitFor(() => expect(marketApi.getMarketTransactions).toHaveBeenCalledWith(expect.objectContaining({
+      filters: expect.objectContaining({ playerId: undefined, type: undefined, from: undefined, to: undefined, page: 1, limit: 20 })
+    })))
+  })
+
+  it('acumula opciones al cambiar de página sin cargar el catálogo completo', async () => {
+    const user = userEvent.setup()
+    const firstPage = {
+      data: {
+        transactions: [{ transaction_id: 'tx-1', confirmed_at: '2026-10-19T12:00:00Z', player_name_snapshot: 'Jugador página 1', player_id: '11111111-1111-4111-8111-111111111111', operation_type: 'SALE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: 0 }],
+        pagination: { current_page: 1, page_size: 20, total_pages: 2, total_records: 21 }
+      }
+    }
+    const secondPage = {
+      data: {
+        transactions: [{ transaction_id: 'tx-2', confirmed_at: '2026-10-18T12:00:00Z', player_name_snapshot: 'Jugador página 2', player_id: '22222222-2222-4222-8222-222222222222', operation_type: 'PURCHASE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: null }],
+        pagination: { current_page: 2, page_size: 20, total_pages: 2, total_records: 21 }
+      }
+    }
+    marketApi.getMarketTransactions.mockImplementation(({ filters }) => {
+      if (filters.limit === 100) return Promise.resolve({ ...firstPage, data: { ...firstPage.data, pagination: { ...firstPage.data.pagination, total_pages: 1 } } })
+      return Promise.resolve(filters.page === 2 ? secondPage : firstPage)
+    })
+    render(<MarketTransactionsPage />)
+    const firstPageCards = await screen.findAllByRole('article')
+    expect(firstPageCards.some((card) => within(card).queryByText('Jugador página 1'))).toBe(true)
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+
+    await waitFor(() => {
+      const secondPageCards = screen.getAllByRole('article')
+      expect(secondPageCards.some((card) => within(card).queryByText('Jugador página 2'))).toBe(true)
+    })
+    const playerSelect = screen.getByRole('combobox', { name: /buscar jugador por nombre/i })
+    expect(within(playerSelect).getByRole('option', { name: 'Jugador página 1' })).toHaveValue('11111111-1111-4111-8111-111111111111')
+    expect(within(playerSelect).getByRole('option', { name: 'Jugador página 2' })).toHaveValue('22222222-2222-4222-8222-222222222222')
+    expect(marketApi.getMarketTransactions).toHaveBeenCalledWith(expect.objectContaining({ filters: expect.objectContaining({ page: 2, limit: 20 }) }))
   })
 })

@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.persistence;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorCatalogoProjection;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorPortfolioProjection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -102,6 +103,24 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
         assertThat(ids(resultado)).containsExactly(id(1));
         assertThat(resultado.get(0).getLiga()).isEqualTo("Liga actualizada");
         assertThat(resultado.get(0).getEquipo()).isEqualTo("Equipo actualizado");
+    }
+
+    @Test
+    void devuelveDescripcionCanonicaAunqueElJugadorEsteInactivo() {
+        jdbc.update("UPDATE jugadores SET is_active = FALSE, name = ? WHERE id = ?",
+                "Jugador inactivo", id(1));
+        jdbc.update("UPDATE equipos SET name = ?, league = ? WHERE id = "
+                + "(SELECT team_id FROM jugadores WHERE id = ?)",
+                "Equipo canónico", "Liga canónica", id(1));
+
+        List<JugadorPortfolioProjection> resultado = repositorio
+                .findPortfolioDescriptions(List.of(id(1)));
+
+        assertThat(resultado).hasSize(1);
+        assertThat(resultado.get(0).getPlayerId()).isEqualTo(id(1));
+        assertThat(resultado.get(0).getPlayerName()).isEqualTo("Jugador inactivo");
+        assertThat(resultado.get(0).getTeam()).isEqualTo("Equipo canónico");
+        assertThat(resultado.get(0).getLeague()).isEqualTo("Liga canónica");
     }
 
     @Test

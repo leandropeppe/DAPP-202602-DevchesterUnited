@@ -7,11 +7,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.devchesterunited.devchesterunitedv2.persistence.PnLRealizadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.TenenciaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.VersionCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.PnLRealizadoMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.TenenciaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.TenenciaMercadoId;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorPortfolioProjection;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.mapper.VersionCotizacionMercadoMapper;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketQuoteAvailability;
@@ -42,6 +44,7 @@ class MarketPortfolioServiceTest {
     private static final UUID QUOTE_ID = UUID.fromString("55555555-5555-5555-5555-555555555555");
 
     @Mock private TenenciaMercadoRepository tenencias;
+    @Mock private JugadorRepository jugadores;
     @Mock private PnLRealizadoMercadoRepository pnlRealizado;
     @Mock private QuotePublicationPort cotizaciones;
     @Mock private VersionCotizacionMercadoRepository versiones;
@@ -57,7 +60,8 @@ class MarketPortfolioServiceTest {
                 cotizaciones,
                 versiones,
                 mapper,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC),
+                jugadores);
     }
 
     @Test
@@ -142,6 +146,10 @@ class MarketPortfolioServiceTest {
         assertThat(position.disponibilidadCotizacion()).isEqualTo(MarketQuoteAvailability.CURRENT);
         assertThat(position.valorActual()).contains(BigDecimal.valueOf(9).setScale(8));
         assertThat(position.cotizacion()).isPresent();
+        assertThat(result.jugadoresAbiertos()).isEqualTo(1L);
+        assertThat(result.tokensTotales()).isEqualTo(3L);
+        assertThat(result.costoPendienteTotal()).isEqualByComparingTo("6.00000000");
+        assertThat(result.valorActualTotal()).contains(BigDecimal.valueOf(9).setScale(8));
     }
 
     @Test
@@ -213,6 +221,10 @@ class MarketPortfolioServiceTest {
         assertThat(result.resultadoCombinado()).isEmpty();
         assertThat(result.posicionesAbiertas()).extracting(p -> p.jugadorId())
                 .containsExactlyInAnyOrder(PLAYER_ID, OTHER_PLAYER_ID);
+        assertThat(result.jugadoresAbiertos()).isEqualTo(2L);
+        assertThat(result.tokensTotales()).isEqualTo(3L);
+        assertThat(result.costoPendienteTotal()).isEqualByComparingTo("3.00000000");
+        assertThat(result.valorActualTotal()).isEmpty();
     }
 
     @Test
@@ -231,6 +243,7 @@ class MarketPortfolioServiceTest {
                 .contains(BigDecimal.valueOf(4).setScale(8));
         assertThat(result.resultadoCombinado())
                 .contains(BigDecimal.valueOf(5).setScale(8));
+        assertThat(result.valorActualTotal()).contains(BigDecimal.valueOf(7).setScale(8));
     }
 
     @Test
@@ -259,6 +272,48 @@ class MarketPortfolioServiceTest {
         verify(pnlRealizado).findById(USER_ID);
         verify(tenencias, never()).findAllByUsuarioId(OTHER_USER_ID);
         verify(pnlRealizado, never()).findById(OTHER_USER_ID);
+    }
+
+    @Test
+    void enriqueceLaPosicionConDatosCanonicosSinExigirQueElJugadorEsteActivo() {
+        givenHoldings(holding(USER_ID, PLAYER_ID, 2L, "3.00000000"));
+        givenNoRealizedPnl();
+        givenAbsentQuote(PLAYER_ID);
+        JugadorPortfolioProjection projection = org.mockito.Mockito.mock(
+                JugadorPortfolioProjection.class);
+        when(projection.getPlayerId()).thenReturn(PLAYER_ID);
+        when(projection.getPlayerName()).thenReturn("Kenny Tete");
+        when(projection.getTeam()).thenReturn("Fulham");
+        when(projection.getLeague()).thenReturn("Premier League");
+        when(jugadores.findPortfolioDescriptions(List.of(PLAYER_ID)))
+                .thenReturn(List.of(projection));
+
+        var result = service.consultar(USER_ID);
+
+        assertThat(result.posicionesAbiertas().get(0).nombreJugador()).isEqualTo("Kenny Tete");
+        assertThat(result.posicionesAbiertas().get(0).equipo()).isEqualTo("Fulham");
+        assertThat(result.posicionesAbiertas().get(0).liga()).isEqualTo("Premier League");
+    }
+
+    @Test
+    void conservaLaPosicionCuandoLaDescripcionCanonicaEsIncompleta() {
+        givenHoldings(holding(USER_ID, PLAYER_ID, 1L, "1.00000000"));
+        givenNoRealizedPnl();
+        givenAbsentQuote(PLAYER_ID);
+        JugadorPortfolioProjection projection = org.mockito.Mockito.mock(
+                JugadorPortfolioProjection.class);
+        when(projection.getPlayerId()).thenReturn(PLAYER_ID);
+        when(projection.getPlayerName()).thenReturn("Jugador sin equipo");
+        when(jugadores.findPortfolioDescriptions(List.of(PLAYER_ID)))
+                .thenReturn(List.of(projection));
+
+        var result = service.consultar(USER_ID);
+
+        assertThat(result.posicionesAbiertas()).hasSize(1);
+        assertThat(result.posicionesAbiertas().get(0).nombreJugador())
+                .isEqualTo("Jugador sin equipo");
+        assertThat(result.posicionesAbiertas().get(0).equipo()).isNull();
+        assertThat(result.posicionesAbiertas().get(0).liga()).isNull();
     }
 
     @Test

@@ -20,11 +20,20 @@ public record MarketPortfolioResponseDTO(
         @JsonInclude(JsonInclude.Include.NON_NULL)
         BigDecimal resultadoCombinado,
         @JsonProperty("combined_result_complete")
-        boolean resultadoCombinadoCompleto) {
+        boolean resultadoCombinadoCompleto,
+        @JsonProperty("open_players")
+        long jugadoresAbiertos,
+        @JsonProperty("total_tokens")
+        long tokensTotales,
+        @JsonProperty("total_pending_acquisition_cost")
+        BigDecimal costoPendienteTotal,
+        @JsonProperty("total_current_value")
+        BigDecimal valorActualTotal) {
 
     public MarketPortfolioResponseDTO {
         posicionesAbiertas = List.copyOf(Objects.requireNonNull(posicionesAbiertas));
         Objects.requireNonNull(pnlRealizado);
+        Objects.requireNonNull(costoPendienteTotal);
     }
 
     public static MarketPortfolioResponseDTO fromDomain(MarketPortfolioResult result) {
@@ -36,6 +45,10 @@ public record MarketPortfolioResponseDTO(
                 result.pnlRealizado(),
                 result.pnlNoRealizado().orElse(null),
                 result.resultadoCombinado().orElse(null),
-                result.resultadoCombinadoCompleto());
+                result.resultadoCombinadoCompleto(),
+                result.jugadoresAbiertos(),
+                result.tokensTotales(),
+                result.costoPendienteTotal(),
+                result.valorActualTotal().orElse(null));
     }
 }

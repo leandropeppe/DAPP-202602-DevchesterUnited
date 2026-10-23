@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MarketStateMessage from '../src/components/MarketStateMessage.jsx'
 import OperationStatus from '../src/components/OperationStatus.jsx'
@@ -220,6 +221,69 @@ describe('componentes de estado del mercado', () => {
     expect(historicalStatus).toHaveTextContent('no está disponible para operar.')
     expect(marketApi.getMarketBalance).toHaveBeenCalledWith('jwt-market')
     expect(marketApi.getMarketPlayers).toHaveBeenCalledWith({ jwt: 'jwt-market', filters: { page: 1, limit: 20 } })
+  })
+
+  it('desplaza y enfoca el panel al seleccionar una compra', async () => {
+    const user = userEvent.setup()
+    const secondPlayer = {
+      ...currentPlayer,
+      id: 'ply_44444444-4444-4444-8444-444444444444',
+      name: 'Segundo jugador'
+    }
+    marketApi.getMarketPlayers.mockResolvedValueOnce({
+      data: {
+        players: [currentPlayer, secondPlayer],
+        pagination: { current_page: 1, total_pages: 1, total_records: 2 }
+      }
+    })
+
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView
+    })
+
+    render(<MarketPage onNavigate={vi.fn()} />)
+    await screen.findByRole('heading', { name: 'Segundo jugador' })
+    const currentCard = screen.getByRole('heading', { name: 'Jugador vigente' }).closest('article')
+    const secondCard = screen.getByRole('heading', { name: 'Segundo jugador' }).closest('article')
+
+    await user.click(within(currentCard).getByRole('button', { name: 'Comprar' }))
+    const purchaseHeading = screen.getByRole('heading', { name: 'Compra de Jugador vigente' })
+    const panel = purchaseHeading.closest('section')
+    expect(panel).not.toBeNull()
+    expect(panel).toHaveAttribute('tabindex', '-1')
+    expect(document.activeElement).toBe(panel)
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' })
+
+    expect(screen.queryByRole('button', { name: 'Vender' })).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: 'Cerrar', exact: true }))
+    await user.click(within(secondCard).getByRole('button', { name: 'Comprar' }))
+    expect(screen.getByRole('heading', { name: 'Compra de Segundo jugador' })).toBeInTheDocument()
+
+    if (originalScrollIntoView) {
+      Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+        configurable: true,
+        value: originalScrollIntoView
+      })
+    } else {
+      delete HTMLElement.prototype.scrollIntoView
+    }
+  })
+
+  it('conserva el saldo cuando falla de forma aislada la consulta de jugadores', async () => {
+    marketApi.getMarketPlayers.mockRejectedValue({
+      status: 503,
+      message: 'El servicio no está disponible temporalmente.'
+    })
+
+    render(<MarketPage onNavigate={vi.fn()} />)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('El servicio no está disponible temporalmente.')
+    expect(screen.getByLabelText('Saldo disponible')).toHaveTextContent('1.500,00')
+    expect(screen.queryByRole('button', { name: 'Comprar' })).toBeNull()
   })
 
   it('no consulta el mercado sin JWT', async () => {

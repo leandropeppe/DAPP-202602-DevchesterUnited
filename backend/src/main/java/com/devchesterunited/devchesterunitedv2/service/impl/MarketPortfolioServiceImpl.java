@@ -1,9 +1,11 @@
 package com.devchesterunited.devchesterunitedv2.service.impl;
 
 import com.devchesterunited.devchesterunitedv2.persistence.PnLRealizadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.TenenciaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.VersionCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.TenenciaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorPortfolioProjection;
 import com.devchesterunited.devchesterunitedv2.persistence.mapper.VersionCotizacionMercadoMapper;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketPortfolioPosition;
 import com.devchesterunited.devchesterunitedv2.service.dto.MarketPortfolioQuote;
@@ -17,11 +19,15 @@ import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Agrega las posiciones abiertas y su valoración del usuario autenticado. */
@@ -36,7 +42,26 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
     private final VersionCotizacionMercadoRepository versiones;
     private final VersionCotizacionMercadoMapper mapper;
     private final Clock clock;
+    private final JugadorRepository jugadores;
 
+    @Autowired
+    public MarketPortfolioServiceImpl(TenenciaMercadoRepository tenencias,
+            PnLRealizadoMercadoRepository pnlRealizado,
+            QuotePublicationPort cotizaciones,
+            VersionCotizacionMercadoRepository versiones,
+            VersionCotizacionMercadoMapper mapper,
+            Clock clock,
+            JugadorRepository jugadores) {
+        this.tenencias = Objects.requireNonNull(tenencias);
+        this.pnlRealizado = Objects.requireNonNull(pnlRealizado);
+        this.cotizaciones = Objects.requireNonNull(cotizaciones);
+        this.versiones = Objects.requireNonNull(versiones);
+        this.mapper = Objects.requireNonNull(mapper);
+        this.clock = Objects.requireNonNull(clock);
+        this.jugadores = Objects.requireNonNull(jugadores);
+    }
+
+    /** Constructor de compatibilidad para consumidores de servicio existentes. */
     public MarketPortfolioServiceImpl(TenenciaMercadoRepository tenencias,
             PnLRealizadoMercadoRepository pnlRealizado,
             QuotePublicationPort cotizaciones,
@@ -49,6 +74,7 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
         this.versiones = Objects.requireNonNull(versiones);
         this.mapper = Objects.requireNonNull(mapper);
         this.clock = Objects.requireNonNull(clock);
+        this.jugadores = null;
     }
 
     @Override
@@ -75,6 +101,25 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
             }
         }
 
+        Map<UUID, JugadorPortfolioProjection> descripciones = cargarDescripciones(posiciones);
+        posiciones = posiciones.stream()
+                .map(position -> enriquecer(position, descripciones.get(position.jugadorId())))
+                .toList();
+
+        long tokensTotales = posiciones.stream()
+                .mapToLong(MarketPortfolioPosition::cantidad)
+                .sum();
+        BigDecimal costoPendienteTotal = posiciones.stream()
+                .map(MarketPortfolioPosition::costoTotalPendiente)
+                .reduce(ZERO, (total, costo) -> total.add(costo)
+                        .setScale(INTERNAL_SCALE, RoundingMode.HALF_EVEN));
+        Optional<BigDecimal> valorActualTotal = todasValuadas
+                ? Optional.of(posiciones.stream()
+                        .flatMap(position -> position.valorActual().stream())
+                        .reduce(ZERO, (total, valor) -> total.add(valor)
+                                .setScale(INTERNAL_SCALE, RoundingMode.HALF_EVEN)))
+                : Optional.empty();
+
         BigDecimal realizado = pnlRealizado.findById(usuarioId)
                 .map(entity -> entity.getPnlRealizado().setScale(INTERNAL_SCALE,
                         RoundingMode.HALF_EVEN))
@@ -88,7 +133,38 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
                 : Optional.empty();
 
         return new MarketPortfolioResult(posiciones, realizado, noRealizado, combinado,
-                todasValuadas);
+                todasValuadas, posiciones.size(), tokensTotales, costoPendienteTotal,
+                valorActualTotal);
+    }
+
+    private Map<UUID, JugadorPortfolioProjection> cargarDescripciones(
+            Collection<MarketPortfolioPosition> posiciones) {
+        List<UUID> jugadorIds = posiciones.stream().map(MarketPortfolioPosition::jugadorId)
+                .distinct().toList();
+        if (jugadorIds.isEmpty()) {
+            return Map.of();
+        }
+        if (jugadores == null) {
+            return Map.of();
+        }
+        Map<UUID, JugadorPortfolioProjection> result = new HashMap<>();
+        List<JugadorPortfolioProjection> descripciones = jugadores.findPortfolioDescriptions(jugadorIds);
+        if (descripciones == null) {
+            return result;
+        }
+        for (JugadorPortfolioProjection descripcion : descripciones) {
+            result.put(descripcion.getPlayerId(), descripcion);
+        }
+        return result;
+    }
+
+    private MarketPortfolioPosition enriquecer(MarketPortfolioPosition position,
+            JugadorPortfolioProjection descripcion) {
+        if (descripcion == null) {
+            return position;
+        }
+        return position.conDescripcion(descripcion.getPlayerName(), descripcion.getTeam(),
+                descripcion.getLeague());
     }
 
     private PositionValuation valorar(TenenciaMercadoEntity tenencia, Instant momento) {

@@ -1,4 +1,4 @@
-cd ..
+
 description: "Lista de tareas para la implementación de Token Market"
 ---
 
@@ -203,7 +203,7 @@ description: "Lista de tareas para la implementación de Token Market"
 **Propósito**: Validar todos los criterios de aceptación y límites de integración antes de entregar la implementación.
 
 - [ ] T076 [P] Ejecutar las suites completas de pruebas unitarias backend, MockMvc, PostgreSQL/Testcontainers y frontend mediante los comandos Gradle/npm existentes del repositorio; no ejecutar migraciones de base de datos contra bases no destinadas a pruebas.
-- [ ] T077 [P] Verificar los 52 requisitos funcionales y los 11 criterios de éxito de `specs/003-token-market/spec.md` frente a las pruebas de implementación y registrar cualquier criterio incumplido en el issue tracker de implementación.
+- [ ] T077 [P] Verificar los 61 requisitos funcionales y los 16 criterios de éxito de `specs/003-token-market/spec.md` frente a las pruebas de implementación y registrar cualquier criterio incumplido en el issue tracker de implementación.
 - [ ] T078 [P] Verificar el comportamiento OpenAPI/de seguridad y confirmar que todas las consultas privadas obtienen la identidad del JWT en lugar de identificadores proporcionados por el cliente bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/`, `controller/` y el uso de la API del frontend.
 - [ ] T079 Verificar que ningún archivo de Token Market implemente scraping de WhoScored, sincronización de estadísticas, estrategias de valoración, rankings ni una segunda fuente de precios; revisar `backend/src/main/java/com/devchesterunited/devchesterunitedv2/adapter/` y los límites de persistencia de cotizaciones.
 - [ ] T080 Verificar el orden de Flyway bajo `backend/src/main/resources/db/migration/` y la coordinación de V16 después de resolver explícitamente la integración de Player Statistics Sync; actualizar únicamente la migración de Token Market si V16 está confirmada, nunca modificar la rama de estadísticas.
@@ -261,10 +261,55 @@ Las puertas externas del camino crítico son la coordinación final de V15, el c
 4. Agregar la demostración controlada de US10.
 5. Ejecutar la verificación posterior de integración real con Player Statistics Sync/Player Valuation cuando esas features estén disponibles.
 
+## Fase 14: Mejoras de Portfolio, venta y visualizacion
+
+Las siguientes tareas son nuevas y permanecen pendientes. No renumeran ni modifican T001-T081. El feature adicional del TP y la integracion real de T075 permanecen fuera de este bloque.
+
+### Backend y contrato de Portfolio
+
+- [X] T082 [P] Implementar la extension contractual de Portfolio en backend y frontend manteniendo alineado `specs/003-token-market/contracts/market-api.md`, distinguiendo campos nuevos, campos existentes y la semantica de null/completitud.
+- [X] T083 Extender los DTOs de servicio/controlador de Portfolio bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/dto/` y `controller/dto/` con jugadores distintos, tokens totales, costo pendiente total y valor actual total, sin trasladar calculos contables al frontend.
+- [X] T084 Extender `MarketPortfolioServiceImpl` para calcular los totales sobre toda la cartera con la precision interna existente, manteniendo valor actual, P/L no realizada y resultado combinado como null cuando falte una cotizacion vigente.
+- [X] T085 Enriquecer cada posicion con nombre canonico, equipo y liga mediante una consulta batch/proyeccion sobre jugadores y equipos, conservando `player_id` como identificador tecnico y sin reutilizar snapshots de historial como fuente principal.
+- [X] T086 [P] Agregar pruebas unitarias, DTO y MockMvc/integracion para totales, cartera vacia, nombres canonicos, cotizaciones CURRENT/HISTORICAL/ABSENT, valores null, aislamiento de usuario y consistencia de precision bajo `backend/src/test/java/com/devchesterunited/devchesterunitedv2/`.
+
+### Frontend de Portfolio y venta
+
+- [X] T087 Quitar visualmente Vender de `frontend/src/components/MarketPlayerCard.jsx` y `frontend/src/views/MarketPage.jsx`, manteniendo Comprar y el flujo existente de cotizaciones.
+- [X] T088 Extender `frontend/src/views/MarketPortfolioPage.jsx` para mostrar resumen totalizado, nombres reales, equipo/liga, estado de cotizacion y la accion Vender por posicion operable.
+- [X] T089 Reutilizar `MarketOperationPanel` y `sellMarketTokens` desde Portfolio, adaptando `player_id`, `quote_id`, `quote_version` y `unit_price` solo para cotizaciones CURRENT y parametrizando el maximo como `min(100, tokens disponibles)`.
+- [X] T090 Recargar Portfolio tras una venta CONFIRMED y conservar el comportamiento de recuperacion para PROCESSING/UNCERTAIN, sin presentar cambios contables antes de una confirmacion segura.
+- [X] T091 Mantener las validaciones de cantidad, cotizacion, version, JWT, idempotencia y errores del backend, incluyendo rechazo de venta con cotizacion historica/ausente y conflicto por cotizacion obsoleta.
+
+### Graficos
+
+- [X] T092 Agregar Recharts como dependencia del frontend en la etapa de implementacion y definir componentes responsive para dona de distribucion, barras agrupadas de costo/valor y actividad temporal.
+- [X] T093 Implementar adaptadores de datos reales del Portfolio para distribucion y comparacion, excluyendo posiciones sin valor actual de las series valuadas y explicando explicitamente los datos no disponibles.
+- [X] T094 Implementar carga completa de `GET /api/v1/market/transactions` usando `pagination.total_pages`, agrupando compras y ventas confirmadas de forma determinista sin tratar una pagina parcial como historial total.
+- [X] T095 Agregar estados de carga, error y ausencia de datos, titulos, resumen textual, tablas equivalentes accesibles, responsive y una semantica visible que no convierta null en cero.
+
+### Pruebas y validacion
+
+- [X] T096 [P] Agregar pruebas Vitest para resumen, nombres, venta desde Portfolio, limite `min(100, quantity)`, cotizaciones no operables, valores null, refresco posterior y transformacion de datos de los tres graficos bajo `frontend/tests/`.
+- [X] T097 Agregar pruebas Playwright para quitar Vender de Mercado, vender parcial/final desde Portfolio, actualizar saldo/posicion/historial, cotizacion obsoleta, estados inciertos y aislamiento entre usuarios bajo `frontend/e2e/token-market.spec.js`.
+- [X] T098 Agregar pruebas de accesibilidad y responsive para titulos, resumenes, tablas equivalentes, foco, ausencia de datos y graficos sin depender exclusivamente del color bajo `frontend/tests/` y `frontend/e2e/`.
+- Evidencia de validacion T096-T098: Vitest `npm run test -- --run` con 13 archivos y 100/100 tests exitosos; Playwright `npm run test:e2e -- e2e/token-market.spec.js` con 4/4 escenarios exitosos; revision visual responsive en Portfolio e Historial, incluido 375 px, con graficos, tablas, leyendas, foco visible y navegacion completa por teclado.
+- [ ] T099 Ejecutar la validacion coordinada de los bloques T082-T098 junto con T076-T081, registrar evidencia de contabilidad, paginacion, seguridad, concurrencia, idempotencia y limites con Player Valuation/Player Statistics Sync, sin implementar el feature adicional del TP.
+
+### Dependencias de la Fase 14
+
+- T082 debe preceder T083-T086.
+- T083-T085 deben completarse antes de T088-T090 y T093.
+- T087 puede avanzar en paralelo con T083, pero la venta de T089 depende del contrato de cotizacion del Portfolio.
+- T089 depende de la interfaz existente de `MarketOperationPanel`; T090-T091 dependen de T089.
+- T092 debe preceder T093-T095; T094 puede avanzar en paralelo con T093.
+- T096 depende de T088-T095; T097 depende de T089-T091 y T094; T098 depende de T095.
+- T099 depende de T086, T090, T091, T096, T097 y T098, y se coordina con T076-T081 sin marcar ninguna de esas tareas como completada.
+
 ## Notas
 
 - Cada tarea usa el formato de checklist requerido e incluye una ruta concreta del repositorio.
 - `[P]` significa que la tarea puede avanzar en paralelo sin editar una dependencia incompleta ni el mismo archivo.
-- Las etiquetas de historia corresponden a las diez historias de usuario de `spec.md`.
+- Las etiquetas de historia corresponden a las once historias de usuario de `spec.md`; T082-T099 amplian la Historia de usuario 11 y la validacion transversal.
 - Ninguna tarea modifica archivos de Player Statistics Sync, documentos aprobados de Specify/Plan ni ejecuta migraciones contra una base de datos durante la planificación.
 - Ninguna tarea implementa scraping, sincronización de estadísticas, estrategias de valoración, rankings ni una segunda fuente de cotizaciones.

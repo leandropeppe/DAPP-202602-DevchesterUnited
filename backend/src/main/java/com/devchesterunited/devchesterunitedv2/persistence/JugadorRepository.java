@@ -2,6 +2,8 @@ package com.devchesterunited.devchesterunitedv2.persistence;
 
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorCatalogoProjection;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorPortfolioProjection;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import jakarta.persistence.LockModeType;
@@ -28,6 +30,19 @@ public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
 
     java.util.List<JugadorEntity> findAllByEquipoId(UUID equipoId);
     java.util.List<JugadorEntity> findAllByEquipoIdAndActivoTrue(UUID equipoId);
+
+    /** Devuelve descripciÃ³n canÃ³nica en una sola consulta, incluyendo jugadores inactivos. */
+    @Query(value = """
+            SELECT j.id AS "playerId",
+                   j.name AS "playerName",
+                   e.name AS "team",
+                   e.league AS "league"
+            FROM jugadores j
+            LEFT JOIN equipos e ON e.id = j.team_id
+            WHERE j.id IN (:playerIds)
+            """, nativeQuery = true)
+    List<JugadorPortfolioProjection> findPortfolioDescriptions(
+            @Param("playerIds") Collection<UUID> playerIds);
     // Escapar primero ! para no volver a escapar los ! introducidos para % y _.
     // Los casts también permiten a PostgreSQL resolver el tipo de parámetros nulos.
     String FROM_Y_FILTROS = """
