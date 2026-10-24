@@ -6,11 +6,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-import com.devchesterunited.devchesterunitedv2.persistence.AuditoriaRechazoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.TransaccionConfirmadaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.AuditoriaRechazoMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketRejectedAttempt;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketRejectionAuditServiceImpl;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.AuditoriaRechazoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.AuditoriaRechazoMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketRejectedAttempt;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketRejectionAuditServiceImpl;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;

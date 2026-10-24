@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.AutenticacionService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.auth.AutenticacionService;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CyclicBarrier;

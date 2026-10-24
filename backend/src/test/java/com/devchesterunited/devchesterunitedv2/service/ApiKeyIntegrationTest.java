@@ -1,8 +1,9 @@
 package com.devchesterunited.devchesterunitedv2.service;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.ApiKeyService;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.auth.ApiKeyService;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -80,7 +81,7 @@ class ApiKeyIntegrationTest extends PostgresTestSupport {
     private UUID crearUsuario() {
         UUID id = UUID.randomUUID();
         String nombre = "u" + id.toString().replace("-", "").substring(0, 20);
-        usuarios.saveAndFlush(new com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity(
+        usuarios.saveAndFlush(new com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity(
                 id, nombre, nombre + "@example.com", "$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW", Instant.now(), Instant.now()));
         fixtures.add(id);
         return id;

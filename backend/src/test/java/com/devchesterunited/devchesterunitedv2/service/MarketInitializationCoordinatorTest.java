@@ -10,12 +10,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.modelo.EstadoMercado;
-import com.devchesterunited.devchesterunitedv2.service.dto.InicializacionMercadoResultado;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationBootstrap;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationCoordinator;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationStateService;
-import com.devchesterunited.devchesterunitedv2.service.impl.InicializacionCreditosUsuariosService;
+import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.InicializacionMercadoResultado;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationBootstrap;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationCoordinator;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationStateService;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.InicializacionCreditosUsuariosService;
 import java.lang.reflect.Field;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;

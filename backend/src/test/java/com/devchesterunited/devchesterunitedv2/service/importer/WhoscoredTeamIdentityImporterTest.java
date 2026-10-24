@@ -1,4 +1,8 @@
-package com.devchesterunited.devchesterunitedv2.service.importer;
+package com.devchesterunited.devchesterunitedv2.scraping.catalogo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredTeamIdentityImporter;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredTeamIdentityPublicationService;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredTeamIdentityCsv;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -10,10 +14,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.adapter;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
 
-import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;

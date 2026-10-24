@@ -1,16 +1,23 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.AuditoriaRechazoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.devchesterunited.devchesterunitedv2.persistence.dto.AuditoriaRechazoMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.ContraparteMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.SolicitudIdempotenciaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.VersionCotizacionMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.VersionCotizacionMercadoId;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.AuditoriaRechazoMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.ContraparteMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.SolicitudIdempotenciaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;

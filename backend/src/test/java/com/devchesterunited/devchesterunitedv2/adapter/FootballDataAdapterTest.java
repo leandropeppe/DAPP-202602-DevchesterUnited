@@ -1,7 +1,10 @@
 package com.devchesterunited.devchesterunitedv2.adapter;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 
-import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
-import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -47,7 +50,7 @@ class FootballDataAdapterTest {
         assertThat(snapshot.identidadesExternasEquipos())
                 .anySatisfy(identidad -> {
                     assertThat(identidad.proveedor()).isEqualTo(
-                            com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.FOOTBALL_DATA);
+                            com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna.FOOTBALL_DATA);
                     assertThat(identidad.externalId()).isEqualTo(10000L);
                 });
     }

@@ -4,11 +4,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.persistence.ContraparteMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.ContraparteMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.ContraparteMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.service.event.JugadorActivadoEvent;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketPlayerActivationListener;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketTokenIssuanceService;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketPlayerActivationListener;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketTokenIssuanceService;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;

@@ -1,14 +1,15 @@
 package com.devchesterunited.devchesterunitedv2.service;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import static org.mockito.Mockito.mock;
 
-import com.devchesterunited.devchesterunitedv2.persistence.SolicitudIdempotenciaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.SolicitudIdempotenciaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketOperationExecutionLock;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketIdempotencyServiceImpl;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.SolicitudIdempotenciaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketOperationExecutionLock;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyServiceImpl;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.HashMap;
@@ -39,7 +40,7 @@ class MarketIdempotencyServiceImplTest extends MarketIdempotencyServiceContractT
     }
 
     @Override
-    protected com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService
+    protected com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService
             service(Clock requestedClock, Duration processingTimeout) {
         when(executionLock.tryAcquire(any(), any())).thenReturn(true);
         return new MarketIdempotencyServiceImpl(solicitudes, requestedClock, processingTimeout,

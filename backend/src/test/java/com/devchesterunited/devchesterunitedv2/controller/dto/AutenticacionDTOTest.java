@@ -1,4 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.controller.dto;
+import com.devchesterunited.devchesterunitedv2.controller.auth.dto.LoginRequestDTO;
+import com.devchesterunited.devchesterunitedv2.controller.auth.dto.LoginResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.auth.dto.RegistroRequestDTO;
+import com.devchesterunited.devchesterunitedv2.controller.auth.dto.UsuarioResponseDTO;
 
 import com.devchesterunited.devchesterunitedv2.configuration.JacksonConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;

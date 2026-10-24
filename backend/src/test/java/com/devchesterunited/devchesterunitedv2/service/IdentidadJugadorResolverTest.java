@@ -1,4 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.service;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.IdentidadExternaJugadorEntity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -7,15 +9,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.service.exception.IdentidadEstadisticaNoResueltaException;
-import com.devchesterunited.devchesterunitedv2.service.impl.IdentidadJugadorResolver;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.IdentidadExternaJugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
+import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadJugadorResolver;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -66,7 +68,7 @@ class IdentidadJugadorResolverTest {
         var otro = new JugadorEntity(UUID.randomUUID(), "Juan Perez", UUID.randomUUID(),
                 "Forward", 9, "Argentina", true);
         when(identidades.findByProveedorAndExternalId(ProveedorIdentidadExterna.WHOSCORED, 44L))
-                .thenReturn(Optional.of(new com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity(
+                .thenReturn(Optional.of(new com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.IdentidadExternaJugadorEntity(
                         UUID.randomUUID(), otro, ProveedorIdentidadExterna.WHOSCORED, 44L)));
 
         var resolver = resolver();
@@ -123,7 +125,7 @@ class IdentidadJugadorResolverTest {
         var equipo = equipo(UUID.randomUUID(), "Equipo A");
         var jugador = new JugadorEntity(UUID.randomUUID(), "Otro Nombre", equipo.getId(), "Forward", 9, "Argentina", true);
         when(identidades.findByProveedorAndExternalId(ProveedorIdentidadExterna.WHOSCORED, 44L))
-                .thenReturn(Optional.of(new com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity(
+                .thenReturn(Optional.of(new com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.IdentidadExternaJugadorEntity(
                         UUID.randomUUID(), jugador, ProveedorIdentidadExterna.WHOSCORED, 44L)));
 
         assertThat(resolver().resolver(hint(), equipo, CompeticionEstadistica.PREMIER_LEAGUE).jugadorId())

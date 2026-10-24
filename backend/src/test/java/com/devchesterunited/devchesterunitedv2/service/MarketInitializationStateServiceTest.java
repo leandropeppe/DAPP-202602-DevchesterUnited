@@ -5,10 +5,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.modelo.EstadoMercado;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadoMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationStateService;
+import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EstadoMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationStateService;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;

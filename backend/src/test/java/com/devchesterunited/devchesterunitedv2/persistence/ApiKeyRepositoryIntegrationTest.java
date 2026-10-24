@@ -1,8 +1,10 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.ApiKeyRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.APIKeyEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.APIKeyEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.UUID;

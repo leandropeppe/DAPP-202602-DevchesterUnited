@@ -6,7 +6,7 @@ import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.Configuracion
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaGeneralV1;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaPosicionalV1;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MotorValorizacion;
-import com.devchesterunited.devchesterunitedv2.service.dto.SnapshotEstadistico;
+import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SnapshotEstadistico;
 import com.devchesterunited.devchesterunitedv2.valorizacion.ValorizacionFixtures;
 import java.time.Instant;
 import java.util.List;

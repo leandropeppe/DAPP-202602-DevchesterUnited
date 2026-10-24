@@ -3,10 +3,10 @@ package com.devchesterunited.devchesterunitedv2.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketSaleRequest;
-import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketSaleService;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleRequest;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;

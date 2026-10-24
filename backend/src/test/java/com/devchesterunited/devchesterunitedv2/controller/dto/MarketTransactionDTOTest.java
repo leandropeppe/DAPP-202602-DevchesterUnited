@@ -1,10 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.controller.dto;
+import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketTransactionResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketTransactionsResponseDTO;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketTransactionRecord;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketTransactionResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.PaginacionResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionRecord;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.shared.PaginacionResultado;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;

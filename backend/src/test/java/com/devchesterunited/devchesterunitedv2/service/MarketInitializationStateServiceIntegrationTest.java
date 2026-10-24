@@ -3,8 +3,8 @@ package com.devchesterunited.devchesterunitedv2.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.devchesterunited.devchesterunitedv2.modelo.EstadoMercado;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationStateService;
+import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationStateService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

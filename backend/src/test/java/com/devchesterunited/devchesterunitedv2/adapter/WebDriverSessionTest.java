@@ -1,4 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.adapter;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WebDriverFactory;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WebDriverSession;
 
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebDriver;

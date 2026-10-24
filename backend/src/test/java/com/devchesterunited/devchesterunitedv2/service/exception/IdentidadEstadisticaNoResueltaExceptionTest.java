@@ -1,4 +1,7 @@
-package com.devchesterunited.devchesterunitedv2.service.exception;
+package com.devchesterunited.devchesterunitedv2.exception;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
 import java.util.ArrayList;
 import java.util.List;

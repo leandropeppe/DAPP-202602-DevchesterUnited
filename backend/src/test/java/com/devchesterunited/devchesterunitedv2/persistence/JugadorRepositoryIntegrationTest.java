@@ -1,8 +1,11 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorCatalogoProjection;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorPortfolioProjection;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.projection.JugadorCatalogoProjection;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.projection.JugadorPortfolioProjection;
 import java.util.ArrayList;
 import java.math.BigDecimal;
 import java.util.List;

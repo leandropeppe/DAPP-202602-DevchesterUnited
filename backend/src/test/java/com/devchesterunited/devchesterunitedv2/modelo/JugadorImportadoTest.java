@@ -1,4 +1,5 @@
-package com.devchesterunited.devchesterunitedv2.modelo;
+package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
 import java.time.Instant;
 import java.util.UUID;

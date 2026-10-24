@@ -1,25 +1,25 @@
 package com.devchesterunited.devchesterunitedv2.service;
 
-import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
-import com.devchesterunited.devchesterunitedv2.adapter.ProveedorCatalogo;
-import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
-import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
-import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
-import com.devchesterunited.devchesterunitedv2.modelo.IdentidadExternaEquipo;
-import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
-import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.mapper.JugadorMapper;
-import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
-import com.devchesterunited.devchesterunitedv2.service.impl.SincronizacionCatalogoServiceImpl;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.ProveedorCatalogo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.IdentidadExternaJugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.IdentidadExternaJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.mapper.JugadorMapper;
+import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SincronizacionCatalogoServiceImpl;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -102,7 +102,7 @@ class SincronizacionCatalogoServiceTest {
         jugadorPersistido.conservarAuditoria(AHORA.minusSeconds(60), AHORA.minusSeconds(30));
         IdentidadExternaJugadorEntity identidad = new IdentidadExternaJugadorEntity(
                 UUID.fromString("80000000-0000-0000-0000-000000000001"), jugadorPersistido,
-                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.FOOTBALL_DATA,
+                com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna.FOOTBALL_DATA,
                 10001L);
         when(identidades.findAllByProveedorAndExternalIdIn(any(), anyList())).thenReturn(List.of(identidad));
         when(identidadesEquipos.findAllByProveedorAndExternalIdIn(any(), anyList()))

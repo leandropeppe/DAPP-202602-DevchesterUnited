@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;

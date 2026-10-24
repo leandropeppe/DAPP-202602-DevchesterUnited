@@ -1,13 +1,18 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.AuditoriaRechazoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.MovimientoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.devchesterunited.devchesterunitedv2.persistence.dto.AuditoriaRechazoMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketRejectedAttempt;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketRejectionAuditService;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.AuditoriaRechazoMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketRejectedAttempt;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketRejectionAuditService;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

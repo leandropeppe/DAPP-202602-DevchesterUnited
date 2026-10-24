@@ -2,7 +2,7 @@ package com.devchesterunited.devchesterunitedv2.controller;
 
 import com.devchesterunited.devchesterunitedv2.configuration.JacksonConfig;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.exceptionhandler.GlobalExceptionHandler;
+import com.devchesterunited.devchesterunitedv2.exception.GlobalExceptionHandler;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.Test;

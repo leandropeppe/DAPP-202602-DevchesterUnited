@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.controller;
+import com.devchesterunited.devchesterunitedv2.modelo.auth.Usuario;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
 import com.fasterxml.jackson.databind.JsonNode;

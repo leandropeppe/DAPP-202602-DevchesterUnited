@@ -1,13 +1,18 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncStagingRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasJugadorRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasJugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncStagingEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.EstadoEstadisticasSync;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncStagingEntity;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

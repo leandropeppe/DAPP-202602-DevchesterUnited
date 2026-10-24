@@ -1,9 +1,10 @@
-package com.devchesterunited.devchesterunitedv2.service.diagnostico;
+package com.devchesterunited.devchesterunitedv2.scraping.catalogo;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredPlayerIdentityDiagnosticService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

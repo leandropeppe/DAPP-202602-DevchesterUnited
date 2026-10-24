@@ -1,4 +1,9 @@
-package com.devchesterunited.devchesterunitedv2.modelo;
+package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefensivas;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

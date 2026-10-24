@@ -1,4 +1,5 @@
-package com.devchesterunited.devchesterunitedv2.service.diagnostico;
+package com.devchesterunited.devchesterunitedv2.scraping.catalogo;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredTeamEnrollmentReportService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -9,17 +10,17 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.adapter.ProveedorEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

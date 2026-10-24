@@ -1,0 +1,7 @@
+package com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository;
+
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.ResultadoElegibilidadValorizacionEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.ResultadoElegibilidadValorizacionKey;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ResultadoElegibilidadValorizacionRepository extends JpaRepository<ResultadoElegibilidadValorizacionEntity, ResultadoElegibilidadValorizacionKey> { }

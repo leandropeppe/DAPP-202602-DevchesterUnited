@@ -1,8 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.controller;
 
 import com.devchesterunited.devchesterunitedv2.configuration.OpenApiConfig;
-import com.devchesterunited.devchesterunitedv2.configuration.SecurityConfig;
-import com.devchesterunited.devchesterunitedv2.configuration.SecurityErrorHandler;
+import com.devchesterunited.devchesterunitedv2.configuration.security.SecurityConfig;
+import com.devchesterunited.devchesterunitedv2.configuration.security.SecurityErrorHandler;
 import io.swagger.v3.oas.models.OpenAPI;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;

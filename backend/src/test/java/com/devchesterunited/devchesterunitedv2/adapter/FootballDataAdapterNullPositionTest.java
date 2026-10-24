@@ -1,7 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.adapter;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 
-import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
-import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;

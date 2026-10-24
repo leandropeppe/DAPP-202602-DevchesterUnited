@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.controller;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

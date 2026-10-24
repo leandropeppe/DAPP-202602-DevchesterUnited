@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.adapter.dto;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsFeedResponseDTO;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

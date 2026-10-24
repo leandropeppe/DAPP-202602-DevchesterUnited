@@ -3,7 +3,7 @@ package com.devchesterunited.devchesterunitedv2.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.devchesterunited.devchesterunitedv2.controller.dto.EstadisticasJugadorResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.estadisticas.dto.EstadisticasJugadorResponseDTO;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 

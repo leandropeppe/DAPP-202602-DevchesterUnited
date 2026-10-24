@@ -1,27 +1,32 @@
 package com.devchesterunited.devchesterunitedv2.service;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasJugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasSyncRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasSyncStagingRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
-import com.devchesterunited.devchesterunitedv2.service.exception.IdentidadEstadisticaNoResueltaException;
-import com.devchesterunited.devchesterunitedv2.service.impl.IdentidadEquipoResolver;
-import com.devchesterunited.devchesterunitedv2.service.impl.IdentidadJugadorResolver;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasJugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncEntity;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionEstadisticasJugadorService;
-import com.devchesterunited.devchesterunitedv2.adapter.ProveedorEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync;
-import com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasJugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncStagingRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.IdentidadExternaJugadorRepository;
+import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
+import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadEquipoResolver;
+import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadJugadorResolver;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncEntity;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.estadisticas.SincronizacionEstadisticasJugadorService;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.EstadoEstadisticasSync;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -63,11 +68,11 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
         fixtureSyncs.forEach(id -> staging.findAllBySyncId(id).forEach(staging::delete));
         fixtureSyncs.forEach(ejecuciones::deleteById);
         fixtureJugadores.forEach(id -> identidadesJugadores.findByJugador_IdAndProveedor(id,
-                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED)
+                com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna.WHOSCORED)
                 .ifPresent(identidadesJugadores::delete));
         fixtureJugadores.forEach(jugadores::deleteById);
         fixtureEquipos.forEach(id -> identidades.findByEquipo_IdAndProveedor(id,
-                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED)
+                com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna.WHOSCORED)
                 .ifPresent(identidades::delete));
         fixtureEquipos.forEach(equipos::deleteById);
         fixtureJugadores.clear();
@@ -87,7 +92,7 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
         assertThatThrownBy(() -> jugadoresResolver.resolver(hint, equipo, CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
         assertThat(identidadesJugadores.findByProveedorAndExternalId(
-                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 901L))
+                com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna.WHOSCORED, 901L))
                 .isEmpty();
     }
 
@@ -128,7 +133,7 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
         assertThat(estadisticas.findAll().stream().map(this::snapshotPublicado).toList())
                 .containsExactlyInAnyOrderElementsOf(snapshotPublicadoAntes);
         assertThat(identidadesJugadores.findByProveedorAndExternalId(
-                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 90111L))
+                com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna.WHOSCORED, 90111L))
                 .isEmpty();
         assertThat(ejecuciones.findAllByEstado(EstadoEstadisticasSync.FALLIDA)).isNotEmpty();
         ejecuciones.findAll().stream().map(e -> e.getId()).filter(id -> !syncsAntes.contains(id))
@@ -168,7 +173,7 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
         assertThat(estadisticas.findByJugadorId(baseline.jugadorId()).orElseThrow().getSyncId())
                 .isEqualTo(baseline.syncId());
         assertThat(identidades.findByProveedorAndExternalId(
-                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 90211L))
+                com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna.WHOSCORED, 90211L))
                 .isEmpty();
         assertThat(ejecuciones.findAllByEstado(EstadoEstadisticasSync.FALLIDA)).isNotEmpty();
         assertThat(staging.findAll()).hasSize(stagingAntes);
@@ -195,14 +200,14 @@ class SincronizacionIdentidadNoResueltaIntegrationTest extends PostgresTestSuppo
         return new Snapshot(jugador.getId(), syncId);
     }
 
-    private List<com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador> snapshots(
+    private List<com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador> snapshots(
             long playerId, String playerName, long teamId, String teamName) {
         return java.util.Arrays.stream(CompeticionEstadistica.values()).map(competicion ->
-                new com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador(
+                new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador(
                         competicion, java.util.List.of(new RegistroEstadisticasJugador(
                                 new IdentidadEstadisticaJugador(playerId, playerName, "Forward", "Argentina",
                                         teamId, teamName),
-                                com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.GENERAL,
+                                com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica.GENERAL,
                                 new MetricasEstadisticasJugador(100, 2, 2, BigDecimal.ONE, BigDecimal.ONE,
                                         BigDecimal.ONE, BigDecimal.ONE, BigDecimal.valueOf(8), 0, 0))))).toList();
     }

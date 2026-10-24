@@ -1,19 +1,20 @@
 package com.devchesterunited.devchesterunitedv2.service;
+import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
 
-import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
-import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
-import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
-import com.devchesterunited.devchesterunitedv2.modelo.IdentidadExternaEquipo;
-import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
-import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
-import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.estadisticas.SincronizacionCatalogoService;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -124,7 +125,7 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
             assertThat(iniciado.await(10, TimeUnit.SECONDS)).isTrue();
             var segundo = pool.submit(servicio::sincronizar);
             assertThatThrownBy(segundo::get).hasCauseInstanceOf(
-                    com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException.class);
+                    com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException.class);
             continuar.countDown();
             assertThat(primero.get(20, TimeUnit.SECONDS).equiposProcesados()).isEqualTo(96);
         }

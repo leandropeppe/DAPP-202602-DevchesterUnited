@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.devchesterunited.devchesterunitedv2.service.dto.QuotePublicationRequest;
-import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;

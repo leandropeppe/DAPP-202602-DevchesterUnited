@@ -5,11 +5,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.persistence.CuentaCreditosMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.CuentaCreditosMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadoMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketBalanceServiceImpl;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CuentaCreditosMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CuentaCreditosMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EstadoMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketBalanceServiceImpl;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Optional;

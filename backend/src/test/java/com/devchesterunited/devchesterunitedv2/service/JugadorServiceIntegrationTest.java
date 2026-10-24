@@ -1,11 +1,11 @@
 package com.devchesterunited.devchesterunitedv2.service;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.controller.dto.FiltroJugadoresDTO;
-import com.devchesterunited.devchesterunitedv2.service.dto.JugadorResultado;
-import com.devchesterunited.devchesterunitedv2.service.dto.JugadoresResultado;
-import com.devchesterunited.devchesterunitedv2.service.dto.PaginacionResultado;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.JugadorService;
+import com.devchesterunited.devchesterunitedv2.controller.jugador.dto.FiltroJugadoresDTO;
+import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadorResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadoresResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.shared.PaginacionResultado;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.jugador.JugadorService;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Arrays;
 import java.util.UUID;

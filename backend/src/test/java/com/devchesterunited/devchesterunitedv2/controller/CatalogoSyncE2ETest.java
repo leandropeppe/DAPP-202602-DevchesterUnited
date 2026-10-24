@@ -1,16 +1,16 @@
 package com.devchesterunited.devchesterunitedv2.controller;
 
-import com.devchesterunited.devchesterunitedv2.adapter.FootballDataException;
-import com.devchesterunited.devchesterunitedv2.adapter.impl.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.modelo.CatalogoSincronizado;
-import com.devchesterunited.devchesterunitedv2.modelo.Equipo;
-import com.devchesterunited.devchesterunitedv2.modelo.IdentidadExternaEquipo;
-import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
-import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.modelo.TemporadaEquipo;
-import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;

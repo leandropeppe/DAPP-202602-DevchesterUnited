@@ -3,8 +3,8 @@ package com.devchesterunited.devchesterunitedv2.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyRequest;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketIdempotencyParameterHasher;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyParameterHasher;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 

@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.controller;
+import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionScheduler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +35,7 @@ class ApiKeyE2ETest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper mapper;
     @Autowired JwtEncoder jwtEncoder;
-    @MockitoBean com.devchesterunited.devchesterunitedv2.configuration.ValorizacionScheduler scheduler;
+    @MockitoBean com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionScheduler scheduler;
     @Value("${spring.datasource.url}") String jdbcUrl;
     private final List<String> usuarios = new ArrayList<>();
 

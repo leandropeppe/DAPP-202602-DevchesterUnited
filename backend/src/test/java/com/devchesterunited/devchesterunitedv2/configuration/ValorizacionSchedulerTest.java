@@ -1,10 +1,11 @@
 package com.devchesterunited.devchesterunitedv2.configuration;
+import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionScheduler;
 
 import static org.mockito.Mockito.*;
 
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ConfiguracionElegibilidad;
-import com.devchesterunited.devchesterunitedv2.service.config.ValorizacionEjecucionConfig;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.ValorizacionJugadorService;
+import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionEjecucionConfig;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.ValorizacionJugadorService;
 import org.junit.jupiter.api.Test;
 
 class ValorizacionSchedulerTest {

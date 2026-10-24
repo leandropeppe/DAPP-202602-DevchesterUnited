@@ -3,9 +3,9 @@ package com.devchesterunited.devchesterunitedv2.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketBalanceService;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketBalanceService;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;

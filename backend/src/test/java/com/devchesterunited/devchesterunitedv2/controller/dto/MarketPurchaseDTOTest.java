@@ -1,10 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.controller.dto;
+import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPurchaseRequestDTO;
+import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPurchaseResponseDTO;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketPurchaseRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketPurchaseResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;

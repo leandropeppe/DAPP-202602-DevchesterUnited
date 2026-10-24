@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
+import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionInicialConfig;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,7 +15,7 @@ class EstrategiaValorizacionTest {
         EstrategiaPosicionalV1 positional = new EstrategiaPosicionalV1(new BigDecimal("0"), new BigDecimal("1"));
         assertEquals(0, BigDecimal.ONE.compareTo(general.pesosPositivos("Forward").values().stream().reduce(BigDecimal.ZERO, BigDecimal::add)));
         assertEquals(0, BigDecimal.ONE.compareTo(positional.pesosPositivos("Defender").values().stream().reduce(BigDecimal.ZERO, BigDecimal::add)));
-        assertEquals("POSITIONAL", new com.devchesterunited.devchesterunitedv2.service.config.ValorizacionInicialConfig()
+        assertEquals("POSITIONAL", new com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionInicialConfig()
                 .estrategiasIniciales(new BigDecimal("0"), BigDecimal.ONE, new BigDecimal("0"), BigDecimal.ONE)
                 .estrategiaVisibleId());
     }

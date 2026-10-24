@@ -1,4 +1,6 @@
-package com.devchesterunited.devchesterunitedv2.modelo;
+package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.IdentidadExternaJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

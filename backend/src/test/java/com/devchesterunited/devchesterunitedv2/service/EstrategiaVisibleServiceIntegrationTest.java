@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.persistence.EstrategiaValorizacionRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstrategiaVisibleRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.HistoricoCotizacionEstrategiaRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstrategiaValorizacionEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstrategiaVisibleEntity;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.EstrategiaVisibleService;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EstrategiaValorizacionRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EstrategiaVisibleRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.HistoricoCotizacionEstrategiaRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EstrategiaValorizacionEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EstrategiaVisibleEntity;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.EstrategiaVisibleService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import org.junit.jupiter.api.AfterEach;

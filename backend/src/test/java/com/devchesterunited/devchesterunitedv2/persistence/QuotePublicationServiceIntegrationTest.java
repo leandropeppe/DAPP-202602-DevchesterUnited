@@ -1,15 +1,17 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuotePublicationRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationResult;
-import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.service.impl.QuotePublicationService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.QuotePublicationPort;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationResult;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.QuotePublicationService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -138,7 +140,7 @@ class QuotePublicationServiceIntegrationTest extends PostgresTestSupport {
                 String.class, initial.quoteId(), initial.version())).isEqualTo("VALID");
         assertThat(quotes.currentQuote(playerId)).get()
                 .extracting(value -> value.validityStatus())
-                .isEqualTo(com.devchesterunited.devchesterunitedv2.service.dto.QuoteValidityStatus.INVALIDATED);
+                .isEqualTo(com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus.INVALIDATED);
 
         var replacement = quotes.publish(new QuotePublicationRequest(
                 playerId, new BigDecimal("1.25"), NOW, NOW, null, "valuation-v2"));

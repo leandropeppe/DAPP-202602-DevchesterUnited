@@ -3,7 +3,7 @@ package com.devchesterunited.devchesterunitedv2.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketInitializationCoordinator;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationCoordinator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.service;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -8,21 +10,21 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.persistence.CuentaCreditosMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EmisionTokensMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.MovimientoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.TenenciaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.TransaccionConfirmadaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.CuentaCreditosMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EmisionTokensMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.TenenciaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.TenenciaMercadoId;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketSaleSettlement;
-import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketSalePersistenceServiceImpl;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketSalePersistenceService;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CuentaCreditosMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EmisionTokensMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.MovimientoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TenenciaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CuentaCreditosMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EmisionTokensMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoId;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleSettlement;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketSalePersistenceServiceImpl;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSalePersistenceService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -86,8 +88,8 @@ class MarketSalePersistenceServiceTest {
         assertThat(emision.getCantidadInventario()).isEqualTo(94L);
         assertThat(tenencia.getQuantity()).isEqualTo(6L);
         assertThat(tenencia.getCostoAdquisicion()).isEqualByComparingTo("9.00000000");
-        ArgumentCaptor<com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity> transaction =
-                ArgumentCaptor.forClass(com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity.class);
+        ArgumentCaptor<com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity> transaction =
+                ArgumentCaptor.forClass(com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity.class);
         verify(transacciones).save(transaction.capture());
         assertThat(transaction.getValue().getTipoOperacion()).isEqualTo("SALE");
         assertThat(transaction.getValue().getPnlRealizado()).isEqualByComparingTo("2.00000000");
@@ -101,8 +103,8 @@ class MarketSalePersistenceServiceTest {
 
         assertThat(tenencia.getQuantity()).isEqualTo(6L);
         assertThat(tenencia.getCostoAdquisicion()).isEqualByComparingTo("9.00000000");
-        ArgumentCaptor<com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity> transaction =
-                ArgumentCaptor.forClass(com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity.class);
+        ArgumentCaptor<com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity> transaction =
+                ArgumentCaptor.forClass(com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity.class);
         verify(transacciones).save(transaction.capture());
         assertThat(transaction.getValue().getPnlRealizado()).isEqualByComparingTo("-2.00000000");
     }
@@ -131,8 +133,8 @@ class MarketSalePersistenceServiceTest {
 
         assertThat(tenencia.getQuantity()).isEqualTo(2L);
         assertThat(tenencia.getCostoAdquisicion()).isEqualByComparingTo("4.00000000");
-        ArgumentCaptor<com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity> transaction =
-                ArgumentCaptor.forClass(com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity.class);
+        ArgumentCaptor<com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity> transaction =
+                ArgumentCaptor.forClass(com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity.class);
         verify(transacciones).save(transaction.capture());
         assertThat(transaction.getValue().getPnlRealizado()).isEqualByComparingTo("0.00000000");
     }
@@ -150,8 +152,8 @@ class MarketSalePersistenceServiceTest {
 
         assertThat(tenencia.getQuantity()).isEqualTo(2L);
         assertThat(tenencia.getCostoAdquisicion()).isEqualByComparingTo("0.66666667");
-        ArgumentCaptor<com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity> transaction =
-                ArgumentCaptor.forClass(com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity.class);
+        ArgumentCaptor<com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity> transaction =
+                ArgumentCaptor.forClass(com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity.class);
         verify(transacciones).save(transaction.capture());
         assertThat(transaction.getValue().getPnlRealizado()).isEqualByComparingTo("0.66666667");
         BigDecimal costoVendido = new BigDecimal("1.00")
@@ -175,8 +177,8 @@ class MarketSalePersistenceServiceTest {
 
         assertThat(tenencia.getQuantity()).isZero();
         assertThat(tenencia.getCostoAdquisicion()).isEqualByComparingTo("0.00000000");
-        ArgumentCaptor<com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity> transactions =
-                ArgumentCaptor.forClass(com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity.class);
+        ArgumentCaptor<com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity> transactions =
+                ArgumentCaptor.forClass(com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity.class);
         verify(transacciones, times(3)).save(transactions.capture());
         assertThat(transactions.getAllValues().get(0).getPnlRealizado())
                 .isEqualByComparingTo("0.66666667");
@@ -185,7 +187,7 @@ class MarketSalePersistenceServiceTest {
         assertThat(transactions.getAllValues().get(2).getPnlRealizado())
                 .isEqualByComparingTo("0.66666667");
         BigDecimal realizedPnl = transactions.getAllValues().stream()
-                .map(com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity::getPnlRealizado)
+                .map(com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity::getPnlRealizado)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         assertThat(realizedPnl).isEqualByComparingTo("2.00000000");
     }

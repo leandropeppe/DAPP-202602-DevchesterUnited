@@ -1,4 +1,7 @@
-package com.devchesterunited.devchesterunitedv2.modelo;
+package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.EstadoEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
 
 import java.time.Instant;
 import java.time.LocalDate;

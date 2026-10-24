@@ -1,9 +1,10 @@
-package com.devchesterunited.devchesterunitedv2.modelo;
+package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+import com.devchesterunited.devchesterunitedv2.modelo.market.TokenQuantity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.devchesterunited.devchesterunitedv2.modelo.exception.CantidadTokenInvalidaException;
+import com.devchesterunited.devchesterunitedv2.exception.CantidadTokenInvalidaException;
 import org.junit.jupiter.api.Test;
 
 class TokenQuantityTest {

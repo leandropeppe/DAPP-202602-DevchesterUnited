@@ -1,17 +1,18 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketIdempotencyParameterHasher;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketOperationExecutionLock;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyParameterHasher;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketOperationExecutionLock;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;

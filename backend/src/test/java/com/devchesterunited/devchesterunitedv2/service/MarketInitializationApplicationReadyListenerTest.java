@@ -3,8 +3,8 @@ package com.devchesterunited.devchesterunitedv2.service;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
-import com.devchesterunited.devchesterunitedv2.configuration.MarketInitializationApplicationReadyListener;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketInitializationService;
+import com.devchesterunited.devchesterunitedv2.configuration.market.MarketInitializationApplicationReadyListener;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketInitializationService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.context.event.ApplicationReadyEvent;

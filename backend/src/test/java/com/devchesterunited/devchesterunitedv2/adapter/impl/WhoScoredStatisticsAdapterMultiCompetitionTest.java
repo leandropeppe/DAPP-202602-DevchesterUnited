@@ -1,11 +1,12 @@
-package com.devchesterunited.devchesterunitedv2.adapter.impl;
+package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsAdapter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.devchesterunited.devchesterunitedv2.adapter.WebDriverFactory;
-import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsConfiguration;
-import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsConfiguration.CompetitionParameters;
-import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsException;
-import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WebDriverFactory;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsConfiguration;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsConfiguration.CompetitionParameters;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsException;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;

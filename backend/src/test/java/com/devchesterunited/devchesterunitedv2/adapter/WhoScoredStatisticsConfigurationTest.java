@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.adapter;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsConfiguration;
 
-import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

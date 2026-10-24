@@ -3,12 +3,12 @@ package com.devchesterunited.devchesterunitedv2.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-import com.devchesterunited.devchesterunitedv2.service.dto.QuotePublicationRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteValidityStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteVersion;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.QuotePublicationPort;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;

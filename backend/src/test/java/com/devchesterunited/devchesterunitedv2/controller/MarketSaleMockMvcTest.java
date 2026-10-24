@@ -11,11 +11,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketSaleRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketSaleResult;
-import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketSaleService;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleResult;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;

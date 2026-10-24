@@ -1,8 +1,9 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncStagingEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncStagingEntity;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 

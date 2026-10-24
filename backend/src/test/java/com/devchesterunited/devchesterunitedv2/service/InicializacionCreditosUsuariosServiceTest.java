@@ -4,9 +4,9 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.persistence.UsuarioRepository;
-import com.devchesterunited.devchesterunitedv2.service.impl.AsignacionCreditosInicialesService;
-import com.devchesterunited.devchesterunitedv2.service.impl.InicializacionCreditosUsuariosService;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.AsignacionCreditosInicialesService;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.InicializacionCreditosUsuariosService;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

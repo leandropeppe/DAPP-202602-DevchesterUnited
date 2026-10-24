@@ -1,7 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.persistence.mapper;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.mapper.JugadorMapper;
 
-import com.devchesterunited.devchesterunitedv2.modelo.Jugador;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

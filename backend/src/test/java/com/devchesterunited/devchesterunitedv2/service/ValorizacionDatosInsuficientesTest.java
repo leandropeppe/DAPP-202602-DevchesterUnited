@@ -1,4 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.service;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.JugadorEstadistico;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MotorValorizacion;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -7,16 +9,16 @@ import org.mockito.ArgumentCaptor;
 
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ConfiguracionElegibilidad;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaGeneralV1;
-import com.devchesterunited.devchesterunitedv2.persistence.CotizacionActualEstrategiaRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EjecucionValorizacionRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.HistoricoCotizacionEstrategiaRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.ResultadoElegibilidadValorizacionRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EjecucionValorizacionEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.ResultadoElegibilidadValorizacionEntity;
-import com.devchesterunited.devchesterunitedv2.service.config.EstrategiasIniciales;
-import com.devchesterunited.devchesterunitedv2.service.dto.SnapshotEstadistico;
-import com.devchesterunited.devchesterunitedv2.service.impl.SnapshotEstadisticoService;
-import com.devchesterunited.devchesterunitedv2.service.impl.ValorizacionJugadorServiceImpl;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.CotizacionActualEstrategiaRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EjecucionValorizacionRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.HistoricoCotizacionEstrategiaRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.ResultadoElegibilidadValorizacionRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EjecucionValorizacionEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.ResultadoElegibilidadValorizacionEntity;
+import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.EstrategiasIniciales;
+import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SnapshotEstadistico;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SnapshotEstadisticoService;
+import com.devchesterunited.devchesterunitedv2.service.impl.valorizacion.ValorizacionJugadorServiceImpl;
 import com.devchesterunited.devchesterunitedv2.valorizacion.ValorizacionFixtures;
 import java.math.BigDecimal;
 import java.time.Clock;

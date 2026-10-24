@@ -1,8 +1,10 @@
 package com.devchesterunited.devchesterunitedv2.controller;
+import com.devchesterunited.devchesterunitedv2.controller.equipo.CatalogoController;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
 
-import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEnCursoException;
-import com.devchesterunited.devchesterunitedv2.service.impl.SincronizacionResultado;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionCatalogoService;
+import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SincronizacionResultado;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.estadisticas.SincronizacionCatalogoService;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,9 +45,9 @@ class CatalogoControllerTest {
         doThrow(new SincronizacionEnCursoException()).when(servicio).sincronizar();
         assertThatThrownBy(() -> controller.sincronizar(USUARIO, null)).isInstanceOf(SincronizacionEnCursoException.class);
         reset(servicio);
-        doThrow(new com.devchesterunited.devchesterunitedv2.adapter.FootballDataException("interno"))
+        doThrow(new com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException("interno"))
                 .when(servicio).sincronizar();
         assertThatThrownBy(() -> controller.sincronizar(USUARIO, null))
-                .isInstanceOf(com.devchesterunited.devchesterunitedv2.adapter.FootballDataException.class);
+                .isInstanceOf(com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException.class);
     }
 }

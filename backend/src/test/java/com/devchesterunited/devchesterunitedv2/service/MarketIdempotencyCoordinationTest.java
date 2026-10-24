@@ -6,11 +6,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.persistence.SolicitudIdempotenciaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketIdempotencyServiceImpl;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketOperationExecutionLock;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyServiceImpl;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketOperationExecutionLock;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;

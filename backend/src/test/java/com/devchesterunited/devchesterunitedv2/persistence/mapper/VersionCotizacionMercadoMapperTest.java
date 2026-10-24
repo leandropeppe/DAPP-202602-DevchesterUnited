@@ -1,12 +1,13 @@
 package com.devchesterunited.devchesterunitedv2.persistence.mapper;
+import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.devchesterunited.devchesterunitedv2.persistence.dto.VersionCotizacionMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.VersionCotizacionMercadoId;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteValidityStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;

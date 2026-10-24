@@ -1,10 +1,10 @@
 package com.devchesterunited.devchesterunitedv2.valorizacion;
 
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasDefensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasGenerales;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasOfensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasPases;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefensivas;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.JugadorEstadistico;
 import java.math.BigDecimal;
 import java.util.UUID;

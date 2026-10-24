@@ -1,27 +1,30 @@
 package com.devchesterunited.devchesterunitedv2.service;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
 
-import com.devchesterunited.devchesterunitedv2.adapter.ProveedorEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync;
-import com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasJugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasSyncRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasSyncStagingRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasJugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaJugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionEstadisticasEnCursoException;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionEstadisticasJugadorService;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.EstadoEstadisticasSync;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasJugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncStagingRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.IdentidadExternaJugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.IdentidadExternaJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEstadisticasEnCursoException;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.estadisticas.SincronizacionEstadisticasJugadorService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -144,7 +147,7 @@ class SincronizacionEstadisticasConcurrenciaIntegrationTest extends PostgresTest
                 ProveedorIdentidadExterna.WHOSCORED, 99001L));
         UUID baseline = UUID.randomUUID();
         syncIds.add(baseline);
-        ejecuciones.save(new com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncEntity(
+        ejecuciones.save(new com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncEntity(
                 baseline, EstadoEstadisticasSync.PUBLICADA, now));
         estadisticas.save(new EstadisticasJugadorEntity(EstadisticasJugadorEntity.Creacion.builder()
                 .id(UUID.randomUUID()).jugadorId(jugadorId).posicion("Forward").minutosJugados(80)
@@ -153,15 +156,15 @@ class SincronizacionEstadisticasConcurrenciaIntegrationTest extends PostgresTest
                 .tarjetasAmarillas(0).tarjetasRojas(0).syncId(baseline).creadoEn(now).actualizadoEn(now)));
     }
 
-    private com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador snapshot(
+    private com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador snapshot(
             CompeticionEstadistica competicion) {
         var registro = new RegistroEstadisticasJugador(
                 new IdentidadEstadisticaJugador(99001L, "Concurrent Player", "Forward", "Argentina",
                         88001L, "Concurrent FC"),
-                com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.GENERAL,
+                com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica.GENERAL,
                 new MetricasEstadisticasJugador(100, 2, 2, BigDecimal.ONE, BigDecimal.ONE,
                         BigDecimal.ONE, BigDecimal.ONE, BigDecimal.valueOf(7), 0, 0));
-        return new com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador(
+        return new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador(
                 competicion, java.util.List.of(registro));
     }
 }

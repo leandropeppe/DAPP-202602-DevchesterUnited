@@ -2,7 +2,7 @@ package com.devchesterunited.devchesterunitedv2.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasJugadorEntity;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;

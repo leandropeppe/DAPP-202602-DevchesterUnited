@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.controller;
+import com.devchesterunited.devchesterunitedv2.controller.market.MarketController;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -8,19 +9,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.devchesterunited.devchesterunitedv2.configuration.SecurityConfig;
-import com.devchesterunited.devchesterunitedv2.configuration.SecurityErrorHandler;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketPortfolioPosition;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketPortfolioQuote;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketPortfolioResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketQuoteAvailability;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketAvailabilityService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketBalanceService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPortfolioService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPurchaseService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketSaleService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketTransactionService;
+import com.devchesterunited.devchesterunitedv2.configuration.security.SecurityConfig;
+import com.devchesterunited.devchesterunitedv2.configuration.security.SecurityErrorHandler;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioPosition;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioQuote;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketQuoteAvailability;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketAvailabilityService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketBalanceService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPortfolioService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketTransactionService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;

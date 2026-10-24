@@ -1,6 +1,7 @@
-package com.devchesterunited.devchesterunitedv2.modelo;
+package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+import com.devchesterunited.devchesterunitedv2.modelo.auth.APIKey;
 
-import com.devchesterunited.devchesterunitedv2.modelo.exception.ApiKeyException;
+import com.devchesterunited.devchesterunitedv2.exception.ApiKeyException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;

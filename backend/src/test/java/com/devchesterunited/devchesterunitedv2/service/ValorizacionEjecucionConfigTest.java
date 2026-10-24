@@ -3,7 +3,7 @@ package com.devchesterunited.devchesterunitedv2.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.devchesterunited.devchesterunitedv2.service.config.ValorizacionEjecucionConfig;
+import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionEjecucionConfig;
 import org.junit.jupiter.api.Test;
 
 class ValorizacionEjecucionConfigTest {

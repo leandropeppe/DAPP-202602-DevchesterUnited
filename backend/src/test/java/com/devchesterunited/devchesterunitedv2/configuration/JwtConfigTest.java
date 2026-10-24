@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.configuration;
+import com.devchesterunited.devchesterunitedv2.configuration.security.JwtConfig;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;

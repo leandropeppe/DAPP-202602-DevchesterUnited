@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.service;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -7,20 +8,20 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.persistence.CabeceraCotizacionMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.VersionCotizacionMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.CabeceraCotizacionMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.VersionCotizacionMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.VersionCotizacionMercadoId;
-import com.devchesterunited.devchesterunitedv2.persistence.mapper.VersionCotizacionMercadoMapper;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuotePublicationRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteValidityStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteVersion;
-import com.devchesterunited.devchesterunitedv2.service.impl.QuotePublicationService;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CabeceraCotizacionMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
+import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.QuotePublicationService;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -168,7 +169,7 @@ class QuotePublicationServiceTest {
 
         assertThatThrownBy(() -> service.invalidate(
                 new QuoteInvalidationRequest(PLAYER_ID, QUOTE_ID, 1L, "obsolete")))
-                .isInstanceOf(com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException.class);
+                .isInstanceOf(com.devchesterunited.devchesterunitedv2.exception.TokenMarketException.class);
         verify(cabeceras, never()).saveAndFlush(any());
     }
 
@@ -184,7 +185,7 @@ class QuotePublicationServiceTest {
 
         assertThatThrownBy(() -> service.invalidate(
                 new QuoteInvalidationRequest(PLAYER_ID, QUOTE_ID, 1L, "expired")))
-                .isInstanceOf(com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException.class);
+                .isInstanceOf(com.devchesterunited.devchesterunitedv2.exception.TokenMarketException.class);
         verify(cabeceras, never()).saveAndFlush(any());
     }
 

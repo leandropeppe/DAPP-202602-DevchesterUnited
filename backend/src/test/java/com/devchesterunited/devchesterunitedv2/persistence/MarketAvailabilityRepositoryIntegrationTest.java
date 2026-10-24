@@ -3,8 +3,8 @@ package com.devchesterunited.devchesterunitedv2.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketQuoteAvailability;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketAvailabilityServiceImpl;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketQuoteAvailability;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketAvailabilityServiceImpl;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;

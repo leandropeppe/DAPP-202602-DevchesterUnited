@@ -1,11 +1,13 @@
 package com.devchesterunited.devchesterunitedv2.controller.dto;
+import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPortfolioResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPortfolioPositionResponseDTO;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketPortfolioPosition;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketPortfolioQuote;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketPortfolioResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketQuoteAvailability;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioPosition;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioQuote;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketQuoteAvailability;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.Instant;

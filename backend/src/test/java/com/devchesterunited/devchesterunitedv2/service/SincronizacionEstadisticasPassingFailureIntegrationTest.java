@@ -2,7 +2,7 @@ package com.devchesterunited.devchesterunitedv2.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.devchesterunited.devchesterunitedv2.service.exception.EstadisticasProveedorException;
+import com.devchesterunited.devchesterunitedv2.exception.EstadisticasProveedorException;
 import org.junit.jupiter.api.Test;
 
 class SincronizacionEstadisticasPassingFailureIntegrationTest {

@@ -1,4 +1,5 @@
-package com.devchesterunited.devchesterunitedv2.diagnostico;
+package com.devchesterunited.devchesterunitedv2.scraping.catalogo;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredTeamEnrollmentApprovedCsv;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

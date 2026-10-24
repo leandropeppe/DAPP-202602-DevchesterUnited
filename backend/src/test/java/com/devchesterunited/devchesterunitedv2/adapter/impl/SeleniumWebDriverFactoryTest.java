@@ -1,4 +1,5 @@
-package com.devchesterunited.devchesterunitedv2.adapter.impl;
+package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.SeleniumWebDriverFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

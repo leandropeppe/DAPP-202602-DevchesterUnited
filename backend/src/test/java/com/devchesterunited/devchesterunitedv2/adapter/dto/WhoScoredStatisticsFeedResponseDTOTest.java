@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.adapter.dto;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsFeedResponseDTO;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;

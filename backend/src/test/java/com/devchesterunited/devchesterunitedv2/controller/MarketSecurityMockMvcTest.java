@@ -10,12 +10,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.modelo.EstadoMercado;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketAvailabilityResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketBalanceResult;
-import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketAvailabilityService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketBalanceService;
+import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketAvailabilityResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketBalanceResult;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketAvailabilityService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketBalanceService;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;

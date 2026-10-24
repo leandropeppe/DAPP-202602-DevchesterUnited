@@ -1,28 +1,33 @@
 package com.devchesterunited.devchesterunitedv2.service;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
 
-import com.devchesterunited.devchesterunitedv2.adapter.ProveedorEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsException;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsException;
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.modelo.EstadoEstadisticasSync;
-import com.devchesterunited.devchesterunitedv2.modelo.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.persistence.EquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasJugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasSyncRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadisticasSyncStagingRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasJugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadisticasSyncStagingEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.IdentidadExternaEquipoEntity;
-import com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.service.impl.EstadisticasPromocionService;
-import com.devchesterunited.devchesterunitedv2.service.impl.IdentidadEquipoResolver;
-import com.devchesterunited.devchesterunitedv2.service.impl.IdentidadJugadorResolver;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.SincronizacionEstadisticasJugadorService;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.EstadoEstadisticasSync;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasJugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncStagingRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.IdentidadExternaJugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncStagingEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.EstadisticasPromocionService;
+import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadEquipoResolver;
+import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadJugadorResolver;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.estadisticas.SincronizacionEstadisticasJugadorService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -177,10 +182,10 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
 
         assertThat(estadisticas.findByJugadorId(jugador.getId()).orElseThrow().getSyncId()).isEqualTo(anterior);
         assertThat(identidadesEquipos.findByProveedorAndExternalId(
-                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 88001L))
+                com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna.WHOSCORED, 88001L))
                 .isEmpty();
         assertThat(identidadesJugadores.findByProveedorAndExternalId(
-                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 99001L))
+                com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna.WHOSCORED, 99001L))
                 .isEmpty();
         assertThat(ejecuciones.findById(syncId).orElseThrow().getEstado())
                 .isEqualTo(EstadoEstadisticasSync.VALIDADA);
@@ -210,32 +215,32 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         doReturn(
                 java.util.Arrays.stream(CompeticionEstadistica.values()).map(competicion -> {
                     if (competicion != CompeticionEstadistica.PREMIER_LEAGUE) {
-                        return new com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador(
+                        return new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador(
                                 competicion, java.util.List.of());
                     }
-                    return new com.devchesterunited.devchesterunitedv2.modelo.SnapshotEstadisticasJugador(
+                    return new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador(
                             competicion, java.util.List.of(
-                                    new com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador(
-                                            new com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador(
+                                    new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador(
+                                            new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador(
                                                     99101L, "Service Atomic Player", "Forward", "Argentina",
                                                     88101L, "Service Atomic FC"),
-                                            com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.GENERAL,
-                                            new com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador(
+                                            com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica.GENERAL,
+                                            new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador(
                                                     101, 2, 2, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
                                                     BigDecimal.ONE, BigDecimal.valueOf(8), 0, 0)),
-                                    new com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador(
-                                            new com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador(
+                                    new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador(
+                                            new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador(
                                                     99101L, "Service Atomic Player", "Forward", "Argentina",
                                                     88101L, "Service Atomic FC"),
-                                            com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.OFENSIVA,
-                                            new com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador(
+                                            com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica.OFENSIVA,
+                                            new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador(
                                                     null, null, null, null, BigDecimal.ONE, BigDecimal.ONE, null, null, null, null)),
-                                    new com.devchesterunited.devchesterunitedv2.modelo.RegistroEstadisticasJugador(
-                                            new com.devchesterunited.devchesterunitedv2.modelo.IdentidadEstadisticaJugador(
+                                    new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador(
+                                            new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador(
                                                     99101L, "Service Atomic Player", "Forward", "Argentina",
                                                     88101L, "Service Atomic FC"),
-                                            com.devchesterunited.devchesterunitedv2.modelo.FamiliaEstadistica.DEFENSIVA,
-                                            new com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador(
+                                            com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica.DEFENSIVA,
+                                            new com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador(
                                                     null, null, null, null, null, null, BigDecimal.ONE, null, null, null))));
                 }).toList()).when(proveedor).obtenerSnapshots(any());
         doThrow(new IllegalStateException("fallo controlado durante promoción")).when(estadisticas)
@@ -246,10 +251,10 @@ class SincronizacionEstadisticasAtomicidadIntegrationTest extends PostgresTestSu
         assertThat(estadisticas.findByJugadorId(jugador.getId()).orElseThrow().getSyncId()).isEqualTo(anterior);
         assertThat(estadisticas.findByJugadorId(jugador.getId()).orElseThrow().getMinutosJugados()).isEqualTo(77);
         assertThat(identidadesEquipos.findByProveedorAndExternalId(
-                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 88101L))
+                com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna.WHOSCORED, 88101L))
                 .isPresent();
         assertThat(identidadesJugadores.findByProveedorAndExternalId(
-                com.devchesterunited.devchesterunitedv2.modelo.ProveedorIdentidadExterna.WHOSCORED, 99101L))
+                com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna.WHOSCORED, 99101L))
                 .isEmpty();
         var fallida = ejecuciones.findAllByEstado(EstadoEstadisticasSync.FALLIDA).stream()
                 .filter(e -> !fallidasAntes.contains(e.getId())).findFirst().orElseThrow();

@@ -3,11 +3,11 @@ package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasDefensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasGenerales;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasOfensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasPases;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefensivas;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;

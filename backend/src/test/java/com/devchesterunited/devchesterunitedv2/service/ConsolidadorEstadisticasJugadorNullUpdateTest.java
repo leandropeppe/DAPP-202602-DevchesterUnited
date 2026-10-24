@@ -2,12 +2,12 @@ package com.devchesterunited.devchesterunitedv2.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasDefensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasGenerales;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasOfensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasPases;
-import com.devchesterunited.devchesterunitedv2.service.impl.ConsolidadorEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefensivas;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.ConsolidadorEstadisticasJugador;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 

@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.service.impl;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketOperationExecutionLock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

@@ -1,11 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.persistence;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.UsuarioEntity;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketRejectedAttempt;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketRejectionFinalizationService;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketRejectedAttempt;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketRejectionFinalizationService;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;

@@ -1,4 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.service.impl;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.EstadisticasSyncLock;
 
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;

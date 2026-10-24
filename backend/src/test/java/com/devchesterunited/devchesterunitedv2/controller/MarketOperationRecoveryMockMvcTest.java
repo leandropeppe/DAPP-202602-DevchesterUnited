@@ -10,10 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.devchesterunited.devchesterunitedv2.configuration.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyRejectionFinalizationPort;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyRejectionFinalizationPort;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;

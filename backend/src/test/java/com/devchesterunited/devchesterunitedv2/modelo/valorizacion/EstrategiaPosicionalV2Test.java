@@ -6,11 +6,11 @@ import com.devchesterunited.devchesterunitedv2.valorizacion.ValorizacionFixtures
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasDefensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasGenerales;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasOfensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasPases;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefensivas;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
 import org.junit.jupiter.api.Test;
 
 class EstrategiaPosicionalV2Test {

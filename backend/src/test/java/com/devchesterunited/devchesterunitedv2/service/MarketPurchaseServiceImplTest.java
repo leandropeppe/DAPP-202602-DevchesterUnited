@@ -1,31 +1,33 @@
 package com.devchesterunited.devchesterunitedv2.service;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import com.devchesterunited.devchesterunitedv2.persistence.CabeceraCotizacionMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.ContraparteMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.EstadoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.TransaccionConfirmadaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.CabeceraCotizacionMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.ContraparteMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.EstadoMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.dto.TransaccionConfirmadaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyClaim;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteValidityStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.QuoteVersion;
-import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketIdempotencyParameterHasher;
-import com.devchesterunited.devchesterunitedv2.service.impl.MarketPurchaseServiceImpl;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketIdempotencyService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPurchasePersistenceService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.MarketQuoteValidationService;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CabeceraCotizacionMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.ContraparteMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EstadoMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyClaim;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyParameterHasher;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketPurchaseServiceImpl;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchasePersistenceService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketQuoteValidationService;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -71,7 +73,7 @@ class MarketPurchaseServiceImplTest extends MarketPurchaseServiceContractTest {
     }
 
     @Override
-    protected com.devchesterunited.devchesterunitedv2.service.interfaces.MarketPurchaseService service() {
+    protected com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService service() {
         return service;
     }
 

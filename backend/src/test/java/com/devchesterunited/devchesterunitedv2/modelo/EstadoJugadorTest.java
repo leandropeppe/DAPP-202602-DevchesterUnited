@@ -1,6 +1,7 @@
-package com.devchesterunited.devchesterunitedv2.modelo;
+package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.EstadoJugador;
 
-import com.devchesterunited.devchesterunitedv2.modelo.exception.JugadorException;
+import com.devchesterunited.devchesterunitedv2.exception.JugadorException;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
