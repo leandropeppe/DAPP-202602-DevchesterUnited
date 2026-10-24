@@ -193,3 +193,57 @@ export const getPlayerValuationHistory = (
       params.toString()
   )
 }
+
+function marketQuery (filters = {}, allowedNames = null) {
+  const params = new URLSearchParams()
+
+  for (const [name, value] of Object.entries(filters)) {
+    if (allowedNames && !allowedNames.includes(name)) continue
+    if (value !== undefined && value !== null && value !== '') {
+      params.set(name, value)
+    }
+  }
+
+  const query = params.toString()
+  return query ? '?' + query : ''
+}
+
+export const getMarketBalance = (jwt) => request('/market/balance', { jwt })
+
+export const getMarketPlayers = ({ filters = {}, jwt } = {}) => request(
+  '/market/players' + marketQuery(filters),
+  { jwt }
+)
+
+export const purchaseMarketTokens = ({ body, idempotencyKey, jwt } = {}) => request(
+  '/market/purchases',
+  {
+    method: 'POST',
+    body,
+    jwt,
+    headers: { 'Idempotency-Key': idempotencyKey }
+  }
+)
+
+export const sellMarketTokens = ({ body, idempotencyKey, jwt } = {}) => request(
+  '/market/sales',
+  {
+    method: 'POST',
+    body,
+    jwt,
+    headers: { 'Idempotency-Key': idempotencyKey }
+  }
+)
+
+export const getMarketOperation = (idempotencyKey, jwt) => request(
+  '/market/operations/' + encodeURIComponent(idempotencyKey),
+  { jwt }
+)
+
+export const getMarketPortfolio = (jwt) => request('/market/portfolio', { jwt })
+
+export const getMarketTransactions = ({ filters = {}, jwt } = {}) => request(
+  '/market/transactions' + marketQuery(filters,
+    ['playerId', 'type', 'from', 'to', 'page', 'limit']),
+  { jwt }
+)

@@ -32,6 +32,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(access -> {
                     access.requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll();
                     access.requestMatchers(HttpMethod.POST, "/api/v1/auth/apikey").authenticated();
+                    access.requestMatchers(HttpMethod.GET, "/api/v1/market/balance", "/api/v1/market/players",
+                            "/api/v1/market/operations/**", "/api/v1/market/portfolio",
+                            "/api/v1/market/transactions")
+                            .authenticated();
+                    access.requestMatchers(HttpMethod.POST, "/api/v1/market/purchases")
+                            .authenticated();
+                    access.requestMatchers(HttpMethod.POST, "/api/v1/market/sales")
+                            .authenticated();
                     access.requestMatchers(HttpMethod.GET, "/api/v1/players", "/api/v1/players/**").permitAll();
                     access.requestMatchers(HttpMethod.POST, "/api/v1/catalog/sync").hasAuthority("API_KEY");
                     access.requestMatchers(HttpMethod.POST, "/api/v1/quotes/recalculate").hasAuthority("API_KEY");

@@ -1,0 +1,57 @@
+package com.devchesterunited.devchesterunitedv2.service.impl;
+
+import com.devchesterunited.devchesterunitedv2.service.dto.MarketIdempotencyRequest;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
+import java.util.UUID;
+
+/** Calcula la huella estable de los parametros funcionales de una operacion. */
+public final class MarketIdempotencyParameterHasher {
+    private MarketIdempotencyParameterHasher() { }
+
+    public static String hash(MarketIdempotencyRequest request) {
+        String canonical = field(normalizeOperation(request.tipoOperacion()))
+                + field(normalizeUuid(request.jugadorId()))
+                + field(normalizePositive(request.cantidad(), "cantidad"))
+                + field(normalizeUuid(request.cotizacionId()))
+                + field(normalizePositive(request.versionCotizacion(), "versionCotizacion"));
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(canonical.getBytes(StandardCharsets.UTF_8));
+            StringBuilder result = new StringBuilder(digest.length * 2);
+            for (byte value : digest) {
+                result.append(String.format(Locale.ROOT, "%02x", value));
+            }
+            return result.toString();
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 no esta disponible en la JVM.", exception);
+        }
+    }
+
+    private static String field(String value) {
+        return value.length() + ":" + value + "|";
+    }
+
+    private static String normalizeOperation(String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("tipoOperacion es obligatorio.");
+        }
+        return value.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private static String normalizeUuid(UUID value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Los identificadores son obligatorios.");
+        }
+        return value.toString().toLowerCase(Locale.ROOT);
+    }
+
+    private static String normalizePositive(Number value, String name) {
+        if (value == null || value.longValue() <= 0) {
+            throw new IllegalArgumentException(name + " debe ser positivo.");
+        }
+        return Long.toString(value.longValue());
+    }
+}

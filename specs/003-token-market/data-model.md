@@ -10,7 +10,7 @@ Este es un diseño conceptual de persistencia para Plan. Los nombres son descrip
 | Contraparte interna del mercado | Identidad de superusuario protegida | Exactamente un singleton de tipo `SUPERUSER`; sin credenciales públicas ni login; referenciado por movimientos/historial. |
 | Cuenta de créditos | Saldo de un usuario o de la contraparte | Propietario único; saldo no negativo; asignación inicial del usuario y reserva inicial son efectos de una sola vez. |
 | Emisión/inventario de tokens | Emisión inicial de 100 tokens para cada jugador elegible | Una fila por jugador estable; exactamente 100 emitidos; propietario inicial superusuario; una emisión única impide duplicar por reactivación. |
-| Referencia de cotización/versión | Precio versionado publicado bajo el contrato compartido | Versión inmutable; jugador, identidad de cotización, precio, publicación, vigencia y referencia opcional de estrategia; cabecera actual coordinada por jugador. |
+| Referencia de cotización/versión | Precio versionado publicado bajo el contrato compartido | Versión inmutable; jugador, identidad de cotización, precio, publicación, vigencia y referencia opcional de estrategia; cabecera actual coordinada por jugador, con estado operativo `VALID`/`INVALIDATED`, instante y motivo durable de invalidación. |
 | Tenencia | Tokens actuales y costo de adquisición del usuario para un jugador | `(user, player)` único; cantidad entera >= 0; costo con precisión interna; tenencia cerrada con cantidad y costo residual en cero. |
 | Solicitud idempotente | Reclamación y resultado durable de una operación | `(user, key)` único; hash de parámetros normalizados; estado, token de ejecución y referencia de respuesta/resultado almacenado; sin secretos. |
 | Transacción confirmada | Compra o venta exitosa inmutable | Referencias estables de usuario/jugador más snapshot del nombre, cantidad, precio, total, contraparte, versión de cotización, referencia de idempotencia, fecha y P/L realizado cuando corresponda. |
@@ -40,7 +40,13 @@ Este es un diseño conceptual de persistencia para Plan. Los nombres son descrip
 
 ## Inicialización y transiciones de estado
 
+La fila singleton comienza en `epoch = 1`. Cada transición persistida incrementa
+`epoch` exactamente una vez; las transiciones a `INITIALIZING` y `FAILED` también
+cuentan. Los reintentos continúan desde la época persistida y nunca la reinician.
+
 Un coordinador interno de inicio de la aplicación invoca la inicialización; no se utiliza endpoint público. La fila del estado singleton se bloquea con `FOR UPDATE` mientras el coordinador pasa a `INITIALIZING`, verifica el único superusuario y su reserva inicial configurable, asigna créditos a usuarios existentes mediante un marcador inicial único, emite exactamente 100 tokens para cada jugador elegible y publica la cotización inicial mediante el port compartido de publicación. Un fallo deja el estado en `FAILED`; un reintento reanuda los pasos faltantes y puede llegar a `READY` solo después de completar todos los pasos obligatorios. Las asignaciones, emisiones y cotizaciones válidas existentes nunca se restablecen ni duplican.
+
+Para el bootstrap de la contraparte `SUPERUSER`, una cuenta inexistente se crea con la reserva inicial efectiva. Si la cuenta ya existe y `initial_reserve_initialized` tiene valor, se conservan tanto su saldo como la reserva registrada. Si la cuenta existe pero `initial_reserve_initialized` es `NULL`, el estado se considera inconsistente: el bootstrap debe rechazarse explícitamente, sin modificar el saldo ni registrar una reserva ficticia. No se crean movimientos artificiales de financiación; el mercado no puede avanzar a `READY` por este caso.
 
 El registro invoca un hook interno de asignación idempotente utilizando el mismo marcador único para el nuevo usuario. El usuario puede persistirse independientemente de una inicialización fallida, pero no puede operar en el mercado hasta que exista su cuenta/asignación de 1.000 créditos. La activación de un jugador inicialmente inactivo ejecuta el mismo flujo de emisión única. La reactivación encuentra la emisión existente y no crea otra de 100 tokens.
 

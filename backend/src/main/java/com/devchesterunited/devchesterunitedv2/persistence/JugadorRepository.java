@@ -2,8 +2,12 @@ package com.devchesterunited.devchesterunitedv2.persistence;
 
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorCatalogoProjection;
+import com.devchesterunited.devchesterunitedv2.persistence.dto.JugadorPortfolioProjection;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,8 +18,31 @@ import org.springframework.data.repository.query.Param;
  * No normaliza acentos ni invoca lógica del dominio.
  */
 public interface JugadorRepository extends JpaRepository<JugadorEntity, UUID> {
+    List<JugadorEntity> findAllByActivoTrueOrderByIdAsc();
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select jugador from JugadorEntity jugador where jugador.id = :id")
+    java.util.Optional<JugadorEntity> findByIdForUpdate(@Param("id") UUID id);
+
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("select jugador from JugadorEntity jugador where jugador.id = :id")
+    java.util.Optional<JugadorEntity> findByIdForRead(@Param("id") UUID id);
+
     java.util.List<JugadorEntity> findAllByEquipoId(UUID equipoId);
     java.util.List<JugadorEntity> findAllByEquipoIdAndActivoTrue(UUID equipoId);
+
+    /** Devuelve descripciÃ³n canÃ³nica en una sola consulta, incluyendo jugadores inactivos. */
+    @Query(value = """
+            SELECT j.id AS "playerId",
+                   j.name AS "playerName",
+                   e.name AS "team",
+                   e.league AS "league"
+            FROM jugadores j
+            LEFT JOIN equipos e ON e.id = j.team_id
+            WHERE j.id IN (:playerIds)
+            """, nativeQuery = true)
+    List<JugadorPortfolioProjection> findPortfolioDescriptions(
+            @Param("playerIds") Collection<UUID> playerIds);
     // Escapar primero ! para no volver a escapar los ! introducidos para % y _.
     // Los casts también permiten a PostgreSQL resolver el tipo de parámetros nulos.
     String FROM_Y_FILTROS = """

@@ -26,11 +26,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import java.sql.SQLException;
 import org.springframework.transaction.TransactionDefinition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class AutenticacionServiceImpl implements AutenticacionService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AutenticacionServiceImpl.class);
     private static final String MENSAJE_CREDENCIALES = "Nombre de usuario o contraseña incorrectos";
     private static final String MENSAJE_DUPLICADO = "El nombre de usuario o el correo electrónico ya está registrado.";
     private final UsuarioRepository repositorio;
@@ -38,17 +43,20 @@ public class AutenticacionServiceImpl implements AutenticacionService {
     private final PasswordEncoder codificador;
     private final JwtConfig jwtConfig;
     private final Clock clock;
+    private final AsignacionCreditosInicialesService asignacionesCreditos;
     private final SecureRandom secureRandom = new SecureRandom();
     private final TransactionTemplate transactionTemplate;
 
     public AutenticacionServiceImpl(UsuarioRepository repositorio, ApiKeyRepository apiKeyRepository,
             PasswordEncoder codificador, JwtConfig jwtConfig, Clock clock,
-            org.springframework.transaction.PlatformTransactionManager transactionManager) {
+            org.springframework.transaction.PlatformTransactionManager transactionManager,
+            AsignacionCreditosInicialesService asignacionesCreditos) {
         this.repositorio = repositorio;
         this.apiKeyRepository = apiKeyRepository;
         this.codificador = codificador;
         this.jwtConfig = jwtConfig;
         this.clock = clock;
+        this.asignacionesCreditos = asignacionesCreditos;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
     }
@@ -69,10 +77,25 @@ public class AutenticacionServiceImpl implements AutenticacionService {
         UsuarioEntity entidad = aEntidad(usuario);
         try {
             UsuarioEntity guardado = repositorio.saveAndFlush(entidad);
+            programarAsignacionTrasCommit(guardado.getId());
             return aRespuesta(aDominio(guardado));
         } catch (DataIntegrityViolationException conflicto) {
             throw new DataIntegrityViolationException(MENSAJE_DUPLICADO);
         }
+    }
+
+    private void programarAsignacionTrasCommit(UUID usuarioId) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    asignacionesCreditos.asignarParaUsuario(usuarioId);
+                } catch (RuntimeException fallo) {
+                    LOGGER.warn("No se pudo asignar el credito inicial al usuario {}; "
+                            + "el procesamiento idempotente posterior lo recuperara.", usuarioId, fallo);
+                }
+            }
+        });
     }
 
     @Override

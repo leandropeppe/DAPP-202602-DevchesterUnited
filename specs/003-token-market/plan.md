@@ -132,6 +132,44 @@ Los artefactos de diseño son:
 | Compatibilidad de contratos | PASS WITH COORDINATION | Las cotizaciones iniciales y dinámicas comparten un contrato; la publicación de Player Valuation y el orden de migraciones V15/V16 requieren coordinación. |
 | Capacidad de prueba | PASS | Se planificaron verificaciones PostgreSQL/Testcontainers y de seguridad/API/UI. |
 
+## Diseño de las mejoras de Portfolio, venta y gráficos
+
+Esta ampliacion mantiene las responsabilidades existentes: Token Market conserva operaciones, tenencias, historial y consumo de cotizaciones; Player Valuation sigue publicando precios; Player Statistics Sync sigue siendo responsable de estadisticas. No se agrega scraping, persistencia de estadisticas ni calculo de precios al mercado.
+
+### Contrato y enriquecimiento del Portfolio
+
+El backend extendera la respuesta existente de Portfolio con totales calculados sobre todas las posiciones abiertas: jugadores distintos, tokens totales, costo pendiente total y valor actual total. Los campos contables se calcularan en `MarketPortfolioServiceImpl` con la precision interna existente. Si una o mas posiciones no tienen cotizacion vigente, los totales dependientes de valuacion permaneceran null y `combined_result_complete` seguira siendo false.
+
+Las posiciones tambien incorporaran nombre canonico, equipo y liga cuando esten disponibles. El enriquecimiento debe resolverse en backend mediante una consulta batch/proyeccion sobre las fuentes canonicas de jugadores y equipos, evitando que React recorra paginas del catalogo o use snapshots del historial como identidad principal. `player_id` continuara siendo el identificador tecnico para operaciones.
+
+### Reutilizacion del flujo de venta
+
+Mercado conservara exclusivamente Comprar. Portfolio iniciara la venta reutilizando `MarketOperationPanel` y `sellMarketTokens`, sin duplicar validaciones ni formularios. El adaptador de una posicion usara `player_id`, `quote_id`, `quote_version` y `unit_price` solamente cuando `quote_availability` sea `CURRENT`. La cantidad visible sera `min(100, quantity)`; el backend continuara siendo la autoridad final sobre tenencia, vigencia, reserva, idempotencia y concurrencia.
+
+Una venta confirmada provocara la recarga del Portfolio. Los estados `PROCESSING` y `UNCERTAIN` no modificaran visualmente saldo o posiciones como si fueran confirmados; la recuperacion existente continuara disponible.
+
+### Decision de biblioteca grafica
+
+`frontend/package.json` no contiene actualmente una biblioteca de graficos. Se planifica utilizar Recharts para dona, barras agrupadas y actividad temporal, sujeto a confirmar una version compatible durante implementacion. La dependencia se agregara solamente en la etapa de implementacion.
+
+Cada grafico tendra una representacion alternativa mediante resumen textual y tabla HTML accesible. Los componentes seran responsive y tendran estados de carga, error y ausencia de datos. Las posiciones sin valor actual no se transformaran en cero: se excluiran de la visualizacion valuada y se explicaran como no disponibles.
+
+### Datos temporales y paginacion
+
+El endpoint de transacciones sigue paginado y contiene solo operaciones confirmadas. Para el grafico de actividad, el frontend cargara todas las paginas necesarias usando el `total_pages` devuelto, o se evaluara un endpoint agregado posterior si el volumen o la consistencia temporal lo exige. Nunca se mostrara una primera pagina como si fuera todo el historial.
+
+El agrupamiento temporal se definira de forma determinista, preferentemente diario para rangos cortos y mensual para historiales extensos, documentando la zona horaria usada para agrupar instantes.
+
+### Secuencia de entrega
+
+1. Estabilizar contrato y agregados backend del Portfolio.
+2. Enriquecer posiciones con identidad canonica y cubrir DTO/servicio/integracion.
+3. Cambiar Mercado a solo Comprar y habilitar Venta desde Portfolio.
+4. Parametrizar el limite de cantidad del panel y recargar despues de confirmar.
+5. Agregar Recharts, adaptadores de datos y tablas accesibles.
+6. Cargar historial completo para actividad y validar responsive, null, errores y estados inciertos.
+7. Ejecutar la validacion transversal posterior, sin incorporar el feature adicional del TP.
+
 ## Seguimiento de complejidad
 
 No se introducen incumplimientos constitucionales. La idempotencia persistente, los locks acotados a recursos y el límite compartido de cotizaciones son complejidad requerida por la especificación funcional aprobada y no son opcionales.

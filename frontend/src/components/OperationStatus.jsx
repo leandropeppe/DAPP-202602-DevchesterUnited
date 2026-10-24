@@ -1,4 +1,5 @@
 import StatusMessage from './StatusMessage.jsx'
+import { normalizeOperationStatus } from '../market/marketState.js'
 
 const OPERATION_STATUS_MESSAGES = {
   pending: 'La operación está pendiente de confirmación.',
@@ -15,14 +16,14 @@ const OPERATION_STATUS_TYPES = {
 }
 
 export default function OperationStatus ({ status, message }) {
-  const knownStatus = Object.hasOwn(OPERATION_STATUS_MESSAGES, status)
-  const resolvedStatus = knownStatus ? status : 'uncertain'
+  const resolvedStatus = normalizeOperationStatus(status)
+  const knownStatus = Object.hasOwn(OPERATION_STATUS_MESSAGES, resolvedStatus)
   const resolvedMessage = knownStatus
     ? (message || OPERATION_STATUS_MESSAGES[resolvedStatus])
     : (message || 'El resultado de la operación no se puede determinar.')
 
   return (
-    <StatusMessage type={OPERATION_STATUS_TYPES[resolvedStatus]}>
+    <StatusMessage type={knownStatus ? OPERATION_STATUS_TYPES[resolvedStatus] : 'error'}>
       {resolvedMessage}
     </StatusMessage>
   )

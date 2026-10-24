@@ -44,6 +44,8 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
 
     @BeforeEach
     void limpiarFixturesExternos() {
+        jdbc.update("DELETE FROM market_token_issuances WHERE player_id IN "
+                + "(SELECT jugador_id FROM identidades_externas_jugador WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("DELETE FROM jugadores WHERE team_id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("DELETE FROM equipos WHERE id IN (SELECT equipo_id FROM identidades_externas_equipo WHERE proveedor = 'FOOTBALL_DATA')");
         jdbc.update("UPDATE equipos SET is_active = true");

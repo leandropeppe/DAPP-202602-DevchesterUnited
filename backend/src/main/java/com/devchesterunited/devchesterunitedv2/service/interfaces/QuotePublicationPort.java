@@ -1,6 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.service.interfaces;
 
 import com.devchesterunited.devchesterunitedv2.service.dto.QuotePublicationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.QuoteVersion;
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -9,9 +11,11 @@ import java.util.UUID;
 /**
  * Límite único para publicar y consultar cotizaciones versionadas.
  *
- * <p>La implementación futura será compartida por la siembra inicial de
- * Token Market y por las publicaciones dinámicas de Player Valuation. Este
- * contrato no calcula precios ni depende de estadísticas.</p>
+ * <p>Player Valuation es responsable de calcular externamente el precio y de
+ * proporcionar la referencia de estrategia y la vigencia. Token Market solo
+ * valida el request, persiste la versión inmutable, actualiza la cabecera
+ * vigente y expone la versión exacta para su consumo. Este contrato no
+ * calcula precios, no realiza scraping ni depende de estadísticas.</p>
  */
 public interface QuotePublicationPort {
 
@@ -41,6 +45,9 @@ public interface QuotePublicationPort {
 
     /** Publica una nueva versión usando la misma fuente de cotizaciones. */
     QuoteVersion publish(QuotePublicationRequest request);
+
+    /** Invalidates the exact current quote without mutating its historical version. */
+    QuoteInvalidationResult invalidate(QuoteInvalidationRequest request);
 
     /** Obtiene la versión actualmente publicada para el jugador. */
     Optional<QuoteVersion> currentQuote(UUID playerId);

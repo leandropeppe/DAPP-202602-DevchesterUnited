@@ -22,6 +22,7 @@ import com.devchesterunited.devchesterunitedv2.service.exception.SincronizacionP
 import com.devchesterunited.devchesterunitedv2.service.exception.JugadorNoEncontradoException;
 import com.devchesterunited.devchesterunitedv2.service.exception.CotizacionNoEncontradaException;
 import com.devchesterunited.devchesterunitedv2.service.exception.ConsultaValorizacionInvalidaException;
+import com.devchesterunited.devchesterunitedv2.service.exception.TokenMarketException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -53,6 +54,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(FootballDataException.class)
     public ResponseEntity<Object> providerUnavailable(FootballDataException exception) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ErrorResponseDTO("No fue posible sincronizar el catalogo con el proveedor externo"));
+    }
+
+    @ExceptionHandler(TokenMarketException.class)
+    public ResponseEntity<Object> tokenMarket(TokenMarketException exception) {
+        return response(statusFor(exception.reason()));
     }
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> invalidInput(ConstraintViolationException exception) {
@@ -115,6 +121,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static ResponseEntity<Object> response(HttpStatus status) {
         return ResponseEntity.status(status).body(error(status));
+    }
+
+    private static HttpStatus statusFor(TokenMarketException.Reason reason) {
+        return switch (reason) {
+            case MARKET_NOT_READY -> HttpStatus.SERVICE_UNAVAILABLE;
+            case ACCOUNT_NOT_FOUND, OPERATION_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
+            case INACTIVE_PLAYER, QUOTE_UNAVAILABLE, INSUFFICIENT_BALANCE,
+                    INSUFFICIENT_INVENTORY,
+                    IDEMPOTENCY_CONFLICT, STALE_REQUEST -> HttpStatus.CONFLICT;
+        };
     }
 
     private static ErrorResponseDTO error(HttpStatusCode status) {

@@ -23,6 +23,20 @@ Player Valuation publica una nueva versión inmutable y avanza la cabecera de co
 
 La cotización inicial es de 1.00 crédito por token y se persiste mediante el mismo límite de publicación y fuente de datos. No vence automáticamente después de siete días; permanece válida hasta que se reemplace o invalide explícitamente. Si no existe una cotización válida, la ejecución de operaciones no está disponible. El último precio conocido inválido/histórico puede mostrarse únicamente con una marca histórica explícita.
 
+## Invalidación exacta
+
+El mismo límite de publicación expone `invalidate(QuoteInvalidationRequest)` para que
+Player Valuation solicite la invalidación de la referencia exacta `(playerId,
+quoteId, version)`. La operación solo modifica la cabecera operativa: las
+versiones históricas, su precio y sus fechas permanecen inmutables.
+
+La cabecera conserva `VALID` o `INVALIDATED`, `invalidatedAt` y el motivo
+normalizado. La solicitud solo se acepta si la referencia sigue siendo la
+vigente y no venció (`validUntil` es exclusivo). Una referencia reemplazada,
+ausente o vencida se rechaza; una repetición exacta devuelve el resultado
+durable original. Una publicación posterior avanza la cabecera y la restablece
+a `VALID`, sin reactivar la versión anterior.
+
 ## Publicación inicial antes de Player Valuation
 
 Antes de que exista la feature completa Player Valuation, el `MarketInitializationService` automático invoca el `QuotePublicationPort.publishInitialQuote(playerId, 1.00, nonExpiring)` interno para cada jugador elegible. El port es el único límite de publicación, respaldado por el adaptador de persistencia de cotizaciones compartido. Crea la misma representación de versión inmutable/cabecera actual que utilizarán las publicaciones dinámicas futuras. El inicializador solo puede utilizar el valor fijo 1.00; no contiene estrategias, estadísticas, scraping ni una segunda estructura de cotizaciones.
