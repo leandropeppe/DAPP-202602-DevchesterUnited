@@ -106,6 +106,17 @@ class MarketAvailabilityServiceTest {
     }
 
     @Test
+    void cotizacionInicialUnoSinValorizacionRealNoEsOperable() {
+        givenState("READY", 1L);
+        givenCompleteCurrentQuote();
+        when(projection.getCurrentPricePerToken()).thenReturn(new BigDecimal("1.00"));
+        when(projection.getCurrentStrategyReference()).thenReturn(null);
+
+        assertThat(service.consultarJugadores(1, 20).jugadores())
+                .singleElement().extracting(p -> p.operable()).isEqualTo(false);
+    }
+
+    @Test
     void jugadorInactivoNoEsOperableAunqueConserveEmisionYCotizacion() {
         givenState("READY", 1L);
         givenCompleteCurrentQuote();

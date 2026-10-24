@@ -17,6 +17,7 @@ public interface MarketPlayerAvailabilityProjection {
     UUID getCurrentQuoteId();
     Long getCurrentQuoteVersion();
     BigDecimal getCurrentPricePerToken();
+    String getCurrentStrategyReference();
     String getCurrentValidityStatus();
     Instant getCurrentValidFrom();
     Instant getCurrentValidUntil();

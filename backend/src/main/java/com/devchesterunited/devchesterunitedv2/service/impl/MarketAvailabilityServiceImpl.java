@@ -66,6 +66,11 @@ public class MarketAvailabilityServiceImpl implements MarketAvailabilityService 
         boolean quoteCurrent = esVigente(projection.getCurrentValidityStatus(),
                 projection.getCurrentValidFrom(), projection.getCurrentValidUntil(), momento);
         boolean currentQuotePresent = projection.getCurrentQuoteId() != null;
+        boolean realCurrentQuote = currentQuotePresent
+                && (projection.getCurrentStrategyReference() != null
+                        && !projection.getCurrentStrategyReference().isBlank()
+                        || projection.getCurrentPricePerToken() == null
+                        || projection.getCurrentPricePerToken().compareTo(java.math.BigDecimal.ONE) != 0);
         boolean quotePresent = currentQuotePresent
                 || projection.getLatestQuoteId() != null;
         boolean quoteHistorical = quotePresent && !quoteCurrent;
@@ -83,7 +88,8 @@ public class MarketAvailabilityServiceImpl implements MarketAvailabilityService 
                 && projection.getIssuedQuantity() > 0
                 && projection.getInventoryQuantity() != null
                 && projection.getInventoryQuantity() > 0
-                && quoteCurrent;
+                && quoteCurrent
+                && realCurrentQuote;
 
         return new MarketPlayerAvailability(
                 projection.getPlayerId(),

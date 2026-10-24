@@ -35,14 +35,20 @@ export default function MarketPlayerCard ({ player, onPurchase }) {
       <QuoteStatus status={quoteStatus} price={price} />
       {operable
         ? (
-          <div className="market-player-card__actions">
-            <button className="button button--primary" type="button" onClick={() => onPurchase?.(player)}>Comprar</button>
-          </div>
-        )
-        : null}
-      {!player.player_active || !player.team_active
-        ? <p className="market-player-card__notice">El jugador o su equipo no están activos.</p>
-        : null}
+              <div className="market-player-card__actions">
+                  <button
+                      className="button button--buy"
+                      type="button"
+                      onClick={() => onPurchase?.(player)}
+                  >
+                      Comprar
+                  </button>
+              </div>
+          )
+          : null}
+        {!player.player_active || !player.team_active
+            ? <p className="market-player-card__notice">El jugador o su equipo no están activos.</p>
+            : null}
     </article>
   )
 }

@@ -18,12 +18,19 @@ import com.devchesterunited.devchesterunitedv2.persistence.dto.HistoricoCotizaci
 import com.devchesterunited.devchesterunitedv2.persistence.dto.ResultadoElegibilidadValorizacionEntity;
 import com.devchesterunited.devchesterunitedv2.service.config.EstrategiasIniciales;
 import com.devchesterunited.devchesterunitedv2.service.dto.SnapshotEstadistico;
+import com.devchesterunited.devchesterunitedv2.service.dto.QuotePublicationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.QuoteInvalidationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.EstrategiaVisibleService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.QuotePublicationPort;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.ValorizacionJugadorService;
 import com.devchesterunited.devchesterunitedv2.persistence.dto.EstrategiaValorizacionKey;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +44,8 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
     private final HistoricoCotizacionEstrategiaRepository historicoRepository;
     private final ResultadoElegibilidadValorizacionRepository elegibilidadRepository;
     private final EstrategiaValorizacionRepository estrategiaRepository;
+    private final QuotePublicationPort quotePublicationPort;
+    private final EstrategiaVisibleService estrategiaVisibleService;
     private final Clock clock;
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -46,7 +55,10 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
             CotizacionActualEstrategiaRepository actualRepository,
             HistoricoCotizacionEstrategiaRepository historicoRepository,
             ResultadoElegibilidadValorizacionRepository elegibilidadRepository,
-            EstrategiaValorizacionRepository estrategiaRepository, Clock clock) {
+            EstrategiaValorizacionRepository estrategiaRepository,
+            QuotePublicationPort quotePublicationPort,
+            EstrategiaVisibleService estrategiaVisibleService,
+            Clock clock) {
         this.snapshotService = snapshotService;
         this.estrategias = estrategias;
         this.motor = motor;
@@ -55,7 +67,20 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
         this.historicoRepository = historicoRepository;
         this.elegibilidadRepository = elegibilidadRepository;
         this.estrategiaRepository = estrategiaRepository;
+        this.quotePublicationPort = quotePublicationPort;
+        this.estrategiaVisibleService = estrategiaVisibleService;
         this.clock = clock;
+    }
+
+    public ValorizacionJugadorServiceImpl(SnapshotEstadisticoService snapshotService,
+            EstrategiasIniciales estrategias, MotorValorizacion motor,
+            EjecucionValorizacionRepository ejecucionRepository,
+            CotizacionActualEstrategiaRepository actualRepository,
+            HistoricoCotizacionEstrategiaRepository historicoRepository,
+            ResultadoElegibilidadValorizacionRepository elegibilidadRepository,
+            EstrategiaValorizacionRepository estrategiaRepository, Clock clock) {
+        this(snapshotService, estrategias, motor, ejecucionRepository, actualRepository,
+                historicoRepository, elegibilidadRepository, estrategiaRepository, null, null, clock);
     }
 
     public ValorizacionJugadorServiceImpl(SnapshotEstadisticoService snapshotService,
@@ -65,7 +90,7 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
             HistoricoCotizacionEstrategiaRepository historicoRepository,
             ResultadoElegibilidadValorizacionRepository elegibilidadRepository, Clock clock) {
         this(snapshotService, estrategias, motor, ejecucionRepository, actualRepository,
-                historicoRepository, elegibilidadRepository, null, clock);
+                historicoRepository, elegibilidadRepository, null, null, null, clock);
     }
 
     @Override
@@ -85,6 +110,8 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
         validarCatalogoPersistido();
         Instant iniciada = Instant.now(clock);
         SnapshotEstadistico snapshot = snapshotService.capturar();
+        EstrategiaVisibleService.SeleccionVisible visible = estrategiaVisibleService == null
+                ? null : estrategiaVisibleService.obtener();
         UUID ejecucionId = UUID.randomUUID();
         ejecucionRepository.save(new EjecucionValorizacionEntity(ejecucionId, tipo,
                 snapshot.capturadoEn(), iniciada, "INICIADA"));
@@ -97,8 +124,15 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
                     persistirElegibilidad(estrategia, snapshot.jugadores(), configuracionElegibilidad, ejecucionId, fallas);
                     List<ResultadoValorizacion> calculados = motor.calcular(estrategia,
                             snapshot.jugadores(), configuracionElegibilidad);
+                    Set<UUID> publicados = new HashSet<>();
                     for (ResultadoValorizacion resultado : calculados) {
-                        persistirResultado(resultado, estrategia, ejecucionId, snapshot.capturadoEn(), resultados, fallas);
+                        if (persistirResultado(resultado, estrategia, ejecucionId, snapshot.capturadoEn(), visible,
+                                resultados, fallas)) {
+                            publicados.add(resultado.jugadorId());
+                        }
+                    }
+                    if (esVisible(estrategia, visible) && quotePublicationPort != null) {
+                        invalidarSinValorizacion(snapshot, publicados, fallas);
                     }
                 } catch (RuntimeException exception) {
                     falloGlobal[0] = true;
@@ -114,14 +148,49 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
         return new ResultadoEjecucion(ejecucionId, snapshot.capturadoEn(), resultados, fallas);
     }
 
-    private void persistirResultado(ResultadoValorizacion resultado, EstrategiaValorizacion estrategia,
-            UUID ejecucionId, Instant capturadaEn, List<ResultadoValorizacion> resultados, List<String> fallas) {
+    private boolean persistirResultado(ResultadoValorizacion resultado, EstrategiaValorizacion estrategia,
+            UUID ejecucionId, Instant capturadaEn, EstrategiaVisibleService.SeleccionVisible visible,
+            List<ResultadoValorizacion> resultados, List<String> fallas) {
         try {
             persistir(resultado, estrategia, ejecucionId, capturadaEn);
+            if (esVisible(estrategia, visible) && quotePublicationPort != null) {
+                quotePublicationPort.publish(new QuotePublicationRequest(
+                        resultado.jugadorId(), resultado.valor(), capturadaEn, capturadaEn, null,
+                        estrategiaReference(estrategia)));
+            }
             resultados.add(resultado);
+            return true;
         } catch (RuntimeException exception) {
             fallas.add(falla(resultado.jugadorId(), estrategia, exception));
+            return false;
         }
+    }
+
+    private void invalidarSinValorizacion(SnapshotEstadistico snapshot, Set<UUID> publicados,
+            List<String> fallas) {
+        for (var jugador : snapshot.jugadores()) {
+            if (publicados.contains(jugador.jugadorId())) continue;
+            try {
+                quotePublicationPort.currentQuote(jugador.jugadorId())
+                        .filter(quote -> quote.validityStatus() == QuoteValidityStatus.VALID)
+                        .ifPresent(quote -> quotePublicationPort.invalidate(new QuoteInvalidationRequest(
+                                jugador.jugadorId(), quote.quoteId(), quote.version(),
+                                "La valorizacion visible no produjo un resultado valido.")));
+            } catch (RuntimeException exception) {
+                fallas.add(jugador.jugadorId() + ":INVALIDACION:" + exception.getMessage());
+            }
+        }
+    }
+
+    private static boolean esVisible(EstrategiaValorizacion estrategia,
+            EstrategiaVisibleService.SeleccionVisible visible) {
+        return visible != null
+                && estrategia.id().equals(visible.estrategiaId())
+                && estrategia.version() == visible.version();
+    }
+
+    private static String estrategiaReference(EstrategiaValorizacion estrategia) {
+        return estrategia.id() + ":v" + estrategia.version();
     }
 
     private void validarCatalogoPersistido() {

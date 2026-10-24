@@ -22,6 +22,7 @@ public interface MarketAvailabilityRepository extends Repository<JugadorEntity, 
                    current_quote.quote_id AS "currentQuoteId",
                    current_quote.version AS "currentQuoteVersion",
                    current_quote.price_per_token AS "currentPricePerToken",
+                   current_quote.strategy_reference AS "currentStrategyReference",
                    CASE WHEN h.validity_status = 'INVALIDATED' THEN 'INVALIDATED'
                         ELSE current_quote.validity_status END AS "currentValidityStatus",
                    current_quote.valid_from AS "currentValidFrom",

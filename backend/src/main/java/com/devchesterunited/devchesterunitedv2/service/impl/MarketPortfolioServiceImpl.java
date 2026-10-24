@@ -176,7 +176,8 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
                 INTERNAL_SCALE, RoundingMode.HALF_EVEN);
 
         Optional<QuoteVersion> actual = cotizaciones.currentQuote(jugadorId)
-                .filter(quote -> quote.isValidAt(momento));
+                .filter(quote -> quote.isValidAt(momento))
+                .filter(MarketPortfolioServiceImpl::isOperationalValuation);
         if (actual.isPresent()) {
             return currentPosition(jugadorId, cantidad, costoTotal, costoPromedio,
                     actual.get());
@@ -200,6 +201,11 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
                         Optional.empty(),
                         Optional.empty()),
                 Optional.empty());
+    }
+
+    private static boolean isOperationalValuation(QuoteVersion quote) {
+        return quote.strategyReference() != null && !quote.strategyReference().isBlank()
+                || quote.pricePerToken().compareTo(BigDecimal.ONE) != 0;
     }
 
     private PositionValuation currentPosition(UUID jugadorId, long cantidad,

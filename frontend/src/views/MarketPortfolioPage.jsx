@@ -136,7 +136,7 @@ export default function MarketPortfolioPage () {
                 </dl>
                 <QuoteStatus status={position.quote_availability} price={position.unit_price === null ? null : amount(position.unit_price)} />
                 {canSell(position)
-                  ? <button className="button button--secondary" type="button" onClick={() => startSale(position)}>Vender</button>
+                  ? <button className="button button--primary" type="button" onClick={() => startSale(position)}>Vender</button>
                   : null}
               </article>
             ))}

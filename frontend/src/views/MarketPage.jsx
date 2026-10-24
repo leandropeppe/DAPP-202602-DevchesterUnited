@@ -137,7 +137,16 @@ export default function MarketPage ({ onNavigate = () => {} }) {
         ? <div className="market-player-grid">{players.map((player) => <MarketPlayerCard key={player.id} player={player} onPurchase={(selected) => setOperation({ player: selected, type: 'PURCHASE' })} />)}</div>
         : null}
 
-      {operation ? <MarketOperationPanel panelRef={operationPanelRef} player={operation.player} type={operation.type} jwt={session.jwt} onClose={() => setOperation(null)} /> : null}
+      {operation
+        ? <MarketOperationPanel
+            panelRef={operationPanelRef}
+            player={operation.player}
+            type={operation.type}
+            jwt={session.jwt}
+            onClose={() => setOperation(null)}
+            onConfirmed={() => { void loadMarket(page, session.jwt) }}
+          />
+        : null}
 
       <nav className="pagination" aria-label="Paginación del mercado">
         <button className="button button--secondary" type="button"
