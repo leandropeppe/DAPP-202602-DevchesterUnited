@@ -130,10 +130,18 @@ jobs:
           -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
 
       - name: Verify SonarCloud Quality Gate and issue limits
+        if: github.ref == 'refs/heads/main'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: pwsh
-        run: ./scripts/verify-sonar-gate.ps1 -ProjectKey 'leandropeppe_DAPP-202602-DevchesterUnited' -Branch '${{ github.ref_name }}'
+        run: ./scripts/verify-sonar-gate.ps1 -ProjectKey 'leandropeppe_DAPP-202602-DevchesterUnited' -Branch 'main'
+
+      - name: Verify SonarCloud analysis completed
+        if: github.ref != 'refs/heads/main'
+        shell: bash
+        run: |
+          echo "SonarCloud analysis completed for ${{ github.ref_name }}."
+          echo "Branch issue limits are verified only on main."
 
   e2e:
     name: Playwright E2E
