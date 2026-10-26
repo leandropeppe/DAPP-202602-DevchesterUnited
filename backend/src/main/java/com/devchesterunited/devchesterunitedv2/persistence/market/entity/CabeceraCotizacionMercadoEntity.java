@@ -9,6 +9,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "market_quote_headers")
 public class CabeceraCotizacionMercadoEntity {
+    private static final String VALID_STATUS = "VALID";
+
     @Id
     @Column(name = "player_id", nullable = false)
     private UUID jugadorId;
@@ -43,7 +45,7 @@ public class CabeceraCotizacionMercadoEntity {
         this.quoteId = quoteId;
         this.versionActual = versionActual;
         this.actualizadoEn = actualizadoEn;
-        this.estadoVigencia = "VALID";
+        this.estadoVigencia = VALID_STATUS;
     }
 
     public CabeceraCotizacionMercadoEntity(UUID jugadorId, UUID quoteId,
@@ -72,7 +74,7 @@ public class CabeceraCotizacionMercadoEntity {
         this.quoteId = quoteId;
         this.versionActual = version;
         this.actualizadoEn = momento;
-        this.estadoVigencia = "VALID";
+        this.estadoVigencia = VALID_STATUS;
         this.invalidatedAt = null;
         this.invalidationReason = null;
     }
@@ -83,7 +85,7 @@ public class CabeceraCotizacionMercadoEntity {
                 || motivo.trim().length() > 200) {
             throw new IllegalArgumentException("Los datos de invalidacion son invalidos.");
         }
-        if (!"VALID".equals(estadoVigencia)) {
+        if (!VALID_STATUS.equals(estadoVigencia)) {
             throw new IllegalStateException("La cotizacion ya fue invalidada.");
         }
         this.estadoVigencia = "INVALIDATED";

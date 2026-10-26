@@ -266,6 +266,15 @@ function formatValuation (value) {
   )
 }
 
+function playerCardClass (theme, flipped) {
+  return `player-card-flip player-card-flip--${theme}` +
+      (flipped ? ' player-card-flip--flipped' : '')
+}
+
+function catalogReturnPath () {
+  return window.history.state?.catalogReturn || '/catalogo'
+}
+
 function ValuationLoading ({
                              onFlip
                          }) {
@@ -652,6 +661,36 @@ function PlayerValuationBack ({
   )
 }
 
+function ValuationHistoryFace ({
+                                 valuationHistory,
+                                 loadValuationHistory,
+                                 onFlip
+                             }) {
+  return (
+      <>
+          {valuationHistory.status === 'loading'
+              ? <ValuationLoading onFlip={onFlip} />
+              : null}
+
+          {valuationHistory.status === 'error'
+              ? <ValuationError
+                  message={valuationHistory.message}
+                  onRetry={loadValuationHistory}
+                  onFlip={onFlip}
+              />
+              : null}
+
+          {valuationHistory.status === 'success'
+              ? <PlayerValuationBack
+                  items={valuationHistory.items}
+                  total={valuationHistory.total}
+                  onFlip={onFlip}
+              />
+              : null}
+      </>
+  )
+}
+
 export default function PlayerDetailPage ({
                                             playerId,
                                             onNavigate
@@ -841,17 +880,10 @@ export default function PlayerDetailPage ({
   function goBack (event) {
       event.preventDefault()
 
-      onNavigate(
-          window.history.state
-              ?.catalogReturn ||
-          '/catalogo'
-      )
+      onNavigate(catalogReturnPath())
   }
 
-  const catalogReturn =
-      window.history.state
-          ?.catalogReturn ||
-      '/catalogo'
+  const catalogReturn = catalogReturnPath()
 
   if (
       state.status ===
@@ -967,14 +999,10 @@ export default function PlayerDetailPage ({
                   <div className="player-detail__player-card">
 
                       <div
-                          className={
-                              `player-card-flip player-card-flip--${playerTheme}` +
-                              (
-                                  cardFlipped
-                                      ? ' player-card-flip--flipped'
-                                      : ''
-                              )
-                          }
+                                      className={playerCardClass(
+                                          playerTheme,
+                                          cardFlipped
+                                      )}
                       >
 
                           <div className="player-card-flip__inner">
@@ -1005,62 +1033,11 @@ export default function PlayerDetailPage ({
 
                               <div className="player-card-flip__face player-card-flip__back">
 
-                                  {
-                                      valuationHistory.status ===
-                                      'loading'
-                                          ? (
-                                              <ValuationLoading
-                                                  onFlip={() =>
-                                                      setCardFlipped(
-                                                          false
-                                                      )
-                                                  }
-                                              />
-                                          )
-                                          : null
-                                  }
-
-                                  {
-                                      valuationHistory.status ===
-                                      'error'
-                                          ? (
-                                              <ValuationError
-                                                  message={
-                                                      valuationHistory.message
-                                                  }
-                                                  onRetry={
-                                                      loadValuationHistory
-                                                  }
-                                                  onFlip={() =>
-                                                      setCardFlipped(
-                                                          false
-                                                      )
-                                                  }
-                                              />
-                                          )
-                                          : null
-                                  }
-
-                                  {
-                                      valuationHistory.status ===
-                                      'success'
-                                          ? (
-                                              <PlayerValuationBack
-                                                  items={
-                                                      valuationHistory.items
-                                                  }
-                                                  total={
-                                                      valuationHistory.total
-                                                  }
-                                                  onFlip={() =>
-                                                      setCardFlipped(
-                                                          false
-                                                      )
-                                                  }
-                                              />
-                                          )
-                                          : null
-                                  }
+                                  <ValuationHistoryFace
+                                      valuationHistory={valuationHistory}
+                                      loadValuationHistory={loadValuationHistory}
+                                      onFlip={() => setCardFlipped(false)}
+                                  />
 
                               </div>
 

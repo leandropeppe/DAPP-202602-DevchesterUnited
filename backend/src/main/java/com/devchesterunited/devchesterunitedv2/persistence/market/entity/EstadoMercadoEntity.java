@@ -11,6 +11,8 @@ import java.time.Instant;
 @Entity
 @Table(name = "market_state")
 public class EstadoMercadoEntity {
+    private static final String INITIALIZING_STATUS = "INITIALIZING";
+
     @Id
     @Column(nullable = false)
     private Short id;
@@ -79,14 +81,14 @@ public class EstadoMercadoEntity {
             throw new IllegalStateException(
                     "Solo UNINITIALIZED o FAILED pueden pasar a INITIALIZING.");
         }
-        status = "INITIALIZING";
+        status = INITIALIZING_STATUS;
         epoch++;
         motivoFallo = null;
         actualizadoEn = momento;
     }
 
     public void marcarFailed(String motivo, Instant momento) {
-        if (!"INITIALIZING".equals(status)) {
+        if (!INITIALIZING_STATUS.equals(status)) {
             throw new IllegalStateException(
                     "Solo INITIALIZING puede pasar a FAILED.");
         }
@@ -97,7 +99,7 @@ public class EstadoMercadoEntity {
     }
 
     public void marcarReady(Instant momento) {
-        if (!"INITIALIZING".equals(status)) {
+        if (!INITIALIZING_STATUS.equals(status)) {
             throw new IllegalStateException(
                     "Solo INITIALIZING puede pasar a READY.");
         }
