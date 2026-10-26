@@ -209,25 +209,100 @@ test('vende parcialmente y luego cierra una posición desde Portfolio', async ({
     const payload = await response.json()
     saleResponses.push(payload.data?.status)
   })
-  const position = page.locator('article.market-position-card').filter({ hasText: 'Jugador vigente' })
-  await expect(position).toBeVisible()
-  await position.getByRole('button', { name: 'Vender' }).click()
-  await page.getByRole('checkbox').check()
-  await page.getByRole('button', { name: /confirmar venta/i }).click()
-  await expect(page.locator('.market-position-card').filter({ hasText: 'Jugador vigente' })).toContainText('1 tokens')
-  await expect.poll(() => saleRequests.length).toBe(1)
-  await expect.poll(() => saleResponses.length).toBe(1)
-  expect(saleResponses[0]).toBe('CONFIRMED')
+  const position = page
+      .locator('article.market-position-card')
+      .filter({ hasText: 'Jugador vigente' })
 
-  const remainingPosition = page.locator('article.market-position-card').filter({ hasText: 'Jugador vigente' })
-  await remainingPosition.getByRole('button', { name: 'Vender' }).click()
-  await page.getByRole('checkbox').check()
-  await page.getByRole('button', { name: /confirmar venta/i }).click()
-  await expect.poll(() => saleRequests.length).toBe(2)
-  await expect.poll(() => saleResponses.length).toBe(2)
-  expect(saleResponses[1]).toBe('CONFIRMED')
-  await expect(page.locator('output.empty-state')).toHaveText(/No ten.*posiciones abiertas/i)
-  await expect(page.locator('.market-position-card')).toHaveCount(0)
+  await expect(position).toBeVisible()
+
+  await position
+      .getByRole('button', { name: 'Vender' })
+      .click()
+
+  await expect(
+      page.getByRole('heading', { name: 'Confirmar venta' })
+  ).toBeVisible()
+
+  await page
+      .getByRole('button', { name: /confirmar venta/i })
+      .click()
+
+  await expect(
+      page.getByRole('heading', { name: 'Venta realizada' })
+  ).toBeVisible()
+
+  await expect.poll(
+      () => saleRequests.length
+  ).toBe(1)
+
+  await expect.poll(
+      () => saleResponses.length
+  ).toBe(1)
+
+  expect(
+      saleResponses[0]
+  ).toBe('CONFIRMED')
+
+  await expect(
+      page
+          .locator('.market-position-card')
+          .filter({ hasText: 'Jugador vigente' })
+  ).toContainText(
+      '1 tokens',
+      {
+        timeout: 5000
+      }
+  )
+
+  const remainingPosition = page
+      .locator('article.market-position-card')
+      .filter({ hasText: 'Jugador vigente' })
+
+  await remainingPosition
+      .getByRole('button', { name: 'Vender' })
+      .click()
+
+  await expect(
+      page.getByRole('heading', { name: 'Confirmar venta' })
+  ).toBeVisible()
+
+  await page
+      .getByRole('button', { name: /confirmar venta/i })
+      .click()
+
+  await expect(
+      page.getByRole('heading', { name: 'Venta realizada' })
+  ).toBeVisible()
+
+  await expect.poll(
+      () => saleRequests.length
+  ).toBe(2)
+
+  await expect.poll(
+      () => saleResponses.length
+  ).toBe(2)
+
+  expect(
+      saleResponses[1]
+  ).toBe('CONFIRMED')
+
+  await expect(
+      page.locator('output.empty-state')
+  ).toHaveText(
+      /No ten.*posiciones abiertas/i,
+      {
+        timeout: 5000
+      }
+  )
+
+  await expect(
+      page.locator('.market-position-card')
+  ).toHaveCount(
+      0,
+      {
+        timeout: 5000
+      }
+  )
 })
 
 test('aísla saldo y resultados observables entre dos usuarios autenticados', async ({ page, context }) => {
