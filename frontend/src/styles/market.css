@@ -239,6 +239,27 @@
     cursor: default;
 }
 
+.button--sell {
+    background-color: #b91c1c;
+    border-color: #b91c1c;
+    color: #ffffff;
+}
+
+.button--sell:hover:not(:disabled) {
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+.button--sell:active:not(:disabled) {
+    background-color: #991b1b;
+    border-color: #991b1b;
+}
+
+.button--sell:disabled {
+    opacity: .55;
+    cursor: default;
+}
+
 .market-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .market-summary-card { display: grid; gap: 5px; padding: 18px; }
 .market-summary-card span { color: #6b7280; font-size: .8rem; font-weight: 800; text-transform: uppercase; }
@@ -410,6 +431,18 @@
 
 .market-purchase-confirmation__dialog > p strong {
     color: #0f172a;
+}
+
+.market-confirmation-quantity {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    margin: 0 0 22px;
+}
+
+.market-confirmation-quantity > span {
+    color: #64748b;
+    font-size: .86rem;
 }
 
 .market-purchase-confirmation__summary {

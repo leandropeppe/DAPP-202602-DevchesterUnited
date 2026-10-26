@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getMarketPortfolio } from '../api/http.js'
 import MarketOperationPanel from '../components/MarketOperationPanel.jsx'
 import MarketPortfolioCharts from '../components/MarketPortfolioCharts.jsx'
@@ -41,7 +41,6 @@ export default function MarketPortfolioPage () {
   const [state, setState] = useState({ status: 'loading', message: '' })
   const [portfolio, setPortfolio] = useState(null)
   const [operation, setOperation] = useState(null)
-  const operationPanelRef = useRef(null)
 
   const load = useCallback(async () => {
     if (!session.jwt || session.isJwtExpired) return
@@ -57,18 +56,6 @@ export default function MarketPortfolioPage () {
   }, [session.isJwtExpired, session.jwt])
 
   useEffect(() => { void load() }, [load])
-
-  useEffect(() => {
-    const panel = operationPanelRef.current
-    if (!operation || !panel) return
-
-    const prefersReducedMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    panel.scrollIntoView?.({
-      behavior: prefersReducedMotion ? 'auto' : 'smooth',
-      block: 'start'
-    })
-    panel.focus({ preventScroll: true })
-  }, [operation])
 
   if (!session.jwt || session.isJwtExpired) {
     return <MarketStateMessage status="error" message="Iniciá sesión para consultar tu portfolio." />
@@ -96,7 +83,7 @@ export default function MarketPortfolioPage () {
         operable: true
       },
       availableQuantity: Number(position.quantity),
-      maxQuantity: Math.min(100, Number(position.quantity))
+      maxQuantity: Number(position.quantity)
     })
   }
 
@@ -145,14 +132,14 @@ export default function MarketPortfolioPage () {
       <MarketPortfolioCharts positions={positions} />
       {operation
         ? <MarketOperationPanel
-            panelRef={operationPanelRef}
             player={operation.player}
             type="SALE"
             availableQuantity={operation.availableQuantity}
             maxQuantity={operation.maxQuantity}
             jwt={session.jwt}
+            modalOnly
             onClose={() => setOperation(null)}
-            onConfirmed={() => { void load() }}
+            onConfirmed={() => { setOperation(null); void load() }}
           />
         : null}
     </section>

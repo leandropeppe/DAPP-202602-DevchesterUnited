@@ -47,10 +47,10 @@ function operationLookupResponse (response) {
   return data
 }
 
-export default function MarketOperationPanel ({ player, type, jwt, onClose, panelRef, maxQuantity = MAX_MARKET_QUANTITY, availableQuantity, availableBalance, currentHoldings, embedded = false, onConfirmed }) {
+export default function MarketOperationPanel ({ player, type, jwt, onClose, panelRef, maxQuantity = MAX_MARKET_QUANTITY, availableQuantity, availableBalance, currentHoldings, embedded = false, modalOnly = false, onConfirmed }) {
   const [quantity, setQuantity] = useState('1')
   const [confirmed, setConfirmed] = useState(false)
-  const [showPurchaseConfirmation, setShowPurchaseConfirmation] = useState(false)
+  const [showPurchaseConfirmation, setShowPurchaseConfirmation] = useState(modalOnly)
   const [state, setState] = useState({ status: 'idle', message: '' })
   const [result, setResult] = useState(null)
   const [needsRecovery, setNeedsRecovery] = useState(false)
@@ -59,12 +59,14 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
 
   const playerId = marketPlayerUuid(player.id)
   const canOperate = isMarketPlayerOperable(player) && playerId && player.quote_id && player.quote_version && player.price_per_token !== null && player.price_per_token !== undefined
+  const isSale = type === 'SALE'
   const quantityNumber = Number(quantity)
-  const quantityLimit = Math.min(MAX_MARKET_QUANTITY, Math.max(0, Number(maxQuantity) || 0))
+  const quantityLimit = isSale
+    ? Math.max(0, Number(maxQuantity) || 0)
+    : Math.min(MAX_MARKET_QUANTITY, Math.max(0, Number(maxQuantity) || 0))
   const quantityError = quantityValidationMessage(quantity, quantityLimit)
   const quantityValid = quantityError === ''
   const estimatedTotal = Number(player.price_per_token) * quantityNumber
-  const isSale = type === 'SALE'
   const operationLabel = type === 'PURCHASE' ? 'Compra' : 'Venta'
   const balanceInsufficient = !isSale && availableBalance !== null && availableBalance !== undefined && Number.isFinite(Number(availableBalance)) && estimatedTotal > Number(availableBalance)
   const purchaseDisabled = balanceInsufficient || !quantityValid
@@ -77,7 +79,7 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
   }
 
   async function executeOperation () {
-    setShowPurchaseConfirmation(false)
+    if (!modalOnly) setShowPurchaseConfirmation(false)
     setState({ status: 'loading', message: '' })
 
     const body = {
@@ -97,6 +99,7 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
       setNeedsRecovery(!['CONFIRMED', 'REJECTED'].includes(operation.status))
       notifyConfirmed(operation)
       setState({ status: 'success', message: '' })
+      if (modalOnly && operation.status === 'CONFIRMED') setShowPurchaseConfirmation(false)
     } catch (error) {
       if (error.incompleteData) {
         setResult(error.incompleteData)
@@ -153,18 +156,19 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
           -
         </button>
         <input
-            id="player-detail-purchase-quantity"
+            id={modalOnly ? 'market-sale-quantity' : 'player-detail-purchase-quantity'}
             type="number"
             min="1"
             max={quantityLimit}
             step="1"
             value={quantity}
+            aria-label="Cantidad de tokens"
             onChange={(event) => {
               setQuantity(event.target.value)
               setState((current) => current.status === 'error' ? { status: 'idle', message: '' } : current)
             }}
             aria-invalid={!quantityValid}
-            aria-describedby="player-detail-purchase-quantity-message"
+            aria-describedby={modalOnly ? 'market-sale-quantity-message' : 'player-detail-purchase-quantity-message'}
             disabled={!canOperate || state.status === 'loading' || Boolean(result)}
         />
         <button
@@ -178,6 +182,32 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
         </button>
       </div>
   )
+
+  if (modalOnly) {
+    return (
+      <MarketConfirmationModal
+          open={showPurchaseConfirmation}
+          title="Confirmar venta"
+          message={<>¿Querés vender tokens de <strong>{player.name}</strong>?</>}
+          pricePerToken={player.price_per_token}
+          quantity={quantityNumber}
+          total={estimatedTotal}
+          totalLabel="Total estimado"
+          confirmLabel={state.status === 'loading' ? 'Vendiendo…' : 'Confirmar venta'}
+          confirmDisabled={!canOperate || !quantityValid || state.status === 'loading' || Boolean(result)}
+          variant="sell"
+          onCancel={() => { setShowPurchaseConfirmation(false); onClose?.() }}
+          onConfirm={() => { void executeOperation() }}
+      >
+        <div className="market-confirmation-quantity">
+          <span>Tokens disponibles: <strong>{availableQuantity}</strong></span>
+          {embeddedQuantityControl}
+          {!quantityValid ? <small id="market-sale-quantity-message" className="field-error" role="alert">{quantityError}</small> : null}
+          {state.status === 'error' ? <small className="field-error" role="alert">{state.message}</small> : null}
+        </div>
+      </MarketConfirmationModal>
+    )
+  }
 
   return (
       <section ref={panelRef} className={`market-operation-panel card${embedded ? ' market-operation-panel--embedded' : ''}`} tabIndex={-1} aria-labelledby="operation-panel-title">

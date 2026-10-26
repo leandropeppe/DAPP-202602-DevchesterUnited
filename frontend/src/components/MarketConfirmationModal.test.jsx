@@ -54,4 +54,11 @@ describe('MarketConfirmationModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar compra' }))
     expect(onConfirm).toHaveBeenCalledTimes(1)
   })
+
+  it('renderiza contenido adicional y respeta el estado deshabilitado', () => {
+    render(<MarketConfirmationModal {...defaultProps} confirmDisabled>{/* selector reutilizable */}<div>Tokens disponibles: 4</div></MarketConfirmationModal>)
+
+    expect(screen.getByText('Tokens disponibles: 4')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeDisabled()
+  })
 })

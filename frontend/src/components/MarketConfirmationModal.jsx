@@ -13,7 +13,10 @@ export default function MarketConfirmationModal ({
   confirmLabel,
   onConfirm,
   onCancel,
-  variant = 'buy'
+  variant = 'buy',
+  children,
+  confirmDisabled = false,
+  totalLabel = 'Total'
 }) {
   if (!open) return null
 
@@ -36,15 +39,17 @@ export default function MarketConfirmationModal ({
         <h3 id="market-confirmation-title">{title}</h3>
         <p>{message}</p>
 
+        {children}
+
         <div className="market-purchase-confirmation__summary">
           <div><span>Precio por token</span><strong>{formatAmount(pricePerToken)}</strong></div>
           <div><span>Cantidad</span><strong>{quantity}</strong></div>
-          <div><span>Total</span><strong>{formatAmount(total)} créditos</strong></div>
+          <div><span>{totalLabel}</span><strong>{formatAmount(total)} créditos</strong></div>
         </div>
 
         <div className="market-purchase-confirmation__actions">
           <button className="button button--secondary" type="button" onClick={onCancel}>Cancelar</button>
-          <button className="button button--buy" type="button" onClick={onConfirm}>{confirmLabel}</button>
+          <button className={`button ${variant === 'sell' ? 'button--sell' : 'button--buy'}`} type="button" onClick={onConfirm} disabled={confirmDisabled}>{confirmLabel}</button>
         </div>
       </div>
     </div>

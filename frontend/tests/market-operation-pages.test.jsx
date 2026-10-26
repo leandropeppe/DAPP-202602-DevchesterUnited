@@ -132,13 +132,8 @@ describe('validación estructural de portfolio e historial', () => {
     expect(screen.queryByText(/posiciones abiertas/i)).not.toBeInTheDocument()
   })
 
-  it('desplaza y enfoca el formulario de venta respetando reduced motion', async () => {
+  it('abre el modal de venta del jugador seleccionado', async () => {
     const user = userEvent.setup()
-    const scrollIntoView = vi.fn()
-    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView
-    const originalMatchMedia = window.matchMedia
-    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView })
-    window.matchMedia = vi.fn().mockReturnValue({ matches: true })
     marketApi.getMarketPortfolio.mockResolvedValueOnce({
       data: {
         open_positions: [{
@@ -161,17 +156,31 @@ describe('validación estructural de portfolio e historial', () => {
       }
     })
 
-    try {
-      render(<MarketPortfolioPage />)
-      await user.click(await screen.findByRole('button', { name: 'Vender' }))
+    render(<MarketPortfolioPage />)
+    await user.click(await screen.findByRole('button', { name: 'Vender' }))
 
-      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' })
-      const panel = screen.getByRole('heading', { name: 'Venta de Jugador real' }).closest('section')
-      expect(document.activeElement).toBe(panel)
-    } finally {
-      Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: originalScrollIntoView })
-      window.matchMedia = originalMatchMedia
-    }
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Confirmar venta' })).toBeInTheDocument()
+    expect(within(screen.getByRole('dialog')).getByText('Jugador real')).toBeInTheDocument()
+  })
+
+  it('actualiza cantidad y total, limita los controles y cancela sin vender', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    render(<MarketOperationPanel player={player} type="SALE" jwt="jwt-test" modalOnly onClose={onClose} availableQuantity={2} maxQuantity={2} />)
+
+    const minus = screen.getByRole('button', { name: 'Disminuir cantidad' })
+    const plus = screen.getByRole('button', { name: 'Aumentar cantidad' })
+    expect(screen.getByRole('spinbutton')).toHaveValue(1)
+    expect(minus).toBeDisabled()
+    await user.click(plus)
+    expect(screen.getByRole('spinbutton')).toHaveValue(2)
+    expect(screen.getByText('20,00 créditos')).toBeInTheDocument()
+    expect(plus).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('dialog').parentElement)
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(marketApi.sellMarketTokens).not.toHaveBeenCalled()
   })
 
   it('acepta campos opcionales nulos en un portfolio válido', async () => {
@@ -215,9 +224,9 @@ describe('validación estructural de portfolio e historial', () => {
     expect(await screen.findByRole('heading', { name: 'Jugador real' })).toBeInTheDocument()
     expect(screen.getByText('Equipo real · Liga real')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Vender' }))
-    expect(screen.getByRole('heading', { name: 'Venta de Jugador real' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Confirmar venta' })).toBeInTheDocument()
     expect(screen.getByRole('spinbutton')).toHaveAttribute('max', '2')
-    expect(screen.getByText('Disponible para vender: 2 tokens')).toBeInTheDocument()
+    expect(screen.getByText(/Tokens disponibles:/)).toHaveTextContent('2')
   })
 
   it('rechaza 4 tokens cuando la tenencia disponible es 3 y permite 3', async () => {
@@ -285,7 +294,6 @@ describe('validación estructural de portfolio e historial', () => {
 
     render(<MarketPortfolioPage />)
     await user.click(await screen.findByRole('button', { name: 'Vender' }))
-    await user.click(screen.getByRole('checkbox'))
     await user.click(screen.getByRole('button', { name: /confirmar venta/i }))
 
     await waitFor(() => expect(marketApi.sellMarketTokens).toHaveBeenCalledWith(expect.objectContaining({
