@@ -100,9 +100,9 @@ export default function MarketTransactionsPage () {
 
   useEffect(() => { void load(page, appliedFilters) }, [appliedFilters, load, page])
 
-  if (!session.jwt || session.isJwtExpired) return <MarketStateMessage status="error" message="Iniciá sesión para consultar tu historial." />
-  if (state.status === 'loading') return <MarketStateMessage status="loading" />
-  if (state.status === 'error' || state.status === 'unavailable') return <MarketStateMessage status={state.status} message={state.message} />
+  if (!session.jwt || session.isJwtExpired) return <section className="market-page" aria-labelledby="transactions-title"><MarketStateMessage status="error" message="Iniciá sesión para consultar tu historial." /></section>
+  if (state.status === 'loading') return <section className="market-page" aria-labelledby="transactions-title"><MarketStateMessage status="loading" /></section>
+  if (state.status === 'error' || state.status === 'unavailable') return <section className="market-page" aria-labelledby="transactions-title"><MarketStateMessage status={state.status} message={state.message} /></section>
 
   const pagination = result.pagination || EMPTY_RESULT.pagination
   const transactions = Array.isArray(result.transactions) ? result.transactions : []

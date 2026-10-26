@@ -1,4 +1,30 @@
-.market-page { display: grid; gap: 24px; }
+.market-page {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    gap: 24px;
+}
+
+.market-page::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+            linear-gradient(
+                    90deg,
+                    rgba(245, 246, 248, 1) 0%,
+                    rgba(245, 246, 248, .97) 22%,
+                    rgba(245, 246, 248, .78) 43%,
+                    rgba(245, 246, 248, .25) 65%,
+                    rgba(245, 246, 248, .02) 100%
+            ),
+            url("/images/old-trafford.png");
+    background-position: center 55%;
+    background-repeat: no-repeat;
+    background-size: cover;
+    pointer-events: none;
+}
 .market-page__links { display: flex; flex-wrap: wrap; gap: 10px; }
 .market-hero { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
 .market-hero .page-heading { margin-bottom: 0; }
@@ -372,6 +398,21 @@
 }
 
 @media (max-width: 680px) {
+    .market-page::before {
+        background-image:
+                linear-gradient(
+                        90deg,
+                        rgba(245, 246, 248, 1) 0%,
+                        rgba(245, 246, 248, .96) 25%,
+                        rgba(245, 246, 248, .72) 45%,
+                        rgba(245, 246, 248, .18) 70%,
+                        rgba(245, 246, 248, 0) 100%
+                ),
+                url("/images/old-trafford.png");
+        background-position: center center;
+        background-size: auto 100%;
+    }
+
     .market-hero { align-items: stretch; flex-direction: column; }
     .market-balance { min-width: 0; }
     .market-player-grid { grid-template-columns: 1fr; }

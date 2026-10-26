@@ -58,10 +58,10 @@ export default function MarketPortfolioPage () {
   useEffect(() => { void load() }, [load])
 
   if (!session.jwt || session.isJwtExpired) {
-    return <MarketStateMessage status="error" message="Iniciá sesión para consultar tu portfolio." />
+    return <section className="market-page" aria-labelledby="portfolio-title"><MarketStateMessage status="error" message="Iniciá sesión para consultar tu portfolio." /></section>
   }
-  if (state.status === 'loading') return <MarketStateMessage status="loading" />
-  if (state.status === 'error' || state.status === 'unavailable') return <MarketStateMessage status={state.status} message={state.message} />
+  if (state.status === 'loading') return <section className="market-page" aria-labelledby="portfolio-title"><MarketStateMessage status="loading" /></section>
+  if (state.status === 'error' || state.status === 'unavailable') return <section className="market-page" aria-labelledby="portfolio-title"><MarketStateMessage status={state.status} message={state.message} /></section>
 
   const positions = Array.isArray(portfolio?.open_positions) ? portfolio.open_positions : []
 
