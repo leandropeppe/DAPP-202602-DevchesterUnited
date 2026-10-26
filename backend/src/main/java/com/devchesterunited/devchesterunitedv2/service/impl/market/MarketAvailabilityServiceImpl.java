@@ -8,12 +8,15 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketAvailabi
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPlayerAvailability;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketQuoteAvailability;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketAvailabilityService;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import java.time.Clock;
 import java.time.Instant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class MarketAvailabilityServiceImpl implements MarketAvailabilityService {
@@ -57,6 +60,21 @@ public class MarketAvailabilityServiceImpl implements MarketAvailabilityService 
                 page.getContent().stream()
                         .map(proyeccion -> mapear(proyeccion, operativa, momento))
                         .toList());
+    }
+
+    @Override
+    @Transactional
+    public Optional<MarketPlayerAvailability> consultarJugador(UUID jugadorId) {
+        var estado = estados.findSingletonForRead().orElseThrow(() ->
+                new IllegalStateException("No existe la fila singleton del estado del mercado."));
+        boolean operativa = EstadoMercado.valueOf(estado.getStatus()) == EstadoMercado.READY;
+        if (!operativa) {
+            throw new TokenMarketException(TokenMarketException.Reason.MARKET_NOT_READY,
+                    "El mercado no esta operativo.");
+        }
+        Instant momento = clock.instant();
+        return mercado.findForMarket(jugadorId)
+                .map(proyeccion -> mapear(proyeccion, operativa, momento));
     }
 
     private static MarketPlayerAvailability mapear(

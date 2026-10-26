@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
@@ -43,7 +44,7 @@ class MarketAvailabilityServiceTest {
     void setUp() {
         service = new MarketAvailabilityServiceImpl(
                 estados, mercado, Clock.fixed(NOW, ZoneOffset.UTC));
-        when(mercado.findAllForMarket(PageRequest.of(0, 20)))
+        lenient().when(mercado.findAllForMarket(PageRequest.of(0, 20)))
                 .thenReturn(new PageImpl<>(java.util.List.of(projection), PageRequest.of(0, 20), 1));
     }
 
@@ -103,6 +104,28 @@ class MarketAvailabilityServiceTest {
 
         assertThat(player.quoteAvailability()).isEqualTo(MarketQuoteAvailability.ABSENT);
         assertThat(player.operable()).isFalse();
+    }
+
+    @Test
+    void consultarJugadorUsaLaProyeccionIndividualYLasMismasReglas() {
+        givenState("READY", 1L);
+        givenCompleteCurrentQuote();
+        when(mercado.findForMarket(PLAYER_ID)).thenReturn(Optional.of(projection));
+
+        var player = service.consultarJugador(PLAYER_ID).orElseThrow();
+
+        assertThat(player.playerId()).isEqualTo(PLAYER_ID);
+        assertThat(player.operable()).isTrue();
+        assertThat(player.quoteAvailability()).isEqualTo(MarketQuoteAvailability.CURRENT);
+        verify(mercado).findForMarket(PLAYER_ID);
+    }
+
+    @Test
+    void consultarJugadorInexistenteNoInventaUnaDisponibilidad() {
+        givenState("READY", 1L);
+        when(mercado.findForMarket(PLAYER_ID)).thenReturn(Optional.empty());
+
+        assertThat(service.consultarJugador(PLAYER_ID)).isEmpty();
     }
 
     @Test

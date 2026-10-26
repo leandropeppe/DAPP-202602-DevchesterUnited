@@ -17,8 +17,15 @@ import { getTeamLogo }
 
 import {
   getPlayerDetail,
-  getPlayerValuationHistory
+  getPlayerValuationHistory,
+  getMarketBalance,
+  getMarketPlayer,
+  getMarketPortfolio
 } from '../api/http.js'
+
+import MarketOperationPanel from '../components/MarketOperationPanel.jsx'
+import { marketPlayerUuid } from '../market/marketState.js'
+import { useOptionalSession } from '../session/SessionContext.jsx'
 
 import {
   errorMessage
@@ -665,6 +672,7 @@ export default function PlayerDetailPage ({
                                             playerId,
                                             onNavigate
                                           }) {
+  const session = useOptionalSession()
   const [
     state,
     setState
@@ -697,6 +705,44 @@ export default function PlayerDetailPage ({
     total: 0,
     message: ''
   })
+
+  const [marketData, setMarketData] = useState({
+    status: 'idle',
+    player: null,
+    balance: null,
+    holdings: 0,
+    message: ''
+  })
+
+  async function loadMarketData () {
+    if (!session?.jwt || session.isJwtExpired) {
+      setMarketData((current) => ({ ...current, status: 'auth-required' }))
+      return
+    }
+
+    setMarketData((current) => ({ ...current, status: 'loading', message: '' }))
+    const marketId = marketPlayerUuid(playerId)
+    const [balanceResult, playerResult, portfolioResult] = await Promise.allSettled([
+      getMarketBalance(session.jwt),
+      getMarketPlayer(marketId, session.jwt),
+      getMarketPortfolio(session.jwt)
+    ])
+    const marketPlayer = playerResult.status === 'fulfilled'
+      ? playerResult.value?.data ?? null
+      : null
+    const positions = portfolioResult.status === 'fulfilled' && Array.isArray(portfolioResult.value?.data?.open_positions)
+      ? portfolioResult.value.data.open_positions
+      : []
+    const position = positions.find((candidate) => marketPlayerUuid(candidate.player_id) === marketId)
+    const failed = [balanceResult, playerResult, portfolioResult].filter((result) => result.status === 'rejected')
+    setMarketData({
+      status: failed.length === 3 ? 'error' : 'success',
+      player: marketPlayer,
+      balance: balanceResult.status === 'fulfilled' ? balanceResult.value?.data?.balance ?? null : null,
+      holdings: position?.quantity ?? 0,
+      message: failed[0]?.reason ? errorMessage(failed[0].reason) : ''
+    })
+  }
 
   useEffect(() => {
     let active = true
@@ -745,12 +791,14 @@ export default function PlayerDetailPage ({
       message: ''
     })
 
+    void loadMarketData()
+
     void load()
 
     return () => {
       active = false
     }
-  }, [playerId])
+  }, [playerId, session?.jwt, session?.isJwtExpired])
 
   async function loadValuationHistory () {
     setValuationHistory(
@@ -1217,6 +1265,35 @@ export default function PlayerDetailPage ({
                     )
                     : null
               }
+
+              <div className="player-detail__purchase">
+                {marketData.status === 'auth-required'
+                  ? <p className="market-operation-panel__warning">Iniciá sesión para comprar tokens.</p>
+                  : null}
+                {marketData.status === 'loading'
+                  ? <p className="market-operation-panel__warning">Cargando datos de compra…</p>
+                  : null}
+                {marketData.status === 'error'
+                  ? <p className="market-operation-panel__warning">No se pudo cargar la información de compra. La información del jugador sigue disponible.</p>
+                  : null}
+                {marketData.status === 'success' && marketData.player
+                  ? <MarketOperationPanel
+                      player={marketData.player}
+                      type="PURCHASE"
+                      jwt={session?.jwt}
+                      embedded
+                      currentHoldings={marketData.holdings}
+                      availableBalance={marketData.balance}
+                      onConfirmed={() => { void loadMarketData() }}
+                    />
+                  : null}
+                {marketData.status === 'success' && !marketData.player
+                  ? <>
+                      <h2>Comprar tokens</h2>
+                      <p className="market-operation-panel__warning">Este jugador no tiene una cotización operable.</p>
+                    </>
+                  : null}
+              </div>
 
             </div>
 

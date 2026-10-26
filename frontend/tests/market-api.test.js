@@ -3,6 +3,7 @@ import {
   getMarketBalance,
   getMarketOperation,
   getMarketPlayers,
+  getMarketPlayer,
   getMarketPortfolio,
   getMarketTransactions,
   purchaseMarketTokens,
@@ -31,6 +32,15 @@ describe('cliente HTTP del Token Market', () => {
     expect(fetch.mock.calls[0][1].headers.get('Authorization')).toBe('Bearer jwt-balance')
     expect(fetch.mock.calls[1][0]).toBe('/api/v1/market/players?page=2&limit=20')
     expect(fetch.mock.calls[1][1].headers.get('Authorization')).toBe('Bearer jwt-players')
+  })
+
+  it('consulta un jugador puntual del mercado', async () => {
+    global.fetch = vi.fn().mockResolvedValue(jsonResponse({ status: 'success', data: {} }))
+
+    await getMarketPlayer('11111111-1111-4111-8111-111111111111', 'jwt-player')
+
+    expect(fetch.mock.calls[0][0]).toBe('/api/v1/market/players/11111111-1111-4111-8111-111111111111')
+    expect(fetch.mock.calls[0][1].headers.get('Authorization')).toBe('Bearer jwt-player')
   })
 
   it.each([

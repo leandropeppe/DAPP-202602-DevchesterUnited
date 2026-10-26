@@ -215,6 +215,11 @@ export const getMarketPlayers = ({ filters = {}, jwt } = {}) => request(
   { jwt }
 )
 
+export const getMarketPlayer = (playerId, jwt) => request(
+  '/market/players/' + encodeURIComponent(playerId),
+  { jwt }
+)
+
 export const purchaseMarketTokens = ({ body, idempotencyKey, jwt } = {}) => request(
   '/market/purchases',
   {

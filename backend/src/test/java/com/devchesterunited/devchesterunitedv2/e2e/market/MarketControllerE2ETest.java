@@ -113,6 +113,21 @@ class MarketControllerE2ETest extends PostgresTestSupport {
                 .andExpect(status().isServiceUnavailable());
     }
 
+    @Test
+    void playerConsultaDisponibilidadPorId() throws Exception {
+        UUID playerId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        when(availability.consultarJugador(playerId)).thenReturn(Optional.of(
+                player(playerId.toString(), MarketQuoteAvailability.CURRENT, true)));
+
+        mvc.perform(get("/api/v1/market/players/{playerId}", playerId)
+                        .with(jwt().jwt(token -> token.subject("usr_" + USER_A))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value("ply_" + playerId))
+                .andExpect(jsonPath("$.data.operable").value(true));
+
+        verify(availability).consultarJugador(playerId);
+    }
+
     private static MarketBalanceResult balance(String status, String saldo) {
         return new MarketBalanceResult(EstadoMercado.valueOf(status), 3L, "READY".equals(status),
                 Optional.of(new BigDecimal(saldo)));

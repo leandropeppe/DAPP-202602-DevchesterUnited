@@ -25,6 +25,7 @@ import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketTransactionService;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.exception.JugadorNoEncontradoException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -42,6 +43,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -191,6 +193,23 @@ public class MarketController {
                 new PaginacionDTO(resultado.pagina(), resultado.limite(),
                         resultado.totalPaginas(), resultado.totalRegistros()));
         return ResponseEntity.ok(new SuccessResponseDTO<>(data));
+    }
+
+    @GetMapping("/players/{playerId}")
+    @Operation(operationId = "consultarMarketPlayer", summary = "Consultar disponibilidad de un jugador en el mercado",
+            description = "Devuelve la disponibilidad y cotizacion del jugador indicado.",
+            security = @SecurityRequirement(name = "BearerAuth"))
+    @ApiResponse(responseCode = "200", description = "Disponibilidad del jugador.")
+    @ApiResponse(responseCode = "404", description = "Jugador inexistente.")
+    @ApiResponse(responseCode = "503", description = "Mercado no operativo.")
+    public ResponseEntity<SuccessResponseDTO<MarketPlayerResponseDTO>> player(
+            @Parameter(name = "playerId", in = ParameterIn.PATH, required = true,
+                    description = "Identificador UUID del jugador.",
+                    schema = @Schema(type = "string", format = "uuid"))
+            @PathVariable UUID playerId) {
+        var resultado = availability.consultarJugador(playerId)
+                .orElseThrow(JugadorNoEncontradoException::new);
+        return ResponseEntity.ok(new SuccessResponseDTO<>(mapear(resultado)));
     }
 
     @PostMapping("/purchases")
