@@ -1,3 +1,8 @@
+.old-trafford-fixed {
+    position: relative;
+    isolation: isolate;
+}
+
 .market-page {
     position: relative;
     isolation: isolate;
@@ -5,6 +10,7 @@
     gap: 24px;
 }
 
+.old-trafford-fixed::before,
 .market-page::before {
     content: "";
     position: fixed;
@@ -13,17 +19,29 @@
     background-image:
             linear-gradient(
                     90deg,
-                    rgba(245, 246, 248, 1) 0%,
-                    rgba(245, 246, 248, .97) 22%,
-                    rgba(245, 246, 248, .78) 43%,
-                    rgba(245, 246, 248, .25) 65%,
-                    rgba(245, 246, 248, .02) 100%
+                    rgba(245, 246, 248, .98) 0%,
+                    rgba(245, 246, 248, .90) 14%,
+                    rgba(245, 246, 248, .68) 28%,
+                    rgba(245, 246, 248, .32) 44%,
+                    rgba(245, 246, 248, .08) 58%,
+                    rgba(245, 246, 248, 0) 68%
             ),
             url("/images/old-trafford.png");
     background-position: center 55%;
     background-repeat: no-repeat;
     background-size: cover;
     pointer-events: none;
+}
+
+/* El mismo fondo fijo se comparte con Catálogo y Detalle de jugador. */
+.old-trafford-fixed > .catalog-hero,
+.old-trafford-fixed > .player-detail__hero {
+    background: transparent;
+}
+
+.old-trafford-fixed .catalog-hero__stadium,
+.old-trafford-fixed .player-detail__stadium {
+    display: none;
 }
 .market-page__links { display: flex; flex-wrap: wrap; gap: 10px; }
 .market-hero { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
@@ -110,8 +128,6 @@
     border-radius: 10px;
     background: #e2e8f0;
     color: #475569;
-    font-size: 1rem;
-    font-weight: 900;
 }
 
 .market-operation-panel__balance span:not(.market-operation-panel__balance-icon) {
@@ -398,6 +414,7 @@
 }
 
 @media (max-width: 680px) {
+    .old-trafford-fixed::before,
     .market-page::before {
         background-image:
                 linear-gradient(
@@ -456,6 +473,36 @@
     color: #15803d;
     font-size: 1.35rem;
     font-weight: 900;
+}
+
+.market-confirmation__success {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    padding: 12px 0 8px;
+    animation: market-confirmation-success-in .24s ease-out both;
+}
+
+.market-confirmation__success-icon {
+    color: #16a34a;
+}
+
+.market-confirmation__success-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.45rem;
+    font-weight: 900;
+}
+
+.market-confirmation__success-message {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.55;
+}
+
+@keyframes market-confirmation-success-in {
+    from { opacity: 0; transform: translateY(6px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .market-purchase-confirmation__dialog h3 {

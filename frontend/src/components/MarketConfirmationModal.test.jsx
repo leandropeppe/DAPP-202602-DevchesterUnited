@@ -61,4 +61,14 @@ describe('MarketConfirmationModal', () => {
     expect(screen.getByText('Tokens disponibles: 4')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeDisabled()
   })
+
+  it('muestra el estado de éxito sin resumen ni acciones', () => {
+    render(<MarketConfirmationModal {...defaultProps} status="success" successTitle="Compra realizada" successMessage="La operación se completó correctamente." />)
+
+    expect(screen.getByRole('heading', { name: 'Compra realizada' })).toBeInTheDocument()
+    expect(screen.getByText('La operación se completó correctamente.')).toBeInTheDocument()
+    expect(document.querySelector('.market-confirmation__success-icon')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cancelar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Confirmar compra' })).not.toBeInTheDocument()
+  })
 })

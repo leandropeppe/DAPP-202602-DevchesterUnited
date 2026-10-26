@@ -139,7 +139,7 @@ export default function MarketPortfolioPage () {
             jwt={session.jwt}
             modalOnly
             onClose={() => setOperation(null)}
-            onConfirmed={() => { setOperation(null); void load() }}
+            onConfirmed={() => { void load() }}
           />
         : null}
     </section>

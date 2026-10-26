@@ -1273,12 +1273,17 @@
 
     border-radius: 9px;
 
-    background: #f0f3f7;
+    background: #fff1f2;
+    color: #d71920;
+}
 
-    color: #25324a;
+.statistic-card__icon > svg {
+    width: 17px;
+    height: 17px;
 
-    font-size: 1rem;
-    font-weight: 900;
+    flex: 0 0 auto;
+
+    stroke: currentColor;
 }
 
 .statistic-card dt {
@@ -1313,20 +1318,22 @@
 }
 
 .stat-icon-card {
-    width: 10px;
-    height: 16px;
+    width: 14px;
+    height: 18px;
 
-    display: inline-block;
+    flex: 0 0 auto;
+
+    stroke: currentColor;
 
     border-radius: 2px;
 }
 
 .stat-icon-card--yellow {
-    background: #f7c948;
+    color: #f7c948;
 }
 
 .stat-icon-card--red {
-    background: #d71920;
+    color: #d71920;
 }
 
 @media (hover: hover) and (pointer: fine) {

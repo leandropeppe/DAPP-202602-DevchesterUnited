@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getMarketOperation, purchaseMarketTokens, sellMarketTokens } from '../api/http.js'
 import OperationStatus from './OperationStatus.jsx'
 import MarketConfirmationModal from './MarketConfirmationModal.jsx'
 import { isMarketPlayerOperable, marketPlayerUuid } from '../market/marketState.js'
 import { errorMessage } from '../views/formUtils.js'
+import { Wallet } from 'lucide-react'
 
 function formatAmount (value) {
   if (value === null || value === undefined || value === '') return 'Sin información'
@@ -56,6 +57,12 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
   const [needsRecovery, setNeedsRecovery] = useState(false)
   const [idempotencyKey] = useState(newIdempotencyKey)
   const confirmedNotified = useRef(false)
+  const operationInFlight = useRef(false)
+  const successTimer = useRef(null)
+
+  useEffect(() => () => {
+    if (successTimer.current) clearTimeout(successTimer.current)
+  }, [])
 
   const playerId = marketPlayerUuid(player.id)
   const canOperate = isMarketPlayerOperable(player) && playerId && player.quote_id && player.quote_version && player.price_per_token !== null && player.price_per_token !== undefined
@@ -79,7 +86,8 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
   }
 
   async function executeOperation () {
-    if (!modalOnly) setShowPurchaseConfirmation(false)
+    if (operationInFlight.current) return
+    operationInFlight.current = true
     setState({ status: 'loading', message: '' })
 
     const body = {
@@ -95,11 +103,39 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
           : await sellMarketTokens({ body, idempotencyKey, jwt })
 
       const operation = operationResponse(response)
+
       setResult(operation)
-      setNeedsRecovery(!['CONFIRMED', 'REJECTED'].includes(operation.status))
-      notifyConfirmed(operation)
-      setState({ status: 'success', message: '' })
-      if (modalOnly && operation.status === 'CONFIRMED') setShowPurchaseConfirmation(false)
+      setNeedsRecovery(
+          !['CONFIRMED', 'REJECTED'].includes(operation.status)
+      )
+
+      if (operation.status === 'CONFIRMED') {
+        setState({
+          status: 'success',
+          message: ''
+        })
+
+        setShowPurchaseConfirmation(true)
+
+        successTimer.current = setTimeout(() => {
+          notifyConfirmed(operation)
+
+          setShowPurchaseConfirmation(false)
+
+          if (modalOnly) {
+            onClose?.()
+          }
+
+          successTimer.current = null
+        }, 2000)
+
+        return
+      }
+
+      setState({
+        status: 'success',
+        message: ''
+      })
     } catch (error) {
       if (error.incompleteData) {
         setResult(error.incompleteData)
@@ -107,6 +143,8 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
       }
 
       setState({ status: 'error', message: errorMessage(error) })
+    } finally {
+      operationInFlight.current = false
     }
   }
 
@@ -194,6 +232,9 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
           total={estimatedTotal}
           totalLabel="Total estimado"
           confirmLabel={state.status === 'loading' ? 'Vendiendo…' : 'Confirmar venta'}
+          status={state.status === 'loading' ? 'loading' : state.status === 'success' && result?.status === 'CONFIRMED' ? 'success' : 'idle'}
+          successTitle="Venta realizada"
+          successMessage="La operación se completó correctamente."
           confirmDisabled={!canOperate || !quantityValid || state.status === 'loading' || Boolean(result)}
           variant="sell"
           onCancel={() => { setShowPurchaseConfirmation(false); onClose?.() }}
@@ -220,8 +261,18 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
           {embedded
               ? (
                   <div className="market-operation-panel__balance">
-                    <span className="market-operation-panel__balance-icon" aria-hidden="true">▣</span>
+                    <span
+                        className="market-operation-panel__balance-icon"
+                        aria-hidden="true"
+                    >
+                      <Wallet
+                          size={18}
+                          strokeWidth={2.2}
+                      />
+                    </span>
+
                     <span>Saldo disponible</span>
+
                     <strong>{formatAmount(availableBalance)} créditos</strong>
                   </div>
               )
@@ -341,6 +392,9 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
             quantity={quantityNumber}
             total={estimatedTotal}
             confirmLabel="Confirmar compra"
+            status={state.status === 'loading' ? 'loading' : state.status === 'success' && result?.status === 'CONFIRMED' ? 'success' : 'idle'}
+            successTitle="Compra realizada"
+            successMessage="La operación se completó correctamente."
             variant="buy"
             onCancel={() => setShowPurchaseConfirmation(false)}
             onConfirm={() => { void executeOperation() }}
