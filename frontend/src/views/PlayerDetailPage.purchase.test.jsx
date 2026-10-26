@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import {fireEvent, render, screen, waitFor, within} from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import PlayerDetailPage from './PlayerDetailPage.jsx'
 import { SessionProvider } from '../session/SessionContext.jsx'
@@ -79,20 +79,86 @@ describe('compra integrada en el detalle del jugador', () => {
     expect(within(purchase).getByText('100,00')).toBeInTheDocument()
   })
 
-  it('ejecuta la compra y vuelve a consultar saldo y tenencia', async () => {
-    api.getMarketBalance.mockResolvedValueOnce({ data: { balance: 100 } }).mockResolvedValue({ data: { balance: 70 } })
-    api.getMarketPortfolio.mockResolvedValueOnce({ data: { open_positions: [] } }).mockResolvedValue({ data: { open_positions: [{ player_id: playerId, quantity: 3 }] } })
-    renderPage()
-    await screen.findByRole('heading', { name: 'Comprar tokens' })
-    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '3' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Comprar tokens' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar compra' }))
+  it('ejecuta la compra, muestra confirmación y luego actualiza saldo y tenencia', async () => {
+    api.getMarketBalance
+        .mockResolvedValueOnce({ data: { balance: 100 } })
+        .mockResolvedValue({ data: { balance: 70 } })
 
-    await waitFor(() => expect(api.purchaseMarketTokens).toHaveBeenCalledWith(expect.objectContaining({
-      body: expect.objectContaining({ player_id: '11111111-1111-4111-8111-111111111111', quantity: 3 }),
-      jwt: 'jwt-test'
-    })))
-    await waitFor(() => expect(api.getMarketBalance).toHaveBeenCalledTimes(2))
+    api.getMarketPortfolio
+        .mockResolvedValueOnce({ data: { open_positions: [] } })
+        .mockResolvedValue({
+          data: {
+            open_positions: [{
+              player_id: playerId,
+              quantity: 3
+            }]
+          }
+        })
+
+    renderPage()
+
+    await screen.findByRole('heading', {
+      name: 'Comprar tokens'
+    })
+
+    fireEvent.change(
+        screen.getByRole('spinbutton'),
+        {
+          target: {
+            value: '3'
+          }
+        }
+    )
+
+    fireEvent.click(
+        screen.getByRole('button', {
+          name: 'Comprar tokens'
+        })
+    )
+
+    fireEvent.click(
+        screen.getByRole('button', {
+          name: 'Confirmar compra'
+        })
+    )
+
+    await waitFor(() =>
+        expect(
+            api.purchaseMarketTokens
+        ).toHaveBeenCalledWith(
+            expect.objectContaining({
+              body: expect.objectContaining({
+                player_id: '11111111-1111-4111-8111-111111111111',
+                quantity: 3
+              }),
+              jwt: 'jwt-test'
+            })
+        )
+    )
+
+    expect(
+        await screen.findByRole('heading', {
+          name: 'Compra realizada'
+        })
+    ).toBeInTheDocument()
+
+    expect(
+        api.getMarketBalance
+    ).toHaveBeenCalledTimes(1)
+
+    await waitFor(
+        () =>
+            expect(
+                api.getMarketBalance
+            ).toHaveBeenCalledTimes(2),
+        {
+          timeout: 3000
+        }
+    )
+
+    expect(
+        api.getMarketPortfolio
+    ).toHaveBeenCalledTimes(2)
   })
 
   it('deshabilita la compra cuando el saldo no alcanza', async () => {

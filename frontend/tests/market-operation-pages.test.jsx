@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MarketOperationPanel from '../src/components/MarketOperationPanel.jsx'
@@ -254,8 +254,9 @@ describe('validación estructural de portfolio e historial', () => {
     expect(screen.getByRole('spinbutton')).toHaveAttribute('max', '100')
   })
 
-  it('recarga el portfolio después de confirmar una venta', async () => {
+  it('recarga el portfolio después de mostrar la confirmación de venta', async () => {
     const user = userEvent.setup()
+
     const initialPortfolio = {
       data: {
         open_positions: [{
@@ -277,30 +278,82 @@ describe('validación estructural de portfolio e historial', () => {
         combined_result_complete: true
       }
     }
+
     const refreshedPortfolio = {
       ...initialPortfolio,
       data: {
         ...initialPortfolio.data,
-        open_positions: [{ ...initialPortfolio.data.open_positions[0], quantity: 1 }],
+        open_positions: [{
+          ...initialPortfolio.data.open_positions[0],
+          quantity: 1
+        }],
         total_tokens: 1,
         total_pending_acquisition_cost: 1,
         total_current_value: 1
       }
     }
+
     marketApi.getMarketPortfolio
-      .mockResolvedValueOnce(initialPortfolio)
-      .mockResolvedValueOnce(refreshedPortfolio)
-    marketApi.sellMarketTokens.mockResolvedValueOnce({ data: { ...completeOperation, status: 'CONFIRMED' } })
+        .mockResolvedValueOnce(initialPortfolio)
+        .mockResolvedValueOnce(refreshedPortfolio)
+
+    marketApi.sellMarketTokens.mockResolvedValueOnce({
+      data: {
+        ...completeOperation,
+        status: 'CONFIRMED'
+      }
+    })
 
     render(<MarketPortfolioPage />)
-    await user.click(await screen.findByRole('button', { name: 'Vender' }))
-    await user.click(screen.getByRole('button', { name: /confirmar venta/i }))
 
-    await waitFor(() => expect(marketApi.sellMarketTokens).toHaveBeenCalledWith(expect.objectContaining({
-      body: expect.objectContaining({ quantity: 1, player_id: '11111111-1111-4111-8111-111111111111' })
-    })))
-    await waitFor(() => expect(marketApi.getMarketPortfolio).toHaveBeenCalledTimes(2))
-    expect(await screen.findByText('1 tokens')).toBeInTheDocument()
+    await user.click(
+        await screen.findByRole('button', {
+          name: 'Vender'
+        })
+    )
+
+    await user.click(
+        screen.getByRole('button', {
+          name: /confirmar venta/i
+        })
+    )
+
+    await waitFor(() =>
+        expect(
+            marketApi.sellMarketTokens
+        ).toHaveBeenCalledWith(
+            expect.objectContaining({
+              body: expect.objectContaining({
+                quantity: 1,
+                player_id: '11111111-1111-4111-8111-111111111111'
+              })
+            })
+        )
+    )
+
+    expect(
+        await screen.findByRole('heading', {
+          name: 'Venta realizada'
+        })
+    ).toBeInTheDocument()
+
+    expect(
+        marketApi.getMarketPortfolio
+    ).toHaveBeenCalledTimes(1)
+
+    await waitFor(
+        () =>
+            expect(
+                marketApi.getMarketPortfolio
+            ).toHaveBeenCalledTimes(2),
+        {
+          timeout: 3000
+        }
+    )
+
+    expect(
+        await screen.findByText('1 tokens')
+    ).toBeInTheDocument()
   })
 
   it('no presenta como vacío un historial sin paginación obligatoria', async () => {
