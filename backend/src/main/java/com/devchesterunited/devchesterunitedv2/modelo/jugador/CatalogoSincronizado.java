@@ -1,12 +1,9 @@
 package com.devchesterunited.devchesterunitedv2.modelo.jugador;
+
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 

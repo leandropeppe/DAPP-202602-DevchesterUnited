@@ -1,24 +1,17 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CuentaCreditosMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EmisionTokensMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.MovimientoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TenenciaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CuentaCreditosMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EmisionTokensMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.MovimientoMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseSettlement;
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.*;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.*;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseSettlement;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchasePersistenceService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Persists the purchase leg in one transaction. The caller owns the earlier

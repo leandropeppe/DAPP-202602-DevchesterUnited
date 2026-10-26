@@ -1,15 +1,17 @@
-package com.devchesterunited.devchesterunitedv2.service;
-
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
+
 
 class TokenMarketValidationTest {
 

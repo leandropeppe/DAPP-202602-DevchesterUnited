@@ -1,15 +1,15 @@
 package com.devchesterunited.devchesterunitedv2.scraping.catalogo;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
 
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class WhoscoredTeamIdentityPublicationService {

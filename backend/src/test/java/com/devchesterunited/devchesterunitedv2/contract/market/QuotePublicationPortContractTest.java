@@ -1,23 +1,16 @@
 package com.devchesterunited.devchesterunitedv2.contract.market;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.*;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 class QuotePublicationPortContractTest {
 

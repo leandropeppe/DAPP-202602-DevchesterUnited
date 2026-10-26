@@ -2,13 +2,14 @@ package com.devchesterunited.devchesterunitedv2.persistence.equipo.repository;
 
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 public interface IdentidadExternaEquipoRepository
         extends JpaRepository<IdentidadExternaEquipoEntity, UUID> {

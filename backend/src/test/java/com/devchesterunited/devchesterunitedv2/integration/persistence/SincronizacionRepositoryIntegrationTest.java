@@ -1,25 +1,30 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
+
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
+import static org.assertj.core.api.Assertions.*;
 
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
-import jakarta.persistence.EntityManager;
-import static org.assertj.core.api.Assertions.*;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional

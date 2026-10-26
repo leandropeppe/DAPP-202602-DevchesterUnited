@@ -1,27 +1,21 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyParameterHasher;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketOperationExecutionLock;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
-import java.sql.Timestamp;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +24,14 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * T033: concurrencia real de la reclamacion, separada de las compras/ventas.

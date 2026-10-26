@@ -1,4 +1,4 @@
-package com.devchesterunited.devchesterunitedv2.controller;
+package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
 
 import com.devchesterunited.devchesterunitedv2.exception.GlobalExceptionHandler;
 import com.devchesterunited.devchesterunitedv2.exception.SincronizacionPersistenciaException;

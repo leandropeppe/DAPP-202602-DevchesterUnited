@@ -1,31 +1,15 @@
 package com.devchesterunited.devchesterunitedv2.controller.market;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
 
-import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketBalanceResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPlayerResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPlayersResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketOperationResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPurchaseRequestDTO;
-import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPurchaseResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketSaleRequestDTO;
-import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketSaleResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPortfolioResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketTransactionsResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.PaginacionDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.market.dto.*;
+import com.devchesterunited.devchesterunitedv2.exception.JugadorNoEncontradoException;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketAvailabilityResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPlayerAvailability;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionFilter;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketAvailabilityService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketBalanceService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPortfolioService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketTransactionService;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.exception.JugadorNoEncontradoException;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -33,24 +17,18 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.util.UUID;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/market")

@@ -1,15 +1,15 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
-import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
 
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EstadoMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.InicializacionMercadoResultado;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.Optional;
 
 /** Gestiona únicamente las transiciones persistentes del estado del mercado. */
 @Service

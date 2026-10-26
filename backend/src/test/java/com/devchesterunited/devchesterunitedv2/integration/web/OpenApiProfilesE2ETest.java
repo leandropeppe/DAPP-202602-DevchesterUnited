@@ -1,4 +1,6 @@
-package com.devchesterunited.devchesterunitedv2.controller;
+package com.devchesterunited.devchesterunitedv2.integration.web;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.devchesterunited.devchesterunitedv2.configuration.OpenApiConfig;
 import com.devchesterunited.devchesterunitedv2.configuration.security.SecurityConfig;
@@ -18,7 +20,6 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class OpenApiProfilesE2ETest {
     @ParameterizedTest

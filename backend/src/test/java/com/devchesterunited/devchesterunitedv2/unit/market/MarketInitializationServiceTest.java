@@ -1,25 +1,27 @@
-package com.devchesterunited.devchesterunitedv2.service;
-
-import static org.assertj.core.api.Assertions.assertThat;
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
+import com.devchesterunited.devchesterunitedv2.service.impl.market.InicializacionCreditosUsuariosService;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationBootstrap;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationCoordinator;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationServiceImpl;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationStateService;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.InicializacionMercadoResultado;
-import com.devchesterunited.devchesterunitedv2.service.impl.market.InicializacionCreditosUsuariosService;
-import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationBootstrap;
-import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationCoordinator;
-import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationServiceImpl;
-import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationStateService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketInitializationService;
-import java.math.BigDecimal;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class MarketInitializationServiceTest {

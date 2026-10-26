@@ -1,22 +1,22 @@
 package com.devchesterunited.devchesterunitedv2.contract.market;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseResult;
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService;
-import java.math.BigDecimal;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * T043 contract suite. A concrete implementation is intentionally supplied by

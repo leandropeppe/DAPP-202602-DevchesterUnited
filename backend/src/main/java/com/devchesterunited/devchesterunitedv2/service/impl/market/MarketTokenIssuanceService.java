@@ -1,16 +1,17 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EmisionTokensMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EmisionTokensMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EmisionTokensMercadoRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /** Emite el suministro inicial de un jugador sin volver a emitirlo al reactivarlo. */
 @Service

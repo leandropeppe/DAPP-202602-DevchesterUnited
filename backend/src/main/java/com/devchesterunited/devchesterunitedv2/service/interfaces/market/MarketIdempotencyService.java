@@ -1,8 +1,9 @@
 package com.devchesterunited.devchesterunitedv2.service.interfaces.market;
 
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyClaim;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
+
 import java.util.Optional;
 import java.util.UUID;
 

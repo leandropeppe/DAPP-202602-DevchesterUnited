@@ -1,7 +1,10 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
+
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
+
 import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionScheduler;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -9,7 +12,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class ValorizacionAlcanceTest {
 

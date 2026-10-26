@@ -2,9 +2,10 @@ package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
 import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.InicializacionMercadoResultado;
-import java.util.concurrent.locks.ReentrantLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Coordina el primer incremento de inicialización sin ejecutar etapas futuras

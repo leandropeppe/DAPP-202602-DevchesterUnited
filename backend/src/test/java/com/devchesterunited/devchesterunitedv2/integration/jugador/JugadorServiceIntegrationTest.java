@@ -1,18 +1,16 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.integration.jugador;
+
+import static org.assertj.core.api.Assertions.*;
 
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.controller.jugador.dto.FiltroJugadoresDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadorResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadoresResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.shared.PaginacionResultado;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.jugador.JugadorService;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import jakarta.validation.ConstraintViolationException;
-import java.util.Arrays;
-import java.util.UUID;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -22,7 +20,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import static org.assertj.core.api.Assertions.*;
+
+import java.util.Arrays;
+import java.util.UUID;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 @SpringBootTest
 @Transactional(isolation = Isolation.REPEATABLE_READ)

@@ -1,16 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.estadisticas;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
 
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
+import org.springframework.stereotype.Component;
+
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.stereotype.Component;
 
 /** Consolida familias sin convertir ausencias en ceros ni completar datos. */
 @Component

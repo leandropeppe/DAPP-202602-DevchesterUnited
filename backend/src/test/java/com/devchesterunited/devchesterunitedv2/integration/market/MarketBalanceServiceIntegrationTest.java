@@ -1,21 +1,22 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.integration.market;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketBalanceService;
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 class MarketBalanceServiceIntegrationTest extends PostgresTestSupport {

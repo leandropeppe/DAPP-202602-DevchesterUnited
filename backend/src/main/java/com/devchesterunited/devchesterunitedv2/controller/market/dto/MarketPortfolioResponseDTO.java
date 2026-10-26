@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.controller.market.dto;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioResult;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;

@@ -1,4 +1,6 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.integration.auth;
+import static org.assertj.core.api.Assertions.*;
+
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
 
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
@@ -18,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 class ApiKeyConcurrencyIntegrationTest extends PostgresTestSupport {

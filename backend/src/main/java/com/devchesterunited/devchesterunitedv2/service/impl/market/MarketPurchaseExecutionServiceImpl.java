@@ -1,33 +1,24 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.ContraparteMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EstadoMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyClaim;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseSettlement;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyExecutionPort;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseExecutionService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchasePersistenceService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketQuoteValidationService;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.*;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /** Liquida y confirma una compra dentro de un único límite transaccional. */
 @Service

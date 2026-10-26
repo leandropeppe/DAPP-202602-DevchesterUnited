@@ -1,16 +1,13 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
+
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import static org.assertj.core.api.Assertions.*;
 
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.projection.JugadorCatalogoProjection;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.projection.JugadorPortfolioProjection;
-import java.util.ArrayList;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Stream;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.hibernate.resource.jdbc.spi.StatementInspector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +23,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
-import static org.assertj.core.api.Assertions.*;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** PostgreSQL real; fixtures independientes del Repository y restaurados por rollback. */
 @SpringBootTest

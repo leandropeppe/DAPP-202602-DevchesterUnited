@@ -1,25 +1,22 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.jugador;
 
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.exception.JugadorNoEncontradoException;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasJugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasJugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.projection.JugadorCatalogoProjection;
-import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasJugadorEntity;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.jugador.JugadorService;
-import com.devchesterunited.devchesterunitedv2.service.dto.jugador.FiltroJugadoresConsulta;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.EstadisticasJugadorResultado;
-import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadorDetalleResultado;
-import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadorResultado;
-import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadoresResultado;
-import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadorRankingResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.jugador.*;
 import com.devchesterunited.devchesterunitedv2.service.dto.shared.PaginacionResultado;
-import com.devchesterunited.devchesterunitedv2.exception.JugadorNoEncontradoException;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.jugador.JugadorService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.IntStream;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class JugadorServiceImpl implements JugadorService {

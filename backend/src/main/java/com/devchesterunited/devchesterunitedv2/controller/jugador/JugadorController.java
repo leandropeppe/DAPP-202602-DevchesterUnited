@@ -1,30 +1,21 @@
 package com.devchesterunited.devchesterunitedv2.controller.jugador;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
-import com.devchesterunited.devchesterunitedv2.controller.jugador.dto.FiltroJugadoresDTO;
+import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionScheduler;
 import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.estadisticas.dto.EstadisticasJugadorResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.jugador.dto.JugadorDetalleResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.jugador.dto.JugadoresResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.estadisticas.dto.EstadisticasJugadorResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.jugador.dto.*;
 import com.devchesterunited.devchesterunitedv2.controller.valorizacion.dto.ValuacionHistoryResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.valorizacion.dto.ValuacionResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.jugador.dto.JugadorRankingResponseDTO;
-import com.devchesterunited.devchesterunitedv2.controller.jugador.dto.RankingJugadoresResponseDTO;
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionScheduler;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.jugador.JugadorService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.CotizacionConsultaService;
 import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.EstadisticasJugadorResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadorDetalleResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadorRankingResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadorResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadoresResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.valorizacion.ValuacionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.valorizacion.ValuacionHistoricoDTO;
-import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadorRankingResultado;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolationException;
-import java.util.Set;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.jugador.JugadorService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.CotizacionConsultaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -32,13 +23,13 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1")

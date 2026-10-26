@@ -1,17 +1,18 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
-import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketQuoteValidationService;
-import java.time.Clock;
-import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.util.UUID;
 
 /** Valida una versión exacta sin calcular ni sustituir cotizaciones. */
 @Service

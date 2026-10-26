@@ -1,4 +1,6 @@
-package com.devchesterunited.devchesterunitedv2.configuration;
+package com.devchesterunited.devchesterunitedv2.unit.auth;
+import static org.assertj.core.api.Assertions.*;
+
 import com.devchesterunited.devchesterunitedv2.configuration.security.JwtConfig;
 
 import com.nimbusds.jose.JWSAlgorithm;
@@ -27,7 +29,6 @@ import org.springframework.mock.env.MockEnvironment;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import static org.assertj.core.api.Assertions.*;
 
 /** Claves aleatorias exclusivas de la prueba: nunca se guardan ni se imprimen. */
 @ExtendWith(OutputCaptureExtension.class)

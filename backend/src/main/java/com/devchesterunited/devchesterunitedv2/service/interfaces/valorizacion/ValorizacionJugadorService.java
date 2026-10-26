@@ -1,7 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion;
 
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ResultadoValorizacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ConfiguracionElegibilidad;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ResultadoValorizacion;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

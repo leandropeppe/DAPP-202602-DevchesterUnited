@@ -1,18 +1,20 @@
-package com.devchesterunited.devchesterunitedv2.service;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationExecutionLock;
+package com.devchesterunited.devchesterunitedv2.integration.market;
+
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationExecutionLock;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 class MarketInitializationExecutionLockIntegrationTest extends PostgresTestSupport {

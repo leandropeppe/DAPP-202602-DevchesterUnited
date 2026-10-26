@@ -1,28 +1,19 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.estadisticas;
-import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadJugadorResolver;
-import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadEquipoResolver;
 
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.exception.*;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
-import com.devchesterunited.devchesterunitedv2.exception.EstadisticasProveedorException;
-import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEstadisticasEnCursoException;
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEstadisticasException;
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionPersistenciaException;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SincronizacionEstadisticasResultado;
+import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadEquipoResolver;
+import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadJugadorResolver;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.estadisticas.SincronizacionEstadisticasJugadorService;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 /** Orquesta red, staging y promoción sin compartir una transacción con el Adapter. */
 @Service

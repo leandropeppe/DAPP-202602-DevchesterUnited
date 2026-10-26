@@ -1,25 +1,29 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.integration.market;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationBootstrap;
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationBootstrap;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 class MarketInitializationBootstrapIntegrationTest extends PostgresTestSupport {

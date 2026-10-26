@@ -1,17 +1,22 @@
-package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
+package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
+
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefensivas;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaGeneralV1;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.JugadorEstadistico;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
+
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class EstrategiaGeneralV1Test {
     private final EstrategiaGeneralV1 estrategia = new EstrategiaGeneralV1(BigDecimal.ZERO, BigDecimal.ONE);

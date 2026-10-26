@@ -1,44 +1,37 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.estadisticas;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
 
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.ProveedorCatalogo;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
+import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
+import com.devchesterunited.devchesterunitedv2.exception.SincronizacionPersistenciaException;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.IdentidadExternaJugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.IdentidadExternaJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.mapper.JugadorMapper;
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionPersistenciaException;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.IdentidadExternaJugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.ProveedorCatalogo;
 import com.devchesterunited.devchesterunitedv2.service.event.JugadorActivadoEvent;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.estadisticas.SincronizacionCatalogoService;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.dao.DataAccessException;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogoService {

@@ -1,36 +1,38 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CuentaCreditosMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EmisionTokensMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.MovimientoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TenenciaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CuentaCreditosMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EmisionTokensMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoId;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseSettlement;
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketPurchasePersistenceServiceImpl;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.UUID;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class MarketPurchasePersistenceServiceTest {

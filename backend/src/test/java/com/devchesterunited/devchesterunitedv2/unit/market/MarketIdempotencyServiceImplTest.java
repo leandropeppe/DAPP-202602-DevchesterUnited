@@ -1,28 +1,29 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
+
 import com.devchesterunited.devchesterunitedv2.contract.market.MarketIdempotencyServiceContractTest;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-import static org.mockito.Mockito.mock;
-
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.SolicitudIdempotenciaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketOperationExecutionLock;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyServiceImpl;
-import java.time.Clock;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketOperationExecutionLock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MarketIdempotencyServiceImplTest extends MarketIdempotencyServiceContractTest {

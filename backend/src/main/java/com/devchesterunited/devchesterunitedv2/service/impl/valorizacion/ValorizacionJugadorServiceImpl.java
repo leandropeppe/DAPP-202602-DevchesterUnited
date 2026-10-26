@@ -1,40 +1,22 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.valorizacion;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.JugadorEstadistico;
-import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SnapshotEstadisticoService;
 
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ConfiguracionElegibilidad;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MotorValorizacion;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ResultadoValorizacion;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ResultadoElegibilidad;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ResultadoNormalizacion;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MetricaValorizacion;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.CotizacionActualEstrategiaRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EstrategiaValorizacionRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EjecucionValorizacionRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.HistoricoCotizacionEstrategiaRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.ResultadoElegibilidadValorizacionRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.CotizacionActualEstrategiaEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EjecucionValorizacionEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.HistoricoCotizacionEstrategiaEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.ResultadoElegibilidadValorizacionEntity;
 import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.EstrategiasIniciales;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.*;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.*;
 import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SnapshotEstadistico;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.EstrategiaVisibleService;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SnapshotEstadisticoService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.EstrategiaVisibleService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.ValorizacionJugadorService;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EstrategiaValorizacionKey;
+import org.springframework.stereotype.Service;
+
 import java.time.Clock;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-import org.springframework.stereotype.Service;
+import java.util.*;
 
 @Service
 public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorService {

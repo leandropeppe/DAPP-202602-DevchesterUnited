@@ -5,10 +5,10 @@ import com.devchesterunited.devchesterunitedv2.service.event.JugadorActivadoEven
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /** Emite el suministro inicial sólo después de confirmar el alta del catálogo. */
 @Component

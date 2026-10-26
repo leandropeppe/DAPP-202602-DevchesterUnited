@@ -1,5 +1,4 @@
 package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
 import java.math.BigDecimal;
 import java.util.Objects;

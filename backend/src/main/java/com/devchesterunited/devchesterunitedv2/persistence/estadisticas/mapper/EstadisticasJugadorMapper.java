@@ -1,10 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.persistence.estadisticas.mapper;
 
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.*;
 import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasJugadorEntity;
 
 /** Traducción explícita entre las 30 columnas locales y el modelo compuesto. */

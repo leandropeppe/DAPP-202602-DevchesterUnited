@@ -1,19 +1,24 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.ApiKeyRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
+
+import static org.assertj.core.api.Assertions.*;
 
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.APIKeyEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
-import java.sql.SQLException;
-import java.time.Instant;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.ApiKeyRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import static org.assertj.core.api.Assertions.*;
+
+import java.sql.SQLException;
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 class ApiKeyRepositoryIntegrationTest extends PostgresTestSupport {

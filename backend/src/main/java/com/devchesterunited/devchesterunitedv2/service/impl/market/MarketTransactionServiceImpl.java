@@ -1,18 +1,19 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionFilter;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionRecord;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.shared.PaginacionResultado;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketTransactionService;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)

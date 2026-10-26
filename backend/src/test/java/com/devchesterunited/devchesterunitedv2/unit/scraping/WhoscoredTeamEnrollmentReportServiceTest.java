@@ -1,37 +1,41 @@
-package com.devchesterunited.devchesterunitedv2.scraping.catalogo;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredTeamEnrollmentReportService;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
+package com.devchesterunited.devchesterunitedv2.unit.scraping;
+
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredTeamEnrollmentReportService;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class WhoscoredTeamEnrollmentReportServiceTest {

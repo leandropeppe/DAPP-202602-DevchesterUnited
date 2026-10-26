@@ -1,4 +1,4 @@
-package com.devchesterunited.devchesterunitedv2.controller;
+package com.devchesterunited.devchesterunitedv2.e2e.jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 

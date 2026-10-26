@@ -5,10 +5,11 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketRejectio
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyRejectionFinalizationPort;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketRejectionAuditTransactionalWriter;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketRejectionFinalizationService;
-import java.util.Objects;
-import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
+import java.util.UUID;
 
 /** Núcleo transaccional de la finalización conjunta de un rechazo. */
 @Service

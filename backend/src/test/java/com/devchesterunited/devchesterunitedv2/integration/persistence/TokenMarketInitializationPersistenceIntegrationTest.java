@@ -1,8 +1,12 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
-
-import static org.assertj.core.api.Assertions.assertThat;
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -11,11 +15,8 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 class TokenMarketInitializationPersistenceIntegrationTest extends PostgresTestSupport {

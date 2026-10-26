@@ -1,12 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.scraping.catalogo;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredTeamEnrollmentApprovedCsv;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class WhoscoredTeamEnrollmentApprovedCsvTest {
     @Test

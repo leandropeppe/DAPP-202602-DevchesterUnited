@@ -1,39 +1,39 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.auth;
-import com.devchesterunited.devchesterunitedv2.service.impl.market.AsignacionCreditosInicialesService;
-import com.devchesterunited.devchesterunitedv2.modelo.auth.APIKey;
 
 import com.devchesterunited.devchesterunitedv2.configuration.security.JwtConfig;
 import com.devchesterunited.devchesterunitedv2.modelo.auth.Usuario;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.ApiKeyRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.APIKeyEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.auth.AutenticacionService;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.ApiKeyRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.auth.ApiKeyResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.shared.LoginResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.shared.UsuarioResultado;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.Locale;
-import java.util.UUID;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Base64;
-import org.springframework.dao.DataIntegrityViolationException;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.AsignacionCreditosInicialesService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.auth.AutenticacionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.SQLException;
-import org.springframework.transaction.TransactionDefinition;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.Locale;
+import java.util.UUID;
 
 @Service
 public class AutenticacionServiceImpl implements AutenticacionService {

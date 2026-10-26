@@ -1,29 +1,30 @@
-package com.devchesterunited.devchesterunitedv2.controller.dto;
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
 import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPurchaseRequestDTO;
 import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPurchaseResponseDTO;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import jakarta.validation.ConstraintViolation;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MarketPurchaseDTOTest {
     private static final UUID USER_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");

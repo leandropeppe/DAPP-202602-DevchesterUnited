@@ -1,21 +1,10 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.unit.market;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionFilter;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionResult;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketTransactionServiceImpl;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +12,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MarketTransactionServiceTest {
@@ -140,8 +141,8 @@ class MarketTransactionServiceTest {
         MarketTransactionFilter filter = new MarketTransactionFilter(PLAYER_ID, "SALE",
                 CONFIRMED_AT, CONFIRMED_AT.plusSeconds(60), 1, 10);
         PageRequest pageRequest = PageRequest.of(0, 10);
-        when(transacciones.buscar(eq(USER_ID), eq(PLAYER_ID), eq("SALE"), eq(CONFIRMED_AT),
-                eq(CONFIRMED_AT.plusSeconds(60)), eq(pageRequest)))
+        when(transacciones.buscar(USER_ID, PLAYER_ID, "SALE", CONFIRMED_AT,
+                CONFIRMED_AT.plusSeconds(60), pageRequest))
                 .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
 
         service.consultar(USER_ID, filter);

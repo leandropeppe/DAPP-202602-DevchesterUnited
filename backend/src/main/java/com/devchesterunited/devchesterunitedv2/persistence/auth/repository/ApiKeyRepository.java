@@ -1,9 +1,10 @@
 package com.devchesterunited.devchesterunitedv2.persistence.auth.repository;
 
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.APIKeyEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ApiKeyRepository extends JpaRepository<APIKeyEntity, UUID> {
     Optional<APIKeyEntity> findByHashClave(String hashClave);

@@ -1,14 +1,15 @@
 package com.devchesterunited.devchesterunitedv2.persistence.auth.repository;
 
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import jakarta.persistence.LockModeType;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 /** Recibe identidades ya normalizadas por la capa de entrada. */
 public interface UsuarioRepository extends JpaRepository<UsuarioEntity, UUID> {

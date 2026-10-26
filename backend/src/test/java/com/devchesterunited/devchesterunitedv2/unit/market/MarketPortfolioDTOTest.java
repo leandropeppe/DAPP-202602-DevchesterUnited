@@ -1,20 +1,21 @@
-package com.devchesterunited.devchesterunitedv2.controller.dto;
-import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPortfolioResponseDTO;
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
 import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPortfolioPositionResponseDTO;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
+import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketPortfolioResponseDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioPosition;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioQuote;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketQuoteAvailability;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MarketPortfolioDTOTest {
     private static final UUID PLAYER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -104,8 +105,8 @@ class MarketPortfolioDTOTest {
         assertThat(json.get("combined_result").decimalValue())
                 .isEqualByComparingTo(new BigDecimal("3.00000000"));
         assertThat(json.get("combined_result_complete").asBoolean()).isTrue();
-        assertThat(json.get("open_players").asLong()).isEqualTo(0L);
-        assertThat(json.get("total_tokens").asLong()).isEqualTo(0L);
+        assertThat(json.get("open_players").asLong()).isZero();
+        assertThat(json.get("total_tokens").asLong()).isZero();
         assertThat(json.get("total_pending_acquisition_cost").decimalValue())
                 .isEqualByComparingTo("0");
         assertThat(json.get("total_current_value").decimalValue())

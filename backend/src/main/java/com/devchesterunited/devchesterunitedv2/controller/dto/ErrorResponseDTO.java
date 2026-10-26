@@ -1,7 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.controller.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 public record ErrorResponseDTO(String message, @JsonInclude(JsonInclude.Include.NON_NULL) List<DetalleErrorDTO> errors) {

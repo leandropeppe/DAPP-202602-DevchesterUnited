@@ -1,6 +1,6 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
 
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ConfiguracionElegibilidad;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaGeneralV1;
@@ -8,9 +8,12 @@ import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaPos
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MotorValorizacion;
 import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SnapshotEstadistico;
 import com.devchesterunited.devchesterunitedv2.support.fixtures.valorizacion.ValorizacionFixtures;
+import org.junit.jupiter.api.Test;
+
 import java.time.Instant;
 import java.util.List;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ValorizacionSnapshotConsistencyTest {
     @Test

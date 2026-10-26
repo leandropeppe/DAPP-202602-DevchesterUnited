@@ -1,14 +1,15 @@
 package com.devchesterunited.devchesterunitedv2.diagnostico;
 
 import com.devchesterunited.devchesterunitedv2.service.diagnostico.WhoscoredPlayerIdentityDiagnosticService;
-import java.nio.file.Path;
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 /** Manual entry point; it is deliberately outside the normal test source set. */
 @ExtendWith(SpringExtension.class)

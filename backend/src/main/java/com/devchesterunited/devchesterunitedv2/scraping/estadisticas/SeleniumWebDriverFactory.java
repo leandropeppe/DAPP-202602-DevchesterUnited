@@ -1,11 +1,11 @@
 package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WebDriverFactory;
-import java.time.Duration;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.stereotype.Component;
+
+import java.time.Duration;
 
 /** Crea la sesion Chrome de infraestructura sin exponer Selenium al dominio. */
 @Component

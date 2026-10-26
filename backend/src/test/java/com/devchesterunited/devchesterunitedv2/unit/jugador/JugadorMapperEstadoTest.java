@@ -1,11 +1,13 @@
-package com.devchesterunited.devchesterunitedv2.persistence.mapper;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.mapper.JugadorMapper;
+package com.devchesterunited.devchesterunitedv2.unit.jugador;
 
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.mapper.JugadorMapper;
+import org.junit.jupiter.api.Test;
+
 import java.time.Instant;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class JugadorMapperEstadoTest {

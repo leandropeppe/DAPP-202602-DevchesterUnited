@@ -1,11 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.estadisticas;
 
 import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.stereotype.Component;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
-import javax.sql.DataSource;
-import org.springframework.stereotype.Component;
 
 /**
  * Advisory lock de sesión para serializar sincronizaciones.

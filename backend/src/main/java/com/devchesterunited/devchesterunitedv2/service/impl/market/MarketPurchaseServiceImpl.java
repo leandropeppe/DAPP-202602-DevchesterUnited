@@ -1,32 +1,21 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyClaim;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketRejectedAttempt;
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseExecutionService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchasePersistenceService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketQuoteValidationService;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketRejectionFinalizationService;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.*;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.util.Locale;
-import java.util.UUID;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 /** Fachada no transaccional: reclama, ejecuta y finaliza rechazos después del rollback. */
 @Service

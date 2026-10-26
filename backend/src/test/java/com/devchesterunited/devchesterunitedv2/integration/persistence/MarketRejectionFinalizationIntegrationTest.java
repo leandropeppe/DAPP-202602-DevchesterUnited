@@ -1,20 +1,21 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketRejectedAttempt;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketRejectionFinalizationService;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** Verifica con PostgreSQL la atomicidad de la finalización interna de T062. */
 @SpringBootTest(properties = "token-market.initialization.auto-start=false")

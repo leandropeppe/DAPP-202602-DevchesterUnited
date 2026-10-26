@@ -1,9 +1,10 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
+import org.springframework.stereotype.Service;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import javax.sql.DataSource;
-import org.springframework.stereotype.Service;
 
 /**
  * Serializa la ejecución completa de inicialización entre instancias de la

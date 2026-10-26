@@ -1,7 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.controller.jugador.dto;
-import com.devchesterunited.devchesterunitedv2.controller.estadisticas.dto.EstadisticasJugadorResponseDTO;
 
+import com.devchesterunited.devchesterunitedv2.controller.estadisticas.dto.EstadisticasJugadorResponseDTO;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 
 public record JugadorDetalleResponseDTO(

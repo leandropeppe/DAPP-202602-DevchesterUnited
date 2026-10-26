@@ -1,4 +1,7 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.auth;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.devchesterunited.devchesterunitedv2.modelo.auth.Usuario;
 
 import com.devchesterunited.devchesterunitedv2.exception.UsuarioException;
@@ -8,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
-import static org.assertj.core.api.Assertions.*;
 
 /** Contrato Java propuesto por T012: constructor completo y getters en espa�f±ol. */
 class UsuarioTest {

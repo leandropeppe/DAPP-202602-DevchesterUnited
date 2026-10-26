@@ -1,17 +1,15 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.estadisticas;
-import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEstadisticasEnCursoException;
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionPersistenciaException;
 
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.EstadoEstadisticasSync;
-import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.annotation.Propagation;
 
 /**
  * Administra el ciclo de vida de una ejecución sin exponer detalles del proveedor.

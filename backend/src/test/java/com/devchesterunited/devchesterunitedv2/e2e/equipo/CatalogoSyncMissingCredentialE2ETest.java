@@ -1,22 +1,19 @@
-package com.devchesterunited.devchesterunitedv2.controller;
+package com.devchesterunited.devchesterunitedv2.e2e.equipo;
+
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +22,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;

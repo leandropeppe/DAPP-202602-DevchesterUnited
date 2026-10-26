@@ -1,4 +1,4 @@
-package com.devchesterunited.devchesterunitedv2.controller;
+package com.devchesterunited.devchesterunitedv2.e2e.market;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;

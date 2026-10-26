@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.dto.market;
 
 import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
+
 import java.util.List;
 
 public record MarketAvailabilityResult(

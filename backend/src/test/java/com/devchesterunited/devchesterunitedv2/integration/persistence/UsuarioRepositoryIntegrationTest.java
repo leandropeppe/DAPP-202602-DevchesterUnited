@@ -1,19 +1,24 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
+
+import static org.assertj.core.api.Assertions.*;
 
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
-import java.time.Instant;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import static org.assertj.core.api.Assertions.*;
+
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 /** API Java propuesta: constructor completo en español, saveAndFlush y búsquedas Optional.
  * Las restricciones se ejercitan por JDBC para evitar que validaciones Java oculten fallos de BD.

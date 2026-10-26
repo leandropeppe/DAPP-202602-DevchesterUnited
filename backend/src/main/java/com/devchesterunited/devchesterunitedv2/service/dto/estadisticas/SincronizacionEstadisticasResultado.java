@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.dto.estadisticas;
 
 import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
+
 import java.util.List;
 
 /** Resumen de una publicación completa, incluyendo jugadores omitidos individualmente. */

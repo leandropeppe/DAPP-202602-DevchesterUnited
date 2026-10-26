@@ -5,6 +5,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfoli
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketQuoteAvailability;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;

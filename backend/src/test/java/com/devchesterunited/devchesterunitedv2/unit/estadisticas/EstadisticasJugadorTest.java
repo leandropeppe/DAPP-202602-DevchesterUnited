@@ -1,14 +1,16 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
+package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
+
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.EstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EstadisticasJugadorTest {
     @Test

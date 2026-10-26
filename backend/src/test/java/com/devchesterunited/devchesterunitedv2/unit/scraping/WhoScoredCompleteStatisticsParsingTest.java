@@ -1,13 +1,15 @@
-package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.scraping;
+
 import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsFeedResponseDTO;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import org.junit.jupiter.api.Test;
 
 class WhoScoredCompleteStatisticsParsingTest {
     private final ObjectMapper mapper = new ObjectMapper();

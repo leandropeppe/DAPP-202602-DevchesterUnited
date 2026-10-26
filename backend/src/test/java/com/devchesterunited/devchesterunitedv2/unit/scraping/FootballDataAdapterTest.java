@@ -1,13 +1,20 @@
-package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.scraping;
+
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import static org.assertj.core.api.Assertions.*;
 
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.web.client.RestClient;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.http.HttpClient;
@@ -16,11 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.web.client.RestClient;
-import static org.assertj.core.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FootballDataAdapterTest {
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();

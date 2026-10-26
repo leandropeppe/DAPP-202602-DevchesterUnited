@@ -1,21 +1,24 @@
-package com.devchesterunited.devchesterunitedv2.controller;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
-import java.time.Instant;
+package com.devchesterunited.devchesterunitedv2.e2e.auth;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +29,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;

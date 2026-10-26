@@ -1,41 +1,48 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.ProveedorCatalogo;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import static org.assertj.core.api.Assertions.*;
+
+import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.IdentidadExternaJugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.IdentidadExternaJugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.IdentidadExternaJugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.mapper.JugadorMapper;
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.IdentidadExternaJugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.ProveedorCatalogo;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SincronizacionCatalogoServiceImpl;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-import static org.assertj.core.api.Assertions.*;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SincronizacionCatalogoServiceTest {

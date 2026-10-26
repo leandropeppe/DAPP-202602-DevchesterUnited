@@ -1,8 +1,9 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
 import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
-import java.util.UUID;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 /** Procesa usuarios existentes en transacciones independientes por usuario. */
 @Service

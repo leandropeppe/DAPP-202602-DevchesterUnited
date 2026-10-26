@@ -1,12 +1,17 @@
-package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
-
+package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.Test;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaPosicionalV1;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MetricaValorizacion;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
+
 import java.math.BigDecimal;
 import java.util.Map;
-import org.junit.jupiter.api.Test;
+
 
 class EstrategiaPosicionalV1Test {
     private final EstrategiaPosicionalV1 estrategia = new EstrategiaPosicionalV1(BigDecimal.ZERO, BigDecimal.ONE);

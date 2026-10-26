@@ -1,13 +1,18 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+package com.devchesterunited.devchesterunitedv2.unit.jugador;
+
+import static org.assertj.core.api.Assertions.*;
 
 import com.devchesterunited.devchesterunitedv2.exception.JugadorException;
-import java.time.Instant;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import static org.assertj.core.api.Assertions.*;
+
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JugadorTest {
     private static final UUID ID = UUID.randomUUID();

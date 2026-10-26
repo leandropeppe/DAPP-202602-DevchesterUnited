@@ -1,23 +1,20 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
+
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionFilter;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPortfolioService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketTransactionService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
+
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.*;
+import com.devchesterunited.devchesterunitedv2.support.fixtures.market.MarketDemoFixtureBuilder.DemoPlayer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,6 +24,13 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /** T073: demostracion reproducible aislada con cuatro usuarios y cinco jugadores. */
 @SpringBootTest(properties = "token-market.initialization.auto-start=false")
@@ -135,7 +139,7 @@ class MarketDemoIntegrationTest {
         assertThat(userOne.posicionesAbiertas()).isNotEqualTo(userTwo.posicionesAbiertas());
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM market_quote_versions "
                 + "WHERE player_id IN (?, ?, ?, ?, ?)", Long.class,
-                fixture.players().stream().map(player -> player.id()).toArray()))
+                fixture.players().stream().map(DemoPlayer::id).toArray()))
                 .isEqualTo(10L);
     }
 

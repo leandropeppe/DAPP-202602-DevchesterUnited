@@ -1,11 +1,14 @@
-package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
+package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
+
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
+
+import com.devchesterunited.devchesterunitedv2.support.fixtures.valorizacion.ValorizacionFixtures;
+import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import com.devchesterunited.devchesterunitedv2.support.fixtures.valorizacion.ValorizacionFixtures;
-import java.util.UUID;
-import org.junit.jupiter.api.Test;
 
 class ElegibilidadValorizacionTest {
     @Test

@@ -1,18 +1,19 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.valorizacion;
 
+import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.EstrategiasIniciales;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MetricaValorizacion;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EstrategiaValorizacionRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EstrategiaVisibleRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EstrategiaValorizacionEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EstrategiaValorizacionKey;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EstrategiaVisibleEntity;
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.EstrategiasIniciales;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EstrategiaValorizacionRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EstrategiaVisibleRepository;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.springframework.transaction.annotation.Transactional;
 
 /** Registra las definiciones de dominio después de que Flyway cree sus tablas. */
 public class EstrategiaValorizacionBootstrap {

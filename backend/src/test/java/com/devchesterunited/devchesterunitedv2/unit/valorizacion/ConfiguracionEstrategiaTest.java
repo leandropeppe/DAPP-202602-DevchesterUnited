@@ -1,10 +1,14 @@
-package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
+package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MetricaValorizacion;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
+
+import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.Map;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ConfiguracionEstrategiaTest {
     @Test

@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.dto.jugador;
 
-import java.util.UUID;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record JugadorResultado(UUID id, String nombre, String liga, String equipo, String posicion,
         int dorsal, String nacionalidad, BigDecimal valuation) {

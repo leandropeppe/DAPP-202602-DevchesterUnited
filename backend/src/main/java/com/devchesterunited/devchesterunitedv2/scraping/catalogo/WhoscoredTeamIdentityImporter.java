@@ -1,10 +1,11 @@
 package com.devchesterunited.devchesterunitedv2.scraping.catalogo;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /** Publica identidades WhoScored únicamente después de completar el preflight. */
 @Service

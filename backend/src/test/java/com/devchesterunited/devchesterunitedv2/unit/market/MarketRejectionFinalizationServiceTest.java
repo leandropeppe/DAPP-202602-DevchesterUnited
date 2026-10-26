@@ -1,6 +1,5 @@
-package com.devchesterunited.devchesterunitedv2.service;
-
-import static org.assertj.core.api.Assertions.assertThat;
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -9,16 +8,19 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempote
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketRejectedAttempt;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketRejectionFinalizationResult;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketRejectionFinalizationServiceImpl;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyRejectionFinalizationPort;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketRejectionAuditTransactionalWriter;
-import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketRejectionFinalizationServiceImpl;
-import java.time.Instant;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class MarketRejectionFinalizationServiceTest {

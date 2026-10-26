@@ -1,26 +1,23 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.SolicitudIdempotenciaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyClaim;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketRejectionFinalizationResult;
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyRejectionFinalizationPort;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.SolicitudIdempotenciaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.*;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyExecutionPort;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyRejectionFinalizationPort;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /** Persistencia y transiciones locales de idempotencia coordinadas por lock transaccional. */
 @Service

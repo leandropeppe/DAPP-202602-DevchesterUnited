@@ -1,15 +1,20 @@
-package com.devchesterunited.devchesterunitedv2.configuration;
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
+
+import static org.assertj.core.api.Assertions.*;
 
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
+import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ByteArrayResource;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.junit.jupiter.api.Test;
-import org.springframework.core.io.ByteArrayResource;
-import static org.assertj.core.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PostgresTestSupportTest extends PostgresTestSupport {
     @Test

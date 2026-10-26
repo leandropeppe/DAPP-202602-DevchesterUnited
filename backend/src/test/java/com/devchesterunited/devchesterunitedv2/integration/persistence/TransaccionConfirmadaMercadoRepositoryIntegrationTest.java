@@ -1,23 +1,33 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.AuditoriaRechazoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
+
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.AuditoriaRechazoMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.ContraparteMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.SolicitudIdempotenciaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.AuditoriaRechazoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
+
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -25,17 +35,9 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.annotation.DirtiesContext;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Testcontainers
@@ -232,7 +234,7 @@ class TransaccionConfirmadaMercadoRepositoryIntegrationTest {
         Fixture fixture = fixture();
         TransaccionConfirmadaMercadoEntity lower = transaction(fixture, fixture.playerOne(),
                 "Lower bound", "PURCHASE", 1L, "1.00", "1.00", null, FIRST_CONFIRMATION);
-        TransaccionConfirmadaMercadoEntity upper = transaction(fixture, fixture.playerTwo(),
+        transaction(fixture, fixture.playerTwo(),
                 "Upper bound", "PURCHASE", 1L, "1.00", "1.00", null,
                 FIRST_CONFIRMATION.plusSeconds(10));
 

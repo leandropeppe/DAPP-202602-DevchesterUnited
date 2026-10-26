@@ -1,14 +1,14 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.integration.market;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationCoordinator;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = "token-market.initialization.auto-start=true")
 class MarketInitializationApplicationReadyIntegrationTest extends PostgresTestSupport {

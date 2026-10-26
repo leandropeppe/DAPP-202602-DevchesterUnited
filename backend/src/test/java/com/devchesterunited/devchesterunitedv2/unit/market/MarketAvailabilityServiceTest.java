@@ -1,33 +1,35 @@
-package com.devchesterunited.devchesterunitedv2.service;
-
-import static org.assertj.core.api.Assertions.assertThat;
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.MarketAvailabilityRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EstadoMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.projection.MarketPlayerAvailabilityProjection;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.MarketAvailabilityRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketQuoteAvailability;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketAvailabilityServiceImpl;
-import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.UUID;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class MarketAvailabilityServiceTest {

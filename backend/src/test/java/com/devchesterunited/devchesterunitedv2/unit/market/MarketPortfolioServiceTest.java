@@ -1,27 +1,28 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.PnLRealizadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.projection.JugadorPortfolioProjection;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TenenciaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.PnLRealizadoMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoId;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.projection.JugadorPortfolioProjection;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.PnLRealizadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TenenciaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketQuoteAvailability;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketPortfolioServiceImpl;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -29,11 +30,13 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MarketPortfolioServiceTest {
@@ -169,7 +172,7 @@ class MarketPortfolioServiceTest {
 
     @Test
     void presentaCotizacionHistoricaSinValoracionActual() {
-        VersionCotizacionMercadoEntity historicalEntity = org.mockito.Mockito.mock(
+        VersionCotizacionMercadoEntity historicalEntity = mock(
                 VersionCotizacionMercadoEntity.class);
         QuoteVersion historicalQuote = quote("2.00", QuoteValidityStatus.INVALIDATED);
         givenHoldings(holding(USER_ID, PLAYER_ID, 2L, "3.00000000"));
@@ -280,7 +283,7 @@ class MarketPortfolioServiceTest {
         givenHoldings(holding(USER_ID, PLAYER_ID, 2L, "3.00000000"));
         givenNoRealizedPnl();
         givenAbsentQuote(PLAYER_ID);
-        JugadorPortfolioProjection projection = org.mockito.Mockito.mock(
+        JugadorPortfolioProjection projection = mock(
                 JugadorPortfolioProjection.class);
         when(projection.getPlayerId()).thenReturn(PLAYER_ID);
         when(projection.getPlayerName()).thenReturn("Kenny Tete");
@@ -301,7 +304,7 @@ class MarketPortfolioServiceTest {
         givenHoldings(holding(USER_ID, PLAYER_ID, 1L, "1.00000000"));
         givenNoRealizedPnl();
         givenAbsentQuote(PLAYER_ID);
-        JugadorPortfolioProjection projection = org.mockito.Mockito.mock(
+        JugadorPortfolioProjection projection = mock(
                 JugadorPortfolioProjection.class);
         when(projection.getPlayerId()).thenReturn(PLAYER_ID);
         when(projection.getPlayerName()).thenReturn("Jugador sin equipo");

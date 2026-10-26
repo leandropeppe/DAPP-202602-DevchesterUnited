@@ -1,19 +1,20 @@
-package com.devchesterunited.devchesterunitedv2.controller.dto;
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
 import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketTransactionResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketTransactionsResponseDTO;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionRecord;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.shared.PaginacionResultado;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MarketTransactionDTOTest {
     private static final UUID TRANSACTION_ID = UUID.fromString(

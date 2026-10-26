@@ -1,36 +1,26 @@
 package com.devchesterunited.devchesterunitedv2.scraping.catalogo;
 
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
+import org.springframework.stereotype.Service;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.StandardCopyOption;
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.EnumMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
-import org.springframework.stereotype.Service;
 
 /** Reporte humano de enrolamiento de equipos WhoScored. No persiste asociaciones. */
 @Service
@@ -129,7 +119,7 @@ public class WhoscoredTeamEnrollmentReportService {
     private static List<String> toCsvValues(EnrollmentReportRow reportRow) {
         ObservedTeam team = reportRow.team();
         List<Candidate> candidates = reportRow.candidates();
-        Candidate one = !candidates.isEmpty() ? candidates.get(0) : null;
+        Candidate one = candidates.isEmpty() ? null : candidates.get(0);
         Candidate two = candidates.size() > 1 ? candidates.get(1) : null;
         return List.of(team.competicion().name(), String.valueOf(team.teamId()), nullToEmpty(team.teamName()),
                 String.valueOf(team.jugadoresObservados()), value(one, Candidate::uuid), value(one, Candidate::footballDataId),

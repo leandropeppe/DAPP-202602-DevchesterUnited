@@ -1,7 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.controller.jugador.dto;
 
-import jakarta.validation.ConstraintViolationException;
 import com.devchesterunited.devchesterunitedv2.service.dto.jugador.FiltroJugadoresConsulta;
+import jakarta.validation.ConstraintViolationException;
+
 import java.util.Set;
 
 /** Entrada validada; null indica filtro o paginación ausente. */

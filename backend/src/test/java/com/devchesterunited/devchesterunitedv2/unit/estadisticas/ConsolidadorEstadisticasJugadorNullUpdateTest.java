@@ -1,15 +1,17 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
+package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
+
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefensivas;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
+
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.ConsolidadorEstadisticasJugador;
-import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ConsolidadorEstadisticasJugadorNullUpdateTest {
     @Test

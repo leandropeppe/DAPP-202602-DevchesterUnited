@@ -3,8 +3,9 @@ package com.devchesterunited.devchesterunitedv2.persistence.market.mapper;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
-import java.util.Objects;
 import org.springframework.stereotype.Component;
+
+import java.util.Objects;
 
 /** Traduce una versión persistida de cotización al modelo de servicio. */
 @Component

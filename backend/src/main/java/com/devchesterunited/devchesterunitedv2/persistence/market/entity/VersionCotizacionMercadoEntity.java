@@ -1,14 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.persistence.market.entity;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;

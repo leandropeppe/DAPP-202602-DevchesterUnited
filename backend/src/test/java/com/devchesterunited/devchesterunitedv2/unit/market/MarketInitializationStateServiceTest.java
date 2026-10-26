@@ -1,24 +1,26 @@
-package com.devchesterunited.devchesterunitedv2.service;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+package com.devchesterunited.devchesterunitedv2.unit.market;
 
 import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EstadoMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationStateService;
-import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MarketInitializationStateServiceTest {
@@ -68,7 +70,7 @@ class MarketInitializationStateServiceTest {
         var resultado = servicio.comenzarOReanudar();
 
         assertThat(resultado.epoca()).isEqualTo(2L);
-        verify(estados, org.mockito.Mockito.never()).save(any());
+        verify(estados, never()).save(any());
     }
 
     @Test
@@ -80,7 +82,7 @@ class MarketInitializationStateServiceTest {
 
         assertThat(resultado.estado()).isEqualTo(EstadoMercado.READY);
         assertThat(resultado.epoca()).isEqualTo(7L);
-        verify(estados, org.mockito.Mockito.never()).save(any());
+        verify(estados, never()).save(any());
     }
 
     @Test
@@ -106,7 +108,7 @@ class MarketInitializationStateServiceTest {
         assertThat(servicio.marcarFailed(4L, "ejecucion antigua")).isEmpty();
         assertThat(estado.getStatus()).isEqualTo("INITIALIZING");
         assertThat(estado.getEpoch()).isEqualTo(5L);
-        verify(estados, org.mockito.Mockito.never()).save(any());
+        verify(estados, never()).save(any());
     }
 
     @Test
@@ -129,7 +131,7 @@ class MarketInitializationStateServiceTest {
         assertThat(servicio.marcarReady(6L)).isEmpty();
         assertThat(estado.getStatus()).isEqualTo("INITIALIZING");
         assertThat(estado.getEpoch()).isEqualTo(7L);
-        verify(estados, org.mockito.Mockito.never()).save(any());
+        verify(estados, never()).save(any());
     }
 
     private static EstadoMercadoEntity estado(String status, long epoch) {

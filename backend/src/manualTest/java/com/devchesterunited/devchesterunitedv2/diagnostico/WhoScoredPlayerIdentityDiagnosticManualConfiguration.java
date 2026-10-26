@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.diagnostico;
 
-import com.devchesterunited.devchesterunitedv2.adapter.impl.SeleniumWebDriverFactory;
 import com.devchesterunited.devchesterunitedv2.adapter.WhoScoredStatisticsConfiguration;
+import com.devchesterunited.devchesterunitedv2.adapter.impl.SeleniumWebDriverFactory;
 import com.devchesterunited.devchesterunitedv2.adapter.impl.WhoScoredStatisticsAdapter;
 import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.IdentidadExternaJugadorRepository;
@@ -12,9 +12,9 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.ConfigurationPropertiesAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.client.RestClientAutoConfiguration;

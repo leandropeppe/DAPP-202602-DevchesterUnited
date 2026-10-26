@@ -1,12 +1,13 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
 
 /**
  * Lock transaccional por solicitud; PostgreSQL lo libera al commit o rollback.

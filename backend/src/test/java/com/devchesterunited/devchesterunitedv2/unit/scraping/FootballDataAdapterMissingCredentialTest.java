@@ -1,14 +1,15 @@
-package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
+package com.devchesterunited.devchesterunitedv2.unit.scraping;
 
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.net.InetSocketAddress;
-import java.util.concurrent.atomic.AtomicInteger;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
+
+import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

@@ -1,12 +1,13 @@
 package com.devchesterunited.devchesterunitedv2.support.fixtures.market;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Fixtures aislados y exclusivos de la demostracion controlada de US10.

@@ -1,10 +1,15 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.jugador;
+
+import static org.assertj.core.api.Assertions.*;
+
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
-import static org.assertj.core.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JugadorImportadoTest {
     private static final UUID EQUIPO = UUID.randomUUID();

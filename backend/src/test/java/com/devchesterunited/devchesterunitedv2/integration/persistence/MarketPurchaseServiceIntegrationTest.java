@@ -1,27 +1,28 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService;
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.List;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** T046: integración del orquestador dentro de un único límite transaccional. */
 @SpringBootTest(properties = "token-market.initialization.auto-start=false")

@@ -1,15 +1,16 @@
-package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.scraping;
+
 import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WebDriverFactory;
 import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WebDriverSession;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebDriver;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class WebDriverSessionTest {
     @Test

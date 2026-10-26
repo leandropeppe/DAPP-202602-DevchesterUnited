@@ -1,11 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.contract.estadisticas;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.devchesterunited.devchesterunitedv2.controller.estadisticas.dto.EstadisticasJugadorResponseDTO;
-import java.math.BigDecimal;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class JugadorDetalleCompleteStatisticsE2ETest {
     @Test

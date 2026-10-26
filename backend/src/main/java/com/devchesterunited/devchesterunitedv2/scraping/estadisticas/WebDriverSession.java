@@ -1,8 +1,9 @@
 package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
 
+import org.openqa.selenium.WebDriver;
+
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.openqa.selenium.WebDriver;
 
 /** Una unica sesion WebDriver reutilizable durante una sincronizacion completa. */
 public final class WebDriverSession implements AutoCloseable {

@@ -1,17 +1,18 @@
-package com.devchesterunited.devchesterunitedv2.persistence.mapper;
-import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+package com.devchesterunited.devchesterunitedv2.unit.market;
 
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
+import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VersionCotizacionMercadoMapperTest {
     private static final Instant PUBLICADA = Instant.parse("2026-10-14T12:00:00.123456Z");

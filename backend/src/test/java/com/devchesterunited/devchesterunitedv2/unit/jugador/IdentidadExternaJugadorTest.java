@@ -1,11 +1,13 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.jugador;
+
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.IdentidadExternaJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import java.util.UUID;
-import org.junit.jupiter.api.Test;
 
 class IdentidadExternaJugadorTest {
     @Test

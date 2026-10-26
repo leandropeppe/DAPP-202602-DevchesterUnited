@@ -1,35 +1,40 @@
-package com.devchesterunited.devchesterunitedv2.service;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.InicializacionMercadoResultado;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.InicializacionCreditosUsuariosService;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationBootstrap;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationCoordinator;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationStateService;
-import com.devchesterunited.devchesterunitedv2.service.impl.market.InicializacionCreditosUsuariosService;
+import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
+
 import java.lang.reflect.Field;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
-import org.junit.jupiter.api.Test;
-import org.mockito.InOrder;
-import org.mockito.Mockito;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class MarketInitializationCoordinatorTest {
     private static final String MOTIVO_FALLO_BOOTSTRAP =
@@ -37,8 +42,8 @@ class MarketInitializationCoordinatorTest {
 
     @Test
     void iniciaEstadoYEjecutaBootstrapSinMarcarReady() {
-        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
-        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        MarketInitializationStateService estados = mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = mock(MarketInitializationBootstrap.class);
         InicializacionMercadoResultado iniciado = resultado(EstadoMercado.INITIALIZING, 2L);
         when(estados.comenzarOReanudar()).thenReturn(iniciado);
 
@@ -52,8 +57,8 @@ class MarketInitializationCoordinatorTest {
 
     @Test
     void noEjecutaBootstrapSiElMercadoYaEstaReady() {
-        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
-        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        MarketInitializationStateService estados = mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = mock(MarketInitializationBootstrap.class);
         InicializacionMercadoResultado listo = resultado(EstadoMercado.READY, 5L);
         when(estados.comenzarOReanudar()).thenReturn(listo);
 
@@ -65,8 +70,8 @@ class MarketInitializationCoordinatorTest {
 
     @Test
     void registraFailedConElEpochDelIntentoYPropagaElErrorOriginal() {
-        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
-        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        MarketInitializationStateService estados = mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = mock(MarketInitializationBootstrap.class);
         InicializacionMercadoResultado iniciado = resultado(EstadoMercado.INITIALIZING, 4L);
         IllegalStateException original = new IllegalStateException("fallo del bootstrap");
         when(estados.comenzarOReanudar()).thenReturn(iniciado);
@@ -81,8 +86,8 @@ class MarketInitializationCoordinatorTest {
 
     @Test
     void estadoInesperadoNoEjecutaBootstrapNiRegistraFailed() {
-        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
-        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        MarketInitializationStateService estados = mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = mock(MarketInitializationBootstrap.class);
         when(estados.comenzarOReanudar()).thenReturn(resultado(EstadoMercado.UNINITIALIZED, 1L));
 
         var coordinador = new MarketInitializationCoordinator(estados, bootstrap);
@@ -96,8 +101,8 @@ class MarketInitializationCoordinatorTest {
 
     @Test
     void conservaElErrorOriginalSiFallaElRegistroDeFailed() {
-        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
-        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        MarketInitializationStateService estados = mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = mock(MarketInitializationBootstrap.class);
         InicializacionMercadoResultado iniciado = resultado(EstadoMercado.INITIALIZING, 4L);
         IllegalStateException original = new IllegalStateException("fallo del bootstrap");
         IllegalStateException falloPersistencia = new IllegalStateException("fallo al persistir");
@@ -115,10 +120,10 @@ class MarketInitializationCoordinatorTest {
 
     @Test
     void completaCreditosBootstrapYReadySoloDespuesDeTodasLasEtapas() {
-        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
-        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        MarketInitializationStateService estados = mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = mock(MarketInitializationBootstrap.class);
         InicializacionCreditosUsuariosService creditos =
-                Mockito.mock(InicializacionCreditosUsuariosService.class);
+                mock(InicializacionCreditosUsuariosService.class);
         InicializacionMercadoResultado iniciado = resultado(EstadoMercado.INITIALIZING, 8L);
         InicializacionMercadoResultado listo = resultado(EstadoMercado.READY, 9L);
         when(estados.comenzarOReanudar()).thenReturn(iniciado);
@@ -137,10 +142,10 @@ class MarketInitializationCoordinatorTest {
 
     @Test
     void unFalloDeEtapaDejaFailedYElSiguienteIntentoReanudaSinDuplicarLaCoordinacion() {
-        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
-        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        MarketInitializationStateService estados = mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = mock(MarketInitializationBootstrap.class);
         InicializacionCreditosUsuariosService creditos =
-                Mockito.mock(InicializacionCreditosUsuariosService.class);
+                mock(InicializacionCreditosUsuariosService.class);
         InicializacionMercadoResultado primerIntento =
                 resultado(EstadoMercado.INITIALIZING, 10L);
         InicializacionMercadoResultado reintento =
@@ -167,8 +172,8 @@ class MarketInitializationCoordinatorTest {
 
     @Test
     void dosInvocacionesNoEjecutanBootstrapSimultaneamente() throws Exception {
-        MarketInitializationStateService estados = Mockito.mock(MarketInitializationStateService.class);
-        MarketInitializationBootstrap bootstrap = Mockito.mock(MarketInitializationBootstrap.class);
+        MarketInitializationStateService estados = mock(MarketInitializationStateService.class);
+        MarketInitializationBootstrap bootstrap = mock(MarketInitializationBootstrap.class);
         InicializacionMercadoResultado iniciado = resultado(EstadoMercado.INITIALIZING, 2L);
         CountDownLatch bootstrapIniciado = new CountDownLatch(1);
         CountDownLatch liberarBootstrap = new CountDownLatch(1);
@@ -201,7 +206,7 @@ class MarketInitializationCoordinatorTest {
             assertThat(esperarThreadEnCola(lock, segundoHilo.get()))
                     .as("la segunda invocacion debe estar encolada en el ReentrantLock")
                     .isTrue();
-            verify(bootstrap, Mockito.times(1)).bootstrap();
+            verify(bootstrap, times(1)).bootstrap();
             liberarBootstrap.countDown();
             primero.get(10, TimeUnit.SECONDS);
             segundo.get(10, TimeUnit.SECONDS);
@@ -211,7 +216,7 @@ class MarketInitializationCoordinatorTest {
         }
 
         assertThat(maximosActivos).hasValue(1);
-        verify(bootstrap, Mockito.times(2)).bootstrap();
+        verify(bootstrap, times(2)).bootstrap();
     }
 
     private static boolean esperarThreadEnCola(ReentrantLock lock, Thread thread) {

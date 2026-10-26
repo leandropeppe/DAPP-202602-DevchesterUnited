@@ -1,24 +1,29 @@
-package com.devchesterunited.devchesterunitedv2.controller.dto;
+package com.devchesterunited.devchesterunitedv2.unit.auth;
+
+import static org.assertj.core.api.Assertions.*;
+
+import com.devchesterunited.devchesterunitedv2.configuration.JacksonConfig;
 import com.devchesterunited.devchesterunitedv2.controller.auth.dto.LoginRequestDTO;
 import com.devchesterunited.devchesterunitedv2.controller.auth.dto.LoginResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.auth.dto.RegistroRequestDTO;
 import com.devchesterunited.devchesterunitedv2.controller.auth.dto.UsuarioResponseDTO;
-
-import com.devchesterunited.devchesterunitedv2.configuration.JacksonConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import java.time.Instant;
-import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
-import static org.assertj.core.api.Assertions.*;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AutenticacionDTOTest {
     private static final ValidatorFactory FACTORY = Validation.buildDefaultValidatorFactory();

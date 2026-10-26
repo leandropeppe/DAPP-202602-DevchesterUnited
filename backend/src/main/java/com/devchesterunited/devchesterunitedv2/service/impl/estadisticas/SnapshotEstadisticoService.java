@@ -1,16 +1,17 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.estadisticas;
 
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.JugadorEstadistico;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.mapper.EstadisticasJugadorMapper;
 import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasJugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.mapper.EstadisticasJugadorMapper;
 import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SnapshotEstadistico;
+import org.springframework.stereotype.Service;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.stereotype.Service;
 
 @Service
 public class SnapshotEstadisticoService {

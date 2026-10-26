@@ -1,44 +1,46 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EmisionTokensMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TenenciaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.MovimientoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.AsignacionCreditosInicialesRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CuentaCreditosMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.PnLRealizadoMercadoRepository;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
+
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.AsignacionCreditosInicialesEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CabeceraCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.ContraparteMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CuentaCreditosMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EmisionTokensMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.MovimientoMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.PnLRealizadoMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.SolicitudIdempotenciaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoId;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.AsignacionCreditosInicialesRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CuentaCreditosMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EmisionTokensMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.MovimientoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.PnLRealizadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TenenciaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
+
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional

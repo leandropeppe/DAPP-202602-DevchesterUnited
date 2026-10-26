@@ -1,13 +1,18 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.equipo;
+
+import static org.assertj.core.api.Assertions.*;
+
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.EstadoEquipo;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
-import static org.assertj.core.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EquipoTest {
     private static final Instant AHORA = Instant.parse("2026-09-16T12:00:00Z");

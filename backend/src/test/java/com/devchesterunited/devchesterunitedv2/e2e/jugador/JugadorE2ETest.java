@@ -1,4 +1,6 @@
-package com.devchesterunited.devchesterunitedv2.controller;
+package com.devchesterunited.devchesterunitedv2.e2e.jugador;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,7 +26,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
-import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -136,7 +137,7 @@ class JugadorE2ETest {
     }
 
     @Test
-    void rechazaPaginacionInvalida() throws Exception {
+    void rechazaPaginacionInvalida() {
         assertAll(
                 () -> error(mvc.perform(consulta(claveValida()).param("page", "")), 400),
                 () -> error(mvc.perform(consulta(claveValida()).param("page", "0")), 400),

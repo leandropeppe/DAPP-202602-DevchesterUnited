@@ -1,4 +1,6 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.integration.auth;
+
+import static org.assertj.core.api.Assertions.*;
 
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.auth.AutenticacionService;
@@ -16,7 +18,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import static org.assertj.core.api.Assertions.*;
 
 /** Contrato propuesto: registrar(nombre, correo, clave) y login(nombre, clave).
  * No hay transacción de test: las llamadas deben terminar con commit propio.

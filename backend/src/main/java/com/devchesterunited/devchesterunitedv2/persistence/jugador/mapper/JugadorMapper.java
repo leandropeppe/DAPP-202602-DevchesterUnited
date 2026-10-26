@@ -3,10 +3,11 @@ package com.devchesterunited.devchesterunitedv2.persistence.jugador.mapper;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.EstadoJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import org.springframework.stereotype.Component;
+
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
-import org.springframework.stereotype.Component;
 
 /** Traduce el perfil de dominio de un jugador a su representación JPA. */
 @Component

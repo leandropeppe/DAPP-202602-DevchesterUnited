@@ -1,21 +1,22 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.unit.market;
 
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.ContraparteMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.event.JugadorActivadoEvent;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketPlayerActivationListener;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketTokenIssuanceService;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MarketPlayerActivationListenerTest {

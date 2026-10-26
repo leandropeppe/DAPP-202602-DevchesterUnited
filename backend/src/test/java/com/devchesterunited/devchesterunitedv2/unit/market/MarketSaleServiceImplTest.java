@@ -1,38 +1,41 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.unit.market;
+
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CabeceraCotizacionMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.ContraparteMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EstadoMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyClaim;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CabeceraCotizacionMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.ContraparteMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EstadoMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TransaccionConfirmadaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyParameterHasher;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketSaleServiceImpl;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketQuoteValidationService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSalePersistenceService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleResult;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -41,11 +44,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class MarketSaleServiceImplTest {

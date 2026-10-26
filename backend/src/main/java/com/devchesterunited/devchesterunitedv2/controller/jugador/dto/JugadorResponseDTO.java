@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.controller.jugador.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 
 /** Perfil público; el Service suministra el identificador opaco ply_ más UUID. */

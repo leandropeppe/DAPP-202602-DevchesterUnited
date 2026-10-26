@@ -1,19 +1,20 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.jugador;
 
+import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.IdentidadExternaJugadorRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
-import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.IdentidadExternaJugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import org.springframework.stereotype.Service;
+
 import java.text.Normalizer;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
-import org.springframework.stereotype.Service;
 
 /** Resuelve jugadores sólo dentro del equipo local previamente resuelto. */
 @Service

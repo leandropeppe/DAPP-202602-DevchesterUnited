@@ -1,12 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity;
 
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.EstadoEstadisticasSync;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.Instant;
 import java.util.UUID;
 

@@ -178,7 +178,7 @@ describe('validación estructural de portfolio e historial', () => {
     expect(screen.getByText('20,00 créditos')).toBeInTheDocument()
     expect(plus).toBeDisabled()
 
-    fireEvent.click(screen.getByRole('dialog').parentElement)
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
     expect(onClose).toHaveBeenCalledTimes(1)
     expect(marketApi.sellMarketTokens).not.toHaveBeenCalled()
   })

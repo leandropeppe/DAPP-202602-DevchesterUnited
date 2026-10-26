@@ -1,4 +1,20 @@
-package com.devchesterunited.devchesterunitedv2.service;
+package com.devchesterunited.devchesterunitedv2.unit.equipo;
+
+import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
+import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadEquipoResolver;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -6,21 +22,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
-import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
-import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadEquipoResolver;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class IdentidadEquipoResolverTest {

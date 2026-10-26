@@ -1,18 +1,20 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
+
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.ConsolidadorEstadisticasJugador;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ConsolidadorEstadisticasJugadorIdempotenciaTest {
     @Test

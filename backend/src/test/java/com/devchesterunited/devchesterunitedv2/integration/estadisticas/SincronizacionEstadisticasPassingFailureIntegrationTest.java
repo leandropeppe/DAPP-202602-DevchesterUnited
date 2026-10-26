@@ -1,9 +1,9 @@
-package com.devchesterunited.devchesterunitedv2.service;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+package com.devchesterunited.devchesterunitedv2.integration.estadisticas;
 
 import com.devchesterunited.devchesterunitedv2.exception.EstadisticasProveedorException;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SincronizacionEstadisticasPassingFailureIntegrationTest {
     @Test

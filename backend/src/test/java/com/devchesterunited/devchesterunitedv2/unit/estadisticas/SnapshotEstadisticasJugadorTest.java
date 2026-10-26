@@ -1,18 +1,20 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
+
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import java.util.List;
-import org.junit.jupiter.api.Test;
 
 class SnapshotEstadisticasJugadorTest {
     @Test

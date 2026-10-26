@@ -1,17 +1,22 @@
-package com.devchesterunited.devchesterunitedv2.persistence;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
+package com.devchesterunited.devchesterunitedv2.integration.persistence;
+
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationResult;
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.QuotePublicationService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -21,12 +26,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 class QuotePublicationServiceIntegrationTest extends PostgresTestSupport {
@@ -139,7 +141,7 @@ class QuotePublicationServiceIntegrationTest extends PostgresTestSupport {
                 "SELECT validity_status FROM market_quote_versions WHERE quote_id = ? AND version = ?",
                 String.class, initial.quoteId(), initial.version())).isEqualTo("VALID");
         assertThat(quotes.currentQuote(playerId)).get()
-                .extracting(value -> value.validityStatus())
+                .extracting(com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion::validityStatus)
                 .isEqualTo(com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus.INVALIDATED);
 
         var replacement = quotes.publish(new QuotePublicationRequest(
@@ -194,7 +196,7 @@ class QuotePublicationServiceIntegrationTest extends PostgresTestSupport {
     @Test
     void reintentosConcurrentesDeInvalidacionNoDuplicanNiSobrescribenElResultado() throws Exception {
         fixture();
-        var initial = quotes.publishInitialQuote(playerId, new BigDecimal("1.00"), true);
+        quotes.publishInitialQuote(playerId, new BigDecimal("1.00"), true);
         CountDownLatch start = new CountDownLatch(1);
         ExecutorService pool = Executors.newFixedThreadPool(2);
         try {

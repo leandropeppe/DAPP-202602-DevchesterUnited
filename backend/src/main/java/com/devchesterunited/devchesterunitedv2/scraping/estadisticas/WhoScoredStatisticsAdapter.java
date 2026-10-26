@@ -1,31 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefensivas;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
 
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WebDriverFactory;
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WebDriverSession;
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsConfiguration;
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsException;
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsFeedResponseDTO;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.Duration;
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -34,6 +10,11 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.*;
 
 /** Adapter de WhoScored basado en Selenium y statisticsfeed. */
 @Component

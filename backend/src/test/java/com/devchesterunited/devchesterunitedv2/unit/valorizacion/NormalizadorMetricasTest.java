@@ -1,12 +1,15 @@
-package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
+package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
+
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
+
+import com.devchesterunited.devchesterunitedv2.support.fixtures.valorizacion.ValorizacionFixtures;
+import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import com.devchesterunited.devchesterunitedv2.support.fixtures.valorizacion.ValorizacionFixtures;
-import java.math.BigDecimal;
-import java.util.List;
-import org.junit.jupiter.api.Test;
 
 class NormalizadorMetricasTest {
     @Test

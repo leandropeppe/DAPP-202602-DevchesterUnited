@@ -2,7 +2,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Legend,
   Pie,
   PieChart,
@@ -88,9 +87,7 @@ function PortfolioDistribution ({ data, totalValue }) {
             <div className="market-chart__visual" role="img" aria-label="Distribución del valor actual del portfolio por jugador">
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
-                  <Pie data={data} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2}>
-                    {data.map((entry, index) => <Cell key={entry.playerId} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
-                  </Pie>
+                  <Pie data={data.map((entry, index) => ({ ...entry, fill: CHART_COLORS[index % CHART_COLORS.length] }))} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2} />
                   <Tooltip formatter={(value) => formatChartAmount(value)} />
                   <Legend />
                 </PieChart>

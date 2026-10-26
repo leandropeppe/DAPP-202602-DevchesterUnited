@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.controller.market.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.Instant;
 import java.util.UUID;
 

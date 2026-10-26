@@ -1,10 +1,12 @@
-package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.scraping;
+
 import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsFeedResponseDTO;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.io.InputStream;
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

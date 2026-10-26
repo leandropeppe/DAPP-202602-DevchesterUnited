@@ -3,12 +3,13 @@ package com.devchesterunited.devchesterunitedv2.controller.auth.dto;
 import com.devchesterunited.devchesterunitedv2.controller.dto.validation.ContrasenaValida;
 import com.devchesterunited.devchesterunitedv2.controller.dto.validation.TextoJsonDeserializer;
 import com.devchesterunited.devchesterunitedv2.controller.dto.validation.UsernameValido;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import java.util.Locale;
 
 public record RegistroRequestDTO(

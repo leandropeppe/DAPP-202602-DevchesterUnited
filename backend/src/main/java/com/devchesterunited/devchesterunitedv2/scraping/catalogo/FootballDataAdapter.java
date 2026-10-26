@@ -1,38 +1,27 @@
 package com.devchesterunited.devchesterunitedv2.scraping.catalogo;
 
-import java.io.IOException;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.ProveedorCatalogo;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballPlayerDTO;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballSeasonDTO;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballTeamDTO;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballTeamsResponseDTO;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.net.URI;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+
+import java.io.IOException;
+import java.net.URI;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
 
 /** Adapter aislado para Football-Data.org; nunca expone sus DTOs al dominio. */
 @Component

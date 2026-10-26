@@ -1,19 +1,22 @@
-package com.devchesterunited.devchesterunitedv2.service.impl;
-import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.EstadisticasSyncLock;
-
-import com.zaxxer.hikari.HikariDataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.PreparedStatement;
-import java.util.Optional;
-import org.junit.jupiter.api.Test;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
+
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.EstadisticasSyncLock;
+import com.zaxxer.hikari.HikariDataSource;
+import org.junit.jupiter.api.Test;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EstadisticasSyncLockTest {
     @Test

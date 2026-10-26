@@ -1,7 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.controller.estadisticas.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.math.BigDecimal;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

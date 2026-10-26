@@ -2,12 +2,13 @@ package com.devchesterunited.devchesterunitedv2.persistence.market.repository;
 
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.projection.MarketPlayerAvailabilityProjection;
-import java.util.UUID;
-import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
 
 /** Lectura agregada del mercado; no expone operaciones de escritura. */
 public interface MarketAvailabilityRepository extends Repository<JugadorEntity, UUID> {

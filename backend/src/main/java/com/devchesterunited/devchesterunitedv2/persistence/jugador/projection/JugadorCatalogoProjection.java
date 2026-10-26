@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.persistence.jugador.projection;
 
-import java.util.UUID;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /** Resultado de catálogo con equipo y liga resueltos desde equipos. */
 public interface JugadorCatalogoProjection {

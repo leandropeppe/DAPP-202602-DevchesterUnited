@@ -5,9 +5,10 @@ import com.devchesterunited.devchesterunitedv2.persistence.market.repository.Cue
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketBalanceResult;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketBalanceService;
-import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 public class MarketBalanceServiceImpl implements MarketBalanceService {

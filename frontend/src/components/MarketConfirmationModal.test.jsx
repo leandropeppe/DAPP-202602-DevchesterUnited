@@ -42,8 +42,10 @@ describe('MarketConfirmationModal', () => {
     expect(onCancel).not.toHaveBeenCalled()
 
     fireEvent.click(dialog.parentElement)
+    expect(onCancel).not.toHaveBeenCalled()
+
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
-    expect(onCancel).toHaveBeenCalledTimes(2)
+    expect(onCancel).toHaveBeenCalledTimes(1)
   })
 
   it('confirma únicamente al presionar el botón de confirmación', () => {

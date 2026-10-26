@@ -1,13 +1,13 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.jugador;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
 
+import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
-import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
-import java.util.UUID;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.IdentidadExternaEquipoRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 /** Resuelve el equipo del flujo normal exclusivamente por identidad persistida. */
 @Service

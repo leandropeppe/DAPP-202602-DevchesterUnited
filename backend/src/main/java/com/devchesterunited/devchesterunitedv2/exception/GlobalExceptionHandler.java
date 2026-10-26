@@ -1,8 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.exception;
 
 import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
 import jakarta.validation.ConstraintViolationException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -10,19 +10,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionPersistenciaException;
-import com.devchesterunited.devchesterunitedv2.exception.JugadorNoEncontradoException;
-import com.devchesterunited.devchesterunitedv2.exception.CotizacionNoEncontradaException;
-import com.devchesterunited.devchesterunitedv2.exception.ConsultaValorizacionInvalidaException;
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {

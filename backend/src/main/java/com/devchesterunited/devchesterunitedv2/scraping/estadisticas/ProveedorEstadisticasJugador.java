@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
 
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
+
 import java.util.Collection;
 import java.util.List;
 

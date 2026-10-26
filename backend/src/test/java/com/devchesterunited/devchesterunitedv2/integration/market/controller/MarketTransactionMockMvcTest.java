@@ -1,22 +1,5 @@
-package com.devchesterunited.devchesterunitedv2.controller;
-import com.devchesterunited.devchesterunitedv2.controller.market.MarketController;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.devchesterunited.devchesterunitedv2.configuration.security.SecurityConfig;
-import com.devchesterunited.devchesterunitedv2.configuration.security.SecurityErrorHandler;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionFilter;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionRecord;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.shared.PaginacionResultado;
+package com.devchesterunited.devchesterunitedv2.integration.market.controller;
+
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketAvailabilityService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketBalanceService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
@@ -24,10 +7,17 @@ import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketTransactionService;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import com.devchesterunited.devchesterunitedv2.configuration.security.SecurityConfig;
+import com.devchesterunited.devchesterunitedv2.configuration.security.SecurityErrorHandler;
+import com.devchesterunited.devchesterunitedv2.controller.market.MarketController;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionFilter;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionRecord;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.shared.PaginacionResultado;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -35,6 +25,18 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = MarketController.class)
 @Import({SecurityConfig.class, SecurityErrorHandler.class})

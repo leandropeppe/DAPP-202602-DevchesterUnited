@@ -1,19 +1,24 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
-
-import java.time.Instant;
+package com.devchesterunited.devchesterunitedv2.unit.equipo;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.*;
+
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CatalogoSincronizadoTest {
     private static final Instant AHORA = Instant.parse("2026-09-16T12:00:00Z");

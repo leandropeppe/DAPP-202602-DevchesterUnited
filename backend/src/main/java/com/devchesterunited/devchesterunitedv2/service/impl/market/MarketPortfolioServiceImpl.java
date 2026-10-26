@@ -1,34 +1,24 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.PnLRealizadoMercadoRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.jugador.projection.JugadorPortfolioProjection;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
+import com.devchesterunited.devchesterunitedv2.persistence.market.repository.PnLRealizadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TenenciaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.jugador.projection.JugadorPortfolioProjection;
-import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioPosition;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioQuote;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfolioResult;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketQuoteAvailability;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.*;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPortfolioService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import java.util.*;
 
 /** Agrega las posiciones abiertas y su valoración del usuario autenticado. */
 @Service

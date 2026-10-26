@@ -1,22 +1,25 @@
-package com.devchesterunited.devchesterunitedv2.controller;
-
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
-import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
-import java.time.Instant;
+package com.devchesterunited.devchesterunitedv2.e2e.equipo;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import static org.assertj.core.api.Assertions.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
+import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataAdapter;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
+import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,14 +31,16 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.assertj.core.api.Assertions.*;
+import java.time.Instant;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc

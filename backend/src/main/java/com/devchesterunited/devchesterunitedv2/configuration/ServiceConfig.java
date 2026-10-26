@@ -1,11 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.configuration;
 
-import java.time.Clock;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.Clock;
 
 @Configuration(proxyBeanMethods = false)
 @EnableScheduling

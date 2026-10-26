@@ -1,11 +1,11 @@
 package com.devchesterunited.devchesterunitedv2.unit.market;
+
+import com.devchesterunited.devchesterunitedv2.exception.CantidadTokenInvalidaException;
 import com.devchesterunited.devchesterunitedv2.modelo.market.TokenQuantity;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import com.devchesterunited.devchesterunitedv2.exception.CantidadTokenInvalidaException;
-import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 class TokenQuantityTest {

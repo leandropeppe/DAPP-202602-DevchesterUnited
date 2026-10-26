@@ -1,12 +1,13 @@
 package com.devchesterunited.devchesterunitedv2.importer;
 
 import com.devchesterunited.devchesterunitedv2.service.importer.WhoscoredTeamIdentityImporter;
-import java.nio.file.Path;
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 @SpringJUnitConfig(WhoscoredTeamIdentityImporterManualConfiguration.class)
 @TestPropertySource(properties = {

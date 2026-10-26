@@ -1,40 +1,26 @@
 package com.devchesterunited.devchesterunitedv2.contract.estadisticas;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
-import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.EstadisticasPromocionService;
-import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.EstadisticasStagingService;
-import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadJugadorResolver;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
-import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadEquipoResolver;
-import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SincronizacionEstadisticasJugadorServiceImpl;
-import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.EstadisticasSyncService;
-import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.EstadisticasSyncLock;
 
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.exception.EstadisticasProveedorException;
 import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.*;
+import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.ProveedorEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.*;
+import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadEquipoResolver;
+import com.devchesterunited.devchesterunitedv2.service.impl.jugador.IdentidadJugadorResolver;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.time.Instant;
-import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.*;
 
 class SincronizacionEstadisticasJugadorServiceImplContractTest {
     @Test

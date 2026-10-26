@@ -1,16 +1,17 @@
 package com.devchesterunited.devchesterunitedv2.support;
 
+import org.springframework.core.io.Resource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
-import org.springframework.core.io.Resource;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
  * PostgreSQL compartido durante la JVM de pruebas; Ryuk libera el contenedor al terminar.

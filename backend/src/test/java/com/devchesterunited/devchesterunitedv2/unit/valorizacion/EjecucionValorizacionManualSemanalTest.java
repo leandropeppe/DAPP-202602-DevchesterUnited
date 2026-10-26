@@ -1,30 +1,34 @@
-package com.devchesterunited.devchesterunitedv2.service;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MotorValorizacion;
+package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
+
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MotorValorizacion;
 import static org.mockito.Mockito.*;
 
+import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.EstrategiasIniciales;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ConfiguracionElegibilidad;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaGeneralV1;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EjecucionValorizacionEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.CotizacionActualEstrategiaRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EjecucionValorizacionRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.HistoricoCotizacionEstrategiaRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.ResultadoElegibilidadValorizacionRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EjecucionValorizacionEntity;
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.EstrategiasIniciales;
 import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SnapshotEstadistico;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SnapshotEstadisticoService;
 import com.devchesterunited.devchesterunitedv2.service.impl.valorizacion.ValorizacionJugadorServiceImpl;
 import com.devchesterunited.devchesterunitedv2.support.fixtures.valorizacion.ValorizacionFixtures;
+import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 
 class EjecucionValorizacionManualSemanalTest {
     @Test

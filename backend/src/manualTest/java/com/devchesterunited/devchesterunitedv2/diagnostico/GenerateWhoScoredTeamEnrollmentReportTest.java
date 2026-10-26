@@ -1,11 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.diagnostico;
 
 import com.devchesterunited.devchesterunitedv2.service.diagnostico.WhoscoredTeamEnrollmentReportService;
-import java.nio.file.Path;
-import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 /** Entry point manual; no pertenece a la suite normal de tests. */
 @SpringBootTest(

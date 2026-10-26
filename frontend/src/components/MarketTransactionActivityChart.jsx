@@ -73,8 +73,11 @@ export default function MarketTransactionActivityChart ({ jwt, filters, initialR
           totalPages = firstResponse.data.pagination.total_pages
         }
         const pagesToLoad = Math.min(totalPages, MAX_ACTIVITY_PAGES)
-        for (let page = 2; page <= pagesToLoad; page += 1) {
-          const response = await getMarketTransactions({ jwt, filters: { ...requestFilters, page, limit: ACTIVITY_PAGE_SIZE } })
+        const pageResponses = await Promise.all(Array.from(
+          { length: Math.max(0, pagesToLoad - 1) },
+          (_, index) => getMarketTransactions({ jwt, filters: { ...requestFilters, page: index + 2, limit: ACTIVITY_PAGE_SIZE } })
+        ))
+        for (const response of pageResponses) {
           if (!validResponse(response)) throw new Error('El servidor devolvió un historial incompleto.')
           transactions.push(...response.data.transactions)
         }

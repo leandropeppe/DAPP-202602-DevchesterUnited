@@ -1,8 +1,9 @@
 package com.devchesterunited.devchesterunitedv2.controller.market.dto;
-import com.devchesterunited.devchesterunitedv2.controller.dto.PaginacionDTO;
 
+import com.devchesterunited.devchesterunitedv2.controller.dto.PaginacionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionResult;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 import java.util.Objects;
 

@@ -1,13 +1,10 @@
 package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
 
+import org.springframework.stereotype.Component;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import org.springframework.stereotype.Component;
+import java.util.*;
 
 @Component
 public final class MotorValorizacion {

@@ -1,4 +1,7 @@
-package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+package com.devchesterunited.devchesterunitedv2.unit.auth;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.devchesterunited.devchesterunitedv2.modelo.auth.APIKey;
 
 import com.devchesterunited.devchesterunitedv2.exception.ApiKeyException;
@@ -7,7 +10,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import static org.assertj.core.api.Assertions.*;
 
 /** Contrato puro de APIKey: no conoce Spring, JPA ni infraestructura. */
 class ApiKeyTest {

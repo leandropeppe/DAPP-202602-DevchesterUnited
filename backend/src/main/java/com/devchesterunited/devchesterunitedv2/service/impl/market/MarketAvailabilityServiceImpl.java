@@ -1,20 +1,21 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
+import com.devchesterunited.devchesterunitedv2.persistence.market.projection.MarketPlayerAvailabilityProjection;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.MarketAvailabilityRepository;
-import com.devchesterunited.devchesterunitedv2.persistence.market.projection.MarketPlayerAvailabilityProjection;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketAvailabilityResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPlayerAvailability;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketQuoteAvailability;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketAvailabilityService;
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
-import java.time.Clock;
-import java.time.Instant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -124,9 +125,9 @@ public class MarketAvailabilityServiceImpl implements MarketAvailabilityService 
                 useCurrentQuote ? projection.getCurrentValidityStatus() : projection.getLatestValidityStatus(),
                 useCurrentQuote ? projection.getCurrentValidFrom() : projection.getLatestValidFrom(),
                 useCurrentQuote ? projection.getCurrentValidUntil() : projection.getLatestValidUntil(),
-                !quotePresent ? MarketQuoteAvailability.ABSENT
-                        : quoteHistorical ? MarketQuoteAvailability.HISTORICAL
-                        : MarketQuoteAvailability.CURRENT,
+                quotePresent ? quoteHistorical ? MarketQuoteAvailability.HISTORICAL
+                        : MarketQuoteAvailability.CURRENT
+                        : MarketQuoteAvailability.ABSENT,
                 operable);
     }
 
