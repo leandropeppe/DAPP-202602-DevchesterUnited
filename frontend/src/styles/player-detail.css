@@ -152,6 +152,8 @@
 .player-detail__player-card {
     width: 100%;
     max-width: 325px;
+    --player-detail-flag-width: 36px;
+    --player-detail-flag-height: 23px;
 
     align-self: stretch;
 }
@@ -275,8 +277,8 @@
 }
 
 .player-detail__player-card .player-card__flag {
-    width: 36px;
-    height: 23px;
+    width: var(--player-detail-flag-width);
+    height: var(--player-detail-flag-height);
 
     border-radius: 4px;
 }
@@ -1388,6 +1390,8 @@
 
     .player-detail__player-card {
         max-width: 300px;
+        --player-detail-flag-width: 44px;
+        --player-detail-flag-height: 28px;
     }
 
     .player-detail__player-card .player-card {
@@ -1424,11 +1428,6 @@
     .player-detail__player-card .player-card__league-logo {
         width: 40px;
         height: 40px;
-    }
-
-    .player-detail__player-card .player-card__flag {
-        width: 44px;
-        height: 28px;
     }
 
     .player-detail__identity-grid {
@@ -1634,8 +1633,8 @@
         height: 36px;
     }
 
-    .player-detail__player-card .player-card__flag {
-        width: 40px;
-        height: 25px;
+    .player-detail__player-card {
+        --player-detail-flag-width: 40px;
+        --player-detail-flag-height: 25px;
     }
 }

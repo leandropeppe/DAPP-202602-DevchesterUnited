@@ -202,11 +202,9 @@ function statisticsFamily (statistics, familyKey, activeTab) {
 
 function DetailIcon ({ statisticKey }) {
   const Icon = getPlayerStatisticIcon(statisticKey)
-  const cardColor = statisticKey === 'yellowCard'
-      ? 'yellow'
-      : statisticKey === 'redCard'
-          ? 'red'
-          : null
+  let cardColor = null
+  if (statisticKey === 'yellowCard') cardColor = 'yellow'
+  if (statisticKey === 'redCard') cardColor = 'red'
 
   return (
       <Icon

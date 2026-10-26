@@ -29,7 +29,8 @@ function isTransactionsResponse (response) {
 function operationLabel (operationType) {
   if (operationType === 'PURCHASE') return 'Compra'
   if (operationType === 'SALE') return 'Venta'
-  return `Tipo de operación no reconocido${operationType ? `: ${operationType}` : ''}`
+  const operationSuffix = operationType ? `: ${operationType}` : ''
+  return `Tipo de operaci\u00f3n no reconocido${operationSuffix}`
 }
 
 function transactionPlayerName (transaction) {

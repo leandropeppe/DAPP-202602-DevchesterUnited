@@ -23,7 +23,6 @@ import java.util.UUID;
 /** Liquida y confirma una compra dentro de un único límite transaccional. */
 @Service
 public class MarketPurchaseExecutionServiceImpl implements MarketPurchaseExecutionService {
-    private static final String PURCHASE = "PURCHASE";
     private static final String SUPERUSER = "SUPERUSER";
 
     private final MarketIdempotencyService idempotencia;

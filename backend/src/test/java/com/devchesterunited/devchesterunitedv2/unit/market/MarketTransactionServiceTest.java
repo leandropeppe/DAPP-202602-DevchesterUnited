@@ -89,21 +89,21 @@ class MarketTransactionServiceTest {
         MarketTransactionResult result = service.consultar(USER_ID, filter);
 
         assertThat(result.transacciones()).hasSize(1);
-        var record = result.transacciones().get(0);
-        assertThat(record.id()).isEqualTo(TRANSACTION_ID);
-        assertThat(record.usuarioId()).isEqualTo(USER_ID);
-        assertThat(record.jugadorId()).isEqualTo(PLAYER_ID);
-        assertThat(record.nombreJugadorSnapshot()).isEqualTo("Historical Player");
-        assertThat(record.tipoOperacion()).isEqualTo("SALE");
-        assertThat(record.cantidad()).isEqualTo(2L);
-        assertThat(record.precioUnitario()).isEqualByComparingTo("2.50");
-        assertThat(record.montoTotal()).isEqualByComparingTo("5.00");
-        assertThat(record.contraparteId()).isEqualTo(COUNTERPARTY_ID);
-        assertThat(record.quoteId()).isEqualTo(QUOTE_ID);
-        assertThat(record.quoteVersion()).isEqualTo(1L);
-        assertThat(record.solicitudIdempotenciaId()).isEqualTo(REQUEST_ID);
-        assertThat(record.pnlRealizado()).isEqualByComparingTo("1.25000000");
-        assertThat(record.confirmadoEn()).isEqualTo(CONFIRMED_AT);
+        var transaction = result.transacciones().get(0);
+        assertThat(transaction.id()).isEqualTo(TRANSACTION_ID);
+        assertThat(transaction.usuarioId()).isEqualTo(USER_ID);
+        assertThat(transaction.jugadorId()).isEqualTo(PLAYER_ID);
+        assertThat(transaction.nombreJugadorSnapshot()).isEqualTo("Historical Player");
+        assertThat(transaction.tipoOperacion()).isEqualTo("SALE");
+        assertThat(transaction.cantidad()).isEqualTo(2L);
+        assertThat(transaction.precioUnitario()).isEqualByComparingTo("2.50");
+        assertThat(transaction.montoTotal()).isEqualByComparingTo("5.00");
+        assertThat(transaction.contraparteId()).isEqualTo(COUNTERPARTY_ID);
+        assertThat(transaction.quoteId()).isEqualTo(QUOTE_ID);
+        assertThat(transaction.quoteVersion()).isEqualTo(1L);
+        assertThat(transaction.solicitudIdempotenciaId()).isEqualTo(REQUEST_ID);
+        assertThat(transaction.pnlRealizado()).isEqualByComparingTo("1.25000000");
+        assertThat(transaction.confirmadoEn()).isEqualTo(CONFIRMED_AT);
     }
 
     @Test

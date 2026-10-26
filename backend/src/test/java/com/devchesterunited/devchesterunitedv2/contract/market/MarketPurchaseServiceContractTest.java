@@ -79,7 +79,9 @@ public abstract class MarketPurchaseServiceContractTest {
     @NullSource
     @ValueSource(longs = {0L, -1L, 101L, Long.MAX_VALUE})
     void cantidadNoValidaNoPuedeProducirUnaCompra(Long cantidad) {
-        assertThatThrownBy(() -> service().comprar(request(cantidad)))
+        var purchaseService = service();
+        var purchaseRequest = request(cantidad);
+        assertThatThrownBy(() -> purchaseService.comprar(purchaseRequest))
                 .isInstanceOfSatisfying(TokenMarketException.class,
                         exception -> assertThat(exception.reason())
                                 .isEqualTo(TokenMarketException.Reason.INVALID_INPUT));
@@ -97,7 +99,9 @@ public abstract class MarketPurchaseServiceContractTest {
     void mercadoNoDisponibleRechazaSinEfectosParciales() {
         givenMarketNotReady();
 
-        assertThatThrownBy(() -> service().comprar(request(1L)))
+        var purchaseService = service();
+        var purchaseRequest = request(1L);
+        assertThatThrownBy(() -> purchaseService.comprar(purchaseRequest))
                 .isInstanceOfSatisfying(TokenMarketException.class,
                         exception -> assertThat(exception.reason())
                                 .isEqualTo(TokenMarketException.Reason.MARKET_NOT_READY));
@@ -108,7 +112,9 @@ public abstract class MarketPurchaseServiceContractTest {
     void cuentaInexistenteRechazaSinEfectosParciales() {
         givenMissingAccount();
 
-        assertThatThrownBy(() -> service().comprar(request(1L)))
+        var purchaseService = service();
+        var purchaseRequest = request(1L);
+        assertThatThrownBy(() -> purchaseService.comprar(purchaseRequest))
                 .isInstanceOfSatisfying(TokenMarketException.class,
                         exception -> assertThat(exception.reason())
                                 .isEqualTo(TokenMarketException.Reason.ACCOUNT_NOT_FOUND));
@@ -119,7 +125,9 @@ public abstract class MarketPurchaseServiceContractTest {
     void saldoInsuficienteRechazaSinEfectosParciales() {
         givenInsufficientBalance();
 
-        assertThatThrownBy(() -> service().comprar(request(2L)))
+        var purchaseService = service();
+        var purchaseRequest = request(2L);
+        assertThatThrownBy(() -> purchaseService.comprar(purchaseRequest))
                 .isInstanceOfSatisfying(TokenMarketException.class,
                         exception -> assertThat(exception.reason())
                                 .isEqualTo(TokenMarketException.Reason.INSUFFICIENT_BALANCE));
@@ -130,7 +138,9 @@ public abstract class MarketPurchaseServiceContractTest {
     void inventarioInsuficienteRechazaSinEfectosParciales() {
         givenInsufficientInventory();
 
-        assertThatThrownBy(() -> service().comprar(request(2L)))
+        var purchaseService = service();
+        var purchaseRequest = request(2L);
+        assertThatThrownBy(() -> purchaseService.comprar(purchaseRequest))
                 .isInstanceOf(TokenMarketException.class);
         assertNoPurchaseEffects();
     }
@@ -139,7 +149,9 @@ public abstract class MarketPurchaseServiceContractTest {
     void cotizacionInexistenteHistoricaInvalidadaOVencidaRechazaSinEfectos() {
         givenUnavailableQuote();
 
-        assertThatThrownBy(() -> service().comprar(request(1L)))
+        var purchaseService = service();
+        var purchaseRequest = request(1L);
+        assertThatThrownBy(() -> purchaseService.comprar(purchaseRequest))
                 .isInstanceOfSatisfying(TokenMarketException.class,
                         exception -> assertThat(exception.reason())
                                 .isEqualTo(TokenMarketException.Reason.QUOTE_UNAVAILABLE));

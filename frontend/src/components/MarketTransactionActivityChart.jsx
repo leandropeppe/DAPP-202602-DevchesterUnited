@@ -51,6 +51,7 @@ function formatQuantity (value) {
 
 export default function MarketTransactionActivityChart ({ jwt, filters, initialResult }) {
   const [state, setState] = useState({ status: 'loading', rows: [], partial: false, totalPages: 0 })
+  const completeHistorySuffix = state.totalPages === 1 ? '' : 's'
 
   useEffect(() => {
     let cancelled = false
@@ -124,7 +125,7 @@ export default function MarketTransactionActivityChart ({ jwt, filters, initialR
         : null}
       {state.status === 'success' && state.partial
         ? <p className="market-chart__state">Se muestran las primeras {MAX_ACTIVITY_PAGES} de {state.totalPages} páginas; la actividad es parcial y no representa todo el historial.</p>
-        : state.status === 'success' ? <p className="market-chart__state">Historial completo cargado: {state.totalPages} página{state.totalPages === 1 ? '' : 's'}.</p> : null}
+        : state.status === 'success' ? <p className="market-chart__state">Historial completo cargado: {state.totalPages} página{completeHistorySuffix}.</p> : null}
     </section>
   )
 }

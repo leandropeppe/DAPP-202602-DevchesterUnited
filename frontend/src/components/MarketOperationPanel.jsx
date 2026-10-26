@@ -125,8 +125,15 @@ function StandardOperationForm ({ player, type, availableQuantity, quantity, qua
 }
 
 function SaleConfirmationView ({ player, state, result, show, quantity, quantityNumber, total, quantityError, quantityValid, canOperate, availableQuantity, quantityLimit, onQuantityChange, onCancel, onConfirm }) {
+  const confirmationStatus = state.status === 'loading'
+    ? 'loading'
+    : state.status === 'success' && result?.status === 'CONFIRMED'
+      ? 'success'
+      : 'idle'
+  const confirmLabel = state.status === 'loading' ? 'Vendiendo…' : 'Confirmar venta'
+
   return (
-      <MarketConfirmationModal open={show} title="Confirmar venta" message={<>Â¿QuerÃ©s vender tokens de <strong>{player.name}</strong>?</>} pricePerToken={player.price_per_token} quantity={quantityNumber} total={total} totalLabel="Total estimado" confirmLabel={state.status === 'loading' ? 'Vendiendoâ€¦' : 'Confirmar venta'} status={state.status === 'loading' ? 'loading' : state.status === 'success' && result?.status === 'CONFIRMED' ? 'success' : 'idle'} successTitle="Venta realizada" successMessage="La operaciÃ³n se completÃ³ correctamente." confirmDisabled={!canOperate || !quantityValid || state.status === 'loading' || Boolean(result)} variant="sell" onCancel={onCancel} onConfirm={onConfirm}>
+      <MarketConfirmationModal open={show} title="Confirmar venta" message={<>Â¿QuerÃ©s vender tokens de <strong>{player.name}</strong>?</>} pricePerToken={player.price_per_token} quantity={quantityNumber} total={total} totalLabel="Total estimado" confirmLabel={confirmLabel} status={confirmationStatus} successTitle="Venta realizada" successMessage="La operaciÃ³n se completÃ³ correctamente." confirmDisabled={!canOperate || !quantityValid || state.status === 'loading' || Boolean(result)} variant="sell" onCancel={onCancel} onConfirm={onConfirm}>
         <div className="market-confirmation-quantity">
           <span>Tokens disponibles: <strong>{availableQuantity}</strong></span>
           <QuantityControl quantity={quantity} quantityNumber={quantityNumber} quantityLimit={quantityLimit} canOperate={canOperate} disabled={state.status === 'loading' || Boolean(result)} inputId="market-sale-quantity" describedBy="market-sale-quantity-message" invalid={!quantityValid} onChange={onQuantityChange} />
@@ -154,6 +161,11 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
   const playerId = marketPlayerUuid(player.id)
   const canOperate = isMarketPlayerOperable(player) && playerId && player.quote_id && player.quote_version && player.price_per_token !== null && player.price_per_token !== undefined
   const isSale = type === 'SALE'
+  const confirmationStatus = state.status === 'loading'
+    ? 'loading'
+    : state.status === 'success' && result?.status === 'CONFIRMED'
+      ? 'success'
+      : 'idle'
   const quantityNumber = Number(quantity)
   const quantityLimit = isSale ? Math.max(0, Number(maxQuantity) || 0) : Math.min(MAX_MARKET_QUANTITY, Math.max(0, Number(maxQuantity) || 0))
   const quantityError = quantityValidationMessage(quantity, quantityLimit)
@@ -236,7 +248,7 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
         </div>
         {!canOperate ? <p className="market-operation-panel__warning">La cotizaciÃ³n ya no es operable. ActualizÃ¡ el mercado antes de continuar.</p> : null}
         {embedded ? <EmbeddedOperationForm player={player} currentHoldings={currentHoldings} availableBalance={availableBalance} quantity={quantity} quantityNumber={quantityNumber} quantityLimit={quantityLimit} quantityError={quantityError} quantityValid={quantityValid} balanceInsufficient={balanceInsufficient} canOperate={canOperate} state={state} result={result} onQuantityChange={handleQuantityChange} onSubmit={submit} /> : <StandardOperationForm player={player} type={type} availableQuantity={availableQuantity} quantity={quantity} quantityNumber={quantityNumber} quantityLimit={quantityLimit} quantityError={quantityError} quantityValid={quantityValid} isSale={isSale} operationLabel={operationLabel} canOperate={canOperate} state={state} result={result} confirmed={confirmed} onQuantityChange={handleQuantityChange} onConfirmed={setConfirmed} onSubmit={submit} />}
-        <MarketConfirmationModal open={showPurchaseConfirmation} title="Confirmar compra" message={<>Â¿EstÃ¡s seguro de que querÃ©s comprar{' '}<strong>{quantityNumber} {quantityNumber === 1 ? 'token' : 'tokens'}</strong>{' '}de <strong>{player.name}</strong>?</>} pricePerToken={player.price_per_token} quantity={quantityNumber} total={estimatedTotal} confirmLabel="Confirmar compra" status={state.status === 'loading' ? 'loading' : state.status === 'success' && result?.status === 'CONFIRMED' ? 'success' : 'idle'} successTitle="Compra realizada" successMessage="La operaciÃ³n se completÃ³ correctamente." variant="buy" onCancel={() => setShowPurchaseConfirmation(false)} onConfirm={() => { void executeOperation() }} />
+        <MarketConfirmationModal open={showPurchaseConfirmation} title="Confirmar compra" message={<>Â¿EstÃ¡s seguro de que querÃ©s comprar{' '}<strong>{quantityNumber} {quantityNumber === 1 ? 'token' : 'tokens'}</strong>{' '}de <strong>{player.name}</strong>?</>} pricePerToken={player.price_per_token} quantity={quantityNumber} total={estimatedTotal} confirmLabel="Confirmar compra" status={confirmationStatus} successTitle="Compra realizada" successMessage="La operaciÃ³n se completÃ³ correctamente." variant="buy" onCancel={() => setShowPurchaseConfirmation(false)} onConfirm={() => { void executeOperation() }} />
         {state.status === 'error' ? <p className="status-message status-message--error" role="alert">{state.message}</p> : null}
         <OperationResult result={result} needsRecovery={needsRecovery} state={state} recover={recover} />
       </section>

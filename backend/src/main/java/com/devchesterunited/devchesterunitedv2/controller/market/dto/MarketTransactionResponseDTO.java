@@ -41,21 +41,21 @@ public record MarketTransactionResponseDTO(
         Objects.requireNonNull(solicitudIdempotenciaId);
     }
 
-    public static MarketTransactionResponseDTO fromDomain(MarketTransactionRecord record) {
-        Objects.requireNonNull(record, "La transaccion es obligatoria.");
+    public static MarketTransactionResponseDTO fromDomain(MarketTransactionRecord transaction) {
+        Objects.requireNonNull(transaction, "La transaccion es obligatoria.");
         return new MarketTransactionResponseDTO(
-                record.id(),
-                record.confirmadoEn(),
-                record.jugadorId(),
-                record.nombreJugadorSnapshot(),
-                record.tipoOperacion(),
-                record.cantidad(),
-                record.precioUnitario(),
-                record.montoTotal(),
-                record.contraparteId(),
-                record.quoteId(),
-                record.quoteVersion(),
-                record.solicitudIdempotenciaId(),
-                record.pnlRealizado());
+                transaction.id(),
+                transaction.confirmadoEn(),
+                transaction.jugadorId(),
+                transaction.nombreJugadorSnapshot(),
+                transaction.tipoOperacion(),
+                transaction.cantidad(),
+                transaction.precioUnitario(),
+                transaction.montoTotal(),
+                transaction.contraparteId(),
+                transaction.quoteId(),
+                transaction.quoteVersion(),
+                transaction.solicitudIdempotenciaId(),
+                transaction.pnlRealizado());
     }
 }

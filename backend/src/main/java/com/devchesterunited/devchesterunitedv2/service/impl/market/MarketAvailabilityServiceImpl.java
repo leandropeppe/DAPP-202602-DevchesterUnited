@@ -100,6 +100,18 @@ public class MarketAvailabilityServiceImpl implements MarketAvailabilityService 
         UUIDAndVersion quote = useCurrentQuote
                 ? new UUIDAndVersion(projection.getCurrentQuoteId(), projection.getCurrentQuoteVersion())
                 : new UUIDAndVersion(projection.getLatestQuoteId(), projection.getLatestQuoteVersion());
+        java.math.BigDecimal pricePerToken = useCurrentQuote
+                ? projection.getCurrentPricePerToken()
+                : projection.getLatestPricePerToken();
+        String validityStatus = useCurrentQuote
+                ? projection.getCurrentValidityStatus()
+                : projection.getLatestValidityStatus();
+        Instant validFrom = useCurrentQuote
+                ? projection.getCurrentValidFrom()
+                : projection.getLatestValidFrom();
+        Instant validUntil = useCurrentQuote
+                ? projection.getCurrentValidUntil()
+                : projection.getLatestValidUntil();
         boolean operable = mercadoOperativo
                 && projection.getPlayerActive()
                 && projection.getTeamActive()
@@ -121,10 +133,10 @@ public class MarketAvailabilityServiceImpl implements MarketAvailabilityService 
                 valueOrZero(projection.getInventoryQuantity()),
                 quote.id(),
                 quote.version(),
-                useCurrentQuote ? projection.getCurrentPricePerToken() : projection.getLatestPricePerToken(),
-                useCurrentQuote ? projection.getCurrentValidityStatus() : projection.getLatestValidityStatus(),
-                useCurrentQuote ? projection.getCurrentValidFrom() : projection.getLatestValidFrom(),
-                useCurrentQuote ? projection.getCurrentValidUntil() : projection.getLatestValidUntil(),
+                pricePerToken,
+                validityStatus,
+                validFrom,
+                validUntil,
                 quotePresent ? quoteHistorical ? MarketQuoteAvailability.HISTORICAL
                         : MarketQuoteAvailability.CURRENT
                         : MarketQuoteAvailability.ABSENT,

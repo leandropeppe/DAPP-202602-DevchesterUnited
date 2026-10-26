@@ -125,7 +125,7 @@ class MarketDemoIntegrationTest {
                 new MarketTransactionFilter(null, null, null, null, 1, 20));
 
         assertThat(userOneHistory.transacciones()).hasSize(2);
-        assertThat(userOneHistory.transacciones()).extracting(record -> record.quoteVersion())
+        assertThat(userOneHistory.transacciones()).extracting(transaction -> transaction.quoteVersion())
                 .containsExactly(2L, 1L);
         assertThat(userOneHistory.transacciones().get(0).pnlRealizado())
                 .isEqualByComparingTo("2.00000000");

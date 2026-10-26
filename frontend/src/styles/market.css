@@ -505,6 +505,12 @@
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .market-confirmation__success {
+        animation: none;
+    }
+}
+
 .market-purchase-confirmation__dialog h3 {
     margin: 0;
     font-size: 1.35rem;
