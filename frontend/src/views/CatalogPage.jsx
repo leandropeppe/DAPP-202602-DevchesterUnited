@@ -152,7 +152,7 @@ export default function CatalogPage ({ onNavigate = () => {} }) {
 
   return (
       <section
-          className="catalog-page"
+          className="catalog-page old-trafford-fixed"
           aria-labelledby="catalog-title"
       >
         <header className="catalog-hero">

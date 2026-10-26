@@ -1,0 +1,116 @@
+package com.devchesterunited.devchesterunitedv2.service.impl.estadisticas;
+
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.repository.EstadisticasSyncStagingRepository;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncStagingEntity;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.EstadoEstadisticasSync;
+import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/** Writes technical staging in short transactions before atomic promotion. */
+@Service
+public class EstadisticasStagingService {
+    private final EstadisticasSyncRepository ejecuciones;
+    private final EstadisticasSyncStagingRepository staging;
+
+    public EstadisticasStagingService(EstadisticasSyncRepository ejecuciones,
+            EstadisticasSyncStagingRepository staging) {
+        this.ejecuciones = ejecuciones;
+        this.staging = staging;
+    }
+
+    @Transactional
+    public void registrarInicio(EstadisticasSyncEntity ejecucion) {
+        ejecuciones.save(ejecucion);
+    }
+
+    @Transactional
+    public void escribirLote(UUID syncId, String competicion, List<Entrada> entradas) {
+        entradas.forEach(entrada -> escribirInterno(syncId, competicion, entrada.jugadorId(),
+                entrada.equipoId(), entrada.registro()));
+    }
+
+    private void escribirInterno(UUID syncId, String competicion, UUID jugadorId, UUID equipoId,
+            RegistroEstadisticasJugador registro) {
+        var identidad = registro.identidad();
+        var entity = staging.findBySyncIdAndCompeticionAndWhoscoredPlayerId(
+                syncId, competicion, identidad.playerId())
+                .orElseGet(() -> new EstadisticasSyncStagingEntity(UUID.randomUUID(), syncId,
+                        competicion, identidad.playerId(), identidad.nombre()));
+        var m = registro.metricas();
+        String posicion = identidad.posicion() != null ? identidad.posicion() : entity.getPosicion();
+        entity.aplicar(EstadisticasSyncStagingEntity.Aplicacion.builder()
+                .jugadorId(jugadorId).equipoId(equipoId).teamId(identidad.teamId())
+                .nombreEquipo(identidad.nombreEquipo()).posicion(posicion)
+                .nacionalidad(identidad.nacionalidad()).familia(registro.familia().name())
+                .minutos(m.minutosJugados()).goles(m.goles()).asistencias(m.asistencias())
+                .tiros(m.tiros()).pasesClave(m.pasesClave()).regates(m.regates())
+                .tackles(m.tackles()).valoracion(m.valoracion())
+                .amarillas(m.tarjetasAmarillas()).rojas(m.tarjetasRojas())
+                .apps(m.generales().apps()).subOn(m.generales().subOn())
+                .manOfTheMatch(m.generales().manOfTheMatch())
+                .aerialWonPerGame(m.generales().aerialWonPerGame())
+                .foulGivenPerGame(m.ofensivas().foulGivenPerGame())
+                .offsideGivenPerGame(m.ofensivas().offsideGivenPerGame())
+                .dispossessedPerGame(m.ofensivas().dispossessedPerGame())
+                .turnoverPerGame(m.ofensivas().turnoverPerGame())
+                .interceptionPerGame(m.defensivas().interceptionPerGame())
+                .foulsPerGame(m.defensivas().foulsPerGame())
+                .offsideWonPerGame(m.defensivas().offsideWonPerGame())
+                .clearancePerGame(m.defensivas().clearancePerGame())
+                .wasDribbledPerGame(m.defensivas().wasDribbledPerGame())
+                .outfielderBlockPerGame(m.defensivas().outfielderBlockPerGame())
+                .goalOwn(m.defensivas().goalOwn())
+                .totalPassesPerGame(m.pases().totalPassesPerGame())
+                .passSuccess(m.pases().passSuccess())
+                .accurateCrossesPerGame(m.pases().accurateCrossesPerGame())
+                .accurateLongPassPerGame(m.pases().accurateLongPassPerGame())
+                .accurateThroughBallPerGame(m.pases().accurateThroughBallPerGame()));
+        staging.save(entity);
+    }
+
+    public record Entrada(UUID jugadorId, UUID equipoId, RegistroEstadisticasJugador registro) { }
+
+    public void validarCompeticionesCompletas(UUID syncId, Set<String> competicionesEsperadas) {
+        if (competicionesEsperadas == null || competicionesEsperadas.isEmpty()) {
+            throw new IdentidadEstadisticaNoResueltaException(
+                    "La ejecucion no contiene competiciones completas.");
+        }
+        Set<String> competicionesRecibidas = new HashSet<>();
+        long total = 0;
+        int page = 0;
+        org.springframework.data.domain.Page<EstadisticasSyncStagingEntity> lote;
+        do {
+            lote = staging.findAllBySyncId(syncId, PageRequest.of(page++, 100));
+            total += lote.getNumberOfElements();
+            for (var row : lote.getContent()) {
+                if (row.getJugadorId() == null) {
+                    throw new IdentidadEstadisticaNoResueltaException(
+                            "La ejecucion contiene identidades sin resolver.");
+                }
+                competicionesRecibidas.add(row.getCompeticion());
+            }
+        } while (lote.hasNext());
+        if (total == 0 || !competicionesRecibidas.equals(competicionesEsperadas)) {
+            throw new IdentidadEstadisticaNoResueltaException(
+                    "La ejecucion no completo las competiciones requeridas.");
+        }
+    }
+
+    @Transactional
+    public void cambiarEstado(UUID syncId, EstadoEstadisticasSync estado, Instant ahora) {
+        var ejecucion = ejecuciones.findById(syncId)
+                .orElseThrow(() -> new IllegalStateException("La ejecucion no existe."));
+        ejecucion.cambiarEstado(estado, null, null);
+        ejecuciones.save(ejecucion);
+    }
+}

@@ -1,0 +1,7 @@
+package com.devchesterunited.devchesterunitedv2.modelo.estadisticas;
+import java.math.BigDecimal;
+public record MetricasDefensivas(BigDecimal tacklePerGame, BigDecimal interceptionPerGame, BigDecimal foulsPerGame, BigDecimal offsideWonPerGame, BigDecimal clearancePerGame, BigDecimal wasDribbledPerGame, BigDecimal outfielderBlockPerGame, Integer goalOwn) {
+    public MetricasDefensivas { tacklePerGame=escala(tacklePerGame); interceptionPerGame=escala(interceptionPerGame); foulsPerGame=escala(foulsPerGame); offsideWonPerGame=escala(offsideWonPerGame); clearancePerGame=escala(clearancePerGame); wasDribbledPerGame=escala(wasDribbledPerGame); outfielderBlockPerGame=escala(outfielderBlockPerGame); validar(tacklePerGame,"tacklePerGame"); validar(interceptionPerGame,"interceptionPerGame"); validar(foulsPerGame,"foulsPerGame"); validar(offsideWonPerGame,"offsideWonPerGame"); validar(clearancePerGame,"clearancePerGame"); validar(wasDribbledPerGame,"wasDribbledPerGame"); validar(outfielderBlockPerGame,"outfielderBlockPerGame"); validar(goalOwn,"goalOwn"); }
+    private static BigDecimal escala(BigDecimal v) { return v == null ? null : v.setScale(2, java.math.RoundingMode.HALF_UP); }
+    private static void validar(Number v, String n) { if (v instanceof BigDecimal d && d.signum()<0 || v instanceof Integer i && i<0) throw new IllegalArgumentException("La métrica "+n+" no puede ser negativa."); }
+}

@@ -45,6 +45,19 @@ describe('detalle con estadisticas completas', () => {
     expect(within(screen.getByText('Valorización Devchester').parentElement).getByText('-')).toBeInTheDocument()
   })
 
+  it('muestra iconos en las cards de todas las familias y mantiene las pestañas', async () => {
+    global.fetch = vi.fn().mockResolvedValue(response({ data: detail }))
+    const { container } = render(<PlayerDetailPage playerId="ply-1" onNavigate={vi.fn()} />)
+    await screen.findByRole('heading', { name: 'Jugador Completo', level: 1 })
+
+    for (const [tab, count] of [['Resumen', 10], ['Ataque', 9], ['Defensa', 8], ['Pases', 5]]) {
+      fireEvent.click(screen.getByRole('tab', { name: tab }))
+      expect(screen.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true')
+      expect(container.querySelectorAll('.statistic-card')).toHaveLength(count)
+      expect(screen.getAllByTestId('statistic-card-icon')).toHaveLength(count)
+    }
+  })
+
   it('mantiene el estado de ausencia de estadisticas', async () => {
     global.fetch = vi.fn().mockResolvedValue(response({ data: { ...detail, statistics: null } }))
     render(<PlayerDetailPage playerId="ply-1" onNavigate={vi.fn()} />)

@@ -1,4 +1,5 @@
 import StatusMessage from './StatusMessage.jsx'
+import { normalizeQuoteStatus } from '../market/marketState.js'
 
 const QUOTE_STATUS_MESSAGES = {
   available: 'Cotización disponible.',
@@ -20,10 +21,11 @@ function ensureMessages (message, requiredMessages) {
 }
 
 export default function QuoteStatus ({ status, price, message }) {
-  const knownStatus = Object.hasOwn(QUOTE_STATUS_MESSAGES, status)
-  const isOperable = status === 'available'
+  const normalizedStatus = normalizeQuoteStatus(status)
+  const knownStatus = Object.hasOwn(QUOTE_STATUS_MESSAGES, normalizedStatus)
+  const isOperable = normalizedStatus === 'available'
   const type = isOperable ? 'success' : 'info'
-  const baseMessage = message || (knownStatus ? QUOTE_STATUS_MESSAGES[status] : '')
+  const baseMessage = message || (knownStatus ? QUOTE_STATUS_MESSAGES[normalizedStatus] : '')
   let requiredMessages = []
   if (!isOperable) {
     requiredMessages = knownStatus

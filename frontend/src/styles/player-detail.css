@@ -133,21 +133,152 @@
 }
 
 /* =========================================================
-   REUSED PLAYER CARD
+   REUSED PLAYER CARD - DETAIL ONLY
    ========================================================= */
+
+.player-detail__hero-layout {
+    position: relative;
+    z-index: 3;
+
+    display: grid;
+    grid-template-columns:
+            325px
+            minmax(0, 1fr);
+
+    gap: 28px;
+    align-items: stretch;
+}
 
 .player-detail__player-card {
     width: 100%;
-    max-width: 310px;
+    max-width: 325px;
 
     align-self: stretch;
+}
+
+.player-detail__player-card .player-card-flip,
+.player-detail__player-card .player-card-flip__inner,
+.player-detail__player-card .player-card-flip__face {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
 }
 
 .player-detail__player-card .player-card {
     width: 100%;
     height: 100%;
+    min-height: 540px;
 
-    min-height: 100%;
+    border-radius:
+            34px
+            34px
+            46px
+            46px;
+}
+
+.player-detail__player-card .player-card__rating {
+    top: 24px;
+    left: 26px;
+}
+
+.player-detail__player-card .player-card__rating strong {
+    font-size: 2.25rem;
+}
+
+.player-detail__player-card .player-card__rating span {
+    margin-top: 7px;
+    font-size: 1.45rem;
+}
+
+.player-detail__player-card .player-card__portrait {
+    height: 255px;
+}
+
+.player-detail__player-card .player-card__portrait::before {
+    width: 280px;
+    height: 280px;
+}
+
+.player-detail__player-card .player-card__portrait::after {
+    width: 280px;
+}
+
+.player-detail__player-card .player-card__silhouette {
+    width: 92%;
+    transform:
+            translateY(8px)
+            scale(1.04);
+}
+
+.player-detail__player-card .player-card__content {
+    flex: 1 1 auto;
+
+    display: flex;
+    flex-direction: column;
+
+    padding:
+            18px
+            24px
+            72px;
+
+    background:
+            linear-gradient(
+                    to bottom,
+                    rgba(0, 0, 0, .03),
+                    rgba(0, 0, 0, .22)
+            );
+}
+
+.player-detail__player-card .player-card__name {
+    margin:
+            0
+            0
+            18px;
+
+    font-size: 1.35rem;
+    line-height: 1.05;
+}
+
+.player-detail__player-card .player-card__metadata {
+    gap: 12px;
+
+    font-size: .92rem;
+    font-weight: 700;
+}
+
+.player-detail__player-card .player-card__metadata > div {
+    grid-template-columns:
+            40px
+            minmax(0, 1fr);
+
+    column-gap: 11px;
+}
+
+.player-detail__player-card .player-card__metadata-icon {
+    width: 40px;
+    height: 34px;
+}
+
+.player-detail__player-card .player-card__metadata-icon svg {
+    width: 30px;
+    height: 30px;
+}
+
+.player-detail__player-card .player-card__team-logo {
+    width: 32px;
+    height: 32px;
+}
+
+.player-detail__player-card .player-card__league-logo {
+    width: 32px;
+    height: 32px;
+}
+
+.player-detail__player-card .player-card__flag {
+    width: 36px;
+    height: 23px;
+
+    border-radius: 4px;
 }
 
 .player-card--static {
@@ -156,6 +287,19 @@
 
 .player-card--static .player-card__action {
     display: none;
+}
+
+.player-detail__player-card .player-card-flip__trigger {
+    right: 18px;
+    bottom: 16px;
+
+    min-height: 38px;
+
+    padding:
+            8px
+            13px;
+
+    font-size: .76rem;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -169,7 +313,7 @@
     .player-detail__player-card .player-card--static:hover .player-card__silhouette {
         transform:
                 translateY(8px)
-                scale(1.03);
+                scale(1.06);
     }
 }
 
@@ -930,6 +1074,21 @@
     margin-top: auto;
 }
 
+.player-detail__purchase {
+    display: grid;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid #e1e6ed;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.player-detail__purchase > h2 {
+    margin: 0;
+    color: #08152f;
+    font-size: 1.2rem;
+}
+
 .highlight-stat {
     display: grid;
 
@@ -1114,12 +1273,17 @@
 
     border-radius: 9px;
 
-    background: #f0f3f7;
+    background: #fff1f2;
+    color: #d71920;
+}
 
-    color: #25324a;
+.statistic-card__icon > svg {
+    width: 17px;
+    height: 17px;
 
-    font-size: 1rem;
-    font-weight: 900;
+    flex: 0 0 auto;
+
+    stroke: currentColor;
 }
 
 .statistic-card dt {
@@ -1138,7 +1302,7 @@
 
     color: #08152f;
 
-    font-size: 1.7rem;
+    font-size: 1.45rem;
     font-weight: 900;
 
     line-height: 1;
@@ -1154,20 +1318,22 @@
 }
 
 .stat-icon-card {
-    width: 10px;
-    height: 16px;
+    width: 14px;
+    height: 18px;
 
-    display: inline-block;
+    flex: 0 0 auto;
+
+    stroke: currentColor;
 
     border-radius: 2px;
 }
 
 .stat-icon-card--yellow {
-    background: #f7c948;
+    color: #f7c948;
 }
 
 .stat-icon-card--red {
-    background: #d71920;
+    color: #d71920;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -1216,12 +1382,53 @@
 @media (max-width: 1100px) {
     .player-detail__hero-layout {
         grid-template-columns:
-                280px
+                300px
                 minmax(0, 1fr);
     }
 
     .player-detail__player-card {
-        max-width: 280px;
+        max-width: 300px;
+    }
+
+    .player-detail__player-card .player-card {
+        min-height: 515px;
+    }
+
+    .player-detail__player-card .player-card__portrait {
+        height: 240px;
+    }
+
+    .player-detail__player-card .player-card__content {
+        padding:
+                22px
+                26px
+                82px;
+    }
+
+    .player-detail__player-card .player-card__metadata {
+        gap: 15px;
+    }
+
+    .player-detail__player-card .player-card__metadata > div {
+        grid-template-columns:
+                48px
+                minmax(0, 1fr);
+    }
+
+    .player-detail__player-card .player-card__metadata-icon {
+        width: 48px;
+        height: 42px;
+    }
+
+    .player-detail__player-card .player-card__team-logo,
+    .player-detail__player-card .player-card__league-logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    .player-detail__player-card .player-card__flag {
+        width: 44px;
+        height: 28px;
     }
 
     .player-detail__identity-grid {
@@ -1261,10 +1468,14 @@
     }
 
     .player-detail__player-card {
-        width: min(340px, 100%);
-        max-width: 340px;
+        width: min(390px, 100%);
+        max-width: 325px;
 
         justify-self: center;
+    }
+
+    .player-detail__player-card .player-card {
+        min-height: 540px;
     }
 
     .player-detail__overview {
@@ -1371,12 +1582,60 @@
         font-size: .8rem;
     }
 
-    .player-card-flip__trigger {
-        right: 12px;
-        bottom: 12px;
+    .player-detail__player-card .player-card-flip__trigger {
+        right: 16px;
+        bottom: 16px;
 
         padding:
-                7px
-                10px;
+                8px
+                12px;
+    }
+
+    .player-detail__player-card .player-card {
+        min-height: 500px;
+    }
+
+    .player-detail__player-card .player-card__portrait {
+        height: 235px;
+    }
+
+    .player-detail__player-card .player-card__content {
+        padding:
+                20px
+                24px
+                76px;
+    }
+
+    .player-detail__player-card .player-card__name {
+        font-size: 1.5rem;
+    }
+
+    .player-detail__player-card .player-card__metadata {
+        gap: 14px;
+        font-size: .96rem;
+    }
+
+    .player-detail__player-card .player-card__metadata > div {
+        grid-template-columns:
+                44px
+                minmax(0, 1fr);
+
+        column-gap: 12px;
+    }
+
+    .player-detail__player-card .player-card__metadata-icon {
+        width: 44px;
+        height: 38px;
+    }
+
+    .player-detail__player-card .player-card__team-logo,
+    .player-detail__player-card .player-card__league-logo {
+        width: 36px;
+        height: 36px;
+    }
+
+    .player-detail__player-card .player-card__flag {
+        width: 40px;
+        height: 25px;
     }
 }

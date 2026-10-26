@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
 
-import com.devchesterunited.devchesterunitedv2.modelo.MetricasEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
 import java.util.Objects;
 import java.util.UUID;
 
