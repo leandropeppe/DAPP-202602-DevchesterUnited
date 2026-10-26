@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.unit.market;
 
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CuentaCreditosMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EmisionTokensMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.MovimientoMercadoRepository;

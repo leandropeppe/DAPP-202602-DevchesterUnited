@@ -1,9 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
 
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
 
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.JugadorEstadistico;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MotorValorizacion;
 import static org.mockito.Mockito.*;
 
 import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.EstrategiasIniciales;

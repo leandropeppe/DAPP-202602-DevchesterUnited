@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.integration.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 

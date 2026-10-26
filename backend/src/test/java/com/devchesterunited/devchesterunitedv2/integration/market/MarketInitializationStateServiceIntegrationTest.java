@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.integration.market;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketInitializationStateService;

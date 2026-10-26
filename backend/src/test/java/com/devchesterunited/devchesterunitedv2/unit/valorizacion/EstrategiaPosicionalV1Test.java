@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaPosicionalV1;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MetricaValorizacion;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
 
 import java.math.BigDecimal;
 import java.util.Map;

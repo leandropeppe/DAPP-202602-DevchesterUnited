@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
 
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
 
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ConfiguracionElegibilidad;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaGeneralV1;

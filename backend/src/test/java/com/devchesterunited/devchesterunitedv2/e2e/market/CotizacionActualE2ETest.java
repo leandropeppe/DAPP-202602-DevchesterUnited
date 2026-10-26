@@ -11,7 +11,6 @@ import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.reposito
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EstrategiaVisibleRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.HistoricoCotizacionEstrategiaRepository;
 
-import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.*;
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

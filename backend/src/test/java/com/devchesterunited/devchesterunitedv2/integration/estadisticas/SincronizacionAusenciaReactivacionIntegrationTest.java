@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.integration.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

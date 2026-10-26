@@ -1,7 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
 import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsConfiguration.CompetitionParameters;
 
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;

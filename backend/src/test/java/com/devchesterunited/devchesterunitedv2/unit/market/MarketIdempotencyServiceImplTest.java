@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.unit.market;
 
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
 
 import com.devchesterunited.devchesterunitedv2.contract.market.MarketIdempotencyServiceContractTest;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.SolicitudIdempotenciaMercadoEntity;

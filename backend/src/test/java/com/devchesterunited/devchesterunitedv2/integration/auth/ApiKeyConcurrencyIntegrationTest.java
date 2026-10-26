@@ -1,7 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.integration.auth;
 import static org.assertj.core.api.Assertions.*;
 
-import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
 
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;

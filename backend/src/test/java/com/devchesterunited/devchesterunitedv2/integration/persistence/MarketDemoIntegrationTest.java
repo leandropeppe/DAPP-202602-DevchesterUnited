@@ -5,14 +5,12 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchase
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionFilter;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPortfolioService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketTransactionService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
 
-import com.devchesterunited.devchesterunitedv2.service.interfaces.market.*;
 import com.devchesterunited.devchesterunitedv2.support.fixtures.market.MarketDemoFixtureBuilder.DemoPlayer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

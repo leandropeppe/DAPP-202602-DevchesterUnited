@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.integration.market;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;

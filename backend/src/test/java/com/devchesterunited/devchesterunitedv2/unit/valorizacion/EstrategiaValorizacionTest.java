@@ -2,7 +2,6 @@ package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
 
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
 
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionInicialConfig;
 
 import org.junit.jupiter.api.Test;
 
