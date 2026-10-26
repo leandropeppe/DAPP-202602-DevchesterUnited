@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import static org.assertj.core.api.Assertions.*;
 
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;

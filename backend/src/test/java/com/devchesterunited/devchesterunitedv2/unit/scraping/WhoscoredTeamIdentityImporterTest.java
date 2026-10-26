@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.unit.scraping;
 
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredTeamIdentityCsv;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredTeamIdentityImporter;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredTeamIdentityPublicationService;

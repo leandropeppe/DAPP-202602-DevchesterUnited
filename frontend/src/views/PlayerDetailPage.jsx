@@ -196,6 +196,10 @@ function tabLabel (tab) {
   return 'Pases'
 }
 
+function statisticsFamily (statistics, familyKey, activeTab) {
+  return statistics?.[familyKey] || statistics?.[activeTab] || statistics || {}
+}
+
 function DetailIcon ({ statisticKey }) {
   const Icon = getPlayerStatisticIcon(statisticKey)
   const cardColor = statisticKey === 'yellowCard'
@@ -935,11 +939,7 @@ export default function PlayerDetailPage ({
       pases: 'pases'
   }[activeTab]
 
-  const family =
-      statistics?.[familyKey] ||
-      statistics?.[activeTab] ||
-      statistics ||
-      {}
+  const family = statisticsFamily(statistics, familyKey, activeTab)
 
   const countryCode =
       getCountryCode(

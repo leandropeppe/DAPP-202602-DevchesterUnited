@@ -52,6 +52,12 @@ function operationLookupResponse (response) {
   return data
 }
 
+function handleIncompleteOperation (error, setResult, setNeedsRecovery) {
+  if (!error.incompleteData) return
+  setResult(error.incompleteData)
+  setNeedsRecovery(true)
+}
+
 function QuantityControl ({ quantity, quantityNumber, quantityLimit, canOperate, disabled, inputId, describedBy, invalid, onChange }) {
   return (
       <div className="quantity-control">
@@ -155,7 +161,6 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
   const estimatedTotal = Number(player.price_per_token) * quantityNumber
   const operationLabel = type === 'PURCHASE' ? 'Compra' : 'Venta'
   const balanceInsufficient = !isSale && availableBalance !== null && availableBalance !== undefined && Number.isFinite(Number(availableBalance)) && estimatedTotal > Number(availableBalance)
-  const purchaseDisabled = balanceInsufficient || !quantityValid
 
   function notifyConfirmed (operation) {
     if (operation.status === 'CONFIRMED' && !confirmedNotified.current) {
@@ -185,10 +190,7 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
         }, 2000)
       }
     } catch (error) {
-      if (error.incompleteData) {
-        setResult(error.incompleteData)
-        setNeedsRecovery(true)
-      }
+      handleIncompleteOperation(error, setResult, setNeedsRecovery)
       setState({ status: 'error', message: errorMessage(error) })
     } finally {
       operationInFlight.current = false
@@ -198,7 +200,7 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
   function submit (event) {
     event.preventDefault()
     if (!quantityValid) return setState({ status: 'error', message: quantityError })
-    if (!canOperate || purchaseDisabled) return
+    if (!canOperate) return
     if (embedded) return setShowPurchaseConfirmation(true)
     if (confirmed) void executeOperation()
   }

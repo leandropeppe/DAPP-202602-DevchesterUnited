@@ -2,11 +2,11 @@ package com.devchesterunited.devchesterunitedv2.contract.market;
 
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.*;
+import java.util.*;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;

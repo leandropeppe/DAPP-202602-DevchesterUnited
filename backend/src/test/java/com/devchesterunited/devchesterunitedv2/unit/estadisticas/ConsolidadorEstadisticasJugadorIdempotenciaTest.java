@@ -1,11 +1,9 @@
 package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.RegistroEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.ConsolidadorEstadisticasJugador;
 import org.junit.jupiter.api.Test;

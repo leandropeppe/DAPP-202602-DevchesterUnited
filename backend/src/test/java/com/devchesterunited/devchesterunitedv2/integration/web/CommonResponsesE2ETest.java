@@ -2,7 +2,6 @@ package com.devchesterunited.devchesterunitedv2.integration.web;
 
 import static org.hamcrest.Matchers.*;
 
-import org.springframework.web.bind.annotation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
 import com.devchesterunited.devchesterunitedv2.configuration.JacksonConfig;
@@ -22,6 +21,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

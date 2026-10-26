@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;

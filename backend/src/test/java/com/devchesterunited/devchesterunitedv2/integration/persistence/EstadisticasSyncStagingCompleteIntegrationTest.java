@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
 import com.devchesterunited.devchesterunitedv2.persistence.estadisticas.entity.EstadisticasSyncStagingEntity;
 import org.junit.jupiter.api.Test;

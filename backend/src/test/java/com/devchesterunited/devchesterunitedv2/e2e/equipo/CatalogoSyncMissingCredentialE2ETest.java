@@ -1,7 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.e2e.equipo;
 
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;

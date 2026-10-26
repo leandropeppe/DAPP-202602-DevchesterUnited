@@ -16,6 +16,7 @@ import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
 import org.junit.jupiter.api.Test;
+import java.util.concurrent.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -32,7 +33,6 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.flywaydb.core.Flyway;

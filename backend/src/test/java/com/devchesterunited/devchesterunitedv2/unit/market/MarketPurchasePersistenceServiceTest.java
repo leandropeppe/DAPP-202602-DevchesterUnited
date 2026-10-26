@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.unit.market;
 
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CuentaCreditosMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EmisionTokensMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.MovimientoMercadoRepository;

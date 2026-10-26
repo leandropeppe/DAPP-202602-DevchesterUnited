@@ -1,9 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.integration.jugador;
 
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;

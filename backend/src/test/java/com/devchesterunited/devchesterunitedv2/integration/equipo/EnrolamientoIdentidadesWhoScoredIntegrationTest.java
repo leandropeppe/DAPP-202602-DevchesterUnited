@@ -1,5 +1,4 @@
 package com.devchesterunited.devchesterunitedv2.integration.equipo;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.EstadoEstadisticasSync;

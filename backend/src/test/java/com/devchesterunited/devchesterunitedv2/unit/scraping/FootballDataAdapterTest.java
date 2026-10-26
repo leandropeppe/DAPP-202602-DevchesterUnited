@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.unit.scraping;
 
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 import static org.assertj.core.api.Assertions.*;
 

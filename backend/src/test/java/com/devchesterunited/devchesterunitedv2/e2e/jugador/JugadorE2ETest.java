@@ -1,7 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.e2e.jugador;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

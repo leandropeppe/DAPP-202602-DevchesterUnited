@@ -1,7 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
-import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 
 import com.devchesterunited.devchesterunitedv2.exception.IdentidadEstadisticaNoResueltaException;
 import org.junit.jupiter.api.Test;

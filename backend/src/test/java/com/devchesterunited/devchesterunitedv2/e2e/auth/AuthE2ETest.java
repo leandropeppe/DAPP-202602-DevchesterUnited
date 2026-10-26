@@ -2,7 +2,6 @@ package com.devchesterunited.devchesterunitedv2.e2e.auth;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.devchesterunited.devchesterunitedv2.modelo.auth.Usuario;
 import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.Matchers.*;
 
