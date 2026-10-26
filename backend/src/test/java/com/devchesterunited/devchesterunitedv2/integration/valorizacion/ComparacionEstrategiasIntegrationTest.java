@@ -10,9 +10,11 @@ import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.reposito
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.HistoricoCotizacionEstrategiaRepository;
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -27,6 +29,18 @@ class ComparacionEstrategiasIntegrationTest extends PostgresTestSupport {
     @Autowired private EjecucionValorizacionRepository ejecuciones;
     @Autowired private CotizacionActualEstrategiaRepository actuales;
     @Autowired private HistoricoCotizacionEstrategiaRepository historicos;
+    @Autowired private JdbcTemplate jdbc;
+
+    @BeforeEach
+    void prepararJugadorFixture() {
+        UUID teamId = jdbc.queryForObject("SELECT id FROM equipos ORDER BY id LIMIT 1", UUID.class);
+        jdbc.update("""
+                INSERT INTO jugadores
+                    (id, name, team_id, position, jersey_number, nationality, is_active, created_at, updated_at)
+                VALUES (?, 'Jugador de valorizacion', ?, 'Forward', 10, 'Argentina', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON CONFLICT (id) DO NOTHING
+                """, PLAYER_ID, teamId);
+    }
 
     @AfterEach
     void limpiar() {

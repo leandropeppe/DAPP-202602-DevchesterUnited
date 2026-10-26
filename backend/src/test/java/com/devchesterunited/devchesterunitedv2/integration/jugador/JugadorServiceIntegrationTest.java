@@ -37,7 +37,7 @@ class JugadorServiceIntegrationTest extends PostgresTestSupport {
 
     @BeforeEach
     void prepararCatalogo() {
-        jdbc.update("DELETE FROM jugadores");
+        limpiarTodosLosJugadoresYDependencias(jdbc);
         jdbc.update("UPDATE equipos SET is_active = TRUE");
         insertar(6, "Manuel", "Neuer", "Bundesliga", "Bayern", "Goalkeeper", 1, "Alemania");
         insertar(3, "Phil", "Foden", "Premier League", "Manchester City", "Forward", 47, "Inglaterra");

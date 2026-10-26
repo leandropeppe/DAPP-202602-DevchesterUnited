@@ -43,7 +43,7 @@ class JugadorRepositoryIntegrationTest extends PostgresTestSupport {
 
     @BeforeEach
     void prepararCatalogo() {
-        jdbc.update("DELETE FROM jugadores");
+        limpiarTodosLosJugadoresYDependencias(jdbc);
         jdbc.update("UPDATE equipos SET is_active = TRUE");
         // Orden de inserción deliberadamente distinto al UUID.
         insertar(6, "Liga prueba", "Club sin símbolos", "Defender");

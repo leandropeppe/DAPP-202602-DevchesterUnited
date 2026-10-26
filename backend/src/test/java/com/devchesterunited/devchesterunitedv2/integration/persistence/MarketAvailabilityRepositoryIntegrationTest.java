@@ -34,6 +34,7 @@ class MarketAvailabilityRepositoryIntegrationTest extends PostgresTestSupport {
 
     @BeforeEach
     void fixture() {
+        limpiarFixturesDeMercado(jdbc);
         jdbc.update("INSERT INTO market_state (id, status, epoch, created_at, updated_at) "
                 + "VALUES (1, 'UNINITIALIZED', 1, ?, ?) ON CONFLICT (id) DO NOTHING",
                 DB_NOW, DB_NOW);
@@ -83,6 +84,7 @@ class MarketAvailabilityRepositoryIntegrationTest extends PostgresTestSupport {
     void restore() {
         jdbc.update("UPDATE market_state SET status = ?, epoch = ? WHERE id = 1",
                 previousStatus, previousEpoch);
+        limpiarJugadoresYDependencias(jdbc, validPlayer, historicalPlayer, absentPlayer, invalidatedPlayer);
     }
 
     @Test

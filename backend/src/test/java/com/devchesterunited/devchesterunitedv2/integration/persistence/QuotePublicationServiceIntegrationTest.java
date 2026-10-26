@@ -46,6 +46,13 @@ class QuotePublicationServiceIntegrationTest extends PostgresTestSupport {
     void cleanup() {
         if (playerId != null) {
             jdbc.update("DELETE FROM market_quote_headers WHERE player_id = ?", playerId);
+            jdbc.update("ALTER TABLE market_quote_versions DISABLE TRIGGER trg_market_quote_versions_immutable");
+            try {
+                jdbc.update("DELETE FROM market_quote_versions WHERE player_id = ?", playerId);
+            } finally {
+                jdbc.update("ALTER TABLE market_quote_versions ENABLE TRIGGER trg_market_quote_versions_immutable");
+            }
+            jdbc.update("DELETE FROM jugadores WHERE id = ?", playerId);
         }
     }
 

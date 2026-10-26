@@ -13,6 +13,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.Ju
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -38,6 +39,23 @@ class SincronizacionRepositoryIntegrationTest extends PostgresTestSupport {
     @Autowired JugadorRepository jugadores;
     @Autowired JdbcTemplate jdbc;
     @Autowired EntityManager entityManager;
+
+    @BeforeEach
+    void prepararJugadorHistorico() {
+        UUID teamId = UUID.fromString("30000000-0000-0000-0000-000000000010");
+        jdbc.update("""
+                INSERT INTO equipos (id, name, league, is_active, created_at, updated_at)
+                VALUES (?, 'Equipo historico', 'LaLiga', TRUE, ?, ?)
+                ON CONFLICT (id) DO NOTHING
+                """, teamId, java.sql.Timestamp.from(AHORA), java.sql.Timestamp.from(AHORA));
+        jdbc.update("""
+                INSERT INTO jugadores
+                    (id, name, team_id, position, jersey_number, nationality, is_active, created_at, updated_at)
+                VALUES (?, 'Jugador historico', ?, 'Forward', 10, 'Argentina', TRUE, ?, ?)
+                ON CONFLICT (id) DO NOTHING
+                """, UUID.fromString("30000000-0000-0000-0000-000000000001"), teamId,
+                java.sql.Timestamp.from(AHORA), java.sql.Timestamp.from(AHORA));
+    }
 
     @Test
     void persisteEquipoJugadorAsociadoYAdmiteDorsalNulo() {

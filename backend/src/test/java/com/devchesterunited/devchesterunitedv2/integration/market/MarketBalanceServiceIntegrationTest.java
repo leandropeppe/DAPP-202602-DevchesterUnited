@@ -35,7 +35,8 @@ class MarketBalanceServiceIntegrationTest extends PostgresTestSupport {
                 "market-balance-integration@example.com", HASH, NOW, NOW));
         jdbc.update("INSERT INTO market_state (id, status, epoch, created_at, updated_at) "
                 + "VALUES (1, 'READY', 17, ?, ?) ON CONFLICT (id) DO UPDATE SET status = 'READY', epoch = 17, "
-                + "failure_reason = NULL, updated_at = EXCLUDED.updated_at", Timestamp.from(NOW), Timestamp.from(NOW));
+                + "failure_reason = NULL, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
+                Timestamp.from(NOW), Timestamp.from(NOW));
         jdbc.update("INSERT INTO market_credit_accounts "
                 + "(id, user_id, balance, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
                 UUID.randomUUID(), USER_ID, new BigDecimal("321.45"), Timestamp.from(NOW), Timestamp.from(NOW));
@@ -71,7 +72,6 @@ class MarketBalanceServiceIntegrationTest extends PostgresTestSupport {
     }
 
     private void limpiarUsuario() {
-        jdbc.update("DELETE FROM market_credit_accounts WHERE user_id = ?", USER_ID);
-        jdbc.update("DELETE FROM usuarios WHERE id = ?", USER_ID);
+        limpiarUsuarioYDependencias(jdbc, USER_ID);
     }
 }
