@@ -87,7 +87,9 @@ class MarketSaleConcurrencyIntegrationTest {
         List<CallOutcome> idempotentOutcomes = concurrently(
                 () -> sell(idempotent.request(idempotent.userIds().get(0), sameKey, 1L)),
                 () -> sell(idempotent.request(idempotent.userIds().get(0), sameKey, 1L)));
-        assertThat(idempotentOutcomes).allMatch(this::isAllowedIdempotentOutcome);
+        assertThat(idempotentOutcomes)
+                .isNotEmpty()
+                .allMatch(this::isAllowedIdempotentOutcome);
         assertThat(countIdempotency(idempotent.userIds().get(0), sameKey)).isEqualTo(1L);
         assertThat(countTransactions(idempotent.playerId())).isLessThanOrEqualTo(1L);
         assertScenarioInvariants(idempotent);

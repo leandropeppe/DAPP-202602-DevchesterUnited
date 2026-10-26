@@ -12,7 +12,19 @@ function formatAmount (value) {
 }
 
 function newIdempotencyKey () {
-  return globalThis.crypto?.randomUUID?.() || `market-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID()
+  }
+
+  const randomBytes = new Uint8Array(16)
+  globalThis.crypto.getRandomValues(randomBytes)
+
+  const randomPart = Array.from(
+      randomBytes,
+      byte => byte.toString(16).padStart(2, '0')
+  ).join('')
+
+  return `market-${randomPart}`
 }
 
 const MAX_MARKET_QUANTITY = 100

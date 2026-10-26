@@ -127,8 +127,15 @@ export default function MarketTransactionsPage () {
       <div className="page-heading"><p className="eyebrow">Token Market</p><h1 id="transactions-title">Historial de transacciones</h1><p>Solo se muestran operaciones confirmadas de tu cuenta.</p></div>
       <form className="card market-filters" onSubmit={submit}>
         <div className="market-filters__controls">
-          <label className="field" htmlFor="market-transaction-player">Buscar jugador por nombre
-            <select id="market-transaction-player" name="playerId" value={filters.playerId} onChange={update} disabled={state.status === 'loading'}>
+          <label className="field" htmlFor="market-transaction-player">
+            <span>Buscar jugador por nombre</span>
+            <select
+                id="market-transaction-player"
+                name="playerId"
+                value={filters.playerId}
+                onChange={update}
+                disabled={state.status === 'loading'}
+            >
               <option value="">Todos los jugadores</option>
               {playerOptions.map((option) => {
                 const key = playerOptionKey(option.name)
@@ -139,7 +146,9 @@ export default function MarketTransactionsPage () {
             </select>
             <small className="muted">Opciones disponibles en las transacciones cargadas.</small>
           </label>
-          <label className="field">Tipo<select name="type" value={filters.type} onChange={update}><option value="">Todos</option><option value="PURCHASE">Compras</option><option value="SALE">Ventas</option></select></label>
+          <label className="field">Tipo<select name="type" value={filters.type} onChange={update}>
+            <option value="">Todos</option>
+            <option value="PURCHASE">Compras</option><option value="SALE">Ventas</option></select></label>
           <label className="field">Desde<input type="datetime-local" name="from" value={filters.from} onChange={update} /></label>
           <label className="field">Hasta<input type="datetime-local" name="to" value={filters.to} onChange={update} /></label>
         </div>

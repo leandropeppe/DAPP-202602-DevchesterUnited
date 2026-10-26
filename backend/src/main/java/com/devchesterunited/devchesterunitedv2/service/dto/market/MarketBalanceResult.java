@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.dto.market;
 
 import com.devchesterunited.devchesterunitedv2.modelo.market.EstadoMercado;
+
 import java.math.BigDecimal;
 import java.util.Optional;
 
@@ -10,8 +11,4 @@ public record MarketBalanceResult(
         long epoch,
         boolean operativa,
         Optional<BigDecimal> saldo) {
-
-    public MarketBalanceResult {
-        saldo = saldo == null ? Optional.empty() : saldo;
-    }
 }
