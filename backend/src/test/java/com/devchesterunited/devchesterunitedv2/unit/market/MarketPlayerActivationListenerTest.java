@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -54,7 +55,7 @@ class MarketPlayerActivationListenerTest {
         when(contrapartes.findByTipoContraparte("SUPERUSER"))
                 .thenReturn(Optional.of(new ContraparteMercadoEntity(
                         COUNTERPARTY_ID, "SUPERUSER", "Superuser", Instant.now())));
-        org.mockito.Mockito.doThrow(new IllegalStateException("fallo de mercado"))
+        doThrow(new IllegalStateException("fallo de mercado"))
                 .when(emisiones).emitirEnPrimeraActivacion(PLAYER_ID, COUNTERPARTY_ID);
 
         new MarketPlayerActivationListener(emisiones, contrapartes)

@@ -5,8 +5,6 @@ import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.Valori
 import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.Matchers.*;
 
-import com.devchesterunited.devchesterunitedv2.controller.auth.AuthController;
-import com.devchesterunited.devchesterunitedv2.controller.auth.dto.LoginRequestDTO;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

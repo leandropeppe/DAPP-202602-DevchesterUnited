@@ -11,7 +11,6 @@ import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketTransactionService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
-import java.util.UUID;
 
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.*;
 import com.devchesterunited.devchesterunitedv2.support.fixtures.market.MarketDemoFixtureBuilder.DemoPlayer;

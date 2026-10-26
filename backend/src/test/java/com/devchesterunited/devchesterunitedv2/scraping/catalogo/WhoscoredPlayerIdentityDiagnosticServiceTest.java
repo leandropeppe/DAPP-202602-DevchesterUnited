@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.scraping.catalogo;
 
-import com.devchesterunited.devchesterunitedv2.scraping.catalogo.WhoscoredPlayerIdentityDiagnosticService;
 
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.IdentidadEstadisticaJugador;
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;

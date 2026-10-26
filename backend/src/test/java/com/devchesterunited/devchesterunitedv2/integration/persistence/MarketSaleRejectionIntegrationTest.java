@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
-import java.math.BigDecimal;
 
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;

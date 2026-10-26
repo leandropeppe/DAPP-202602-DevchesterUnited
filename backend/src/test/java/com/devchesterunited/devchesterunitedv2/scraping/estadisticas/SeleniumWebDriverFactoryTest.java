@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.SeleniumWebDriverFactory;
 
 import org.junit.jupiter.api.Test;
 

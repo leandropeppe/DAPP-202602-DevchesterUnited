@@ -1,15 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
+import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsConfiguration.CompetitionParameters;
 
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WebDriverFactory;
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsAdapter;
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsConfiguration;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
-import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredStatisticsConfiguration.CompetitionParameters;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;

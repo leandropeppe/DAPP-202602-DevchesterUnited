@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.unit.market;
 
-import org.mockito.Mockito;
 
 import com.devchesterunited.devchesterunitedv2.configuration.market.MarketInitializationApplicationReadyListener;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketInitializationService;

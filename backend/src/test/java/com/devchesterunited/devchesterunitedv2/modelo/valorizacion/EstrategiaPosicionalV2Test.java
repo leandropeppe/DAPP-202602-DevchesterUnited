@@ -5,10 +5,6 @@ import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstad
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaPosicionalV2;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.JugadorEstadistico;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MotorValorizacion;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
 
 import com.devchesterunited.devchesterunitedv2.support.fixtures.valorizacion.ValorizacionFixtures;
 import org.junit.jupiter.api.Test;
