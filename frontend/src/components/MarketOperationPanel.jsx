@@ -7,7 +7,7 @@ import { errorMessage } from '../views/formUtils.js'
 import { Wallet } from 'lucide-react'
 
 function formatAmount (value) {
-  if (value === null || value === undefined || value === '') return 'Sin informaciÃ³n'
+  if (value === null || value === undefined || value === '') return 'Sin información'
   return Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
@@ -22,9 +22,9 @@ function newIdempotencyKey () {
 const MAX_MARKET_QUANTITY = 100
 
 function quantityValidationMessage (value, maxQuantity = MAX_MARKET_QUANTITY) {
-  if (value === '') return 'IngresÃ¡ una cantidad de tokens.'
+  if (value === '') return 'Ingresá una cantidad de tokens.'
   const parsed = Number(value)
-  if (!Number.isInteger(parsed)) return 'La cantidad debe ser un nÃºmero entero.'
+  if (!Number.isInteger(parsed)) return 'La cantidad debe ser un número entero.'
   if (parsed < 1) return 'La cantidad debe ser al menos 1 token.'
   if (parsed > maxQuantity) return `La cantidad no puede superar ${maxQuantity} tokens.`
   return ''
@@ -37,7 +37,7 @@ function isObject (value) {
 function operationResponse (response) {
   const data = response?.data
   if (!isObject(data) || typeof data.status !== 'string' || !data.status.trim() || typeof data.updated_at !== 'string' || !data.updated_at) {
-    const error = new Error('El servidor devolviÃ³ una respuesta incompleta para la operaciÃ³n.')
+    const error = new Error('El servidor devolvió una respuesta incompleta para la operación.')
     error.incompleteData = {}
     throw error
   }
@@ -47,7 +47,7 @@ function operationResponse (response) {
 function operationLookupResponse (response) {
   const data = response?.data
   if (!isObject(data) || typeof data.idempotency_key !== 'string' || !data.idempotency_key.trim() || typeof data.operation_type !== 'string' || !data.operation_type.trim() || typeof data.status !== 'string' || !data.status.trim() || typeof data.updated_at !== 'string' || !data.updated_at) {
-    throw new Error('El servidor devolviÃ³ un estado incompleto para la operaciÃ³n.')
+    throw new Error('El servidor devolvió un estado incompleto para la operación.')
   }
   return data
 }
@@ -74,7 +74,7 @@ function OperationResult ({ result, needsRecovery, state, recover }) {
       <div className="market-operation-result">
         <OperationStatus status={result.status} />
         {result.total_amount !== undefined ? <p>Total confirmado: {formatAmount(result.total_amount)}</p> : null}
-        {result.transaction_id ? <p>TransacciÃ³n: {result.transaction_id}</p> : null}
+        {result.transaction_id ? <p>Transacción: {result.transaction_id}</p> : null}
         {needsRecovery ? <button className="button button--secondary" type="button" onClick={recover} disabled={state.status === 'loading'}>Consultar estado</button> : null}
       </div>
   )
@@ -94,7 +94,7 @@ function EmbeddedOperationForm ({ player, currentHoldings, availableBalance, qua
           </label>
           <div className="market-operation-panel__metric"><span>Costo total</span><strong>{formatAmount(Number(player.price_per_token) * quantityNumber)}</strong></div>
         </div>
-        <button className="button button--buy player-detail-purchase-submit" type="submit" disabled={!canOperate || balanceInsufficient || !quantityValid || state.status === 'loading' || Boolean(result)}>{state.status === 'loading' ? 'Comprandoâ€¦' : 'Comprar tokens'}</button>
+        <button className="button button--buy player-detail-purchase-submit" type="submit" disabled={!canOperate || balanceInsufficient || !quantityValid || state.status === 'loading' || Boolean(result)}>{state.status === 'loading' ? 'Comprando…' : 'Comprar tokens'}</button>
       </form>
   )
 }
@@ -104,7 +104,7 @@ function StandardOperationForm ({ player, type, availableQuantity, quantity, qua
       <>
         <dl className="market-operation-panel__facts">
           <div><dt>Precio unitario</dt><dd>{formatAmount(player.price_per_token)}</dd></div>
-          <div><dt>VersiÃ³n aceptada</dt><dd>{player.quote_version || 'Sin versiÃ³n'}</dd></div>
+          <div><dt>Versión aceptada</dt><dd>{player.quote_version || 'Sin versión'}</dd></div>
           <div><dt>Total estimado</dt><dd>{formatAmount(Number(player.price_per_token) * quantityNumber)}</dd></div>
         </dl>
         <form onSubmit={onSubmit} className="market-operation-form">
@@ -116,9 +116,9 @@ function StandardOperationForm ({ player, type, availableQuantity, quantity, qua
           </label>
           <label className="market-operation-confirmation">
             <input type="checkbox" checked={confirmed} onChange={(event) => onConfirmed(event.target.checked)} disabled={!canOperate || state.status === 'loading' || Boolean(result)} />
-            <span>Confirmo esta {operationLabel.toLowerCase()} con la versiÃ³n de cotizaciÃ³n indicada.</span>
+            <span>Confirmo esta {operationLabel.toLowerCase()} con la versión de cotización indicada.</span>
           </label>
-          <button className="button button--primary" type="submit" disabled={!confirmed || !canOperate || !quantityValid || state.status === 'loading' || Boolean(result)}>{state.status === 'loading' ? 'Enviandoâ€¦' : `Confirmar ${operationLabel.toLowerCase()}`}</button>
+          <button className="button button--primary" type="submit" disabled={!confirmed || !canOperate || !quantityValid || state.status === 'loading' || Boolean(result)}>{state.status === 'loading' ? 'Enviando…' : `Confirmar ${operationLabel.toLowerCase()}`}</button>
         </form>
       </>
   )
@@ -133,7 +133,7 @@ function SaleConfirmationView ({ player, state, result, show, quantity, quantity
   const confirmLabel = state.status === 'loading' ? 'Vendiendo…' : 'Confirmar venta'
 
   return (
-      <MarketConfirmationModal open={show} title="Confirmar venta" message={<>Â¿QuerÃ©s vender tokens de <strong>{player.name}</strong>?</>} pricePerToken={player.price_per_token} quantity={quantityNumber} total={total} totalLabel="Total estimado" confirmLabel={confirmLabel} status={confirmationStatus} successTitle="Venta realizada" successMessage="La operaciÃ³n se completÃ³ correctamente." confirmDisabled={!canOperate || !quantityValid || state.status === 'loading' || Boolean(result)} variant="sell" onCancel={onCancel} onConfirm={onConfirm}>
+      <MarketConfirmationModal open={show} title="Confirmar venta" message={<>¿Querés vender tokens de <strong>{player.name}</strong>?</>} pricePerToken={player.price_per_token} quantity={quantityNumber} total={total} totalLabel="Total estimado" confirmLabel={confirmLabel} status={confirmationStatus} successTitle="Venta realizada" successMessage="La operación se completó correctamente." confirmDisabled={!canOperate || !quantityValid || state.status === 'loading' || Boolean(result)} variant="sell" onCancel={onCancel} onConfirm={onConfirm}>
         <div className="market-confirmation-quantity">
           <span>Tokens disponibles: <strong>{availableQuantity}</strong></span>
           <QuantityControl quantity={quantity} quantityNumber={quantityNumber} quantityLimit={quantityLimit} canOperate={canOperate} disabled={state.status === 'loading' || Boolean(result)} inputId="market-sale-quantity" describedBy="market-sale-quantity-message" invalid={!quantityValid} onChange={onQuantityChange} />
@@ -242,13 +242,13 @@ export default function MarketOperationPanel ({ player, type, jwt, onClose, pane
   return (
       <section ref={panelRef} className={`market-operation-panel card${embedded ? ' market-operation-panel--embedded' : ''}`} tabIndex={-1} aria-labelledby="operation-panel-title">
         <div className="market-operation-panel__heading">
-          <div><p className="eyebrow">Confirmar operaciÃ³n</p><h2 id="operation-panel-title">{embedded ? 'Comprar tokens' : `${operationLabel} de ${player.name}`}</h2></div>
+          <div><p className="eyebrow">Confirmar operación</p><h2 id="operation-panel-title">{embedded ? 'Comprar tokens' : `${operationLabel} de ${player.name}`}</h2></div>
           {embedded ? <div className="market-operation-panel__balance"><span className="market-operation-panel__balance-icon" aria-hidden="true"><Wallet size={18} strokeWidth={2.2} /></span><span>Saldo disponible</span><strong>{formatAmount(availableBalance)} créditos</strong></div> : null}
           {!embedded ? <button className="button button--quiet" type="button" onClick={onClose} disabled={state.status === 'loading'}>Cerrar</button> : null}
         </div>
-        {!canOperate ? <p className="market-operation-panel__warning">La cotizaciÃ³n ya no es operable. ActualizÃ¡ el mercado antes de continuar.</p> : null}
+        {!canOperate ? <p className="market-operation-panel__warning">La cotización ya no es operable. Actualizá el mercado antes de continuar.</p> : null}
         {embedded ? <EmbeddedOperationForm player={player} currentHoldings={currentHoldings} availableBalance={availableBalance} quantity={quantity} quantityNumber={quantityNumber} quantityLimit={quantityLimit} quantityError={quantityError} quantityValid={quantityValid} balanceInsufficient={balanceInsufficient} canOperate={canOperate} state={state} result={result} onQuantityChange={handleQuantityChange} onSubmit={submit} /> : <StandardOperationForm player={player} type={type} availableQuantity={availableQuantity} quantity={quantity} quantityNumber={quantityNumber} quantityLimit={quantityLimit} quantityError={quantityError} quantityValid={quantityValid} isSale={isSale} operationLabel={operationLabel} canOperate={canOperate} state={state} result={result} confirmed={confirmed} onQuantityChange={handleQuantityChange} onConfirmed={setConfirmed} onSubmit={submit} />}
-        <MarketConfirmationModal open={showPurchaseConfirmation} title="Confirmar compra" message={<>Â¿EstÃ¡s seguro de que querÃ©s comprar{' '}<strong>{quantityNumber} {quantityNumber === 1 ? 'token' : 'tokens'}</strong>{' '}de <strong>{player.name}</strong>?</>} pricePerToken={player.price_per_token} quantity={quantityNumber} total={estimatedTotal} confirmLabel="Confirmar compra" status={confirmationStatus} successTitle="Compra realizada" successMessage="La operaciÃ³n se completÃ³ correctamente." variant="buy" onCancel={() => setShowPurchaseConfirmation(false)} onConfirm={() => { void executeOperation() }} />
+        <MarketConfirmationModal open={showPurchaseConfirmation} title="Confirmar compra" message={<>¿Estás seguro de que querés comprar{' '}<strong>{quantityNumber} {quantityNumber === 1 ? 'token' : 'tokens'}</strong>{' '}de <strong>{player.name}</strong>?</>} pricePerToken={player.price_per_token} quantity={quantityNumber} total={estimatedTotal} confirmLabel="Confirmar compra" status={confirmationStatus} successTitle="Compra realizada" successMessage="La operación se completó correctamente." variant="buy" onCancel={() => setShowPurchaseConfirmation(false)} onConfirm={() => { void executeOperation() }} />
         {state.status === 'error' ? <p className="status-message status-message--error" role="alert">{state.message}</p> : null}
         <OperationResult result={result} needsRecovery={needsRecovery} state={state} recover={recover} />
       </section>

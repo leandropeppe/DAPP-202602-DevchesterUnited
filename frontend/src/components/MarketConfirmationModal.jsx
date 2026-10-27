@@ -1,4 +1,5 @@
 import { CircleCheckBig } from 'lucide-react'
+import { createPortal } from 'react-dom'
 
 function formatAmount (value) {
   if (value === null || value === undefined || value === '') return 'Sin información'
@@ -15,7 +16,8 @@ export default function MarketConfirmationModal ({
 
   const variantClass = variant === 'sell' ? ' market-purchase-confirmation--sell' : ''
 
-  return (
+  return createPortal(
+    (
       <div className={`market-purchase-confirmation${variantClass}`}>
         <div className="market-purchase-confirmation__dialog" role="dialog" aria-modal="true"
              aria-labelledby="market-confirmation-title">
@@ -52,5 +54,7 @@ export default function MarketConfirmationModal ({
               )}
         </div>
       </div>
+    ),
+    document.body
   )
 }
