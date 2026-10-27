@@ -4,7 +4,6 @@ import RegistrationPage from './views/RegistrationPage.jsx'
 import LoginPage from './views/LoginPage.jsx'
 import CatalogPage from './views/CatalogPage.jsx'
 import PlayerDetailPage from './views/PlayerDetailPage.jsx'
-import MarketPage from './views/MarketPage.jsx'
 import MarketPortfolioPage from './views/MarketPortfolioPage.jsx'
 import MarketTransactionsPage from './views/MarketTransactionsPage.jsx'
 import AppLayout from './components/AppLayout.jsx'
@@ -14,7 +13,7 @@ import './styles/catalog.css'
 import './styles/player-detail.css'
 import './styles/market.css'
 
-const ROUTES = new Set(['/registro', '/login', '/catalogo', '/market', '/market/portfolio', '/market/transactions'])
+const ROUTES = new Set(['/registro', '/login', '/catalogo', '/market/portfolio', '/market/transactions'])
 const PLAYER_DETAIL_ROUTE = /^\/catalogo\/jugadores\/([^/]+)$/
 function resolveRoute (pathname) { return ROUTES.has(pathname) || PLAYER_DETAIL_ROUTE.test(pathname) ? pathname : '/login' }
 function playerIdFromRoute (route) { return route.match(PLAYER_DETAIL_ROUTE)?.[1] || '' }
@@ -43,7 +42,6 @@ function Application () {
       {route === '/registro' ? <RegistrationPage onNavigate={navigate} /> : null}
       {route === '/login' ? <LoginPage onNavigate={navigate} session={session} /> : null}
       {route === '/catalogo' ? <CatalogPage onNavigate={navigate} /> : null}
-      {route === '/market' ? <MarketPage onNavigate={navigate} /> : null}
       {route === '/market/portfolio' ? <MarketPortfolioPage /> : null}
       {route === '/market/transactions' ? <MarketTransactionsPage /> : null}
       {PLAYER_DETAIL_ROUTE.test(route) ? <PlayerDetailPage playerId={playerIdFromRoute(route)} onNavigate={navigate} /> : null}

@@ -210,11 +210,6 @@ function marketQuery (filters = {}, allowedNames = null) {
 
 export const getMarketBalance = (jwt) => request('/market/balance', { jwt })
 
-export const getMarketPlayers = ({ filters = {}, jwt } = {}) => request(
-  '/market/players' + marketQuery(filters),
-  { jwt }
-)
-
 export const getMarketPlayer = (playerId, jwt) => request(
   '/market/players/' + encodeURIComponent(playerId),
   { jwt }
