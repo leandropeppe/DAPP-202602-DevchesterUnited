@@ -40,16 +40,6 @@ export default function Header ({ route, session, onNavigate }) {
             </a>
           ))}
           {session.jwt ? (
-            <a
-              className="primary-nav__link"
-              href="/market"
-              aria-current={route === '/market' ? 'page' : undefined}
-              onClick={(event) => go(event, '/market')}
-            >
-              Mercado
-            </a>
-          ) : null}
-          {session.jwt ? (
             <a className="primary-nav__link" href="/market/portfolio" aria-current={route === '/market/portfolio' ? 'page' : undefined} onClick={(event) => go(event, '/market/portfolio')}>Portfolio</a>
           ) : null}
           {session.jwt ? (
