@@ -6,7 +6,7 @@
 
 ## Summary
 
-El feature calcula y conserva resultados de valorización independientes para todas las estrategias habilitadas a partir de estadísticas deportivas persistidas. Inicialmente se habilitarán GENERAL v1 y POSITIONAL v1. Una estrategia visible/oficial determina qué serie se devuelve por defecto, pero no limita los cálculos.
+El feature calcula y conserva resultados de valorización independientes para todas las estrategias habilitadas a partir de estadísticas deportivas persistidas. GENERAL v1 y POSITIONAL v1 se conservan como versiones registradas, mientras que POSITIONAL v2 es la estrategia posicional activa y visible/default. La estrategia visible determina qué serie se devuelve por defecto, pero no limita los cálculos.
 
 La lógica se ubicará en el dominio y será orquestada por servicios existentes de la aplicación. El cálculo no dependerá de tokenización, compra, venta o portfolio. La persistencia seguirá el patrón Repository/JPA/Flyway ya utilizado por el backend y las consultas, el ranking y el recálculo manual respetarán el contrato REST/OpenAPI existente.
 
@@ -28,7 +28,7 @@ La lógica se ubicará en el dominio y será orquestada por servicios existentes
 
 **Constraints**: No umbral funcional por defecto para partidos/minutos; métricas positivas requeridas obligatorias por jugador y estrategia; métricas negativas ausentes sin penalización; históricos separados e inmutables por estrategia/version; como máximo una estrategia visible
 
-**Scale/Scope**: Población de jugadores sincronizados de las competiciones existentes; GENERAL v1 y POSITIONAL v1 habilitadas, cuatro posiciones posicionales, cotización actual e histórico por estrategia; sin UI administrativa ni tokenización
+**Scale/Scope**: Población de jugadores sincronizados de las competiciones existentes; GENERAL v1, POSITIONAL v1 histórica y POSITIONAL v2 activa, cuatro posiciones posicionales, cotización actual e histórico por estrategia; sin UI administrativa ni tokenización
 
 ## Constitution Check
 
@@ -41,6 +41,18 @@ La lógica se ubicará en el dominio y será orquestada por servicios existentes
 - **PASS**: Las consultas de cotización, el ranking y el recálculo manual protegido se documentan mediante OpenAPI v3. No se expone cambio de estrategia visible con autorización administrativa.
 - **PASS**: Se conservarán tests existentes y se agregarán casos felices y de borde; no se modificarán ni eliminarán tests existentes.
 - **PASS**: La feature no crea dependencia funcional con tokenización, compra, venta, wallets, portfolios o balances.
+
+### Diseño de POSITIONAL v2
+
+POSITIONAL v2 se implementa como una estrategia de dominio versionada, sin cambiar la organización por capas ni introducir una nueva arquitectura. Para cada posición soportada, el cálculo utiliza la población estadística de esa misma posición y aplica la configuración de métricas vigente.
+
+- Las métricas configuradas se normalizan mediante z-score por posición.
+- Los resultados normalizados pasan por una transformación sigmoid antes de combinarse en el score posicional.
+- Las métricas configuradas como per-90 se convierten a esa escala antes de la normalización; las demás conservan su tratamiento configurado.
+- El resultado incorpora progressive reliability, es decir, un ajuste progresivo de confiabilidad basado en el volumen estadístico disponible del jugador.
+- La estrategia no introduce rating ni factor de mercado en el cálculo de POSITIONAL v2.
+
+POSITIONAL v1 se mantiene como versión previa/histórica para conservar resultados y permitir consultas explícitas mediante la selección versionada existente. POSITIONAL v2 es la versión utilizada funcionalmente y la selección visible/default.
 
 ## Project Structure
 
@@ -76,7 +88,7 @@ backend/src/test/java/com/devchesterunited/devchesterunitedv2/
 └── controller/*Cotizacion*E2ETest.java
 ```
 
-**Structure Decision**: Se mantiene el backend existente organizado por capas. El dominio será independiente de infraestructura; el servicio coordinará jugadores, estadísticas y repositorios; las consultas REST, el ranking y el recálculo manual utilizarán DTOs y seguridad propios; las tablas de cotización e histórico se agregarán mediante Flyway. El frontend existente se adapta únicamente al endpoint canónico del histórico, sin agregar una pantalla administrativa.
+**Structure Decision**: Se mantiene el backend existente organizado por capas. El dominio será independiente de infraestructura; el servicio coordinará jugadores, estadísticas y repositorios; POSITIONAL v2 permanecerá encapsulada como estrategia versionada dentro del dominio; las consultas REST, el ranking y el recálculo manual utilizarán DTOs y seguridad propios; las tablas de cotización e histórico se agregarán mediante Flyway. El frontend existente se adapta únicamente al endpoint canónico del histórico, sin agregar una pantalla administrativa.
 
 ### Constitution Check — Post-Design Re-evaluation
 

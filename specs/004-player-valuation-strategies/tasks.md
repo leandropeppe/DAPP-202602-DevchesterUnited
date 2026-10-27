@@ -63,7 +63,7 @@ description: "Tareas de implementación para valorización multi-estrategia de j
 - [x] T019 [US1] Implementar la conversión común `valorBase + score * factorEscala` y el clamp de score en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/modelo/valorizacion/ConversorCotizacion.java`
 - [x] T020 [US1] Implementar el caso de uso que captura estrategias habilitadas/versiones y snapshot, calcula cada estrategia de forma independiente y continúa ante exclusiones en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/ValorizacionJugadorServiceImpl.java`
 - [x] T021 [US1] Persistir una cotización actual y un histórico por combinación jugador + estrategia + version, incluyendo ejecución, score, valorBase, factorEscala y trazabilidad, en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/ValorizacionJugadorServiceImpl.java` y `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/`
-- [x] T022 [US1] Registrar GENERAL v1 y POSITIONAL v1 habilitadas para cálculo y seleccionar POSITIONAL v1 como estrategia visible inicial mediante `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/config/ValorizacionInicialConfig.java`, manteniendo la selección visible como caso de uso/servicio interno sin endpoint, rol ADMIN ni autorización específica
+- [x] T022 [US1] Registrar GENERAL v1 y POSITIONAL v1 habilitadas para cálculo y seleccionar POSITIONAL v1 como estrategia visible inicial de la etapa v1 mediante `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/config/ValorizacionInicialConfig.java`, manteniendo la selección visible como caso de uso/servicio interno sin endpoint, rol ADMIN ni autorización específica; esta selección histórica queda supersedida por T050.
 
 **Checkpoint**: US1 permite ejecutar ambas estrategias habilitadas con el mismo snapshot y conserva resultados separados sin depender de tokenización.
 
@@ -189,7 +189,7 @@ T017 Estrategia POSITIONAL v1
 
 ## MVP Scope
 
-El MVP recomendado es Phase 1 + Phase 2 + US1 (T001–T022): calcular GENERAL v1 y POSITIONAL v1 habilitadas sobre un snapshot único y persistir cotización actual e histórico separados por estrategia/version. US3 agrega la consulta consumible y US4 la automatización semanal.
+El núcleo inicial de la feature fue Phase 1 + Phase 2 + US1 (T001–T022), con GENERAL v1 y POSITIONAL v1 sobre un snapshot único. El alcance funcional vigente agrega POSITIONAL v2 como estrategia posicional activa y visible/default, conservando v1 para resultados históricos y consultas explícitas.
 
 ## Notes
 
@@ -198,10 +198,10 @@ El MVP recomendado es Phase 1 + Phase 2 + US1 (T001–T022): calcular GENERAL v1
 
 ### Incremento POSITIONAL v2
 
-- [x] T049 Implementar `EstrategiaPosicionalV2` con z-score por posición, sigmoide, métricas por 90, bloques, confiabilidad progresiva y sin rating/factor de mercado.
-- [x] T050 Registrar POSITIONAL v2 sin eliminar V1 y seleccionar v2 como estrategia visible/default, manteniendo GENERAL v1.
-- [x] T051 Verificar persistencia, histórico, consultas por defecto y consulta explícita de POSITIONAL v1 mediante la selección versionada existente.
-- [x] T052 Agregar pruebas de V2 para nulls, desviación cero, inversión de métricas, confiabilidad, score acotado y bootstrap de v2.
+- [x] T049 [FR-033,FR-034,FR-035,FR-036] Implementar `EstrategiaPosicionalV2` con z-score por posición, sigmoide, métricas por 90, bloques, confiabilidad progresiva y sin rating/factor de mercado.
+- [x] T050 [FR-037,SC-016] Registrar POSITIONAL v2 sin eliminar v1 y seleccionar POSITIONAL v2 como estrategia posicional activa y visible/default, manteniendo GENERAL v1 y la versión histórica POSITIONAL v1.
+- [x] T051 [FR-027,FR-028,SC-005,SC-007,SC-016] Verificar persistencia, histórico, consultas por defecto con POSITIONAL v2 y consulta explícita de POSITIONAL v1 histórica mediante la selección versionada existente.
+- [x] T052 [FR-033,FR-034,FR-035,FR-036,SC-013,SC-014,SC-015] Agregar pruebas de V2 para nulls, desviación cero, inversión de métricas, confiabilidad, score acotado y bootstrap de v2.
 - [x] T053 Ejecutar tests backend, tests/build/verify frontend y revisar tareas de calidad disponibles.
 
 ### Incremento de API, ranking y adaptación de consumidores
