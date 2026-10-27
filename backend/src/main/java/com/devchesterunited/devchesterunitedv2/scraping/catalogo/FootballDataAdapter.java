@@ -7,6 +7,7 @@ import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincroniza
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.devchesterunited.devchesterunitedv2.scraping.catalogo.dto.FootballTeamDetailsDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -108,10 +109,12 @@ public class FootballDataAdapter implements ProveedorCatalogo {
             convertirJugador(
                     jugador,
                     idEquipo,
+                    equipoExterno.id(),
                     idsEnEquipo,
                     contexto.jugadores(),
                     contexto.jugadoresVistos(),
-                    contexto.identidadesFootballData()
+                    contexto.identidadesFootballData(),
+                    contexto.limite()
             );
         }
     }
@@ -119,49 +122,76 @@ public class FootballDataAdapter implements ProveedorCatalogo {
     private void convertirJugador(
             FootballPlayerDTO jugador,
             UUID idEquipo,
+            Long equipoExternoId,
             Set<Long> idsEnEquipo,
             List<Jugador> jugadores,
-            Map<Long, String> jugadoresVistos,
-            Map<UUID, Long> identidadesFootballData) {
+            Map<Long, JugadorVisto> jugadoresVistos,
+            Map<UUID, Long> identidadesFootballData,
+            Instant limite) {
 
         validarJugador(jugador);
 
-        String firma = firma(jugador, idEquipo);
+        String firma = firma(jugador);
 
         if (!idsEnEquipo.add(jugador.id())) {
             validarJugadorDuplicado(jugador.id(), firma, jugadoresVistos);
             return;
         }
 
-        String previa = jugadoresVistos.putIfAbsent(jugador.id(), firma);
+        JugadorVisto previa = jugadoresVistos.get(jugador.id());
 
-        if (previa != null && !previa.equals(firma)) {
+        if (previa != null && !previa.firma().equals(firma)) {
             throw new FootballDataException(
                     "El proveedor repitio un jugador con datos incompatibles."
             );
         }
 
         if (previa == null) {
-            Jugador jugadorInterno = new Jugador(
-                    UUID.randomUUID(),
-                    nombre(jugador),
-                    idEquipo,
-                    posicion(jugador.position()),
-                    jugador.shirtNumber(),
-                    jugador.nationality().trim(),
-                    clock.instant()
-            );
+            Jugador jugadorInterno = crearJugador(jugador, idEquipo);
             jugadores.add(jugadorInterno);
             identidadesFootballData.put(jugadorInterno.getId(), jugador.id());
+            jugadoresVistos.put(jugador.id(), new JugadorVisto(firma, equipoExternoId, jugadorInterno));
+        } else if (!previa.equipoExternoId().equals(equipoExternoId)) {
+            reconciliarDuplicado(jugador, idEquipo, equipoExternoId, previa,
+                    jugadores, identidadesFootballData, jugadoresVistos, limite);
+        }
+    }
+
+    private Jugador crearJugador(FootballPlayerDTO jugador, UUID idEquipo) {
+        return new Jugador(UUID.randomUUID(), nombre(jugador), idEquipo,
+                posicion(jugador.position()), jugador.shirtNumber(),
+                jugador.nationality().trim(), clock.instant());
+    }
+
+    private void reconciliarDuplicado(FootballPlayerDTO jugador, UUID idEquipo,
+            Long equipoExternoId, JugadorVisto previa, List<Jugador> jugadores,
+            Map<UUID, Long> identidadesFootballData, Map<Long, JugadorVisto> jugadoresVistos,
+            Instant limite) {
+        Instant anterior = obtenerEquipo(previa.equipoExternoId(), limite);
+        Instant nuevo = obtenerEquipo(equipoExternoId, limite);
+        if (nuevo.equals(anterior)) {
+            throw new FootballDataException("No fue posible resolver el equipo vigente del jugador repetido.");
+        }
+        if (nuevo.isAfter(anterior)) {
+            Jugador reemplazo = crearJugador(jugador, idEquipo);
+            int indice = jugadores.indexOf(previa.jugador());
+            if (indice < 0) {
+                throw new FootballDataException("No fue posible reconciliar el jugador repetido.");
+            }
+            jugadores.set(indice, reemplazo);
+            identidadesFootballData.remove(previa.jugador().getId());
+            identidadesFootballData.put(reemplazo.getId(), jugador.id());
+            jugadoresVistos.put(jugador.id(), new JugadorVisto(previa.firma(), equipoExternoId, reemplazo));
         }
     }
 
     private void validarJugadorDuplicado(
             Long jugadorId,
             String firma,
-            Map<Long, String> jugadoresVistos) {
+            Map<Long, JugadorVisto> jugadoresVistos) {
 
-        if (!firma.equals(jugadoresVistos.get(jugadorId))) {
+        JugadorVisto visto = jugadoresVistos.get(jugadorId);
+        if (visto == null || !firma.equals(visto.firma())) {
             throw new FootballDataException(
                     "El proveedor repitio un jugador con datos incompatibles."
             );
@@ -185,11 +215,11 @@ public class FootballDataAdapter implements ProveedorCatalogo {
         List<Jugador> jugadores = new ArrayList<>();
         Map<Long, UUID> equiposPorExterno = new HashMap<>();
         List<IdentidadExternaEquipo> identidadesExternasEquipos = new ArrayList<>();
-        Map<Long, String> jugadoresVistos = new HashMap<>();
+        Map<Long, JugadorVisto> jugadoresVistos = new HashMap<>();
         Map<UUID, Long> identidadesFootballData = new HashMap<>();
         ConversionContext contexto = new ConversionContext(
                 equipos, jugadores, equiposPorExterno, identidadesExternasEquipos,
-                jugadoresVistos, identidadesFootballData);
+                jugadoresVistos, identidadesFootballData, limite);
         for (int i = 0; i < LIGAS.size(); i++) {
             comprobarDeadline(limite);
             if (i > 0) dormirCadencia(limite);
@@ -218,6 +248,33 @@ public class FootballDataAdapter implements ProveedorCatalogo {
                         if (bytes.length > MAX_BODY) throw new FootballDataException("La respuesta del proveedor excede el limite.");
                         try { return mapper.readValue(bytes, FootballTeamsResponseDTO.class); }
                         catch (IOException e) { throw new FootballDataException("La respuesta del proveedor no es valida.", e); }
+                    });
+        } catch (FootballDataException e) { throw e; }
+        catch (RestClientException e) { throw new FootballDataException("No fue posible consultar el proveedor.", e); }
+    }
+
+    private Instant obtenerEquipo(Long equipoId, Instant limite) {
+        comprobarDeadline(limite);
+        try {
+            return cliente.get().uri("/teams/" + equipoId)
+                    .header("X-Auth-Token", apiKey)
+                    .exchange((request, response) -> {
+                        HttpStatusCode status = response.getStatusCode();
+                        if (!status.is2xxSuccessful()) throw new FootballDataException("El proveedor rechazo la consulta.");
+                        validarCuota(response.getHeaders());
+                        byte[] bytes = response.getBody().readAllBytes();
+                        if (bytes.length > MAX_BODY) throw new FootballDataException("La respuesta del proveedor excede el limite.");
+                        try {
+                            FootballTeamDetailsDTO equipo = mapper.readValue(bytes, FootballTeamDetailsDTO.class);
+                            if (equipo == null || !equipoId.equals(equipo.id())
+                                    || equipo.lastUpdated() == null || equipo.lastUpdated().isBlank()) {
+                                throw new FootballDataException("La respuesta del proveedor no permite resolver el jugador repetido.");
+                            }
+                            return Instant.parse(equipo.lastUpdated());
+                        } catch (FootballDataException e) { throw e; }
+                        catch (Exception e) {
+                            throw new FootballDataException("La respuesta del proveedor no permite resolver el jugador repetido.", e);
+                        }
                     });
         } catch (FootballDataException e) { throw e; }
         catch (RestClientException e) { throw new FootballDataException("No fue posible consultar el proveedor.", e); }
@@ -267,8 +324,11 @@ public class FootballDataAdapter implements ProveedorCatalogo {
     }
 
     private static String posicion(String externa) {
-        if (externa == null) return null;
-        return switch (externa) {
+        if (externa == null || externa.isBlank() || "null".equalsIgnoreCase(externa.trim())) {
+            return null;
+        }
+
+        return switch (externa.trim()) {
             case "Goalkeeper" -> "Goalkeeper";
             case "Defence", "Defender", "Centre-Back", "Left-Back", "Right-Back" -> "Defender";
             case "Midfield", "Midfielder", "Defensive Midfield", "Central Midfield", "Attacking Midfield", "Left Midfield", "Right Midfield" -> "Midfielder";
@@ -277,8 +337,8 @@ public class FootballDataAdapter implements ProveedorCatalogo {
         };
     }
 
-    private static String firma(FootballPlayerDTO j, UUID equipo) {
-        return equipo + "|" + j.name() + "|" + j.shirtNumber() + "|" + j.nationality() + "|" + j.position();
+    private static String firma(FootballPlayerDTO j) {
+        return j.name() + "|" + j.shirtNumber() + "|" + j.nationality() + "|" + j.position();
     }
 
     private void dormirCadencia(Instant limite) {
@@ -296,7 +356,9 @@ public class FootballDataAdapter implements ProveedorCatalogo {
             List<Jugador> jugadores,
             Map<Long, UUID> equiposPorExterno,
             List<IdentidadExternaEquipo> identidadesExternasEquipos,
-            Map<Long, String> jugadoresVistos,
-            Map<UUID, Long> identidadesFootballData) { }
+            Map<Long, JugadorVisto> jugadoresVistos,
+            Map<UUID, Long> identidadesFootballData,
+            Instant limite) { }
+    private record JugadorVisto(String firma, Long equipoExternoId, Jugador jugador) { }
     private record Liga(String codigo, String nombre, int cantidad) { }
 }

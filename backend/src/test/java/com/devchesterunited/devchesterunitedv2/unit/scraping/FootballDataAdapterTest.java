@@ -66,6 +66,107 @@ class FootballDataAdapterTest {
         assertThat(jugadores).anyMatch(j -> j.getDorsal() == null && j.getNombre().equals("Solo Nombre"));
     }
 
+    @Test
+    void reconciliaDuplicadoConElEquipoMasRecientementeActualizado() throws Exception {
+        var snapshot = sincronizarConDuplicado("2026-01-02T00:00:00Z", "2026-02-02T00:00:00Z", false);
+        assertThat(equipoExternoDelJugador(snapshot, 80175L)).isEqualTo(511L);
+    }
+
+    @Test
+    void reconciliaDuplicadoCuandoElPrimerEquipoEsElMasReciente() throws Exception {
+        var snapshot = sincronizarConDuplicado("2026-02-02T00:00:00Z", "2026-01-02T00:00:00Z", false);
+        assertThat(equipoExternoDelJugador(snapshot, 80175L)).isEqualTo(1076L);
+    }
+
+    @Test
+    void rechazaDuplicadoSinResolucionInequivoca() throws Exception {
+        assertThatThrownBy(() -> sincronizarConDuplicado("2026-02-02T00:00:00Z", "2026-02-02T00:00:00Z", false))
+                .isInstanceOf(FootballDataException.class);
+        detenerServidor();
+        assertThatThrownBy(() -> sincronizarConDuplicado(null, "2026-02-02T00:00:00Z", false))
+                .isInstanceOf(FootballDataException.class);
+        detenerServidor();
+        assertThatThrownBy(() -> sincronizarConDuplicado("not-an-instant", "2026-02-02T00:00:00Z", false))
+                .isInstanceOf(FootballDataException.class);
+    }
+
+    @Test
+    void rechazaDuplicadoConDatosPersonalesIncompatiblesSinConsultarEquipos() throws Exception {
+        var rutas = new ArrayList<String>();
+        iniciar((exchange, codigo) -> {
+            rutas.add(exchange.getRequestURI().getPath());
+            responder(exchange, 200, payloadDuplicado(codigo, true), "100");
+        });
+
+        assertThatThrownBy(() -> adapter().sincronizar()).isInstanceOf(FootballDataException.class);
+        assertThat(rutas).noneMatch(ruta -> ruta.startsWith("/teams/"));
+    }
+
+    @Test
+    void llamadasDeReconciliacionConservanAutenticacionDelAdapter() throws Exception {
+        var tokens = new ArrayList<String>();
+        iniciar((exchange, codigo) -> {
+            tokens.add(exchange.getRequestHeaders().getFirst("X-Auth-Token"));
+            if (exchange.getRequestURI().getPath().startsWith("/teams/")) {
+                responder(exchange, 200, "{\"id\":" + codigo + ",\"lastUpdated\":\"2026-02-02T00:00:00Z\"}", "100");
+            } else {
+                responder(exchange, 200, payloadDuplicado(codigo, false), "100");
+            }
+        });
+        assertThatThrownBy(() -> adapter().sincronizar()).isInstanceOf(FootballDataException.class);
+        assertThat(tokens).allMatch("test-key"::equals);
+    }
+
+    private long equipoExternoDelJugador(com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado snapshot, long jugadorExterno) {
+        var jugador = snapshot.jugadores().stream()
+                .filter(j -> snapshot.getExternalId(j.getId()) == jugadorExterno)
+                .findFirst().orElseThrow();
+        return snapshot.getIdentidadExternaEquipo(jugador.getEquipoId()).externalId();
+    }
+
+    private com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado sincronizarConDuplicado(
+            String actualizadoA, String actualizadoB, boolean incompatible) throws Exception {
+        iniciar((exchange, codigo) -> {
+            String ruta = exchange.getRequestURI().getPath();
+            if (ruta.equals("/teams/1076")) {
+                responder(exchange, 200, "{\"id\":1076,\"lastUpdated\":" + jsonString(actualizadoA) + "}", "100");
+            } else if (ruta.equals("/teams/511")) {
+                responder(exchange, 200, "{\"id\":511,\"lastUpdated\":" + jsonString(actualizadoB) + "}", "100");
+            } else {
+                responder(exchange, 200, payloadDuplicado(codigo, incompatible), "100");
+            }
+        });
+        return adapter().sincronizar();
+    }
+
+    private String jsonString(String value) {
+        return value == null ? "null" : "\"" + value + "\"";
+    }
+
+    private String payloadDuplicado(String codigo, boolean incompatible) throws IOException {
+        if (!codigo.equals("PL") && !codigo.equals("PD")) return payload(codigo, cantidad(codigo), false);
+        int cantidad = cantidad(codigo);
+        int indice = codigo.equals("PL") ? 0 : 1;
+        long equipoId = codigo.equals("PL") ? 1076L : 511L;
+        var equipos = new ArrayList<Object>();
+        for (int i = 0; i < cantidad; i++) {
+            long id = i == 0 ? equipoId : 90000L + indice * 1000 + i;
+            var jugadores = new ArrayList<Object>();
+            var jugador = new java.util.HashMap<String, Object>();
+            jugador.put("id", i == 0 ? 80175L : id + 50000);
+            jugador.put("name", i == 0 && incompatible && codigo.equals("PD") ? "Otro Nombre" : "Yann Gboho");
+            jugador.put("shirtNumber", i == 0 ? 10 : 1);
+            jugador.put("nationality", "France");
+            jugador.put("position", "Forward");
+            jugadores.add(jugador);
+            equipos.add(java.util.Map.of("id", id, "name", "Equipo " + id, "squad", jugadores));
+        }
+        return mapper.writeValueAsString(java.util.Map.of("count", cantidad,
+                "competition", java.util.Map.of("code", codigo),
+                "season", java.util.Map.of("id", 2026, "startDate", "2026-08-01", "endDate", "2027-05-31"),
+                "teams", equipos));
+    }
+
     private void assertSincronizacionFalla() {
         FootballDataAdapter adaptador = adapter();
 
