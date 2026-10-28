@@ -1430,7 +1430,7 @@ export default function PlayerDetailPage ({
           }
 
           {simulatorOpen
-              ? <PlayerValuationSimulator playerId={playerId} onClose={() => setSimulatorOpen(false)} />
+              ? <PlayerValuationSimulator playerId={playerId} jwt={session?.jwt} onClose={() => setSimulatorOpen(false)} />
               : null}
 
       </section>

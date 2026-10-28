@@ -160,6 +160,8 @@ public class JugadorController {
     @ApiResponse(responseCode = "400", description = "Request o escenario inválido.")
     @ApiResponse(responseCode = "404", description = "Jugador no encontrado.")
     @ApiResponse(responseCode = "409", description = "Jugador no simulable.")
+    @ApiResponse(responseCode = "401", description = "JWT ausente o invalido.")
+    @SecurityRequirement(name = "BearerAuth")
     @PostMapping("/players/{playerId}/valuation-simulator")
     public ResponseEntity<SuccessResponseDTO<SimulacionResultadoHttpDTO>> simularCotizacion(
             @PathVariable String playerId, @jakarta.validation.Valid @RequestBody SimulacionCotizacionRequestHttpDTO request) {

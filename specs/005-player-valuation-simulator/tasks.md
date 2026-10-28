@@ -131,12 +131,12 @@ description: "Tareas de implementación del simulador de cotización futura"
 
 **Purpose**: cerrar documentación, calidad, compatibilidad y validación final sin ampliar el alcance.
 
-- [ ] T049 [P] Actualizar la documentación OpenAPI del endpoint en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/jugador/` para que Swagger UI refleje `contracts/valuation-simulator-api.yaml` y todos los códigos de error.
-- [ ] T050 [P] Actualizar la colección Postman existente bajo `backend`/`scripts`/`specs` donde el proyecto la mantenga, agregando GET/POST del simulador sin credenciales ni datos externos reales.
-- [ ] T051 Ejecutar `.\gradlew.bat test --no-daemon --console=plain` desde `backend/` y corregir únicamente fallos introducidos por esta feature, sin modificar ni borrar tests existentes.
+- [x] T049 [P] Actualizar la documentación OpenAPI del endpoint en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/jugador/` para que Swagger UI refleje `contracts/valuation-simulator-api.yaml` y todos los códigos de error.
+- [x] T050 [P] Actualizar la colección Postman existente bajo `backend`/`scripts`/`specs` donde el proyecto la mantenga, agregando GET/POST del simulador sin credenciales ni datos externos reales.
+- [x] T051 Ejecutar `.\gradlew.bat test --no-daemon --console=plain` desde `backend/` y corregir únicamente fallos introducidos por esta feature, sin modificar ni borrar tests existentes.
 - [ ] T052 Ejecutar `npm run test -- --run`, `npm run build` y `npm run test:e2e -- --grep 'simulador|valuation'` desde `frontend/`; corregir formato, accesibilidad, Promises no manejadas y regresiones de la feature.
 - [ ] T053 Ejecutar el flujo completo de `specs/005-player-valuation-simulator/quickstart.md` y verificar que no existan migraciones/tablas nuevas ni invocaciones a persistencia oficial en el diff de la feature.
-- [ ] T054 Ejecutar la revisión SonarCloud/quality gate definida por el proyecto y documentar en `specs/005-player-valuation-simulator/quickstart.md` cualquier issue nueva que deba resolverse antes del cierre.
+- [x] T054 Ejecutar la revisión SonarCloud/quality gate definida por el proyecto y documentar en `specs/005-player-valuation-simulator/quickstart.md` cualquier issue nueva que deba resolverse antes del cierre.
 
 ---
 

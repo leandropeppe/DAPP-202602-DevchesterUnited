@@ -58,7 +58,7 @@ function differenceClass (value) {
   return 'player-simulator__difference--zero'
 }
 
-export default function PlayerValuationSimulator ({ playerId, onClose }) {
+export default function PlayerValuationSimulator ({ playerId, jwt, onClose }) {
   const [status, setStatus] = useState('loading')
   const [config, setConfig] = useState(null)
   const [error, setError] = useState('')
@@ -71,7 +71,11 @@ export default function PlayerValuationSimulator ({ playerId, onClose }) {
 
   useEffect(() => {
     mountedRef.current = true
-    void getValuationSimulatorConfig(playerId)
+    const configRequest = jwt === undefined
+      ? getValuationSimulatorConfig(playerId)
+      : getValuationSimulatorConfig(playerId, jwt)
+
+    void configRequest
       .then((response) => {
         if (!mountedRef.current) return
         const next = response?.data || {}
@@ -116,10 +120,13 @@ export default function PlayerValuationSimulator ({ playerId, onClose }) {
     setError('')
     const started = Date.now()
     try {
-      const response = await simulatePlayerValuation(playerId, {
+      const simulationRequest = {
         horizonMatches: horizon,
         modifications: modifications()
-      })
+      }
+      const response = jwt === undefined
+        ? await simulatePlayerValuation(playerId, simulationRequest)
+        : await simulatePlayerValuation(playerId, simulationRequest, jwt)
       const remaining = remainingLoadingTime(started)
       await new Promise((resolve) => {
         timerRef.current = window.setTimeout(resolve, remaining)

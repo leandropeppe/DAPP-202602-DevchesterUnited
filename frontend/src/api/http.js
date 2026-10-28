@@ -154,24 +154,26 @@ export const getPlayerDetail = (id) =>
         encodeURIComponent(id)
     )
 
-export const getValuationSimulatorConfig = (id) =>
+export const getValuationSimulatorConfig = (id, jwt) =>
   request(
     '/players/' +
     encodeURIComponent(id) +
-    '/valuation-simulator'
+    '/valuation-simulator',
+    { jwt }
   )
 
 export const simulatePlayerValuation = (id, {
   horizonMatches,
   modifications = {}
-} = {}) =>
+} = {}, jwt) =>
   request(
     '/players/' +
     encodeURIComponent(id) +
     '/valuation-simulator',
     {
       method: 'POST',
-      body: { horizonMatches, modifications }
+      body: { horizonMatches, modifications },
+      jwt
     }
   )
 

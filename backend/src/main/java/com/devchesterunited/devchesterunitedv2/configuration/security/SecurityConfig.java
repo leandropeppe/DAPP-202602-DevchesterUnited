@@ -42,6 +42,8 @@ public class SecurityConfig {
                     access.requestMatchers(HttpMethod.POST, "/api/v1/market/sales")
                             .authenticated();
                     access.requestMatchers(HttpMethod.GET, "/api/v1/players", "/api/v1/players/**").permitAll();
+                    access.requestMatchers(HttpMethod.POST, "/api/v1/players/*/valuation-simulator")
+                            .authenticated();
                     access.requestMatchers(HttpMethod.POST, "/api/v1/catalog/sync").hasAuthority("API_KEY");
                     access.requestMatchers(HttpMethod.POST, "/api/v1/quotes/recalculate").hasAuthority("API_KEY");
                     if (environment.acceptsProfiles(Profiles.of("local", "test"))) {

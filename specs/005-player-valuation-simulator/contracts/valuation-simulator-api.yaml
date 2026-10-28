@@ -9,6 +9,7 @@ paths:
   /api/v1/players/{playerId}/valuation-simulator:
     get:
       operationId: obtenerConfiguracionSimulador
+      security: []
       summary: Obtener datos y campos editables del simulador
       parameters:
         - $ref: '#/components/parameters/PlayerId'
@@ -25,6 +26,8 @@ paths:
           $ref: '#/components/responses/NotSimulable'
     post:
       operationId: simularCotizacionJugador
+      security:
+        - BearerAuth: []
       summary: Calcular una cotización proyectada en memoria
       parameters:
         - $ref: '#/components/parameters/PlayerId'
@@ -43,11 +46,18 @@ paths:
                 $ref: '#/components/schemas/SuccessSimulationResult'
         '400':
           $ref: '#/components/responses/InvalidScenario'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/NotSimulable'
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   parameters:
     PlayerId:
       name: playerId
@@ -129,6 +139,9 @@ components:
         message: { type: string }
         errors: { type: array, items: { type: string } }
   responses:
+    Unauthorized:
+      description: JWT ausente o invÃ¡lido.
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
     InvalidScenario:
       description: Request o escenario inválido.
       content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
