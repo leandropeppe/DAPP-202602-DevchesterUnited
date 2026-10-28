@@ -6,6 +6,7 @@ import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGener
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.CatalogoMetricaSimulacion;
+import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ConfiguradorMetricasSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.EstadisticasProyectadas;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ResultadoSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
@@ -13,7 +14,6 @@ import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MetricaValori
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.EstadisticaSimulacionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.SimulacionConfiguracionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.SimulacionResultadoDTO;
-import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.TipoMetricaSimulacionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.EstadisticasJugadorResultado;
 
 import java.math.BigDecimal;
@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public final class SimulacionLecturaMapper {
+    private final ConfiguradorMetricasSimulacion configurador = new ConfiguradorMetricasSimulacion();
     public MetricasEstadisticasJugador aModelo(EstadisticasJugadorResultado dto) {
         if (dto == null) return null;
         var g = dto.generales();
@@ -60,17 +61,7 @@ public final class SimulacionLecturaMapper {
     public SimulacionConfiguracionDTO aConfiguracion(String playerId, Collection<String> positions,
             String resolvedPosition, EstrategiaValorizacion estrategia, BigDecimal currentQuote,
             MetricasEstadisticasJugador actuales, Collection<String> blockingReasons) {
-        List<EstadisticaSimulacionDTO> statistics = new ArrayList<>();
-        for (MetricaValorizacion metrica : MetricaValorizacion.values()) {
-            CatalogoMetricaSimulacion.Definicion definicion = CatalogoMetricaSimulacion.definir(metrica);
-            BigDecimal value = actuales == null ? null : metrica.extraer(actuales);
-            boolean usadaPorEstrategia = estrategia != null
-                    && (estrategia.pesosPositivos(resolvedPosition).containsKey(metrica)
-                            || estrategia.pesosPenalizacion(resolvedPosition).containsKey(metrica));
-            statistics.add(new EstadisticaSimulacionDTO(metrica.name(), definicion.etiqueta(),
-                    tipo(definicion.semantica()), value, usadaPorEstrategia && value != null,
-                    definicion.minimo(), definicion.maximo()));
-        }
+        List<EstadisticaSimulacionDTO> statistics = configurador.configurar(resolvedPosition, estrategia, actuales);
         String strategyId = estrategia == null ? null : estrategia.id();
         int strategyVersion = estrategia == null ? 0 : estrategia.version();
         boolean provisional = estrategia != null
@@ -99,15 +90,6 @@ public final class SimulacionLecturaMapper {
                 resultado.estrategiaId(), resultado.estrategiaVersion(), resultado.posicion(), actual, simulated,
                 resultado.score(), monetary, percentage, unavailableReason,
                 estadisticas(resultado.estadisticasProyectadas()), Map.of());
-    }
-
-    private static TipoMetricaSimulacionDTO tipo(CatalogoMetricaSimulacion.Semantica semantica) {
-        return switch (semantica) {
-            case ACUMULATIVA -> TipoMetricaSimulacionDTO.ACCUMULATIVE;
-            case POR_PARTIDO -> TipoMetricaSimulacionDTO.AVERAGE;
-            case PORCENTAJE -> TipoMetricaSimulacionDTO.PERCENTAGE;
-            case RATING -> TipoMetricaSimulacionDTO.RATING;
-        };
     }
 
     private static Map<String, Object> estadisticas(EstadisticasProyectadas proyectadas) {

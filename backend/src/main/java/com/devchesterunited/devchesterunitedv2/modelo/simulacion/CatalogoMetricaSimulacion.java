@@ -83,7 +83,21 @@ public final class CatalogoMetricaSimulacion {
     }
 
     private static String etiqueta(MetricaValorizacion metrica) {
-        return java.util.Arrays.stream(metrica.name().split("_"))
-                .map(String::toLowerCase).collect(Collectors.joining(" "));
+        return switch (metrica) {
+            case GOALS -> "Goles";
+            case ASSISTS -> "Asistencias";
+            case RATING -> "Valoración";
+            case SHOTS -> "Tiros por partido";
+            case KEY_PASSES -> "Pases clave por partido";
+            case MAN_OF_THE_MATCH -> "Jugador del partido";
+            case PASS_SUCCESS -> "Precisión de pase";
+            case TACKLES -> "Entradas por partido";
+            case INTERCEPTIONS -> "Intercepciones por partido";
+            case CLEARANCES -> "Despejes por partido";
+            case AERIAL_WON -> "Duelos aéreos ganados por partido";
+            case LONG_PASSES -> "Pases largos precisos por partido";
+            default -> java.util.Arrays.stream(metrica.name().split("_"))
+                    .map(String::toLowerCase).collect(Collectors.joining(" "));
+        };
     }
 }
