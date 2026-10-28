@@ -12,11 +12,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public final class PoblacionElegibleSimulacionReader {
     private final Supplier<List<JugadorEstadistico>> poblacionOficial;
     private final MotorValorizacion motor;
 
+    @Autowired
     public PoblacionElegibleSimulacionReader(SnapshotEstadisticoService snapshots,
             MotorValorizacion motor) {
         this(() -> snapshots.capturar().jugadores(), motor);

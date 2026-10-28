@@ -15,6 +15,10 @@ import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadoresResu
 import com.devchesterunited.devchesterunitedv2.service.dto.valorizacion.ValuacionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.valorizacion.ValuacionHistoricoDTO;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.jugador.JugadorService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.simulacion.SimulacionCotizacionService;
+import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.SimulacionCotizacionRequestDTO;
+import com.devchesterunited.devchesterunitedv2.modelo.simulacion.CodigoErrorSimulacion;
+import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ExcepcionSimulacion;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.CotizacionConsultaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,12 +44,14 @@ public class JugadorController {
     private final JugadorService servicio;
     private final CotizacionConsultaService cotizacionConsulta;
     private final ValorizacionScheduler valorizacionScheduler;
+    private final SimulacionCotizacionService simulacionService;
 
     public JugadorController(JugadorService servicio, CotizacionConsultaService cotizacionConsulta,
-            ValorizacionScheduler valorizacionScheduler) {
+            ValorizacionScheduler valorizacionScheduler, SimulacionCotizacionService simulacionService) {
         this.servicio = servicio;
         this.cotizacionConsulta = cotizacionConsulta;
         this.valorizacionScheduler = valorizacionScheduler;
+        this.simulacionService = simulacionService;
     }
 
     @Operation(
@@ -136,6 +142,35 @@ public class JugadorController {
             @PathVariable String id) {
         JugadorDetalleResponseDTO respuesta = mapearDetalle(servicio.consultarDetalle(id));
         return ResponseEntity.ok(new SuccessResponseDTO<>(respuesta));
+    }
+
+    @Operation(operationId = "obtenerConfiguracionSimulador", summary = "Obtener configuración del simulador")
+    @ApiResponse(responseCode = "200", description = "Configuración editable del simulador.")
+    @ApiResponse(responseCode = "404", description = "Jugador no encontrado.")
+    @ApiResponse(responseCode = "409", description = "Jugador no simulable.")
+    @GetMapping("/players/{playerId}/valuation-simulator")
+    public ResponseEntity<SuccessResponseDTO<SimulacionConfiguracionHttpDTO>> obtenerConfiguracionSimulador(
+            @PathVariable String playerId) {
+        return ResponseEntity.ok(new SuccessResponseDTO<>(SimulacionConfiguracionHttpDTO.from(
+                simulacionService.obtenerConfiguracion(playerId))));
+    }
+
+    @Operation(operationId = "simularCotizacion", summary = "Simular cotización sin persistir")
+    @ApiResponse(responseCode = "200", description = "Resultado transitorio de la simulación.")
+    @ApiResponse(responseCode = "400", description = "Request o escenario inválido.")
+    @ApiResponse(responseCode = "404", description = "Jugador no encontrado.")
+    @ApiResponse(responseCode = "409", description = "Jugador no simulable.")
+    @PostMapping("/players/{playerId}/valuation-simulator")
+    public ResponseEntity<SuccessResponseDTO<SimulacionResultadoHttpDTO>> simularCotizacion(
+            @PathVariable String playerId, @jakarta.validation.Valid @RequestBody SimulacionCotizacionRequestHttpDTO request) {
+        if (!request.horizontePermitido()) {
+            throw new ExcepcionSimulacion(CodigoErrorSimulacion.HORIZONTE_INVALIDO,
+                    "horizonMatches debe ser 3, 5, 8 o 10.");
+        }
+        SimulacionCotizacionRequestDTO internal = new SimulacionCotizacionRequestDTO(
+                request.horizonMatches(), request.modifications());
+        return ResponseEntity.ok(new SuccessResponseDTO<>(SimulacionResultadoHttpDTO.from(
+                simulacionService.simular(playerId, internal))));
     }
 
     @Operation(operationId = "consultarRankingJugadores", summary = "Consultar ranking de jugadores",

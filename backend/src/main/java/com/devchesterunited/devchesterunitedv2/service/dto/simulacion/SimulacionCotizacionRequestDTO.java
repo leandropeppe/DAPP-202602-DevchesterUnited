@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.service.dto.simulacion;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.devchesterunited.devchesterunitedv2.modelo.simulacion.MetricaNoEditableException;
 
 public record SimulacionCotizacionRequestDTO(int horizonMatches,
         Map<String, BigDecimal> modifications) {
@@ -13,7 +14,7 @@ public record SimulacionCotizacionRequestDTO(int horizonMatches,
         Map<String, BigDecimal> copia = new LinkedHashMap<>();
         modifications.forEach((metrica, valor) -> {
             if ("apps".equals(metrica) || "minsPlayed".equals(metrica)) {
-                throw new IllegalArgumentException(metrica + " no es editable.");
+                throw new MetricaNoEditableException(metrica);
             }
             copia.put(metrica, valor);
         });

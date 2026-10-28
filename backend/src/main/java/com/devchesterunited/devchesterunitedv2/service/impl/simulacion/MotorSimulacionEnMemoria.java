@@ -11,7 +11,9 @@ import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ResultadoValo
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.springframework.stereotype.Component;
 
+@Component
 public final class MotorSimulacionEnMemoria {
     private final MotorValorizacion motor;
     private final PoblacionElegibleSimulacionReader poblacionReader;

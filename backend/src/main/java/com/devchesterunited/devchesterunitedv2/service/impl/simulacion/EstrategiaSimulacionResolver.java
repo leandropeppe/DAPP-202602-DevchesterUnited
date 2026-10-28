@@ -7,7 +7,10 @@ import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaVal
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.EstrategiaAusenteException;
 
 import java.util.Objects;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public final class EstrategiaSimulacionResolver {
     private final EstrategiasIniciales estrategias;
     private final ConfiguracionElegibilidad configuracionElegibilidad;
@@ -19,6 +22,7 @@ public final class EstrategiaSimulacionResolver {
                 "La configuración de elegibilidad es obligatoria.");
     }
 
+    @Autowired
     public EstrategiaSimulacionResolver(EstrategiasIniciales estrategias,
             ValorizacionEjecucionConfig configuracion) {
         this(estrategias, Objects.requireNonNull(configuracion,

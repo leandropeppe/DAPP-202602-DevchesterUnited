@@ -2,6 +2,8 @@ package com.devchesterunited.devchesterunitedv2.exception;
 
 import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
+import com.devchesterunited.devchesterunitedv2.modelo.simulacion.CodigoErrorSimulacion;
+import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ExcepcionSimulacion;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessException;
@@ -13,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -59,6 +62,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return response(HttpStatus.BAD_REQUEST);
     }
 
+
+    @ExceptionHandler(ExcepcionSimulacion.class)
+    public ResponseEntity<Object> simulationError(ExcepcionSimulacion exception) {
+        HttpStatus status = switch (exception.codigo()) {
+            case HORIZONTE_INVALIDO, METRICA_NO_EDITABLE, VALOR_FUERA_DE_RANGO -> HttpStatus.BAD_REQUEST;
+            case DATOS_INSUFICIENTES, POSICION_NO_SOPORTADA, POSICION_AMBIGUA,
+                    ESTRATEGIA_AUSENTE -> HttpStatus.CONFLICT;
+        };
+        return ResponseEntity.status(status).body(new ErrorResponseDTO(exception.getMessage()));
+    }
+
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Object> unauthorized(AuthenticationException exception) {
         String mensaje = exception instanceof BadCredentialsException
@@ -85,6 +99,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .map(error -> new ErrorResponseDTO.DetalleErrorDTO(nombreJson(error.getField()), error.getDefaultMessage()))
                 .toList();
         return ResponseEntity.badRequest().body(new ErrorResponseDTO("Error de validación", detalles));
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException exception,
+            HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        return ResponseEntity.badRequest().body(new ErrorResponseDTO(
+                "El body no es válido o contiene campos no permitidos."));
     }
 
     private static String nombreJson(String campo) {
