@@ -154,6 +154,24 @@ export const getPlayerDetail = (id) =>
         encodeURIComponent(id)
     )
 
+export const getValuationSimulatorConfig = (id) =>
+  request(
+    '/players/' +
+    encodeURIComponent(id) +
+    '/valuation-simulator'
+  )
+
+export const simulatePlayerValuation = (id, body) =>
+  request(
+    '/players/' +
+    encodeURIComponent(id) +
+    '/valuation-simulator',
+    {
+      method: 'POST',
+      body
+    }
+  )
+
 export const getPlayerValuationHistory = (
     id,
     {
