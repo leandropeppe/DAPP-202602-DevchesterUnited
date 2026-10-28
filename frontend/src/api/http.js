@@ -161,14 +161,17 @@ export const getValuationSimulatorConfig = (id) =>
     '/valuation-simulator'
   )
 
-export const simulatePlayerValuation = (id, body) =>
+export const simulatePlayerValuation = (id, {
+  horizonMatches,
+  modifications = {}
+} = {}) =>
   request(
     '/players/' +
     encodeURIComponent(id) +
     '/valuation-simulator',
     {
       method: 'POST',
-      body
+      body: { horizonMatches, modifications }
     }
   )
 

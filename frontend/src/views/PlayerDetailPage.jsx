@@ -26,6 +26,7 @@ import {
 } from '../api/http.js'
 
 import MarketOperationPanel from '../components/MarketOperationPanel.jsx'
+import PlayerValuationSimulator from '../components/PlayerValuationSimulator.jsx'
 import { marketPlayerUuid } from '../market/marketState.js'
 import { useOptionalSession } from '../session/SessionContext.jsx'
 
@@ -738,6 +739,7 @@ export default function PlayerDetailPage ({
       holdings: 0,
       message: ''
   })
+  const [simulatorOpen, setSimulatorOpen] = useState(false)
 
   async function loadMarketData () {
       if (!session?.jwt || session.isJwtExpired) {
@@ -808,6 +810,7 @@ export default function PlayerDetailPage ({
       }
 
       setCardFlipped(false)
+      setSimulatorOpen(false)
 
       setValuationHistory({
           status: 'idle',
@@ -1226,6 +1229,9 @@ export default function PlayerDetailPage ({
                       }
 
                       <div className="player-detail__purchase">
+                          <button className="button button--primary player-detail__simulator-button" type="button" onClick={() => setSimulatorOpen(true)}>
+                              Simular cotización
+                          </button>
                           {marketData.status === 'auth-required'
                               ? <p className="market-operation-panel__warning">Iniciá sesión para comprar tokens.</p>
                               : null}
@@ -1422,6 +1428,10 @@ export default function PlayerDetailPage ({
                       </StatusMessage>
                   )
           }
+
+          {simulatorOpen
+              ? <PlayerValuationSimulator playerId={playerId} onClose={() => setSimulatorOpen(false)} />
+              : null}
 
       </section>
   )

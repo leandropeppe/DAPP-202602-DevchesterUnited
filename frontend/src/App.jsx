@@ -12,6 +12,7 @@ import './styles/layout.css'
 import './styles/catalog.css'
 import './styles/player-detail.css'
 import './styles/market.css'
+import './styles/player-valuation-simulator.css'
 
 const ROUTES = new Set(['/registro', '/login', '/catalogo', '/market/portfolio', '/market/transactions'])
 const PLAYER_DETAIL_ROUTE = /^\/catalogo\/jugadores\/([^/]+)$/

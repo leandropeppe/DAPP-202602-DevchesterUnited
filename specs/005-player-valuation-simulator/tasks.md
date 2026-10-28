@@ -107,21 +107,21 @@ description: "Tareas de implementación del simulador de cotización futura"
 
 ### Tests for User Story 3
 
-- [ ] T037 [P] [US3] Añadir tests de cliente HTTP en `frontend/src/api/http.valuation-simulator.test.js` para GET/POST, payload de solo modificaciones, errores 400/409 y respuestas con diferencias nulas.
-- [ ] T038 [P] [US3] Añadir tests del modal en `frontend/src/components/PlayerValuationSimulator.test.jsx` para selector exacto 3/5/8/10, actuales/proyectados, apps/minutos deshabilitados, reset, recálculo y estado de error conservando edición.
-- [ ] T039 [P] [US3] Añadir tests de loader en `frontend/src/components/MaradonaLoader.test.jsx` y `frontend/src/components/PlayerValuationSimulator.loader.test.jsx` para éxito rápido ≥2 s, éxito lento sin espera extra y error sin espera artificial.
-- [ ] T040 [P] [US3] Añadir test de integración de vista en `frontend/src/views/PlayerDetailPage.valuation-simulator.test.jsx` que abra el simulador desde detalle y mantenga el contexto de la página durante múltiples simulaciones.
-- [ ] T041 [P] [US3] Añadir escenarios Playwright en `frontend/e2e/player-valuation-simulator.spec.js` para FW, MF, DF, GK soportado, posiciones múltiples, datos faltantes, cotización ausente, horizonte inválido y cinco recalculos consecutivos.
+- [x] T037 [P] [US3] Añadir tests de cliente HTTP en `frontend/src/api/http.valuation-simulator.test.js` para GET/POST, payload de solo modificaciones, errores 400/409 y respuestas con diferencias nulas.
+- [x] T038 [P] [US3] Añadir tests del modal en `frontend/src/components/PlayerValuationSimulator.test.jsx` para selector exacto 3/5/8/10, actuales/proyectados, apps/minutos deshabilitados, reset, recálculo y estado de error conservando edición.
+- [x] T039 [P] [US3] Añadir tests de loader en `frontend/src/components/MaradonaLoader.test.jsx` y `frontend/src/components/PlayerValuationSimulator.loader.test.jsx` para éxito rápido ≥2 s, éxito lento sin espera extra y error sin espera artificial.
+- [x] T040 [P] [US3] Añadir test de integración de vista en `frontend/src/views/PlayerDetailPage.valuation-simulator.test.jsx` que abra el simulador desde detalle y mantenga el contexto de la página durante múltiples simulaciones.
+- [x] T041 [P] [US3] Añadir escenarios Playwright en `frontend/e2e/player-valuation-simulator.spec.js` para FW, MF, DF, GK soportado, posiciones múltiples, datos faltantes, cotización ausente, horizonte inválido y cinco recalculos consecutivos.
 
 ### Implementation for User Story 3
 
-- [ ] T042 [US3] Implementar `getValuationSimulatorConfig` y `simulatePlayerValuation` en `frontend/src/api/http.js`, consumiendo solo `/api/v1/players/{playerId}/valuation-simulator` y enviando únicamente `horizonMatches` y `modifications`.
-- [ ] T043 [P] [US3] Implementar el loader accesible y contextual en `frontend/src/components/MaradonaLoader.jsx` y `frontend/public/images/maradona-loader.*`, usando el recurso disponible/provisto sin bloquear errores.
-- [ ] T044 [US3] Implementar el modal y estado local en `frontend/src/components/PlayerValuationSimulator.jsx`, con selector de horizonte, inputs derivados de `statistics`, actuales/proyectados, reset, recálculo, diferencias y estados diferenciados del contrato.
-- [ ] T045 [P] [US3] Crear estilos responsive y accesibles del modal en `frontend/src/styles/player-valuation-simulator.css`, manteniendo la convención de 2 espacios, comillas simples y jerarquía JSX legible.
-- [ ] T046 [US3] Integrar botón de apertura, carga de configuración y cierre seguro en `frontend/src/views/PlayerDetailPage.jsx`, evitando recargar el detalle y manteniendo intactas estadísticas/cotización oficiales.
-- [ ] T047 [US3] Implementar en `frontend/src/components/PlayerValuationSimulator.jsx` el cálculo de espera `max(0, 2000ms - elapsed)` únicamente después de respuesta exitosa; mostrar inmediatamente respuestas lentas y errores.
-- [ ] T048 [US3] Añadir mensajes accesibles y accionables para ausencia de estadísticas, cotización actual, estrategia, posición y métricas GK en `frontend/src/components/PlayerValuationSimulator.jsx`, sin reproducir reglas de valorización del backend.
+- [x] T042 [US3] Implementar `getValuationSimulatorConfig` y `simulatePlayerValuation` en `frontend/src/api/http.js`, consumiendo solo `/api/v1/players/{playerId}/valuation-simulator` y enviando únicamente `horizonMatches` y `modifications`.
+- [x] T043 [P] [US3] Implementar el loader accesible y contextual en `frontend/src/components/MaradonaLoader.jsx` y `frontend/public/images/maradona-loader.*`, usando el recurso disponible/provisto sin bloquear errores.
+- [x] T044 [US3] Implementar el modal y estado local en `frontend/src/components/PlayerValuationSimulator.jsx`, con selector de horizonte, inputs derivados de `statistics`, actuales/proyectados, reset, recálculo, diferencias y estados diferenciados del contrato.
+- [x] T045 [P] [US3] Crear estilos responsive y accesibles del modal en `frontend/src/styles/player-valuation-simulator.css`, manteniendo la convención de 2 espacios, comillas simples y jerarquía JSX legible.
+- [x] T046 [US3] Integrar botón de apertura, carga de configuración y cierre seguro en `frontend/src/views/PlayerDetailPage.jsx`, evitando recargar el detalle y manteniendo intactas estadísticas/cotización oficiales.
+- [x] T047 [US3] Implementar en `frontend/src/components/PlayerValuationSimulator.jsx` el cálculo de espera `max(0, 2000ms - elapsed)` únicamente después de respuesta exitosa; mostrar inmediatamente respuestas lentas y errores.
+- [x] T048 [US3] Añadir mensajes accesibles y accionables para ausencia de estadísticas, cotización ausente, estrategia, posición y métricas GK en `frontend/src/components/PlayerValuationSimulator.jsx`, sin reproducir reglas de valorización del backend.
 
 **Checkpoint**: la experiencia completa funciona desde `PlayerDetailPage`, permite explorar escenarios y no altera datos oficiales.
 
