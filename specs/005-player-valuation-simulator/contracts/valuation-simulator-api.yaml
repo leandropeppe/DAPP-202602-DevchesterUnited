@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: Devchester United - Simulador de cotización
+  version: 1.0.0
+  description: Contrato transitorio para preparar y ejecutar escenarios sin persistirlos.
+servers:
+  - url: /
+paths:
+  /api/v1/players/{playerId}/valuation-simulator:
+    get:
+      operationId: obtenerConfiguracionSimulador
+      summary: Obtener datos y campos editables del simulador
+      parameters:
+        - $ref: '#/components/parameters/PlayerId'
+      responses:
+        '200':
+          description: Estado actual y configuración resoluble.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessSimulatorConfig'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/NotSimulable'
+    post:
+      operationId: simularCotizacionJugador
+      summary: Calcular una cotización proyectada en memoria
+      parameters:
+        - $ref: '#/components/parameters/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulationRequest'
+      responses:
+        '200':
+          description: Resultado temporal, sin publicación ni histórico.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessSimulationResult'
+        '400':
+          $ref: '#/components/responses/InvalidScenario'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/NotSimulable'
+components:
+  parameters:
+    PlayerId:
+      name: playerId
+      in: path
+      required: true
+      schema: { type: string, pattern: '^ply_[0-9a-fA-F-]+$' }
+  schemas:
+    StatisticValue:
+      type: object
+      required: [metric, label, kind, currentValue, editable]
+      properties:
+        metric: { type: string }
+        label: { type: string }
+        kind: { type: string, enum: [ACCUMULATIVE, AVERAGE, PERCENTAGE, RATING] }
+        currentValue: { type: number, nullable: true }
+        editable: { type: boolean }
+        min: { type: number, nullable: true }
+        max: { type: number, nullable: true }
+    SimulatorConfig:
+      type: object
+      required: [playerId, positions, resolvedPosition, strategyId, strategyVersion, horizons, statistics]
+      properties:
+        playerId: { type: string }
+        positions: { type: array, items: { type: string } }
+        resolvedPosition: { type: string, nullable: true }
+        strategyId: { type: string }
+        strategyVersion: { type: integer, minimum: 1 }
+        provisionalStrategy: { type: boolean }
+        currentQuote: { type: number, nullable: true }
+        horizons: { type: array, items: { type: integer, enum: [3, 5, 8, 10] } }
+        currentApps: { type: integer, nullable: true }
+        currentMinutes: { type: integer, nullable: true }
+        statistics: { type: array, items: { $ref: '#/components/schemas/StatisticValue' } }
+        blockingReasons: { type: array, items: { type: string } }
+    SimulationRequest:
+      type: object
+      required: [horizonMatches, modifications]
+      additionalProperties: false
+      properties:
+        horizonMatches: { type: integer, enum: [3, 5, 8, 10] }
+        modifications:
+          type: object
+          additionalProperties: { type: number }
+          description: Solo cambios del usuario; acumulativas son incrementos y promedios/porcentajes son valores finales. No admite apps/minsPlayed.
+    SimulationResult:
+      type: object
+      required: [playerId, horizonMatches, strategyId, strategyVersion, projectedStatistics, simulatedQuote, score]
+      properties:
+        playerId: { type: string }
+        horizonMatches: { type: integer }
+        strategyId: { type: string }
+        strategyVersion: { type: integer }
+        resolvedPosition: { type: string }
+        currentQuote: { type: number, nullable: true }
+        simulatedQuote: { type: number }
+        score: { type: number, minimum: 0, maximum: 1 }
+        monetaryDifference: { type: number, nullable: true }
+        percentageDifference: { type: number, nullable: true }
+        percentageDifferenceUnavailableReason: { type: string, nullable: true }
+        projectedStatistics: { type: object, additionalProperties: true }
+        trace: { type: object, additionalProperties: true }
+    SuccessSimulatorConfig:
+      type: object
+      required: [status, data]
+      properties:
+        status: { type: string, example: success }
+        data: { $ref: '#/components/schemas/SimulatorConfig' }
+    SuccessSimulationResult:
+      type: object
+      required: [status, data]
+      properties:
+        status: { type: string, example: success }
+        data: { $ref: '#/components/schemas/SimulationResult' }
+    ErrorResponse:
+      type: object
+      required: [status, message]
+      properties:
+        status: { type: string, example: error }
+        message: { type: string }
+        errors: { type: array, items: { type: string } }
+  responses:
+    InvalidScenario:
+      description: Request o escenario inválido.
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    NotFound:
+      description: Jugador no encontrado.
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    NotSimulable:
+      description: Posición, estrategia o estadísticas insuficientes.
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
