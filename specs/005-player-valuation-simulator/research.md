@@ -54,7 +54,7 @@ Se revisaron la especificación 005, la constitución, `MetricasEstadisticasJuga
 
 ### D8. Loader contextual en frontend
 
-- **Decisión**: medir el tiempo desde el inicio del POST; en éxito esperar `max(0, 2000ms - elapsed)` antes de mostrar resultado. Errores se muestran inmediatamente. El componente tendrá `role="status"`, texto accesible y recurso Maradona reutilizable.
+- **Decisión**: medir el tiempo desde el inicio del POST; en éxito esperar `max(0, 3000ms - elapsed)` antes de mostrar resultado. Errores se muestran inmediatamente. El componente tendrá `role="status"`, texto accesible y recurso Maradona reutilizable.
 - **Racional**: implementa exactamente los escenarios 005 sin añadir latencia a errores ni a respuestas lentas.
 
 ## Resultado

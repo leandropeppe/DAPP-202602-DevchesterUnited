@@ -8,8 +8,8 @@ describe('MaradonaLoader', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Calculando cotización...')
   })
 
-  it.each([[300, 1700], [1500, 500], [2500, 0]])('calcula espera restante para respuesta en %sms', (elapsed, expected) => {
-    expect(remainingLoadingTime(0, elapsed)).toBe(expected)
+  it.each([[0, 3000], [300, 2700], [1500, 1500], [3000, 0], [4500, 0]])('calcula espera restante para elapsed=%sms', (elapsed, expected) => {
+    expect(remainingLoadingTime(elapsed)).toBe(expected)
   })
 
 })

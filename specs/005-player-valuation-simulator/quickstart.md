@@ -40,7 +40,7 @@ npm run build
 npm run test:e2e -- --grep 'simulador|valuation'
 ```
 
-Validación manual: abrir el detalle, iniciar simulador, seleccionar 3/5/8/10, modificar una métrica, recalcular cinco veces, restablecer y verificar que el loader de Maradona dure al menos 2 s en respuestas rápidas. Verificar que un error no espere y conserve el formulario.
+Validación manual: abrir el detalle, iniciar simulador, seleccionar 3/5/8/10, modificar una métrica, recalcular cinco veces, restablecer y verificar que el loader de Maradona dure al menos 3 s en respuestas rápidas. Verificar que un error no espere y conserve el formulario.
 
 ## Seguridad y contrato OpenAPI
 

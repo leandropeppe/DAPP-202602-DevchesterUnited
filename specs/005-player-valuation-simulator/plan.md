@@ -6,7 +6,7 @@
 
 Se incorporará un caso de uso de simulación exclusivamente en memoria. El backend cargará el jugador, sus estadísticas normalizadas, la cotización visible y la estrategia/version vigente; devolverá la configuración editable y aceptará un horizonte de 3, 5, 8 o 10 partidos junto con únicamente los cambios del usuario. Un proyector de dominio construirá una copia temporal de las métricas, sumará automáticamente apariciones y 90 minutos por partido, y distinguirá incrementos acumulativos de valores finales promedio/porcentuales. El resultado se calculará delegando en el mismo `MotorValorizacion` y la misma estrategia de 004, sin invocar repositorios de cotizaciones, históricos ni publicación de mercado.
 
-La UI agregará el simulador al detalle del jugador mediante un modal accesible, con campos derivados del contrato de estrategia, recalculo/restablecimiento, comparación monetaria y loader de Maradona con mínimo de dos segundos solo en éxitos rápidos.
+La UI agregará el simulador al detalle del jugador mediante un modal accesible, con campos derivados del contrato de estrategia, recalculo/restablecimiento, comparación monetaria y loader de Maradona con mínimo de tres segundos solo en éxitos rápidos.
 
 ## Technical Context
 
@@ -22,7 +22,7 @@ La UI agregará el simulador al detalle del jugador mediante un modal accesible,
 
 **Project Type**: Web application monorepo con backend REST y frontend SPA.
 
-**Performance Goals**: cálculo síncrono y acotado al jugador solicitado; sin esperar artificialmente en backend. La UI garantiza 2 s mínimos solo cuando la respuesta exitosa llega antes de ese umbral.
+**Performance Goals**: cálculo síncrono y acotado al jugador solicitado; sin esperar artificialmente en backend. La UI garantiza 3 s mínimos solo cuando la respuesta exitosa llega antes de ese umbral.
 
 **Constraints**: horizontes exactos `{3,5,8,10}`; posiciones y estrategia deben resolverse con las reglas de 004; estadísticas oficiales, cotizaciones e históricos son inmutables; no se inventan métricas ausentes; mensajes y documentación en español; no exponer DTOs de WhoScored.
 

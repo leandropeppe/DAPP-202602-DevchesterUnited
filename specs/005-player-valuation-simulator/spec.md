@@ -54,8 +54,8 @@ Como usuario, quiero recalcular varias veces, restablecer el escenario y compara
 1. **Given** un simulador abierto, **When** el usuario cambia el escenario y vuelve a calcular, **Then** se reemplaza el resultado anterior por el nuevo sin cerrar el simulador ni modificar la cotización oficial.
 2. **Given** valores modificados, **When** el usuario selecciona restablecer, **Then** todas las métricas editables vuelven a sus valores actuales y apariciones/minutos vuelven a mostrar sus valores de referencia antes de simular.
 3. **Given** una simulación exitosa, **When** el usuario consulta la cotización oficial o el histórico, **Then** ambos conservan exactamente sus valores previos y no se crea un registro histórico de la simulación.
-4. **Given** que el procesamiento tarda menos de 2 segundos, **When** se ejecuta una simulación, **Then** se muestra un loader contextual de Maradona haciendo jueguitos durante al menos 2 segundos antes del resultado.
-5. **Given** que el procesamiento tarda más de 2 segundos, **When** finaliza el cálculo, **Then** el resultado se muestra inmediatamente al terminar, sin espera adicional.
+4. **Given** que el procesamiento tarda menos de 3 segundos, **When** se ejecuta una simulación, **Then** se muestra un loader contextual de Maradona haciendo jueguitos durante al menos 3 segundos antes del resultado.
+5. **Given** que el procesamiento tarda más de 3 segundos, **When** finaliza el cálculo, **Then** el resultado se muestra inmediatamente al terminar, sin espera adicional.
 6. **Given** un error de validación o cálculo, **When** se ejecuta la simulación, **Then** se muestra el error sin espera artificial y se conserva el escenario editable.
 
 ### Edge Cases
@@ -95,8 +95,8 @@ Como usuario, quiero recalcular varias veces, restablecer el escenario y compara
 - **FR-018**: El usuario MUST poder restablecer todos los valores editables a los valores actuales del jugador y reiniciar el escenario seleccionado.
 - **FR-019**: El sistema MUST validar tipos, campos obligatorios, rangos, escalas, porcentajes, valores negativos y coherencia de incrementos antes de ejecutar el cálculo.
 - **FR-020**: El sistema MUST rechazar horizontes no permitidos, posiciones no soportadas, jugadores sin estrategia aplicable y escenarios sin estadísticas suficientes, comunicando una causa accionable.
-- **FR-021**: Durante una simulación exitosa, el sistema MUST mostrar un loader contextual de Maradona haciendo jueguitos durante un mínimo de 2 segundos.
-- **FR-022**: Si el procesamiento exitoso supera 2 segundos, el sistema MUST mostrar el resultado inmediatamente al finalizar, sin agregar espera artificial adicional.
+- **FR-021**: Durante una simulación exitosa, el sistema MUST mostrar un loader contextual de Maradona haciendo jueguitos durante un mínimo de 3 segundos.
+- **FR-022**: Si el procesamiento exitoso supera 3 segundos, el sistema MUST mostrar el resultado inmediatamente al finalizar, sin agregar espera artificial adicional.
 - **FR-023**: Ante un error de validación, datos insuficientes o cálculo, el sistema MUST omitir la espera artificial y mantener disponible el escenario para corregirlo.
 - **FR-024**: El sistema MUST tratar explícitamente la falta de estadísticas, ausencia de cotización actual, posiciones múltiples, posiciones no soportadas y falta de estrategia como estados diferenciados para el usuario.
 - **FR-025**: El sistema MUST preservar sin cambios los datos oficiales y el histórico aunque el usuario ejecute varias simulaciones o cierre el simulador.
@@ -119,7 +119,7 @@ Como usuario, quiero recalcular varias veces, restablecer el escenario y compara
 - **SC-004**: El 100% de las simulaciones exitosas muestra cotización actual, cotización simulada, diferencia monetaria y diferencia porcentual o una explicación verificable de por qué esta última no es calculable.
 - **SC-005**: El 100% de las simulaciones exitosas reutiliza las mismas reglas de valorización de `004-player-valuation-strategies` y produce el mismo valor que produciría el motor para el mismo escenario.
 - **SC-006**: Después de cualquier cantidad de simulaciones, el 100% de las estadísticas oficiales, cotizaciones oficiales e históricos consultados conserva sus valores previos.
-- **SC-007**: Al menos el 95% de las simulaciones válidas muestra el loader durante al menos 2 segundos y ninguna simulación fallida agrega una espera artificial.
+- **SC-007**: Al menos el 95% de las simulaciones válidas muestra el loader durante al menos 3 segundos y ninguna simulación fallida agrega una espera artificial.
 - **SC-008**: El 100% de los escenarios con tipos inválidos, rangos inválidos, negativos no permitidos, datos faltantes o posiciones no aplicables se rechaza con un mensaje accionable y sin cambios persistidos.
 - **SC-009**: Un usuario puede modificar, recalcular y restablecer al menos 5 escenarios consecutivos sobre el mismo jugador sin cerrar el simulador ni perder el contexto del detalle.
 

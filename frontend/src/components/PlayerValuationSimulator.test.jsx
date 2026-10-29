@@ -66,7 +66,7 @@ describe('PlayerValuationSimulator', () => {
     fireEvent.change(screen.getByLabelText('Cantidad de tokens'), { target: { value: '3' } })
     fireEvent.change(screen.getByLabelText('Goles predicción'), { target: { value: '2' } })
     fireEvent.click(screen.getByRole('button', { name: 'Simular' }))
-    await screen.findByRole('heading', { name: 'Cotización proyectada' }, { timeout: 3000 })
+    await screen.findByRole('heading', { name: 'Cotización proyectada' }, { timeout: 5000 })
     fireEvent.click(screen.getByRole('button', { name: 'Restablecer' }))
     expect(screen.getByLabelText('Cantidad de tokens')).toHaveValue(1)
     expect(screen.getByLabelText('Goles predicción')).toHaveValue(0)

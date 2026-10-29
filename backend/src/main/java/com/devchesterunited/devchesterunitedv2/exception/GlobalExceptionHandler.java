@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -99,13 +98,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .map(error -> new ErrorResponseDTO.DetalleErrorDTO(nombreJson(error.getField()), error.getDefaultMessage()))
                 .toList();
         return ResponseEntity.badRequest().body(new ErrorResponseDTO("Error de validación", detalles));
-    }
-
-    @Override
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException exception,
-            HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        return ResponseEntity.badRequest().body(new ErrorResponseDTO(
-                "El body no es válido o contiene campos no permitidos."));
     }
 
     private static String nombreJson(String campo) {
