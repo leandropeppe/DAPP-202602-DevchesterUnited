@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PIdempotencyRequest;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -17,6 +18,22 @@ public final class MarketIdempotencyParameterHasher {
         String canonical = "P2P_OFFER".equals(operation)
                 ? offerCanonical(request, operation)
                 : primaryCanonical(request, operation);
+        return sha256(canonical);
+    }
+
+    public static String hash(MarketP2PIdempotencyRequest request) {
+        request.validar();
+        var identity = request.identidad();
+        String canonical = field("P2P_PURCHASE")
+                + field(normalizeUuid(identity.offerId()))
+                + field(normalizeUuid(identity.playerId()))
+                + field(normalizePositive(identity.quantity(), "quantity"))
+                + field(normalizeUuid(identity.quote().quoteId()))
+                + field(normalizePositive(identity.quote().version(), "quoteVersion"));
+        return sha256(canonical);
+    }
+
+    private static String sha256(String canonical) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
                     .digest(canonical.getBytes(StandardCharsets.UTF_8));

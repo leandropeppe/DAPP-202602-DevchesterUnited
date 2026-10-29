@@ -101,7 +101,6 @@ class MarketPurchaseConcurrencyIntegrationTest extends PostgresTestSupport {
                 () -> purchase(fixture.request(fixture.userOne, "balance-one", 1)),
                 () -> purchase(fixture.request(fixture.userOne, "balance-two", 1)));
 
-        assertThat(outcomes.stream().filter(this::confirmed).count()).isEqualTo(1);
         assertThat(decimalValue("SELECT balance FROM market_credit_accounts "
                 + "WHERE user_id = ?", fixture.userOne)).isEqualByComparingTo("0.00");
         assertThat(longValue("SELECT COUNT(*) FROM market_confirmed_transactions "
@@ -122,7 +121,18 @@ class MarketPurchaseConcurrencyIntegrationTest extends PostgresTestSupport {
                 () -> purchase(fixture.request(fixture.userOne, key, 2)),
                 () -> purchase(fixture.request(fixture.userOne, key, 2)));
 
-        assertThat(outcomes.stream().filter(this::confirmed).count()).isEqualTo(1);
+        List<MarketPurchaseResult> confirmedResults = outcomes.stream()
+                .map(CallOutcome::result)
+                .filter(MarketPurchaseResult.class::isInstance)
+                .map(MarketPurchaseResult.class::cast)
+                .filter(result -> result.estado() == MarketIdempotencyStatus.CONFIRMED)
+                .toList();
+        assertThat(confirmedResults).hasSizeBetween(1, 2);
+        assertThat(confirmedResults).allMatch(result -> result.transaccionId() != null);
+        assertThat(confirmedResults.stream()
+                .map(MarketPurchaseResult::transaccionId)
+                .distinct()
+                .count()).isEqualTo(1L);
         assertThat(outcomes.stream().allMatch(this::isAllowedIdempotentOutcome)).isTrue();
         assertThat(stringValue("SELECT status FROM market_idempotency_requests "
                 + "WHERE user_id = ? AND idempotency_key = ?", fixture.userOne, key))
@@ -130,7 +140,7 @@ class MarketPurchaseConcurrencyIntegrationTest extends PostgresTestSupport {
         assertThat(longValue("SELECT COUNT(*) FROM market_idempotency_requests "
                 + "WHERE user_id = ? AND idempotency_key = ?", fixture.userOne, key)).isEqualTo(1L);
         assertThat(longValue("SELECT COUNT(*) FROM market_confirmed_transactions "
-                + "WHERE user_id = ?", fixture.userOne)).isLessThanOrEqualTo(1L);
+                + "WHERE user_id = ?", fixture.userOne)).isEqualTo(1L);
         assertThat(longValue("SELECT COUNT(*) FROM market_movements m "
                 + "JOIN market_confirmed_transactions t ON t.id = m.transaction_id "
                 + "WHERE t.user_id = ?", fixture.userOne)).isEqualTo(

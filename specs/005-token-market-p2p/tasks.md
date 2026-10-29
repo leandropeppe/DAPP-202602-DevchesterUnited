@@ -115,7 +115,7 @@ description: "Task list for Token Market P2P"
 
 ### Implementation for User Story 3
 
-- [ ] T036 [P] [US3] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/market/MarketP2PPurchaseService.java` y commands de compra
+- [x] T036 [P] [US3] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/market/MarketP2PPurchaseService.java` y commands de compra
 - [ ] T037 [US3] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2PPurchaseExecutionServiceImpl.java` con revalidación de jugador, quote identity/version y orden de locks P2P
 - [ ] T038 [US3] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2PPurchasePersistenceServiceImpl.java` para débito/crédito, transferencia de tokens, reducción de `remaining_quantity` y `reserved_quantity`, movimientos y asientos atómicos
 - [ ] T039 [US3] Implementar la actualización de costo de adquisición/PnL en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/market/entity/TenenciaMercadoEntity.java` y los servicios de tenencia existentes sin alterar las reglas de valorización
