@@ -60,14 +60,14 @@ description: "Task list for Token Market P2P"
 
 ### Tests for User Story 1
 
-- [ ] T020 [P] [US1] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketSaleGoneMockMvcTest.java` para HTTP 410 sin movimientos, saldos, tenencias ni transacción nueva
-- [ ] T021 [P] [US1] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/PrimaryPurchaseRegressionIntegrationTest.java` para saldo, inventario, tenencia, quote exacta e idempotencia de compra primaria sin modificar los tests existentes
+- [x] T020 [P] [US1] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketSaleGoneMockMvcTest.java` para HTTP 410 sin movimientos, saldos, tenencias ni transacción nueva
+- [x] T021 [P] [US1] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/PrimaryPurchaseRegressionIntegrationTest.java` para saldo, inventario, tenencia, quote exacta e idempotencia de compra primaria sin modificar los tests existentes
 
 ### Implementation for User Story 1
 
-- [ ] T022 [US1] Cambiar `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/market/MarketController.java` para responder HTTP 410 en `POST /api/v1/market/sales` antes de invocar settlement
-- [ ] T023 [US1] Ajustar la documentación OpenAPI de `MarketController.java` y DTOs asociados para describir 410 como funcionalidad retirada, manteniendo la lectura de ventas históricas
-- [ ] T024 [US1] Verificar que `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketPurchaseExecutionServiceImpl.java`, `MarketPurchasePersistenceServiceImpl.java` y `MarketQuoteValidationServiceImpl.java` conservan sus validaciones y no consumen reservas P2P
+- [x] T022 [US1] Cambiar `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/market/MarketController.java` para responder HTTP 410 en `POST /api/v1/market/sales` antes de invocar settlement
+- [x] T023 [US1] Ajustar la documentación OpenAPI de `MarketController.java` y DTOs asociados para describir 410 como funcionalidad retirada, manteniendo la lectura de ventas históricas
+- [x] T024 [US1] Verificar que `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketPurchaseExecutionServiceImpl.java`, `MarketPurchasePersistenceServiceImpl.java` y `MarketQuoteValidationServiceImpl.java` conservan sus validaciones y no consumen reservas P2P
 
 **Checkpoint**: El mercado primario sigue operativo y la dirección usuario → superusuario está bloqueada.
 

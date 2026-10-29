@@ -37,20 +37,17 @@ public class MarketController {
     private final MarketAvailabilityService availability;
     private final MarketIdempotencyService idempotency;
     private final MarketPurchaseService purchases;
-    private final MarketSaleService sales;
     private final MarketPortfolioService portfolios;
     private final MarketTransactionService transactions;
 
     @Autowired
     public MarketController(MarketBalanceService balances, MarketAvailabilityService availability,
             MarketIdempotencyService idempotency, MarketPurchaseService purchases,
-            MarketSaleService sales, MarketPortfolioService portfolios,
-            MarketTransactionService transactions) {
+            MarketPortfolioService portfolios, MarketTransactionService transactions) {
         this.balances = balances;
         this.availability = availability;
         this.idempotency = idempotency;
         this.purchases = purchases;
-        this.sales = sales;
         this.portfolios = portfolios;
         this.transactions = transactions;
     }
@@ -219,29 +216,15 @@ public class MarketController {
 
     @PostMapping("/sales")
     @Operation(operationId = "venderTokens", summary = "Vender tokens de un jugador",
-            description = "Ejecuta una venta atomica usando la cotizacion exacta indicada por el usuario.",
+            description = "La venta nueva al superusuario fue retirada. El historial de ventas se conserva.",
             security = @SecurityRequirement(name = "BearerAuth"))
-    @ApiResponse(responseCode = "200", description = "Venta confirmada o solicitud pendiente.",
-            content = @Content(schema = @Schema(implementation = MarketSaleResponseDTO.class)))
-    @ApiResponse(responseCode = "400", description = "Solicitud o Idempotency-Key invalida.",
-            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
-    @ApiResponse(responseCode = "401", description = "JWT ausente o invalido.",
-            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
-    @ApiResponse(responseCode = "404", description = "Cuenta de mercado inexistente.",
-            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
-    @ApiResponse(responseCode = "409", description = "Cotizacion, tenencia, reserva o idempotencia en conflicto.",
-            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
-    @ApiResponse(responseCode = "503", description = "Mercado no operativo.",
-            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "410", description = "La venta nueva al superusuario fue retirada.")
     public ResponseEntity<SuccessResponseDTO<MarketSaleResponseDTO>> sale(
             @AuthenticationPrincipal Jwt jwt,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody MarketSaleRequestDTO request) {
-        UUID usuarioId = usuarioDesde(jwt);
-        String clave = normalizeIdempotencyKey(idempotencyKey);
-        var result = sales.vender(request.toDomain(usuarioId, clave));
-        return ResponseEntity.ok(new SuccessResponseDTO<>(
-                MarketSaleResponseDTO.fromDomain(result)));
+        usuarioDesde(jwt);
+        return ResponseEntity.status(HttpStatus.GONE).build();
     }
 
     @GetMapping("/operations/{idempotency-key}")

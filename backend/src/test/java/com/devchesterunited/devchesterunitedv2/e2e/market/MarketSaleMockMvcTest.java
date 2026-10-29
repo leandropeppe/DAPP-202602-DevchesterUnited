@@ -1,9 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.e2e.market;
 
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleResult;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.Test;
@@ -17,16 +13,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
-import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.UUID;
+import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,148 +29,12 @@ class MarketSaleMockMvcTest extends PostgresTestSupport {
     private static final UUID USER_B = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
     private static final UUID PLAYER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final UUID QUOTE_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
-    private static final UUID OPERATION_ID = UUID.fromString("33333333-3333-3333-3333-333333333333");
-    private static final UUID TRANSACTION_ID = UUID.fromString("44444444-4444-4444-4444-444444444444");
-    private static final Instant UPDATED_AT = Instant.parse("2026-10-15T12:00:00Z");
 
     @Autowired
     private MockMvc mvc;
 
     @MockitoBean
     private MarketSaleService sales;
-
-    @Test
-    void ventaParcialConfirmadaDevuelveRespuestaPublicaYCantidadSolicitada() throws Exception {
-        when(sales.vender(any())).thenReturn(confirmed(2L, new BigDecimal("2.50"),
-                new BigDecimal("5.00")));
-
-        mvc.perform(post("/api/v1/market/sales")
-                        .with(jwtFor(USER_A))
-                        .header("Idempotency-Key", " sale-partial ")
-                        .contentType("application/json")
-                        .content(validBody(2)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data.operation_id").value(OPERATION_ID.toString()))
-                .andExpect(jsonPath("$.data.transaction_id").value(TRANSACTION_ID.toString()))
-                .andExpect(jsonPath("$.data.player_id").value(PLAYER_ID.toString()))
-                .andExpect(jsonPath("$.data.quantity").value(2))
-                .andExpect(jsonPath("$.data.unit_price").value(2.50))
-                .andExpect(jsonPath("$.data.total_amount").value(5.00))
-                .andExpect(jsonPath("$.data.status").value("CONFIRMED"))
-                .andExpect(jsonPath("$.data.updated_at").value(UPDATED_AT.toString()));
-
-        var request = org.mockito.ArgumentCaptor.forClass(MarketSaleRequest.class);
-        verify(sales).vender(request.capture());
-        assertThat(request.getValue().usuarioId()).isEqualTo(USER_A);
-        assertThat(request.getValue().claveIdempotencia()).isEqualTo("sale-partial");
-        assertThat(request.getValue().cantidad()).isEqualTo(2L);
-    }
-
-    @Test
-    void ventaFinalConfirmadaNoExponeCostosInternos() throws Exception {
-        when(sales.vender(any())).thenReturn(confirmed(3L, new BigDecimal("1.25"),
-                new BigDecimal("3.75")));
-
-        mvc.perform(post("/api/v1/market/sales")
-                        .with(jwtFor(USER_A))
-                        .header("Idempotency-Key", "sale-final")
-                        .contentType("application/json")
-                        .content(validBody(3)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("CONFIRMED"))
-                .andExpect(jsonPath("$.data.quantity").value(3))
-                .andExpect(jsonPath("$.data.transaction_id").value(TRANSACTION_ID.toString()))
-                .andExpect(jsonPath("$.data.acquisition_cost").doesNotExist())
-                .andExpect(jsonPath("$.data.realized_pnl").doesNotExist())
-                .andExpect(jsonPath("$.data.user_id").doesNotExist())
-                .andExpect(jsonPath("$.data.execution_token").doesNotExist())
-                .andExpect(jsonPath("$.data.parameters_hash").doesNotExist());
-    }
-
-    @Test
-    void ventaProcessingDevuelve200SinImportesNiTransaccionInexistentes() throws Exception {
-        when(sales.vender(any())).thenReturn(new MarketSaleResult(
-                OPERATION_ID, null, USER_A, PLAYER_ID, null, null, null,
-                MarketIdempotencyStatus.PROCESSING, UPDATED_AT));
-
-        mvc.perform(post("/api/v1/market/sales")
-                        .with(jwtFor(USER_A))
-                        .header("Idempotency-Key", "sale-processing")
-                        .contentType("application/json")
-                        .content(validBody(1)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data.operation_id").value(OPERATION_ID.toString()))
-                .andExpect(jsonPath("$.data.status").value("PROCESSING"))
-                .andExpect(jsonPath("$.data.transaction_id").doesNotExist())
-                .andExpect(jsonPath("$.data.unit_price").doesNotExist())
-                .andExpect(jsonPath("$.data.total_amount").doesNotExist())
-                .andExpect(jsonPath("$.data.user_id").doesNotExist())
-                .andExpect(jsonPath("$.data.execution_token").doesNotExist())
-                .andExpect(jsonPath("$.data.parameters_hash").doesNotExist());
-
-        verify(sales).vender(any(MarketSaleRequest.class));
-    }
-
-    @ParameterizedTest
-    @MethodSource("domainErrors")
-    void erroresDeVentaDevuelven409EstructuradoSinDetalleInterno(
-            TokenMarketException.Reason reason) throws Exception {
-        when(sales.vender(any())).thenThrow(new TokenMarketException(reason, "detalle interno"));
-
-        mvc.perform(post("/api/v1/market/sales")
-                        .with(jwtFor(USER_A))
-                        .header("Idempotency-Key", "sale-domain-" + reason)
-                        .contentType("application/json")
-                        .content(validBody(1)))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value("error"))
-                .andExpect(jsonPath("$.message").value(
-                        org.hamcrest.Matchers.not("detalle interno")))
-                .andExpect(jsonPath("$.data").doesNotExist());
-
-        verify(sales).vender(any(MarketSaleRequest.class));
-    }
-
-    private static java.util.stream.Stream<Arguments> domainErrors() {
-        return java.util.stream.Stream.of(
-                Arguments.of(TokenMarketException.Reason.INSUFFICIENT_INVENTORY),
-                Arguments.of(TokenMarketException.Reason.INSUFFICIENT_BALANCE),
-                Arguments.of(TokenMarketException.Reason.INACTIVE_PLAYER),
-                Arguments.of(TokenMarketException.Reason.QUOTE_UNAVAILABLE),
-                Arguments.of(TokenMarketException.Reason.IDEMPOTENCY_CONFLICT),
-                Arguments.of(TokenMarketException.Reason.STALE_REQUEST));
-    }
-
-    @Test
-    void reintentoIdempotenteConservaOperacionTransaccionYClaveNormalizada() throws Exception {
-        when(sales.vender(any())).thenReturn(confirmed(1L, new BigDecimal("2.00"),
-                new BigDecimal("2.00")));
-
-        mvc.perform(post("/api/v1/market/sales")
-                        .with(jwtFor(USER_A))
-                        .header("Idempotency-Key", " sale-retry ")
-                        .contentType("application/json")
-                        .content(validBody(1)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.operation_id").value(OPERATION_ID.toString()))
-                .andExpect(jsonPath("$.data.transaction_id").value(TRANSACTION_ID.toString()));
-
-        mvc.perform(post("/api/v1/market/sales")
-                        .with(jwtFor(USER_A))
-                        .header("Idempotency-Key", " sale-retry ")
-                        .contentType("application/json")
-                        .content(validBody(1)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.operation_id").value(OPERATION_ID.toString()))
-                .andExpect(jsonPath("$.data.transaction_id").value(TRANSACTION_ID.toString()));
-
-        var requests = org.mockito.ArgumentCaptor.forClass(MarketSaleRequest.class);
-        verify(sales, times(2)).vender(requests.capture());
-        assertThat(requests.getAllValues()).allMatch(request -> USER_A.equals(request.usuarioId())
-                && "sale-retry".equals(request.claveIdempotencia()));
-    }
 
     @Test
     void jwtAusenteDevuelve401YSinEjecutarVenta() throws Exception {
@@ -221,31 +75,8 @@ class MarketSaleMockMvcTest extends PostgresTestSupport {
     }
 
     @ParameterizedTest
-    @MethodSource("invalidKeys")
-    void claveIdempotenteInvalidaDevuelve400YSinEjecutarVenta(String key) throws Exception {
-        var request = post("/api/v1/market/sales")
-                .with(jwtFor(USER_A))
-                .contentType("application/json")
-                .content(validBody(1));
-        if (key != null) {
-            request.header("Idempotency-Key", key);
-        }
-
-        mvc.perform(request)
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("error"));
-
-        verifyNoInteractions(sales);
-    }
-
-    private static java.util.stream.Stream<Arguments> invalidKeys() {
-        return java.util.stream.Stream.of(Arguments.of((String) null), Arguments.of(" "),
-                Arguments.of("x".repeat(201)));
-    }
-
-    @ParameterizedTest
     @MethodSource("invalidQuantities")
-    void cantidadInvalidaDevuelve400YSinEjecutarVenta(long quantity) throws Exception {
+    void cantidadInvalidaSigueSiendo400YSinEjecutarVenta(long quantity) throws Exception {
         mvc.perform(post("/api/v1/market/sales")
                         .with(jwtFor(USER_A))
                         .header("Idempotency-Key", "sale-invalid-quantity-" + quantity)
@@ -257,12 +88,12 @@ class MarketSaleMockMvcTest extends PostgresTestSupport {
         verifyNoInteractions(sales);
     }
 
-    private static java.util.stream.Stream<Arguments> invalidQuantities() {
-        return java.util.stream.Stream.of(Arguments.of(0L), Arguments.of(-1L), Arguments.of(101L));
+    private static Stream<Arguments> invalidQuantities() {
+        return Stream.of(Arguments.of(0L), Arguments.of(-1L), Arguments.of(101L));
     }
 
     @Test
-    void bodyIncompletoOJsonMalformadoDevuelve400YSinEjecutarVenta() throws Exception {
+    void bodyIncompletoOJsonMalformadoSigueSiendo400YSinEjecutarVenta() throws Exception {
         mvc.perform(post("/api/v1/market/sales")
                         .with(jwtFor(USER_A))
                         .header("Idempotency-Key", "sale-missing-fields")
@@ -283,7 +114,7 @@ class MarketSaleMockMvcTest extends PostgresTestSupport {
     }
 
     @Test
-    void userIdEnElBodyEsPropiedadNoPermitidaYNoEjecutaVenta() throws Exception {
+    void userIdEnElBodySigueSiendoPropiedadNoPermitida() throws Exception {
         mvc.perform(post("/api/v1/market/sales")
                         .with(jwtFor(USER_A))
                         .header("Idempotency-Key", "sale-foreign-user")
@@ -293,30 +124,6 @@ class MarketSaleMockMvcTest extends PostgresTestSupport {
                 .andExpect(jsonPath("$.status").value("error"));
 
         verifyNoInteractions(sales);
-    }
-
-    @Test
-    void pertenenciaDeVentaProvieneExclusivamenteDelJwt() throws Exception {
-        when(sales.vender(any())).thenReturn(confirmed(1L, new BigDecimal("1.25"),
-                new BigDecimal("1.25")));
-
-        mvc.perform(post("/api/v1/market/sales")
-                        .with(jwtFor(USER_A))
-                        .header("Idempotency-Key", "sale-owner")
-                        .contentType("application/json")
-                        .content(validBody(1)))
-                .andExpect(status().isOk());
-
-        var request = org.mockito.ArgumentCaptor.forClass(MarketSaleRequest.class);
-        verify(sales).vender(request.capture());
-        assertThat(request.getValue().usuarioId()).isEqualTo(USER_A);
-        assertThat(request.getValue().usuarioId()).isNotEqualTo(USER_B);
-    }
-
-    private static MarketSaleResult confirmed(long quantity, BigDecimal unitPrice,
-            BigDecimal totalAmount) {
-        return new MarketSaleResult(OPERATION_ID, TRANSACTION_ID, USER_A, PLAYER_ID, quantity,
-                unitPrice, totalAmount, MarketIdempotencyStatus.CONFIRMED, UPDATED_AT);
     }
 
     private static String validBody(long quantity) {
