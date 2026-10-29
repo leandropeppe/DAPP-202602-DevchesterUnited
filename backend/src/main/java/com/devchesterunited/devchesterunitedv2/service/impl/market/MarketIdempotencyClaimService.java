@@ -120,7 +120,9 @@ public class MarketIdempotencyClaimService {
                     "El tipo de operacion es obligatorio.");
         }
         String normalized = operation.trim().toUpperCase(Locale.ROOT);
-        if (!"PURCHASE".equals(normalized) && !"SALE".equals(normalized)) {
+        if (!"PURCHASE".equals(normalized) && !"SALE".equals(normalized)
+                && !"P2P_OFFER".equals(normalized) && !"P2P_PURCHASE".equals(normalized)
+                && !"P2P_CANCEL".equals(normalized)) {
             throw new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
                     "El tipo de operacion no es valido.");
         }

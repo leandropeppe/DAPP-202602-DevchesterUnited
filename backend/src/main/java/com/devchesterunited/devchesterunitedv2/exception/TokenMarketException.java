@@ -13,7 +13,13 @@ public class TokenMarketException extends RuntimeException {
         STALE_REQUEST,
         INVALID_INPUT,
         ACCOUNT_NOT_FOUND,
-        OPERATION_NOT_FOUND
+        OPERATION_NOT_FOUND,
+        MANUAL_PRICE_NOT_ALLOWED,
+        QUOTE_CHANGED,
+        OFFER_ALREADY_CANCELLED,
+        OFFER_NOT_PURCHASABLE,
+        INSUFFICIENT_AVAILABLE_QUANTITY,
+        INSUFFICIENT_CREDITS
     }
 
     private final Reason reason;

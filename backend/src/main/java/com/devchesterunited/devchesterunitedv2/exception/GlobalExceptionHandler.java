@@ -121,10 +121,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return switch (reason) {
             case MARKET_NOT_READY -> HttpStatus.SERVICE_UNAVAILABLE;
             case ACCOUNT_NOT_FOUND, OPERATION_NOT_FOUND -> HttpStatus.NOT_FOUND;
-            case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
+            case INVALID_INPUT, MANUAL_PRICE_NOT_ALLOWED -> HttpStatus.BAD_REQUEST;
             case INACTIVE_PLAYER, QUOTE_UNAVAILABLE, INSUFFICIENT_BALANCE,
                     INSUFFICIENT_INVENTORY,
-                    IDEMPOTENCY_CONFLICT, STALE_REQUEST -> HttpStatus.CONFLICT;
+                    IDEMPOTENCY_CONFLICT, STALE_REQUEST, QUOTE_CHANGED,
+                    OFFER_ALREADY_CANCELLED, OFFER_NOT_PURCHASABLE,
+                    INSUFFICIENT_AVAILABLE_QUANTITY, INSUFFICIENT_CREDITS -> HttpStatus.CONFLICT;
         };
     }
 
