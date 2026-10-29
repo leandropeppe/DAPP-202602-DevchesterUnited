@@ -16,6 +16,13 @@ function formatValue (value) {
   return String(value)
 }
 
+function formatSigned (value) {
+  const number = numberValue(value)
+  if (number === null || !Number.isFinite(number)) return 'No disponible'
+  if (number === 0) return formatValue(number)
+  return `${number > 0 ? '+' : ''}${formatValue(number)}`
+}
+
 function initialValues (statistics) {
   return Object.fromEntries((statistics || []).filter((stat) => stat.editable).map((stat) => [
     stat.metric,
@@ -58,11 +65,19 @@ function differenceClass (value) {
   return 'player-simulator__difference--zero'
 }
 
+function tokenMoney (tokens, quote) {
+  const amount = numberValue(tokens)
+  const price = numberValue(quote)
+  if (amount === null || price === null || !Number.isFinite(amount) || !Number.isFinite(price)) return null
+  return amount * price
+}
+
 export default function PlayerValuationSimulator ({ playerId, jwt, onClose }) {
   const [status, setStatus] = useState('loading')
   const [config, setConfig] = useState(null)
   const [error, setError] = useState('')
   const [horizon, setHorizon] = useState(null)
+  const [tokens, setTokens] = useState('1')
   const [values, setValues] = useState({})
   const [result, setResult] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -94,13 +109,16 @@ export default function PlayerValuationSimulator ({ playerId, jwt, onClose }) {
       mountedRef.current = false
       if (timerRef.current) window.clearTimeout(timerRef.current)
     }
-  }, [playerId])
+  }, [playerId, jwt])
 
   const editable = useMemo(() => (config?.statistics || []).filter((stat) => stat.editable), [config])
   const blocked = (config?.blockingReasons || []).length > 0
+  const tokensNumber = numberValue(tokens)
+  const tokensInvalid = tokens === '' || tokensNumber === null || !Number.isFinite(tokensNumber) || tokensNumber <= 0
 
   function resetScenario () {
     setHorizon(config?.horizons?.[0] ?? null)
+    setTokens('1')
     setValues(initialValues(config?.statistics))
     setResult(null)
     setError('')
@@ -116,6 +134,10 @@ export default function PlayerValuationSimulator ({ playerId, jwt, onClose }) {
   }
 
   async function submit () {
+    if (tokensInvalid) {
+      setError('Ingresá una cantidad de tokens positiva para calcular el impacto económico.')
+      return
+    }
     setSubmitting(true)
     setError('')
     const started = Date.now()
@@ -140,6 +162,92 @@ export default function PlayerValuationSimulator ({ playerId, jwt, onClose }) {
     }
   }
 
+  function renderLoader () {
+    return <div className="player-simulator__loader-overlay" aria-busy="true"><MaradonaLoader /></div>
+  }
+
+  function renderResult () {
+    const actualValue = tokenMoney(tokens, result?.currentQuote)
+    const projectedValueForTokens = tokenMoney(tokens, result?.simulatedQuote)
+    const tokenDifference = actualValue === null || projectedValueForTokens === null
+      ? null
+      : projectedValueForTokens - actualValue
+
+    return (
+      <div className="player-simulator__result-view" aria-live="polite">
+        <p className="eyebrow">Resultado de la simulación</p>
+        <h3>Cotización proyectada</h3>
+        <strong className="player-simulator__result-hero">{formatValue(result?.simulatedQuote)}</strong>
+        <p className={`player-simulator__result-variation ${differenceClass(Number(result?.percentageDifference))}`}>
+          Variación: <strong>{result?.percentageDifference === null ? friendlyDifferenceReason(result?.percentageDifferenceUnavailableReason) : `${formatSigned(result?.percentageDifference)} %`}</strong>
+        </p>
+
+        <div className="player-simulator__result-grid">
+          <span>Cotización actual<strong>{formatValue(result?.currentQuote)}</strong></span>
+          <span>Cotización proyectada<strong>{formatValue(result?.simulatedQuote)}</strong></span>
+          <span className={differenceClass(Number(result?.monetaryDifference))}>Diferencia absoluta<strong>{formatSigned(result?.monetaryDifference)}</strong></span>
+          <span className={differenceClass(Number(result?.percentageDifference))}>Diferencia porcentual<strong>{result?.percentageDifference === null ? friendlyDifferenceReason(result?.percentageDifferenceUnavailableReason) : `${formatSigned(result?.percentageDifference)} %`}</strong></span>
+        </div>
+
+        <section className="player-simulator__token-impact" aria-label="Impacto económico de los tokens">
+          <h4>Impacto por cantidad de tokens</h4>
+          <div className="player-simulator__result-grid">
+            <span>Cantidad de tokens<strong>{formatValue(tokensNumber)}</strong></span>
+            <span>Valor actual<strong>{actualValue === null ? 'No disponible' : formatValue(actualValue)}</strong></span>
+            <span>Valor proyectado<strong>{projectedValueForTokens === null ? 'No disponible' : formatValue(projectedValueForTokens)}</strong></span>
+            <span className={differenceClass(Number(tokenDifference))}>Ganancia/pérdida potencial<strong>{tokenDifference === null ? 'No disponible' : formatSigned(tokenDifference)}</strong></span>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  function renderForm () {
+    return (
+      <>
+        {error ? <p className="player-simulator__message player-simulator__message--error" role="alert">{error}</p> : null}
+        {blocked ? <div className="player-simulator__message player-simulator__message--warning" role="alert"><strong>No se puede simular todavía.</strong><ul>{config.blockingReasons.map((reason) => <li key={reason}>{friendlyBlockingReason(reason)}</li>)}</ul></div> : null}
+
+        <div className="player-simulator__controls">
+          <div>
+            <label htmlFor="simulator-horizon">Horizonte</label>
+            <select id="simulator-horizon" value={horizon ?? ''} onChange={(event) => setHorizon(Number(event.target.value))} disabled={submitting}>
+              {(config?.horizons || []).map((option) => <option key={option} value={option}>{option} partidos</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="simulator-tokens">Cantidad de tokens</label>
+            <input id="simulator-tokens" type="number" min="0.01" step="any" value={tokens} onChange={(event) => setTokens(event.target.value)} disabled={submitting} aria-invalid={tokensInvalid} />
+          </div>
+          <div className="player-simulator__facts">
+            <span>Partidos: <strong>{formatValue(config?.currentApps)} → {formatValue(numberValue(config?.currentApps) === null || horizon === null ? null : config.currentApps + horizon)}</strong></span>
+            <span>Minutos: <strong>{formatValue(config?.currentMinutes)} → {formatValue(numberValue(config?.currentMinutes) === null || horizon === null ? null : config.currentMinutes + horizon * 90)}</strong></span>
+          </div>
+        </div>
+
+        <div className="player-simulator__stats" role="table" aria-label="Estadísticas del escenario">
+          <div className="player-simulator__stat-row player-simulator__stat-row--heading" role="row">
+            <strong role="columnheader">Métrica</strong><strong role="columnheader">Actual</strong><strong role="columnheader">Predicción</strong><strong role="columnheader">Proyectado</strong>
+          </div>
+          {editable.map((stat) => {
+            const projected = projectedValue(stat, values[stat.metric])
+            const isAccum = stat.kind === 'ACCUMULATIVE'
+            return (
+              <div className="player-simulator__stat-row" key={stat.metric} role="row">
+                <span role="cell"><strong>{stat.label}</strong><small>{stat.kind}</small></span>
+                <span role="cell">{formatValue(stat.currentValue)}</span>
+                <label role="cell" htmlFor={`simulator-${stat.metric}`}><input id={`simulator-${stat.metric}`} aria-label={`${stat.label} ${isAccum ? 'predicción' : 'valor proyectado'}`} type="number" min={stat.min ?? undefined} max={stat.max ?? undefined} step="any" value={values[stat.metric] ?? ''} onChange={(event) => setValues((current) => ({ ...current, [stat.metric]: event.target.value }))} disabled={submitting} /></label>
+                <span role="cell">{formatValue(projected)}</span>
+              </div>
+            )
+          })}
+        </div>
+
+        <footer className="player-simulator__actions"><button className="button button--secondary" type="button" onClick={resetScenario} disabled={submitting}>Restablecer</button><button className="button button--primary" type="button" onClick={() => { void submit() }} disabled={submitting || blocked || horizon === null || tokensInvalid}>{submitting ? 'Calculando…' : 'Simular'}</button></footer>
+      </>
+    )
+  }
+
   if (status === 'loading') {
     return <div className="player-simulator__backdrop"><section className="player-simulator" role="dialog" aria-modal="true" aria-labelledby="simulator-title"><MaradonaLoader /></section></div>
   }
@@ -156,41 +264,9 @@ export default function PlayerValuationSimulator ({ playerId, jwt, onClose }) {
           <button className="player-simulator__close" type="button" onClick={onClose} aria-label="Cerrar simulador">×</button>
         </header>
 
-        {error ? <p className="player-simulator__message player-simulator__message--error" role="alert">{error}</p> : null}
-        {blocked ? <div className="player-simulator__message player-simulator__message--warning" role="alert"><strong>No se puede simular todavía.</strong><ul>{config.blockingReasons.map((reason) => <li key={reason}>{friendlyBlockingReason(reason)}</li>)}</ul></div> : null}
-
-        <div className="player-simulator__controls">
-          <label htmlFor="simulator-horizon">Horizonte</label>
-          <select id="simulator-horizon" value={horizon ?? ''} onChange={(event) => setHorizon(Number(event.target.value))} disabled={submitting}>
-            {(config?.horizons || []).map((option) => <option key={option} value={option}>{option} partidos</option>)}
-          </select>
-          <div className="player-simulator__facts">
-            <span>Partidos: <strong>{formatValue(config?.currentApps)} → {formatValue(numberValue(config?.currentApps) === null || horizon === null ? null : config.currentApps + horizon)}</strong></span>
-            <span>Minutos: <strong>{formatValue(config?.currentMinutes)} → {formatValue(numberValue(config?.currentMinutes) === null || horizon === null ? null : config.currentMinutes + horizon * 90)}</strong></span>
-          </div>
-        </div>
-
-        <div className="player-simulator__stats" aria-label="Estadísticas del escenario">
-          {editable.map((stat) => {
-            const projected = projectedValue(stat, values[stat.metric])
-            const isAccum = stat.kind === 'ACCUMULATIVE'
-            return (
-              <div className="player-simulator__stat" key={stat.metric}>
-                <div className="player-simulator__stat-heading"><strong>{stat.label}</strong><span>{stat.kind}</span></div>
-                <div className="player-simulator__stat-values">
-                  <span><small>Actual</small>{formatValue(stat.currentValue)}</span>
-                  <label><small>{isAccum ? 'Predicción' : 'Proyectado'}</small><input aria-label={`${stat.label} ${isAccum ? 'predicción' : 'valor proyectado'}`} type="number" min={stat.min ?? undefined} max={stat.max ?? undefined} step="any" value={values[stat.metric] ?? ''} onChange={(event) => setValues((current) => ({ ...current, [stat.metric]: event.target.value }))} disabled={submitting} /></label>
-                  <span><small>Proyectado</small>{formatValue(projected)}</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {submitting ? <MaradonaLoader /> : null}
-        {result ? <section className="player-simulator__result" aria-live="polite"><h3>Resultado</h3><div className="player-simulator__result-grid"><span>Cotización actual<strong>{formatValue(result.currentQuote)}</strong></span><span>Cotización simulada<strong>{formatValue(result.simulatedQuote)}</strong></span><span className={differenceClass(Number(result.monetaryDifference))}>Diferencia monetaria<strong>{formatValue(result.monetaryDifference)}</strong></span><span className={differenceClass(Number(result.percentageDifference))}>Diferencia porcentual<strong>{result.percentageDifference === null ? friendlyDifferenceReason(result.percentageDifferenceUnavailableReason) : `${formatValue(result.percentageDifference)} %`}</strong></span></div></section> : null}
-
-        <footer className="player-simulator__actions"><button className="button button--secondary" type="button" onClick={resetScenario} disabled={submitting}>Restablecer</button><button className="button button--primary" type="button" onClick={() => { void submit() }} disabled={submitting || blocked || horizon === null}>{submitting ? 'Calculando…' : 'Simular'}</button></footer>
+        {result ? renderResult() : renderForm()}
+        {result ? <footer className="player-simulator__actions"><button className="button button--secondary" type="button" onClick={resetScenario}>Restablecer</button><button className="button button--secondary" type="button" onClick={() => { setResult(null); setError('') }}>Modificar escenario</button><button className="button button--primary" type="button" onClick={onClose}>Cerrar</button></footer> : null}
+        {submitting ? renderLoader() : null}
       </section>
     </div>
   )

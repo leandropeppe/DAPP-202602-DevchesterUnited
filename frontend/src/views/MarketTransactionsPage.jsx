@@ -160,7 +160,37 @@ export default function MarketTransactionsPage () {
       </form>
       {transactions.length === 0
         ? <output className="empty-state">No hay transacciones confirmadas para estos filtros.</output>
-        : <div className="market-transactions-list">{transactions.map((transaction) => <article className="card market-transaction-card" data-player-id={transaction.player_id} key={transaction.transaction_id}><div><strong>{operationLabel(transaction.operation_type)}</strong><span>{transactionDate(transaction.confirmed_at)}</span></div><p className="market-transaction-card__snapshot">{transactionPlayerName(transaction)}</p><dl><div><dt>Cantidad</dt><dd>{transaction.quantity}</dd></div><div><dt>Precio unitario</dt><dd>{amount(transaction.unit_price)}</dd></div><div><dt>Total</dt><dd>{amount(transaction.total_amount)}</dd></div><div><dt>Versión cotización</dt><dd>{transaction.quote_version}</dd></div><div><dt>P/L realizada</dt><dd>{amount(transaction.realized_pnl)}</dd></div></dl></article>)}</div>}
+        : <div className="market-transactions-list">{transactions.map((transaction) => <article
+              className={`card market-transaction-card ${
+                  transaction.operation_type === 'PURCHASE'
+                      ? 'market-transaction-card--purchase'
+                      : transaction.operation_type === 'SALE'
+                          ? 'market-transaction-card--sale'
+                          : ''
+              }`}
+              data-player-id={transaction.player_id}
+              key={transaction.transaction_id}
+          >
+            <div>
+              <strong>{operationLabel(transaction.operation_type)}</strong><span>{transactionDate(transaction.confirmed_at)}</span>
+            </div>
+            <p className="market-transaction-card__snapshot">{transactionPlayerName(transaction)}</p>
+            <dl>
+              <div>
+                <dt>Cantidad</dt>
+                <dd>{transaction.quantity}</dd>
+              </div>
+              <div>
+                <dt>Precio unitario</dt>
+                <dd>{amount(transaction.unit_price)}</dd>
+              </div>
+              <div>
+                <dt>Total</dt>
+                <dd>{amount(transaction.total_amount)}</dd>
+              </div>
+              <div>
+                <dt>Versión cotización</dt>
+                <dd>{transaction.quote_version}</dd></div><div><dt>P/L realizada</dt><dd>{amount(transaction.realized_pnl)}</dd></div></dl></article>)}</div>}
       <MarketTransactionActivityChart jwt={session.jwt} filters={appliedFilters} initialResult={result} />
       <nav className="pagination" aria-label="Paginación del historial"><button className="button button--secondary" type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1}>Anterior</button><span className="pagination__label">Página {pagination.current_page || page} de {pagination.total_pages || 0}</span><button className="button button--secondary" type="button" onClick={() => setPage((current) => current + 1)} disabled={!pagination.total_pages || page >= pagination.total_pages}>Siguiente</button></nav>
     </section>

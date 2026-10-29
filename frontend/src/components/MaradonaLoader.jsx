@@ -1,20 +1,30 @@
-export const MIN_LOADING_MS = 2000
+import '../styles/maradona-loader.css';
 
-export function remainingLoadingTime (startedAt, now = Date.now()) {
-  return Math.max(0, MIN_LOADING_MS - (now - startedAt))
+function MaradonaLoader() {
+    return (
+        <div
+            className="football-valuation-loader"
+            role="status"
+            aria-live="polite"
+        >
+            <div
+                className="football-valuation-loader__sprite"
+                aria-hidden="true"
+            />
+
+            <h3 className="football-valuation-loader__title">
+                Calculando cotización...
+            </h3>
+
+            <p className="football-valuation-loader__description">
+                Aplicando estadísticas simuladas y estrategia de valorización.
+            </p>
+        </div>
+    );
 }
 
-export default function MaradonaLoader () {
-  return (
-    <div className="maradona-loader" role="status" aria-live="polite">
-      <img
-        className="maradona-loader__image"
-        src="/images/maradona-loader.png"
-        alt=""
-        aria-hidden="true"
-        onError={(event) => { event.currentTarget.hidden = true }}
-      />
-      <span>Calculando simulación…</span>
-    </div>
-  )
+export function remainingLoadingTime(elapsedMs, minimumMs = 10000) {
+    return Math.max(0, minimumMs - elapsedMs);
 }
+
+export default MaradonaLoader;

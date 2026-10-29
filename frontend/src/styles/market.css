@@ -286,6 +286,17 @@
 .market-summary-card strong { color: #111827; font-size: 1.25rem; }
 .market-positions-list, .market-transactions-list { display: grid; gap: 16px; }
 .market-position-card, .market-transaction-card { display: grid; gap: 16px; padding: 22px; }
+.market-transaction-card--purchase {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    border-left: 4px solid #86efac;
+}
+
+.market-transaction-card--sale {
+    background: #fff1f2;
+    border-color: #fecdd3;
+    border-left: 4px solid #fda4af;
+}
 .market-position-card > div:first-child, .market-transaction-card > div:first-child { display: flex; justify-content: space-between; gap: 12px; }
 .market-position-card h2 { margin: 0; font-size: 1.05rem; }
 .market-transaction-card__snapshot { margin: -8px 0 0; color: #6b7280; }
