@@ -26,11 +26,43 @@ test('abre el simulador, recalcula cinco veces y restablece', async ({ page }) =
   await page.getByRole('button', { name: 'Simular cotización' }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   for (let index = 0; index < 5; index += 1) {
-    await page.getByRole('button', { name: index === 0 ? 'Simular' : 'Simular' }).click()
-    await expect(page.getByText('Cotización simulada')).toBeVisible()
+    await page
+        .getByRole('button', {
+          name: 'Simular',
+          exact: true
+        })
+        .click()
+
+    await expect(
+        page.getByRole('heading', {
+          name: 'Cotización proyectada'
+        })
+    ).toBeVisible()
+
+    if (index < 4) {
+      await page
+          .getByRole('button', {
+            name: 'Modificar escenario'
+          })
+          .click()
+
+      await expect(
+          page.getByRole('button', {
+            name: 'Simular',
+            exact: true
+          })
+      ).toBeVisible()
+    }
   }
-  await page.getByRole('button', { name: 'Restablecer' }).click()
-  await expect(page.getByLabel('Goles predicción')).toHaveValue('0')
+  await page
+      .getByRole('button', {
+        name: 'Restablecer'
+      })
+      .click()
+
+  await expect(
+      page.getByLabel('Goles predicción')
+  ).toHaveValue('0')
   await page.getByRole('button', { name: 'Cerrar simulador' }).click()
   await expect(page.getByRole('heading', { name: 'Jugador Uno', level: 1 })).toBeVisible()
 })
