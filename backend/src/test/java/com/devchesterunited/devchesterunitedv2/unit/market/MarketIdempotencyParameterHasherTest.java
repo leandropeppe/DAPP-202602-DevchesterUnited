@@ -32,8 +32,8 @@ class MarketIdempotencyParameterHasherTest {
 
     @Test
     void rechazaParametrosNoPositivos() {
-        assertThatThrownBy(() -> MarketIdempotencyParameterHasher.hash(
-                request("PURCHASE", 0L, 1L)))
+        var invalidRequest = request("PURCHASE", 0L, 1L);
+        assertThatThrownBy(() -> MarketIdempotencyParameterHasher.hash(invalidRequest))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

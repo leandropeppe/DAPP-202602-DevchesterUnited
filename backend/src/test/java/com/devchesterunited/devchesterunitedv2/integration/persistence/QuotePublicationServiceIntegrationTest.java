@@ -86,11 +86,13 @@ class QuotePublicationServiceIntegrationTest extends PostgresTestSupport {
     void versionesPersistidasSonInmutables() {
         fixture();
         var initial = quotes.publishInitialQuote(playerId, new BigDecimal("1.00"), true);
+        UUID quoteId = initial.quoteId();
+        Long version = initial.version();
 
         assertThatThrownBy(() -> jdbc.update(
                 "UPDATE market_quote_versions SET price_per_token = 2.00 "
                         + "WHERE quote_id = ? AND version = ?",
-                initial.quoteId(), initial.version()))
+                quoteId, version))
                 .isInstanceOf(DataAccessException.class);
         assertThat(jdbc.queryForObject(
                 "SELECT price_per_token FROM market_quote_versions "
@@ -187,9 +189,10 @@ class QuotePublicationServiceIntegrationTest extends PostgresTestSupport {
         var initial = quotes.publishInitialQuote(playerId, new BigDecimal("1.00"), true);
         var replacement = quotes.publish(new QuotePublicationRequest(
                 playerId, new BigDecimal("1.50"), NOW, NOW, null, "valuation-v2"));
+        var staleRequest = new QuoteInvalidationRequest(
+                playerId, initial.quoteId(), initial.version(), "obsolete");
 
-        assertThatThrownBy(() -> quotes.invalidate(new QuoteInvalidationRequest(
-                playerId, initial.quoteId(), initial.version(), "obsolete")))
+        assertThatThrownBy(() -> quotes.invalidate(staleRequest))
                 .isInstanceOf(TokenMarketException.class);
         assertThat(jdbc.queryForObject(
                 "SELECT current_version FROM market_quote_headers WHERE player_id = ?",

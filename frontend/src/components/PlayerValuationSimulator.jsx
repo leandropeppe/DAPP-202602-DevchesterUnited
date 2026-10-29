@@ -274,12 +274,12 @@ export default function PlayerValuationSimulator ({ playerId, jwt, onClose }) {
   }
 
   if (status === 'loading') {
-    return <div className="player-simulator__backdrop"><section className="player-simulator" role="dialog" aria-modal="true" aria-labelledby="simulator-title"><MaradonaLoader /></section></div>
+    return <div className="player-simulator__backdrop"><dialog open className="player-simulator" aria-modal="true" aria-labelledby="simulator-title"><MaradonaLoader /></dialog></div>
   }
 
   return (
     <div className="player-simulator__backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-      <section className="player-simulator" role="dialog" aria-modal="true" aria-labelledby="simulator-title">
+      <dialog open className="player-simulator" aria-modal="true" aria-labelledby="simulator-title">
         <header className="player-simulator__header">
           <div>
             <p className="eyebrow">Simulador</p>
@@ -292,7 +292,7 @@ export default function PlayerValuationSimulator ({ playerId, jwt, onClose }) {
         {result ? renderResult() : renderForm()}
         {result ? <footer className="player-simulator__actions"><button className="button button--secondary" type="button" onClick={resetScenario}>Restablecer</button><button className="button button--secondary" type="button" onClick={() => { setResult(null); setError('') }}>Modificar escenario</button><button className="button button--primary" type="button" onClick={onClose}>Cerrar</button></footer> : null}
         {submitting ? renderLoader() : null}
-      </section>
+      </dialog>
     </div>
   )
 }

@@ -40,6 +40,32 @@ function newIdempotencyKey () {
 
 const MAX_MARKET_QUANTITY = 100
 
+function operationQuantityLimit (isSale, maxQuantity) {
+  const normalizedMax = Math.max(0, Number(maxQuantity) || 0)
+  return isSale
+    ? normalizedMax
+    : Math.min(MAX_MARKET_QUANTITY, normalizedMax)
+}
+
+function operationConfirmationStatus (status, result) {
+  if (status === 'loading') return 'loading'
+  if (status === 'success' && result?.status === 'CONFIRMED') return 'success'
+  return 'idle'
+}
+
+function hasInsufficientBalance (isSale, availableBalance, estimatedTotal) {
+  if (isSale || availableBalance === null || availableBalance === undefined) {
+    return false
+  }
+
+  const balance = Number(availableBalance)
+  return Number.isFinite(balance) && estimatedTotal > balance
+}
+
+function operationLabelForType (type) {
+  return type === 'PURCHASE' ? 'Compra' : 'Venta'
+}
+
 function quantityValidationMessage (
     value,
     maxQuantity = MAX_MARKET_QUANTITY
@@ -128,6 +154,110 @@ function handleIncompleteOperation (
 
   setResult(error.incompleteData)
   setNeedsRecovery(true)
+}
+
+async function executeMarketOperation ({
+  operationInFlight,
+  setState,
+  playerId,
+  quantityNumber,
+  player,
+  type,
+  idempotencyKey,
+  setResult,
+  setNeedsRecovery,
+  setShowPurchaseConfirmation,
+  successTimer,
+  jwt,
+  modalOnly,
+  onClose,
+  notifyConfirmed
+}) {
+  if (operationInFlight.current) {
+    return
+  }
+
+  operationInFlight.current = true
+  setState({ status: 'loading', message: '' })
+
+  const body = {
+    player_id: playerId,
+    quantity: quantityNumber,
+    quote_id: player.quote_id,
+    quote_version: player.quote_version
+  }
+
+  try {
+    const response = type === 'PURCHASE'
+      ? await purchaseMarketTokens({ body, idempotencyKey, jwt })
+      : await sellMarketTokens({ body, idempotencyKey, jwt })
+    const operation = operationResponse(response)
+    setResult(operation)
+    setNeedsRecovery(!['CONFIRMED', 'REJECTED'].includes(operation.status))
+    setState({ status: 'success', message: '' })
+
+    if (operation.status === 'CONFIRMED') {
+      setShowPurchaseConfirmation(true)
+      successTimer.current = setTimeout(() => {
+        notifyConfirmed(operation)
+        setShowPurchaseConfirmation(false)
+        if (modalOnly) onClose?.()
+        successTimer.current = null
+      }, 2000)
+    }
+  } catch (error) {
+    handleIncompleteOperation(error, setResult, setNeedsRecovery)
+    setState({ status: 'error', message: errorMessage(error) })
+  } finally {
+    operationInFlight.current = false
+  }
+}
+
+async function recoverMarketOperation ({
+  idempotencyKey,
+  jwt,
+  setState,
+  setResult,
+  setNeedsRecovery,
+  notifyConfirmed
+}) {
+  setState({ status: 'loading', message: '' })
+
+  try {
+    const operation = operationLookupResponse(
+      await getMarketOperation(idempotencyKey, jwt)
+    )
+    setResult((current) => ({ ...current, ...operation }))
+    setNeedsRecovery(
+      operation.status === 'PROCESSING' ||
+      operation.status === 'UNCERTAIN' ||
+      !['CONFIRMED', 'REJECTED'].includes(operation.status)
+    )
+    notifyConfirmed(operation)
+    setState({ status: 'success', message: '' })
+  } catch (error) {
+    setState({ status: 'error', message: errorMessage(error) })
+  }
+}
+
+function submitMarketOperation (event, {
+  quantityValid,
+  quantityError,
+  canOperate,
+  embedded,
+  confirmed,
+  setState,
+  setShowPurchaseConfirmation,
+  executeOperation
+}) {
+  event.preventDefault()
+
+  if (!quantityValid) {
+    return setState({ status: 'error', message: quantityError })
+  }
+  if (!canOperate) return
+  if (embedded) return setShowPurchaseConfirmation(true)
+  if (confirmed) void executeOperation()
 }
 
 function QuantityControl ({
@@ -546,15 +676,10 @@ function SaleConfirmationView ({
                                  onCancel,
                                  onConfirm
                                }) {
-  const confirmationStatus =
-      state.status === 'loading'
-          ? 'loading'
-          : (
-              state.status === 'success' &&
-              result?.status === 'CONFIRMED'
-          )
-              ? 'success'
-              : 'idle'
+  const confirmationStatus = operationConfirmationStatus(
+      state.status,
+      result
+  )
 
   const confirmLabel =
       state.status === 'loading'
@@ -713,32 +838,20 @@ export default function MarketOperationPanel ({
   const isSale =
       type === 'SALE'
 
-  const confirmationStatus =
-      state.status === 'loading'
-          ? 'loading'
-          : (
-              state.status === 'success' &&
-              result?.status === 'CONFIRMED'
-          )
-              ? 'success'
-              : 'idle'
+  let confirmationStatus = 'idle'
+  if (state.status === 'loading') {
+    confirmationStatus = 'loading'
+  } else if (state.status === 'success' && result?.status === 'CONFIRMED') {
+    confirmationStatus = 'success'
+  }
 
   const quantityNumber =
       Number(quantity)
 
-  const quantityLimit =
-      isSale
-          ? Math.max(
-              0,
-              Number(maxQuantity) || 0
-          )
-          : Math.min(
-              MAX_MARKET_QUANTITY,
-              Math.max(
-                  0,
-                  Number(maxQuantity) || 0
-              )
-          )
+  const quantityLimit = operationQuantityLimit(
+      isSale,
+      maxQuantity
+  )
 
   const quantityError =
       quantityValidationMessage(
@@ -754,20 +867,13 @@ export default function MarketOperationPanel ({
           player.price_per_token
       ) * quantityNumber
 
-  const operationLabel =
-      type === 'PURCHASE'
-          ? 'Compra'
-          : 'Venta'
+  const operationLabel = operationLabelForType(type)
 
-  const balanceInsufficient =
-      !isSale &&
-      availableBalance !== null &&
-      availableBalance !== undefined &&
-      Number.isFinite(
-          Number(availableBalance)
-      ) &&
-      estimatedTotal >
-      Number(availableBalance)
+  const balanceInsufficient = hasInsufficientBalance(
+      isSale,
+      availableBalance,
+      estimatedTotal
+  )
 
   function notifyConfirmed (operation) {
     if (
@@ -781,163 +887,47 @@ export default function MarketOperationPanel ({
   }
 
   async function executeOperation () {
-    if (operationInFlight.current) {
-      return
-    }
-
-    operationInFlight.current = true
-
-    setState({
-      status: 'loading',
-      message: ''
+    return executeMarketOperation({
+      operationInFlight,
+      setState,
+      playerId,
+      quantityNumber,
+      player,
+      type,
+      idempotencyKey,
+      setResult,
+      setNeedsRecovery,
+      setShowPurchaseConfirmation,
+      successTimer,
+      jwt,
+      modalOnly,
+      onClose,
+      notifyConfirmed
     })
-
-    const body = {
-      player_id: playerId,
-      quantity: quantityNumber,
-      quote_id: player.quote_id,
-      quote_version: player.quote_version
-    }
-
-    try {
-      const response =
-          type === 'PURCHASE'
-              ? await purchaseMarketTokens({
-                body,
-                idempotencyKey,
-                jwt
-              })
-              : await sellMarketTokens({
-                body,
-                idempotencyKey,
-                jwt
-              })
-
-      const operation =
-          operationResponse(response)
-
-      setResult(operation)
-
-      setNeedsRecovery(
-          ![
-            'CONFIRMED',
-            'REJECTED'
-          ].includes(
-              operation.status
-          )
-      )
-
-      setState({
-        status: 'success',
-        message: ''
-      })
-
-      if (
-          operation.status === 'CONFIRMED'
-      ) {
-        setShowPurchaseConfirmation(true)
-
-        successTimer.current =
-            setTimeout(() => {
-              notifyConfirmed(operation)
-
-              setShowPurchaseConfirmation(
-                  false
-              )
-
-              if (modalOnly) {
-                onClose?.()
-              }
-
-              successTimer.current =
-                  null
-            }, 2000)
-      }
-    } catch (error) {
-      handleIncompleteOperation(
-          error,
-          setResult,
-          setNeedsRecovery
-      )
-
-      setState({
-        status: 'error',
-        message: errorMessage(error)
-      })
-    } finally {
-      operationInFlight.current =
-          false
-    }
   }
 
   function submit (event) {
-    event.preventDefault()
-
-    if (!quantityValid) {
-      return setState({
-        status: 'error',
-        message: quantityError
-      })
-    }
-
-    if (!canOperate) {
-      return
-    }
-
-    if (embedded) {
-      return setShowPurchaseConfirmation(
-          true
-      )
-    }
-
-    if (confirmed) {
-      void executeOperation()
-    }
+    return submitMarketOperation(event, {
+      quantityValid,
+      quantityError,
+      canOperate,
+      embedded,
+      confirmed,
+      setState,
+      setShowPurchaseConfirmation,
+      executeOperation
+    })
   }
 
   async function recover () {
-    setState({
-      status: 'loading',
-      message: ''
+    return recoverMarketOperation({
+      idempotencyKey,
+      jwt,
+      setState,
+      setResult,
+      setNeedsRecovery,
+      notifyConfirmed
     })
-
-    try {
-      const operation =
-          operationLookupResponse(
-              await getMarketOperation(
-                  idempotencyKey,
-                  jwt
-              )
-          )
-
-      setResult(current => ({
-        ...current,
-        ...operation
-      }))
-
-      setNeedsRecovery(
-          operation.status === 'PROCESSING' ||
-          operation.status === 'UNCERTAIN' ||
-          ![
-            'CONFIRMED',
-            'REJECTED'
-          ].includes(
-              operation.status
-          )
-      )
-
-      notifyConfirmed(operation)
-
-      setState({
-        status: 'success',
-        message: ''
-      })
-    } catch (error) {
-      setState({
-        status: 'error',
-        message: errorMessage(error)
-      })
-    }
   }
 
   function handleQuantityChange (value) {

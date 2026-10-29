@@ -125,9 +125,9 @@ class MarketRejectionAuditIntegrationTest {
         MarketRejectedAttempt attempt = new MarketRejectedAttempt(usuarioId, "PURCHASE", null,
                 sha256Like("rollback-key"), "INSUFFICIENT_BALANCE",
                 sha256Like("rollback-parameters"), createdAt);
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
 
-        assertThatThrownBy(() -> new TransactionTemplate(transactionManager)
-                .executeWithoutResult(status -> {
+        assertThatThrownBy(() -> transactionTemplate.executeWithoutResult(status -> {
                     auditService.registrar(attempt);
                     status.setRollbackOnly();
                     throw new IllegalStateException("rollback de operación principal");

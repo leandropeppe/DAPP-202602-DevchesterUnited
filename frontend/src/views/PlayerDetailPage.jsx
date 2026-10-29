@@ -80,6 +80,80 @@ const FAMILIES = {
   ]
 }
 
+async function loadMarketDataForPlayer (session, playerId, setMarketData) {
+  if (!session?.jwt || session.isJwtExpired) {
+    setMarketData((current) => ({ ...current, status: 'auth-required' }))
+    return
+  }
+
+  setMarketData((current) => ({ ...current, status: 'loading', message: '' }))
+  const marketId = marketPlayerUuid(playerId)
+  const [balanceResult, playerResult, portfolioResult] = await Promise.allSettled([
+    getMarketBalance(session.jwt),
+    getMarketPlayer(marketId, session.jwt),
+    getMarketPortfolio(session.jwt)
+  ])
+  const marketPlayer = playerResult.status === 'fulfilled'
+    ? playerResult.value?.data ?? null
+    : null
+  const positions = portfolioResult.status === 'fulfilled' && Array.isArray(portfolioResult.value?.data?.open_positions)
+    ? portfolioResult.value.data.open_positions
+    : []
+  const position = positions.find((candidate) => marketPlayerUuid(candidate.player_id) === marketId)
+  const failed = [balanceResult, playerResult, portfolioResult].filter((result) => result.status === 'rejected')
+  setMarketData({
+    status: failed.length === 3 ? 'error' : 'success',
+    player: marketPlayer,
+    balance: balanceResult.status === 'fulfilled' ? balanceResult.value?.data?.balance ?? null : null,
+    holdings: position?.quantity ?? 0,
+    message: failed[0]?.reason ? errorMessage(failed[0].reason) : ''
+  })
+}
+
+async function loadPlayerDetail (playerId, setState, setPlayer, isActive) {
+  setState({ status: 'loading', message: '' })
+
+  try {
+    const response = await getPlayerDetail(playerId)
+    if (!isActive()) return
+    setPlayer(response?.data || null)
+    setState({ status: 'success', message: '' })
+  } catch (error) {
+    if (isActive()) {
+      setState({ status: 'error', message: errorMessage(error) })
+    }
+  }
+}
+
+async function loadPlayerValuationHistory (playerId, setValuationHistory) {
+  setValuationHistory((current) => ({
+    ...current,
+    status: 'loading',
+    message: ''
+  }))
+
+  try {
+    const response = await getPlayerValuationHistory(playerId, {
+      page: 1,
+      limit: 30
+    })
+    const data = response?.data
+    setValuationHistory({
+      status: 'success',
+      items: Array.isArray(data?.items) ? data.items : [],
+      total: Number(data?.total) || 0,
+      message: ''
+    })
+  } catch (error) {
+    setValuationHistory({
+      status: 'error',
+      items: [],
+      total: 0,
+      message: errorMessage(error)
+    })
+  }
+}
+
 const ALIASES = {
   minsPlayed: [
       'minutosJugados',
@@ -694,6 +768,68 @@ function ValuationHistoryFace ({
   )
 }
 
+function playerDetailStatusView ({ state, player, catalogReturn, onBack }) {
+  if (state.status === 'loading') {
+    return (
+        <StatusMessage type="info">
+            Cargando detalle del jugador…
+        </StatusMessage>
+    )
+  }
+
+  if (state.status !== 'error' && player) {
+    return null
+  }
+
+  return (
+      <section className="player-detail old-trafford-fixed">
+          <h1>No se pudo cargar el jugador</h1>
+          <StatusMessage type="error">
+              {state.message || 'Jugador no encontrado.'}
+          </StatusMessage>
+          <a
+              className="button button--secondary player-detail__back"
+              href={catalogReturn}
+              onClick={onBack}
+          >
+              Volver al catálogo
+          </a>
+      </section>
+  )
+}
+
+function openPlayerValuationHistory (
+  setCardFlipped,
+  valuationHistory,
+  loadValuationHistory
+) {
+  setCardFlipped(true)
+  if (valuationHistory.status === 'idle') {
+    void loadValuationHistory()
+  }
+}
+
+function teamLogoNode (teamLogo) {
+  return teamLogo
+    ? <img src={teamLogo} alt="" className="detail-info-card__team-logo" />
+    : <span aria-hidden="true">â—‡</span>
+}
+
+function countryFlagNode (countryCode) {
+  return countryCode
+    ? <img
+        src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
+        alt=""
+        className="detail-info-card__flag"
+      />
+    : <span aria-hidden="true">â—</span>
+}
+
+function valuationDisplay (valuation) {
+  if (valuation === null || valuation === undefined) return '-'
+  return Number(valuation).toLocaleString('es-AR', { maximumFractionDigits: 2 })
+}
+
 export default function PlayerDetailPage ({
                                             playerId,
                                             onNavigate
@@ -741,75 +877,14 @@ export default function PlayerDetailPage ({
   })
   const [simulatorOpen, setSimulatorOpen] = useState(false)
 
-  async function loadMarketData () {
-      if (!session?.jwt || session.isJwtExpired) {
-          setMarketData((current) => ({ ...current, status: 'auth-required' }))
-          return
-      }
-
-      setMarketData((current) => ({ ...current, status: 'loading', message: '' }))
-      const marketId = marketPlayerUuid(playerId)
-      const [balanceResult, playerResult, portfolioResult] = await Promise.allSettled([
-          getMarketBalance(session.jwt),
-          getMarketPlayer(marketId, session.jwt),
-          getMarketPortfolio(session.jwt)
-      ])
-      const marketPlayer = playerResult.status === 'fulfilled'
-          ? playerResult.value?.data ?? null
-          : null
-      const positions = portfolioResult.status === 'fulfilled' && Array.isArray(portfolioResult.value?.data?.open_positions)
-          ? portfolioResult.value.data.open_positions
-          : []
-      const position = positions.find((candidate) => marketPlayerUuid(candidate.player_id) === marketId)
-      const failed = [balanceResult, playerResult, portfolioResult].filter((result) => result.status === 'rejected')
-      setMarketData({
-          status: failed.length === 3 ? 'error' : 'success',
-          player: marketPlayer,
-          balance: balanceResult.status === 'fulfilled' ? balanceResult.value?.data?.balance ?? null : null,
-          holdings: position?.quantity ?? 0,
-          message: failed[0]?.reason ? errorMessage(failed[0].reason) : ''
-      })
+  function loadMarketData () {
+      return loadMarketDataForPlayer(session, playerId, setMarketData)
   }
 
   useEffect(() => {
       let active = true
 
-      async function load () {
-          setState({
-              status: 'loading',
-              message: ''
-          })
-
-          try {
-              const response =
-                  await getPlayerDetail(
-                      playerId
-                  )
-
-              if (!active) {
-                  return
-              }
-
-              setPlayer(
-                  response?.data || null
-              )
-
-              setState({
-                  status: 'success',
-                  message: ''
-              })
-          } catch (error) {
-              if (active) {
-                  setState({
-                      status: 'error',
-                      message:
-                          errorMessage(error)
-                  })
-              }
-          }
-      }
-
-      setCardFlipped(false)
+       setCardFlipped(false)
       setSimulatorOpen(false)
 
       setValuationHistory({
@@ -821,7 +896,12 @@ export default function PlayerDetailPage ({
 
       void loadMarketData()
 
-      void load()
+       void loadPlayerDetail(
+           playerId,
+           setState,
+           setPlayer,
+           () => active
+       )
 
       return () => {
           active = false
@@ -829,57 +909,18 @@ export default function PlayerDetailPage ({
   }, [playerId, session?.jwt, session?.isJwtExpired])
 
   async function loadValuationHistory () {
-      setValuationHistory(
-          (current) => ({
-              ...current,
-              status: 'loading',
-              message: ''
-          })
-      )
-
-      try {
-          const response =
-              await getPlayerValuationHistory(
-                  playerId,
-                  {
-                      page: 1,
-                      limit: 30
-                  }
-              )
-
-          const data =
-              response?.data
-
-          setValuationHistory({
-              status: 'success',
-              items:
-                  Array.isArray(data?.items)
-                      ? data.items
-                      : [],
-              total:
-                  Number(data?.total) || 0,
-              message: ''
-          })
-      } catch (error) {
-          setValuationHistory({
-              status: 'error',
-              items: [],
-              total: 0,
-              message:
-                  errorMessage(error)
-          })
-      }
+       return loadPlayerValuationHistory(
+           playerId,
+           setValuationHistory
+       )
   }
 
   function openValuationHistory () {
-      setCardFlipped(true)
-
-      if (
-          valuationHistory.status ===
-          'idle'
-      ) {
-          void loadValuationHistory()
-      }
+       return openPlayerValuationHistory(
+           setCardFlipped,
+           valuationHistory,
+           loadValuationHistory
+       )
   }
 
   function goBack (event) {
@@ -890,45 +931,15 @@ export default function PlayerDetailPage ({
 
   const catalogReturn = catalogReturnPath()
 
-  if (
-      state.status ===
-      'loading'
-  ) {
-      return (
-          <StatusMessage type="info">
-              Cargando detalle del jugador…
-          </StatusMessage>
-      )
-  }
+  const statusView = playerDetailStatusView({
+    state,
+    player,
+    catalogReturn,
+    onBack: goBack
+  })
 
-  if (
-      state.status === 'error' ||
-      !player
-  ) {
-      return (
-          <section className="player-detail old-trafford-fixed">
-
-              <h1>
-                  No se pudo cargar el jugador
-              </h1>
-
-              <StatusMessage type="error">
-                  {
-                      state.message ||
-                      'Jugador no encontrado.'
-                  }
-              </StatusMessage>
-
-              <a
-                  className="button button--secondary player-detail__back"
-                  href={catalogReturn}
-                  onClick={goBack}
-              >
-                  Volver al catálogo
-              </a>
-
-          </section>
-      )
+  if (statusView) {
+    return statusView
   }
 
   const statistics =
@@ -1141,21 +1152,7 @@ export default function PlayerDetailPage ({
                 </span>
 
                                   <strong>
-                                      {
-                                          player.valuation ===
-                                          null ||
-                                          player.valuation ===
-                                          undefined
-                                              ? '-'
-                                              : Number(
-                                                  player.valuation
-                                              ).toLocaleString(
-                                                  'es-AR',
-                                                  {
-                                                      maximumFractionDigits: 2
-                                                  }
-                                              )
-                                      }
+                                      {valuationDisplay(player.valuation)}
                                   </strong>
 
                               </div>

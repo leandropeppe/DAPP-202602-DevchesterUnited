@@ -2,8 +2,6 @@ package com.devchesterunited.devchesterunitedv2.service.impl.simulacion;
 
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.EstadisticasProyectadas;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ResultadoSimulacion;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ConfiguracionElegibilidad;
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.JugadorEstadistico;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MotorValorizacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ResultadoValorizacion;

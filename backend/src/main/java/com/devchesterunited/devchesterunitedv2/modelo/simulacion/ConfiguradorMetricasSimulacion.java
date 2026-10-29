@@ -6,7 +6,6 @@ import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MetricaValori
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.EstadisticaSimulacionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.TipoMetricaSimulacionDTO;
 
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -29,9 +28,8 @@ public final class ConfiguradorMetricasSimulacion {
 
     public List<EstadisticaSimulacionDTO> configurar(String posicion,
             EstrategiaValorizacion estrategia, MetricasEstadisticasJugador actuales) {
-        Set<MetricaValorizacion> whitelist = EDITABLES.getOrDefault(posicion, Set.of());
         return java.util.Arrays.stream(MetricaValorizacion.values())
-                .map(metrica -> definir(metrica, posicion, whitelist, estrategia, actuales))
+                .map(metrica -> definir(metrica, posicion, estrategia, actuales))
                 .toList();
     }
 
@@ -50,7 +48,7 @@ public final class ConfiguradorMetricasSimulacion {
     }
 
     private EstadisticaSimulacionDTO definir(MetricaValorizacion metrica, String posicion,
-            Set<MetricaValorizacion> whitelist, EstrategiaValorizacion estrategia,
+            EstrategiaValorizacion estrategia,
             MetricasEstadisticasJugador actuales) {
         CatalogoMetricaSimulacion.Definicion definicion = CatalogoMetricaSimulacion.definir(metrica);
         var value = actuales == null ? null : metrica.extraer(actuales);

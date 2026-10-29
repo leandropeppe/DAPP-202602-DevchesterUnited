@@ -19,7 +19,7 @@ export default function MarketConfirmationModal ({
   return createPortal(
     (
       <div className={`market-purchase-confirmation${variantClass}`}>
-        <div className="market-purchase-confirmation__dialog" role="dialog" aria-modal="true"
+        <dialog open className="market-purchase-confirmation__dialog" aria-modal="true"
              aria-labelledby="market-confirmation-title">
           {status === 'success'
               ? (
@@ -52,7 +52,7 @@ export default function MarketConfirmationModal ({
                     </div>
                   </>
               )}
-        </div>
+        </dialog>
       </div>
     ),
     document.body

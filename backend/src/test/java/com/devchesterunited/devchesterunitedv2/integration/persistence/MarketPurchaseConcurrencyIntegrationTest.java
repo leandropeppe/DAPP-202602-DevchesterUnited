@@ -254,8 +254,8 @@ class MarketPurchaseConcurrencyIntegrationTest extends PostgresTestSupport {
     private Fixture fixture(int users, BigDecimal balance, long inventory) {
         UUID playerId = UUID.randomUUID();
         UUID quoteId = UUID.randomUUID();
-        UUID userOne = createUser("one", balance);
-        UUID userTwo = users == 2 ? createUser("two", balance) : userOne;
+        UUID userOne = createUser("one");
+        UUID userTwo = users == 2 ? createUser("two") : userOne;
         CounterpartyFixture counterparty = findOrCreateSuperuser();
         MarketStateSnapshot previousState = marketState();
         UUID teamId = jdbc.queryForObject("SELECT id FROM equipos ORDER BY id LIMIT 1", UUID.class);
@@ -294,7 +294,7 @@ class MarketPurchaseConcurrencyIntegrationTest extends PostgresTestSupport {
         return fixture;
     }
 
-    private UUID createUser(String suffix, BigDecimal balance) {
+    private UUID createUser(String suffix) {
         UUID userId = UUID.randomUUID();
         jdbc.update("INSERT INTO usuarios (id, username, email, password_hash, created_at, updated_at) "
                 + "VALUES (?, ?, ?, ?, ?, ?)", userId,

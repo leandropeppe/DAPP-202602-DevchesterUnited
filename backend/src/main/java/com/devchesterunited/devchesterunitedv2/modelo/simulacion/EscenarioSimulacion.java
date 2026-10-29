@@ -26,8 +26,7 @@ public record EscenarioSimulacion(UUID jugadorId, int horizontePartidos,
         modificaciones = Map.copyOf(copia);
     }
 
-    public static EscenarioSimulacion conModificacionNoTipada(UUID jugadorId, int horizonte,
-            String metrica, BigDecimal valor) {
+    public static EscenarioSimulacion conModificacionNoTipada(String metrica) {
         if ("apps".equals(metrica) || "minsPlayed".equals(metrica)) {
             throw new MetricaNoEditableException(metrica);
         }

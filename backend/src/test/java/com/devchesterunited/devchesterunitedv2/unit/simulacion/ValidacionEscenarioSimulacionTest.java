@@ -20,8 +20,10 @@ class ValidacionEscenarioSimulacionTest {
         for (int horizonte : new int[] { 3, 5, 8, 10 }) {
             new EscenarioSimulacion(UUID.randomUUID(), horizonte, Map.of());
         }
+        UUID playerId = UUID.randomUUID();
+        Map<MetricaValorizacion, BigDecimal> modificaciones = Map.of();
         ExcepcionSimulacion error = assertThrows(ExcepcionSimulacion.class,
-                () -> new EscenarioSimulacion(UUID.randomUUID(), 4, Map.of()));
+                () -> new EscenarioSimulacion(playerId, 4, modificaciones));
         assertEquals(CodigoErrorSimulacion.HORIZONTE_INVALIDO, error.codigo());
     }
 
@@ -37,8 +39,9 @@ class ValidacionEscenarioSimulacionTest {
 
     private static void assertCodigo(Map<MetricaValorizacion, BigDecimal> modificaciones,
             CodigoErrorSimulacion codigo) {
+        UUID playerId = UUID.randomUUID();
         ExcepcionSimulacion error = assertThrows(ExcepcionSimulacion.class,
-                () -> new EscenarioSimulacion(UUID.randomUUID(), 5, modificaciones));
+                () -> new EscenarioSimulacion(playerId, 5, modificaciones));
         assertEquals(codigo, error.codigo());
     }
 }

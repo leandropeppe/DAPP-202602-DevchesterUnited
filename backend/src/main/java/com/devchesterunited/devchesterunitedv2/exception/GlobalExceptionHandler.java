@@ -2,7 +2,6 @@ package com.devchesterunited.devchesterunitedv2.exception;
 
 import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
-import com.devchesterunited.devchesterunitedv2.modelo.simulacion.CodigoErrorSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ExcepcionSimulacion;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.ConcurrencyFailureException;

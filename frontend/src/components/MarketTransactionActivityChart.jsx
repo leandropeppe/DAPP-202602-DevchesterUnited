@@ -52,6 +52,12 @@ function formatQuantity (value) {
 export default function MarketTransactionActivityChart ({ jwt, filters, initialResult }) {
   const [state, setState] = useState({ status: 'loading', rows: [], partial: false, totalPages: 0 })
   const completeHistorySuffix = state.totalPages === 1 ? '' : 's'
+  let historyMessage = null
+  if (state.status === 'success') {
+    historyMessage = state.partial
+      ? <p className="market-chart__state">Se muestran las primeras {MAX_ACTIVITY_PAGES} de {state.totalPages} páginas; la actividad es parcial y no representa todo el historial.</p>
+      : <p className="market-chart__state">Historial completo cargado: {state.totalPages} página{completeHistorySuffix}.</p>
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -96,9 +102,9 @@ export default function MarketTransactionActivityChart ({ jwt, filters, initialR
     <section className="card market-chart-card market-activity-chart" aria-labelledby="transaction-activity-title">
       <h2 id="transaction-activity-title">Evolución de compras y ventas</h2>
       <p>Tokens confirmados por día, según la zona horaria local del navegador.</p>
-      {state.status === 'loading' ? <p className="market-chart__state" role="status">Cargando actividad…</p> : null}
+      {state.status === 'loading' ? <output className="market-chart__state" aria-live="polite">Cargando actividad…</output> : null}
       {state.status === 'error' ? <p className="market-chart__state status-message--error" role="alert">{state.message}</p> : null}
-      {state.status === 'success' && state.rows.length === 0 ? <p className="market-chart__state" role="status">No hay operaciones confirmadas para representar.</p> : null}
+      {state.status === 'success' && state.rows.length === 0 ? <output className="market-chart__state" aria-live="polite">No hay operaciones confirmadas para representar.</output> : null}
       {state.status === 'success' && state.rows.length > 0
         ? (
           <>
@@ -123,9 +129,7 @@ export default function MarketTransactionActivityChart ({ jwt, filters, initialR
           </>
         )
         : null}
-      {state.status === 'success' && state.partial
-        ? <p className="market-chart__state">Se muestran las primeras {MAX_ACTIVITY_PAGES} de {state.totalPages} páginas; la actividad es parcial y no representa todo el historial.</p>
-        : state.status === 'success' ? <p className="market-chart__state">Historial completo cargado: {state.totalPages} página{completeHistorySuffix}.</p> : null}
+      {historyMessage}
     </section>
   )
 }

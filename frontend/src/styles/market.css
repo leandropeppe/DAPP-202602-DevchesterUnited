@@ -313,7 +313,7 @@
 .market-charts__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .market-chart-card { display: grid; gap: 12px; padding: 22px; min-width: 0; }
 .market-chart__visual { min-width: 0; width: 100%; }
-.market-chart__state { margin: 0; color: #4b5563; }
+.market-chart__state { display: block; margin: 0; color: #4b5563; }
 .market-chart__exclusions ul { margin: 6px 0 0; padding-left: 20px; color: #4b5563; font-size: .86rem; }
 .market-chart__summary { margin: 0; color: #374151; font-weight: 700; }
 .market-chart-table { width: 100%; border-collapse: collapse; font-size: .86rem; }

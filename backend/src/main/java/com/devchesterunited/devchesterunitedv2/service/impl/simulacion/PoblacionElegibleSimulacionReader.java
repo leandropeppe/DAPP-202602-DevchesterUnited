@@ -4,13 +4,11 @@ import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.Configuracion
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.JugadorEstadistico;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MotorValorizacion;
-import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SnapshotEstadistico;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SnapshotEstadisticoService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

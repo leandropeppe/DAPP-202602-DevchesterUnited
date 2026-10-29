@@ -226,7 +226,9 @@ public abstract class MarketPurchaseServiceContractTest {
     }
 
     private void assertRejectedWithoutEffects() {
-        assertThatThrownBy(() -> service().comprar(request(1L)))
+        var service = service();
+        var request = request(1L);
+        assertThatThrownBy(() -> service.comprar(request))
                 .isInstanceOf(TokenMarketException.class);
         assertNoPurchaseEffects();
     }

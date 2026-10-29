@@ -94,9 +94,9 @@ class ProyectorEstadisticasTest {
 
     @Test
     void rechazaAppsYMinutosComoModificaciones() {
+        MetricasEstadisticasJugador actuales = actuales();
         assertThrows(MetricaNoEditableException.class,
-                () -> ProyectorEstadisticas.proyectar(actuales(), EscenarioSimulacion.conModificacionNoTipada(
-                        UUID.randomUUID(), 5, "apps", BigDecimal.ONE)));
+                () -> proyectarConModificacionNoTipada(actuales));
     }
 
     @Test
@@ -106,9 +106,9 @@ class ProyectorEstadisticasTest {
                 new MetricasOfensivas(5, 3, null, null, null, null, null, null, null),
                 new MetricasDefensivas(null, null, null, null, null, null, null, null),
                 new MetricasPases(null, null, null, null, null));
+        EscenarioSimulacion escenario = new EscenarioSimulacion(UUID.randomUUID(), 3, Map.of());
         assertThrows(DatosInsuficientesException.class,
-                () -> ProyectorEstadisticas.proyectar(sinApps,
-                        new EscenarioSimulacion(UUID.randomUUID(), 3, Map.of())));
+                () -> ProyectorEstadisticas.proyectar(sinApps, escenario));
     }
 
     private static MetricasEstadisticasJugador actuales() {
@@ -120,5 +120,10 @@ class ProyectorEstadisticasTest {
                         new BigDecimal("3.20"), null, null, 1),
                 new MetricasPases(new BigDecimal("40.00"), new BigDecimal("75.00"), null,
                         new BigDecimal("5.00"), null));
+    }
+
+    private static EstadisticasProyectadas proyectarConModificacionNoTipada(
+            MetricasEstadisticasJugador actuales) {
+        return ProyectorEstadisticas.proyectar(actuales, EscenarioSimulacion.conModificacionNoTipada("apps"));
     }
 }

@@ -122,6 +122,14 @@ public class MarketAvailabilityServiceImpl implements MarketAvailabilityService 
                 && quoteCurrent
                 && realCurrentQuote;
 
+        MarketQuoteAvailability quoteAvailability;
+        if (!quotePresent) {
+            quoteAvailability = MarketQuoteAvailability.ABSENT;
+        } else if (quoteHistorical) {
+            quoteAvailability = MarketQuoteAvailability.HISTORICAL;
+        } else {
+            quoteAvailability = MarketQuoteAvailability.CURRENT;
+        }
         return new MarketPlayerAvailability(
                 projection.getPlayerId(),
                 projection.getPlayerName(),
@@ -137,9 +145,7 @@ public class MarketAvailabilityServiceImpl implements MarketAvailabilityService 
                 validityStatus,
                 validFrom,
                 validUntil,
-                quotePresent ? quoteHistorical ? MarketQuoteAvailability.HISTORICAL
-                        : MarketQuoteAvailability.CURRENT
-                        : MarketQuoteAvailability.ABSENT,
+                quoteAvailability,
                 operable);
     }
 

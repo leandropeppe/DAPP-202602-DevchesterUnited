@@ -114,8 +114,8 @@ public final class MotorValorizacion {
                 if (bloque.getKey() == EstrategiaPosicionalV2.Bloque.AMENAZA_DEFENSIVA) {
                     scoreBloque = scoreAmenazaDefensiva(estrategia, jugador, distribuciones, trazas, posicion);
                 } else {
-                    scoreBloque = scoreBloqueV2(estrategia, jugador, bloque.getKey(), metricas,
-                            distribuciones, trazas, penalizaciones, posicion);
+                    scoreBloque = scoreBloqueV2(new ScoreBloqueContext(estrategia, jugador, distribuciones,
+                            trazas, penalizaciones, posicion), bloque.getKey(), metricas);
                 }
                 score = score.add(scoreBloque.multiply(bloque.getValue()));
             }
@@ -165,27 +165,25 @@ public final class MotorValorizacion {
         return valor.multiply(BigDecimal.valueOf(90)).divide(BigDecimal.valueOf(minutos), 8, RoundingMode.HALF_UP);
     }
 
-    private static BigDecimal scoreBloqueV2(EstrategiaPosicionalV2 estrategia, JugadorEstadistico jugador,
-            EstrategiaPosicionalV2.Bloque bloque, Map<MetricaValorizacion, BigDecimal> metricas,
-            Map<MetricaValorizacion, Distribucion> distribuciones, List<ResultadoNormalizacion> trazas,
-            List<MetricaValorizacion> penalizaciones, String posicion) {
+    private static BigDecimal scoreBloqueV2(ScoreBloqueContext contexto,
+            EstrategiaPosicionalV2.Bloque bloque, Map<MetricaValorizacion, BigDecimal> metricas) {
         BigDecimal suma = BigDecimal.ZERO;
         int validas = 0;
         for (MetricaValorizacion metrica : metricas.keySet()) {
-            BigDecimal valor = valorV2(metrica, jugador);
-            Distribucion distribucion = distribuciones.get(metrica);
+            BigDecimal valor = valorV2(metrica, contexto.jugador());
+            Distribucion distribucion = contexto.distribuciones().get(metrica);
             if (valor == null || distribucion == null) {
-                trazas.add(trazaV2(metrica, valor, distribucion, BigDecimal.valueOf(.5), posicion,
+                contexto.trazas().add(trazaV2(metrica, valor, distribucion, BigDecimal.valueOf(.5), contexto.posicion(),
                         ResultadoNormalizacion.Estado.AUSENTE, METODO_V2));
                 continue;
             }
-            BigDecimal normalizado = normalizadoV2(estrategia, metrica, valor, distribucion);
+            BigDecimal normalizado = normalizadoV2(contexto.estrategia(), metrica, valor, distribucion);
             boolean inversa = bloque == EstrategiaPosicionalV2.Bloque.DISCIPLINA;
             if (inversa) {
                 normalizado = BigDecimal.ONE.subtract(normalizado);
-                penalizaciones.add(metrica);
+                contexto.penalizaciones().add(metrica);
             }
-            trazas.add(trazaV2(metrica, valor, distribucion, normalizado, posicion,
+            contexto.trazas().add(trazaV2(metrica, valor, distribucion, normalizado, contexto.posicion(),
                     distribucion.desviacion().signum() == 0 ? ResultadoNormalizacion.Estado.CONSTANTE
                             : ResultadoNormalizacion.Estado.CALCULADO,
                     METODO_V2));
@@ -238,6 +236,14 @@ public final class MotorValorizacion {
         return subfamiliasValidas == 0 ? BigDecimal.valueOf(.5)
                 : sumaSubfamilias.divide(BigDecimal.valueOf(subfamiliasValidas), 8, RoundingMode.HALF_UP);
     }
+
+    private record ScoreBloqueContext(
+            EstrategiaPosicionalV2 estrategia,
+            JugadorEstadistico jugador,
+            Map<MetricaValorizacion, Distribucion> distribuciones,
+            List<ResultadoNormalizacion> trazas,
+            List<MetricaValorizacion> penalizaciones,
+            String posicion) { }
 
     private static BigDecimal normalizadoV2(EstrategiaPosicionalV2 estrategia, MetricaValorizacion metrica,
             BigDecimal valor, Distribucion distribucion) {

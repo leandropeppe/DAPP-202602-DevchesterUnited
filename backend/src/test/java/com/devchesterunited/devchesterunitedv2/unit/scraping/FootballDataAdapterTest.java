@@ -98,7 +98,8 @@ class FootballDataAdapterTest {
             responder(exchange, 200, payloadDuplicado(codigo, true), "100");
         });
 
-        assertThatThrownBy(() -> adapter().sincronizar()).isInstanceOf(FootballDataException.class);
+        var adapter = adapter();
+        assertThatThrownBy(adapter::sincronizar).isInstanceOf(FootballDataException.class);
         assertThat(rutas).noneMatch(ruta -> ruta.startsWith("/teams/"));
     }
 
@@ -113,7 +114,8 @@ class FootballDataAdapterTest {
                 responder(exchange, 200, payloadDuplicado(codigo, false), "100");
             }
         });
-        assertThatThrownBy(() -> adapter().sincronizar()).isInstanceOf(FootballDataException.class);
+        var adapter = adapter();
+        assertThatThrownBy(adapter::sincronizar).isInstanceOf(FootballDataException.class);
         assertThat(tokens).allMatch("test-key"::equals);
     }
 

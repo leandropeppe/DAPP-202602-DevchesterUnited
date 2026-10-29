@@ -4,6 +4,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPortfoli
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketPurchaseRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketSaleRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionFilter;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionRecord;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPortfolioService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService;
@@ -125,7 +126,7 @@ class MarketDemoIntegrationTest {
                 new MarketTransactionFilter(null, null, null, null, 1, 20));
 
         assertThat(userOneHistory.transacciones()).hasSize(2);
-        assertThat(userOneHistory.transacciones()).extracting(transaction -> transaction.quoteVersion())
+        assertThat(userOneHistory.transacciones()).extracting(MarketTransactionRecord::quoteVersion)
                 .containsExactly(2L, 1L);
         assertThat(userOneHistory.transacciones().get(0).pnlRealizado())
                 .isEqualByComparingTo("2.00000000");

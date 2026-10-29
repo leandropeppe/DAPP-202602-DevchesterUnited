@@ -5,7 +5,6 @@ import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefen
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
-import com.devchesterunited.devchesterunitedv2.modelo.simulacion.CatalogoMetricaSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ConfiguradorMetricasSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.EstadisticasProyectadas;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ResultadoSimulacion;
@@ -17,7 +16,6 @@ import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.Simulacion
 import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.EstadisticasJugadorResultado;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,26 +32,52 @@ public final class SimulacionLecturaMapper {
         var d = dto.defensivas();
         var p = dto.pases();
         return new MetricasEstadisticasJugador(
-                new MetricasGenerales(value(g == null ? null : g.apps(), dto.minutosJugados()),
-                        g == null ? null : g.subOn(), value(g == null ? null : g.minsPlayed(), dto.minutosJugados()),
-                        g == null ? null : g.manOfTheMatch(), g == null ? null : g.aerialWonPerGame(),
-                        value(g == null ? null : g.rating(), dto.valoracion()), g == null ? null : g.yellowCard(),
-                        g == null ? null : g.redCard()),
-                new MetricasOfensivas(value(o == null ? null : o.goal(), dto.goles()),
-                        value(o == null ? null : o.assistTotal(), dto.asistencias()),
-                        value(o == null ? null : o.shotsPerGame(), dto.tiros()),
-                        value(o == null ? null : o.keyPassPerGame(), dto.pasesClave()),
-                        value(o == null ? null : o.dribbleWonPerGame(), dto.regates()),
-                        o == null ? null : o.foulGivenPerGame(), o == null ? null : o.offsideGivenPerGame(),
-                        o == null ? null : o.dispossessedPerGame(), o == null ? null : o.turnoverPerGame()),
-                new MetricasDefensivas(value(d == null ? null : d.tacklePerGame(), dto.tackles()),
-                        d == null ? null : d.interceptionPerGame(), d == null ? null : d.foulsPerGame(),
-                        d == null ? null : d.offsideWonPerGame(), d == null ? null : d.clearancePerGame(),
-                        d == null ? null : d.wasDribbledPerGame(), d == null ? null : d.outfielderBlockPerGame(),
-                        d == null ? null : d.goalOwn()),
-                new MetricasPases(p == null ? null : p.totalPassesPerGame(), p == null ? null : p.passSuccess(),
-                        p == null ? null : p.accurateCrossesPerGame(), p == null ? null : p.accurateLongPassPerGame(),
-                        p == null ? null : p.accurateThroughBallPerGame()));
+                generales(dto, g), ofensivas(dto, o), defensivas(dto, d), pases(p));
+    }
+
+    private static MetricasGenerales generales(EstadisticasJugadorResultado dto,
+            EstadisticasJugadorResultado.Generales generales) {
+        return new MetricasGenerales(value(generales == null ? null : generales.apps(), dto.minutosJugados()),
+                generales == null ? null : generales.subOn(),
+                value(generales == null ? null : generales.minsPlayed(), dto.minutosJugados()),
+                generales == null ? null : generales.manOfTheMatch(),
+                generales == null ? null : generales.aerialWonPerGame(),
+                value(generales == null ? null : generales.rating(), dto.valoracion()),
+                generales == null ? null : generales.yellowCard(),
+                generales == null ? null : generales.redCard());
+    }
+
+    private static MetricasOfensivas ofensivas(EstadisticasJugadorResultado dto,
+            EstadisticasJugadorResultado.Ofensivas ofensivas) {
+        return new MetricasOfensivas(value(ofensivas == null ? null : ofensivas.goal(), dto.goles()),
+                value(ofensivas == null ? null : ofensivas.assistTotal(), dto.asistencias()),
+                value(ofensivas == null ? null : ofensivas.shotsPerGame(), dto.tiros()),
+                value(ofensivas == null ? null : ofensivas.keyPassPerGame(), dto.pasesClave()),
+                value(ofensivas == null ? null : ofensivas.dribbleWonPerGame(), dto.regates()),
+                ofensivas == null ? null : ofensivas.foulGivenPerGame(),
+                ofensivas == null ? null : ofensivas.offsideGivenPerGame(),
+                ofensivas == null ? null : ofensivas.dispossessedPerGame(),
+                ofensivas == null ? null : ofensivas.turnoverPerGame());
+    }
+
+    private static MetricasDefensivas defensivas(EstadisticasJugadorResultado dto,
+            EstadisticasJugadorResultado.Defensivas defensivas) {
+        return new MetricasDefensivas(value(defensivas == null ? null : defensivas.tacklePerGame(), dto.tackles()),
+                defensivas == null ? null : defensivas.interceptionPerGame(),
+                defensivas == null ? null : defensivas.foulsPerGame(),
+                defensivas == null ? null : defensivas.offsideWonPerGame(),
+                defensivas == null ? null : defensivas.clearancePerGame(),
+                defensivas == null ? null : defensivas.wasDribbledPerGame(),
+                defensivas == null ? null : defensivas.outfielderBlockPerGame(),
+                defensivas == null ? null : defensivas.goalOwn());
+    }
+
+    private static MetricasPases pases(EstadisticasJugadorResultado.Pases pases) {
+        return new MetricasPases(pases == null ? null : pases.totalPassesPerGame(),
+                pases == null ? null : pases.passSuccess(),
+                pases == null ? null : pases.accurateCrossesPerGame(),
+                pases == null ? null : pases.accurateLongPassPerGame(),
+                pases == null ? null : pases.accurateThroughBallPerGame());
     }
 
     private static <T> T value(T nested, T fallback) { return nested != null ? nested : fallback; }
@@ -84,8 +108,14 @@ public final class SimulacionLecturaMapper {
         BigDecimal monetary = actual == null || simulated == null ? null : simulated.subtract(actual);
         BigDecimal percentage = actual == null || simulated == null || actual.signum() == 0
                 ? null : monetary.multiply(BigDecimal.valueOf(100)).divide(actual, 8, java.math.RoundingMode.HALF_UP);
-        String unavailableReason = actual == null ? "COTIZACION_ACTUAL_AUSENTE"
-                : actual.signum() == 0 ? "COTIZACION_ACTUAL_CERO" : null;
+        String unavailableReason;
+        if (actual == null) {
+            unavailableReason = "COTIZACION_ACTUAL_AUSENTE";
+        } else if (actual.signum() == 0) {
+            unavailableReason = "COTIZACION_ACTUAL_CERO";
+        } else {
+            unavailableReason = null;
+        }
         return new SimulacionResultadoDTO("ply_" + resultado.jugadorId(), resultado.horizontePartidos(),
                 resultado.estrategiaId(), resultado.estrategiaVersion(), resultado.posicion(), actual, simulated,
                 resultado.score(), monetary, percentage, unavailableReason,

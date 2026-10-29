@@ -41,8 +41,9 @@ class SimulacionApiSerializationContractTest {
         assertEquals(3, roundTrip.modifications().get("GOALS").intValue());
         assertFalse(json.has("apps"));
         assertFalse(json.has("minsPlayed"));
+        Map<String, BigDecimal> invalidModifications = Map.of("apps", BigDecimal.ONE);
         assertThrows(IllegalArgumentException.class,
-                () -> new SimulacionCotizacionRequestDTO(5, Map.of("apps", BigDecimal.ONE)));
+                () -> new SimulacionCotizacionRequestDTO(5, invalidModifications));
     }
 
     @Test

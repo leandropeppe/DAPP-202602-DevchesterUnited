@@ -14,7 +14,6 @@ import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ResolutorPosici
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaPosicionalV2;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MetricaValorizacion;
-import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.EstadisticasJugadorResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.jugador.JugadorDetalleResultado;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.SimulacionConfiguracionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.SimulacionCotizacionRequestDTO;
@@ -28,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
 

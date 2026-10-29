@@ -73,7 +73,7 @@ export function buildPortfolioChartData (positions = []) {
 }
 
 function ChartState ({ children }) {
-  return <p className="market-chart__state" role="status">{children}</p>
+  return <output className="market-chart__state" aria-live="polite">{children}</output>
 }
 
 function PortfolioDistribution ({ data, totalValue }) {
