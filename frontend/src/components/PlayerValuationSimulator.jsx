@@ -135,30 +135,55 @@ export default function PlayerValuationSimulator ({ playerId, jwt, onClose }) {
 
   async function submit () {
     if (tokensInvalid) {
-      setError('Ingresá una cantidad de tokens positiva para calcular el impacto económico.')
+      setError(
+          'Ingresá una cantidad de tokens positiva para calcular el impacto económico.'
+      )
       return
     }
+
     setSubmitting(true)
     setError('')
+
     const started = Date.now()
+
     try {
       const simulationRequest = {
         horizonMatches: horizon,
         modifications: modifications()
       }
+
       const response = jwt === undefined
-        ? await simulatePlayerValuation(playerId, simulationRequest)
-        : await simulatePlayerValuation(playerId, simulationRequest, jwt)
-      const remaining = remainingLoadingTime(started)
+          ? await simulatePlayerValuation(
+              playerId,
+              simulationRequest
+          )
+          : await simulatePlayerValuation(
+              playerId,
+              simulationRequest,
+              jwt
+          )
+
+      const elapsed = Date.now() - started
+      const remaining = remainingLoadingTime(elapsed)
+
       await new Promise((resolve) => {
-        timerRef.current = window.setTimeout(resolve, remaining)
+        timerRef.current = window.setTimeout(
+            resolve,
+            remaining
+        )
       })
+
       if (!mountedRef.current) return
+
       setResult(response?.data || null)
     } catch (reason) {
-      if (mountedRef.current) setError(errorMessage(reason))
+      if (mountedRef.current) {
+        setError(errorMessage(reason))
+      }
     } finally {
-      if (mountedRef.current) setSubmitting(false)
+      if (mountedRef.current) {
+        setSubmitting(false)
+      }
     }
   }
 

@@ -23,8 +23,8 @@ function MaradonaLoader() {
     );
 }
 
-export function remainingLoadingTime(elapsedMs, minimumMs = 10000) {
-    return Math.max(0, minimumMs - elapsedMs);
+export function remainingLoadingTime(elapsedMs, minimumMs = 3000) {
+    return Math.max(0, minimumMs - elapsedMs)
 }
 
 export default MaradonaLoader;
