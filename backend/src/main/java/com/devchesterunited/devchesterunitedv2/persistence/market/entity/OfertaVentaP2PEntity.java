@@ -91,7 +91,10 @@ public class OfertaVentaP2PEntity {
         this.estado = estado;
         this.solicitudIdempotenciaId = auditoria.solicitudIdempotenciaId();
         this.creadoEn = auditoria.creadoEn();
-        this.actualizadoEn = auditoria.actualizadoEn();
+        // Hibernate asigna la version inicial al persistir. Mantenerla nula
+        // durante la construccion evita que un UUID asignado sea clasificado
+        // como entidad detached por el algoritmo de estado de Hibernate.
+        this.actualizadoEn = null;
         validarInvariantes();
     }
 

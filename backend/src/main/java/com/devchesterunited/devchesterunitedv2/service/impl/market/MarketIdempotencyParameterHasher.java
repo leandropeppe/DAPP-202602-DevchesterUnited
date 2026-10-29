@@ -13,11 +13,10 @@ public final class MarketIdempotencyParameterHasher {
     private MarketIdempotencyParameterHasher() { }
 
     public static String hash(MarketIdempotencyRequest request) {
-        String canonical = field(normalizeOperation(request.tipoOperacion()))
-                + field(normalizeUuid(request.jugadorId()))
-                + field(normalizePositive(request.cantidad(), "cantidad"))
-                + field(normalizeUuid(request.cotizacionId()))
-                + field(normalizePositive(request.versionCotizacion(), "versionCotizacion"));
+        String operation = normalizeOperation(request.tipoOperacion());
+        String canonical = "P2P_OFFER".equals(operation)
+                ? offerCanonical(request, operation)
+                : primaryCanonical(request, operation);
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
                     .digest(canonical.getBytes(StandardCharsets.UTF_8));
@@ -29,6 +28,18 @@ public final class MarketIdempotencyParameterHasher {
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 no esta disponible en la JVM.", exception);
         }
+    }
+
+    private static String offerCanonical(MarketIdempotencyRequest request, String operation) {
+        return field(operation) + field(normalizeUuid(request.jugadorId()))
+                + field(normalizePositive(request.cantidad(), "cantidad"));
+    }
+
+    private static String primaryCanonical(MarketIdempotencyRequest request, String operation) {
+        return field(operation) + field(normalizeUuid(request.jugadorId()))
+                + field(normalizePositive(request.cantidad(), "cantidad"))
+                + field(normalizeUuid(request.cotizacionId()))
+                + field(normalizePositive(request.versionCotizacion(), "versionCotizacion"));
     }
 
     private static String field(String value) {

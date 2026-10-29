@@ -83,17 +83,17 @@ description: "Task list for Token Market P2P"
 
 ### Tests for User Story 2
 
-- [ ] T025 [P] [US2] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/market/MarketP2POfferValidationTest.java` para cantidad entera positiva, precio manual rechazado, identidad JWT y jugador/quote no operables
-- [ ] T026 [P] [US2] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2POfferReservationIntegrationTest.java` para reserva inmediata, suma de remanentes y no exceder disponibilidad
-- [ ] T027 [P] [US2] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2POfferControllerTest.java` para request/response, autenticación y errores de publicación
+- [x] T025 [P] [US2] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/market/MarketP2POfferValidationTest.java` para cantidad entera positiva, precio manual rechazado, identidad JWT y jugador/quote no operables
+- [x] T026 [P] [US2] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2POfferReservationIntegrationTest.java` para reserva inmediata, suma de remanentes y no exceder disponibilidad
+- [x] T027 [P] [US2] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2POfferControllerTest.java` para request/response, autenticación y errores de publicación
 
 ### Implementation for User Story 2
 
-- [ ] T028 [P] [US2] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/market/MarketP2POfferService.java` y DTOs de comando/resultado
-- [ ] T029 [US2] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2POfferServiceImpl.java` con claim idempotente, validación de jugador activo/quote válida y rechazo explícito de `price`/`unit_price`
-- [ ] T030 [US2] Implementar en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2POfferPersistenceServiceImpl.java` la actualización atómica de `reserved_quantity` y la inserción de oferta
-- [ ] T031 [US2] Agregar DTOs HTTP de publicación en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/market/dto/` sin campo de precio aceptado
-- [ ] T032 [US2] Agregar endpoint `POST /api/v1/market/p2p/offers` en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/market/MarketController.java` con `Idempotency-Key` y documentación OpenAPI
+- [x] T028 [P] [US2] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/market/MarketP2POfferService.java` y DTOs de comando/resultado
+- [x] T029 [US2] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2POfferServiceImpl.java` con claim idempotente, validación de jugador activo/quote válida y rechazo explícito de `price`/`unit_price`
+- [x] T030 [US2] Implementar en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2POfferPersistenceServiceImpl.java` la actualización atómica de `reserved_quantity` y la inserción de oferta
+- [x] T031 [US2] Agregar DTOs HTTP de publicación en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/market/dto/` sin campo de precio aceptado
+- [x] T032 [US2] Agregar endpoint `POST /api/v1/market/p2p/offers` en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/market/MarketController.java` con `Idempotency-Key` y documentación OpenAPI
 
 **Checkpoint**: La publicación es idempotente, reserva tokens inmediatamente y no permite precio manual.
 

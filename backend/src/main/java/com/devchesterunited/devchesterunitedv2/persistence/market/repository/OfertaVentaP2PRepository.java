@@ -34,4 +34,11 @@ public interface OfertaVentaP2PRepository extends JpaRepository<OfertaVentaP2PEn
 
     Page<OfertaVentaP2PEntity> findAllByVendedorIdOrderByCreadoEnDescIdDesc(
             UUID vendedorId, Pageable pageable);
+
+    @Query("select coalesce(sum(oferta.cantidadRestante), 0) "
+            + "from OfertaVentaP2PEntity oferta "
+            + "where oferta.vendedorId = :vendedorId and oferta.jugadorId = :jugadorId "
+            + "and oferta.estado in ('OPEN', 'PARTIALLY_FILLED')")
+    Long sumRemainingActiveByVendedorIdAndJugadorId(@Param("vendedorId") UUID vendedorId,
+            @Param("jugadorId") UUID jugadorId);
 }
