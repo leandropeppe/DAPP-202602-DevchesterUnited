@@ -79,8 +79,14 @@ public class MarketP2PPurchaseValidationService {
         CabeceraCotizacionMercadoEntity header = cabeceras
                 .findByJugadorIdForUpdate(command.playerId())
                 .orElseThrow(this::quoteUnavailable);
-        QuoteVersion quote = exactCurrentQuote(command, header);
         Instant now = clock.instant();
+        QuoteVersion quote = currentQuote(command.playerId(), header);
+        if (!sameQuote(command, header)) {
+            throw quoteChanged(quote);
+        }
+        if (quote == null) {
+            throw quoteUnavailable();
+        }
         if (!quote.isValidAt(now)) {
             throw quoteUnavailable();
         }
@@ -90,25 +96,29 @@ public class MarketP2PPurchaseValidationService {
                 quote, command.quantity(), now);
     }
 
-    private QuoteVersion exactCurrentQuote(MarketP2PPurchaseCommand command,
+    private QuoteVersion currentQuote(java.util.UUID playerId,
             CabeceraCotizacionMercadoEntity header) {
-        MarketP2PQuoteIdentity observed = command.quote();
-        if (!observed.quoteId().equals(header.getQuoteId())
-                || !observed.version().equals(header.getVersionActual())
-                || !"VALID".equals(header.getEstadoVigencia())) {
-            throw quoteChanged();
+        if (!"VALID".equals(header.getEstadoVigencia())) {
+            return null;
         }
         VersionCotizacionMercadoEntity entity = versiones.findExact(
-                command.playerId(), observed.quoteId(), observed.version())
-                .orElseThrow(this::quoteUnavailable);
-        if (!"VALID".equals(entity.getEstadoVigencia())) {
-            throw quoteUnavailable();
+                playerId, header.getQuoteId(), header.getVersionActual()).orElse(null);
+        if (entity == null || !"VALID".equals(entity.getEstadoVigencia())) {
+            return null;
         }
         return new QuoteVersion(entity.getId().getQuoteId(), entity.getId().getVersion(),
                 entity.getJugadorId(), entity.getPrecioPorToken(), entity.getPublicadoEn(),
                 entity.getValidoDesde(), entity.getValidoHasta(),
                 QuoteValidityStatus.valueOf(entity.getEstadoVigencia()),
                 entity.getReferenciaEstrategia());
+    }
+
+    private boolean sameQuote(MarketP2PPurchaseCommand command,
+            CabeceraCotizacionMercadoEntity header) {
+        MarketP2PQuoteIdentity observed = command.quote();
+        return observed.quoteId().equals(header.getQuoteId())
+                && observed.version().equals(header.getVersionActual())
+                && "VALID".equals(header.getEstadoVigencia());
     }
 
     private TokenMarketException marketNotReady() {
@@ -131,8 +141,8 @@ public class MarketP2PPurchaseValidationService {
                 "La cotizacion oficial no esta vigente.");
     }
 
-    private TokenMarketException quoteChanged() {
+    private TokenMarketException quoteChanged(QuoteVersion currentQuote) {
         return new TokenMarketException(TokenMarketException.Reason.QUOTE_CHANGED,
-                "La cotizacion observada ya no es la vigente.");
+                "La cotizacion observada ya no es la vigente.", currentQuote);
     }
 }

@@ -189,7 +189,8 @@ class MarketP2POfferOptimisticLockIntegrationTest extends PostgresTestSupport {
                 new TradeP2PEntity.Identidad(tradeId, ofertaId, usuarioId, compradorId, jugadorId),
                 new TradeP2PEntity.Liquidacion(jugador.getNombre(), 1L,
                         BigDecimal.ONE, BigDecimal.ONE),
-                new TradeP2PEntity.Confirmacion(quoteId, 1L, solicitudCompraId, NOW)));
+                new TradeP2PEntity.Confirmacion(quoteId, 1L, solicitudCompraId, NOW),
+                null));
         entityManager.clear();
 
         TradeP2PEntity persisted = trades.findById(tradeId).orElseThrow();

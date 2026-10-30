@@ -12,7 +12,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Verifica V21/V22 sobre PostgreSQL 16 descartable. */
+/** Verifica V21/V22/V23 sobre PostgreSQL 16 descartable. */
 @SpringBootTest(properties = "token-market.initialization.auto-start=false")
 @Testcontainers
 class MarketP2PSchemaIntegrationTest {
@@ -48,6 +48,9 @@ class MarketP2PSchemaIntegrationTest {
         assertThat(indexExists("ix_market_p2p_offers_player_status_created")).isTrue();
         assertThat(indexExists("ix_market_p2p_entries_user_date")).isTrue();
         assertThat(columnExists("market_p2p_trades", "realized_pnl")).isTrue();
+        assertThat(columnExists("market_p2p_trades", "offer_status_after_trade")).isTrue();
+        assertThat(columnExists("market_p2p_trades", "remaining_quantity_after_trade")).isTrue();
+        assertThat(columnExists("market_p2p_trades", "reserved_quantity_after_trade")).isTrue();
         assertThat(tableExists("market_p2p_movements")).isTrue();
         assertThat(constraintExists("fk_p2p_movement_trade")).isTrue();
         assertThat(constraintExists("uq_p2p_movement_trade_role")).isTrue();
@@ -69,6 +72,18 @@ class MarketP2PSchemaIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT is_nullable FROM information_schema.columns "
                 + "WHERE table_name = 'market_p2p_trades' AND column_name = 'realized_pnl'",
                 String.class)).isEqualTo("YES");
+    }
+
+    @Test
+    void aplicaV23ConSnapshotHistoricoNullable() {
+        assertThat(jdbc.queryForObject("SELECT success FROM flyway_schema_history "
+                + "WHERE version = '23'", Boolean.class)).isTrue();
+        assertThat(jdbc.queryForObject("SELECT is_nullable FROM information_schema.columns "
+                + "WHERE table_name = 'market_p2p_trades' "
+                + "AND column_name = 'offer_status_after_trade'", String.class))
+                .isEqualTo("YES");
+        assertThat(constraintExists("ck_market_p2p_trade_offer_snapshot_complete")).isTrue();
+        assertThat(constraintExists("ck_market_p2p_trade_offer_snapshot_coherence")).isTrue();
     }
 
     private boolean tableExists(String table) {

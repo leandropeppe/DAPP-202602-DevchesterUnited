@@ -8,7 +8,12 @@ public record MarketP2PPurchaseResult(UUID solicitudId, UUID tradeId, UUID offer
         UUID compradorId, Settlement settlement, MarketIdempotencyStatus estado) {
     public record Quote(UUID quoteId, Long version, BigDecimal unitPrice) { }
 
-    public record Quantities(Long purchased, Long remaining, Long reserved) { }
+    public record Quantities(Long purchased, Long remaining, Long reserved,
+            String offerStatus) {
+        public Quantities(Long purchased, Long remaining, Long reserved) {
+            this(purchased, remaining, reserved, null);
+        }
+    }
 
     public record Settlement(UUID vendedorId, UUID jugadorId, Long quantity, Quote quote,
             Quantities quantities, BigDecimal totalAmount) { }

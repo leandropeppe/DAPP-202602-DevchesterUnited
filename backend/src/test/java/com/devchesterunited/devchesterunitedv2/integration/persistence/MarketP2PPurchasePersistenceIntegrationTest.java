@@ -4,6 +4,9 @@ import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PQuoteIdentity;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseCommand;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseIdentity;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyParameterHasher;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP2PPurchaseService;
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.support.fixtures.market.MarketP2PFixtureBuilder;
@@ -71,6 +74,8 @@ abstract class MarketP2PPurchasePersistenceIntegrationTest extends PostgresTestS
         assertThat(result.tradeId()).isNotNull();
         assertThat(result.settlement().quantities().remaining()).isEqualTo(2L);
         assertThat(result.settlement().quantities().reserved()).isEqualTo(2L);
+        assertThat(result.settlement().quantities().offerStatus())
+                .isEqualTo("PARTIALLY_FILLED");
         assertThat(jdbc.queryForObject("SELECT balance FROM market_credit_accounts "
                 + "WHERE user_id = ?", BigDecimal.class, buyer.id()))
                 .isEqualByComparingTo("95.00");
@@ -95,6 +100,13 @@ abstract class MarketP2PPurchasePersistenceIntegrationTest extends PostgresTestS
         assertThat(jdbc.queryForObject("SELECT realized_pnl FROM market_p2p_trades "
                 + "WHERE id = ?", BigDecimal.class, result.tradeId()))
                 .isEqualByComparingTo("3.00000000");
+        assertThat(jdbc.queryForObject("SELECT offer_status_after_trade FROM market_p2p_trades "
+                + "WHERE id = ?", String.class, result.tradeId()))
+                .isEqualTo("PARTIALLY_FILLED");
+        assertThat(jdbc.queryForObject("SELECT remaining_quantity_after_trade FROM market_p2p_trades "
+                + "WHERE id = ?", Long.class, result.tradeId())).isEqualTo(2L);
+        assertThat(jdbc.queryForObject("SELECT reserved_quantity_after_trade FROM market_p2p_trades "
+                + "WHERE id = ?", Long.class, result.tradeId())).isEqualTo(2L);
         assertThat(jdbc.queryForObject("SELECT realized_pnl FROM market_realized_pnl "
                 + "WHERE user_id = ?", BigDecimal.class, seller.id()))
                 .isEqualByComparingTo("3.00000000");
@@ -113,6 +125,17 @@ abstract class MarketP2PPurchasePersistenceIntegrationTest extends PostgresTestS
         MarketP2PPurchaseResult result = purchase("full-key", 4L);
 
         assertThat(result.settlement().quantities().remaining()).isZero();
+        assertThat(result.settlement().quantities().reserved()).isZero();
+        assertThat(result.settlement().quantities().offerStatus()).isEqualTo("FILLED");
+        assertThat(jdbc.queryForObject("SELECT offer_status_after_trade "
+                + "FROM market_p2p_trades WHERE id = ?", String.class, result.tradeId()))
+                .isEqualTo("FILLED");
+        assertThat(jdbc.queryForObject("SELECT remaining_quantity_after_trade "
+                + "FROM market_p2p_trades WHERE id = ?", Long.class, result.tradeId()))
+                .isZero();
+        assertThat(jdbc.queryForObject("SELECT reserved_quantity_after_trade "
+                + "FROM market_p2p_trades WHERE id = ?", Long.class, result.tradeId()))
+                .isZero();
         assertThat(jdbc.queryForObject("SELECT status FROM market_p2p_offers "
                 + "WHERE id = ?", String.class, offer.id())).isEqualTo("FILLED");
         assertThat(jdbc.queryForObject("SELECT reserved_quantity FROM market_holdings "
@@ -132,6 +155,7 @@ abstract class MarketP2PPurchasePersistenceIntegrationTest extends PostgresTestS
         MarketP2PPurchaseResult replay = purchase("replay-key", 1L);
 
         assertThat(replay.tradeId()).isEqualTo(first.tradeId());
+        assertThat(replay).isEqualTo(first);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM market_p2p_trades "
                 + "WHERE offer_id = ?", Long.class, offer.id())).isEqualTo(1L);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM market_p2p_movements "
@@ -140,6 +164,11 @@ abstract class MarketP2PPurchasePersistenceIntegrationTest extends PostgresTestS
                 + "WHERE user_id = ?", BigDecimal.class, seller.id()))
                 .isEqualByComparingTo("1.50000000");
 
+        MarketP2PPurchaseResult later = purchase("replay-later-key", 1L);
+        assertThat(later.tradeId()).isNotEqualTo(first.tradeId());
+        MarketP2PPurchaseResult replayAfterLater = purchase("replay-key", 1L);
+        assertThat(replayAfterLater).isEqualTo(first);
+
         jdbc.update("UPDATE market_credit_accounts SET balance = 1 "
                 + "WHERE user_id = ?", buyer.id());
         assertThatThrownBy(() -> purchase("insufficient-key", 1L))
@@ -147,7 +176,52 @@ abstract class MarketP2PPurchasePersistenceIntegrationTest extends PostgresTestS
                         assertThat(exception.reason())
                                 .isEqualTo(TokenMarketException.Reason.INSUFFICIENT_BALANCE));
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM market_p2p_trades "
-                + "WHERE offer_id = ?", Long.class, offer.id())).isEqualTo(1L);
+                + "WHERE offer_id = ?", Long.class, offer.id())).isEqualTo(2L);
+    }
+
+    @Test
+    void replayConservaSnapshotTrasCancelacionPosterior() {
+        MarketP2PPurchaseResult first = purchase("replay-cancel-key", 1L);
+        jdbc.update("UPDATE market_p2p_offers SET remaining_quantity = 0, "
+                + "released_quantity = 3, status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP "
+                + "WHERE id = ?", offer.id());
+        jdbc.update("UPDATE market_holdings SET reserved_quantity = 0 "
+                + "WHERE user_id = ? AND player_id = ?", seller.id(), player.id());
+
+        MarketP2PPurchaseResult replay = purchase("replay-cancel-key", 1L);
+        assertThat(replay).isEqualTo(first);
+        assertThat(replay.settlement().quantities().offerStatus())
+                .isEqualTo("PARTIALLY_FILLED");
+        assertThat(replay.settlement().quantities().remaining()).isEqualTo(3L);
+        assertThat(replay.settlement().quantities().reserved()).isEqualTo(3L);
+    }
+
+    @Test
+    void replayLegacySinSnapshotEsConflictoExplicito() {
+        String key = "legacy-replay-key";
+        MarketP2PIdempotencyRequest request = new MarketP2PIdempotencyRequest(
+                buyer.id(), key, new MarketP2PPurchaseIdentity(offer.id(), player.id(), 1L,
+                new MarketP2PQuoteIdentity(quote.quoteId(), quote.version())));
+        String hash = MarketIdempotencyParameterHasher.hash(request);
+        MarketP2PFixtureBuilder builder = new MarketP2PFixtureBuilder(jdbc);
+        MarketP2PFixtureBuilder.FixtureIdempotency idempotency = builder.createIdempotency(
+                buyer, key, "P2P_PURCHASE", hash);
+        UUID tradeId = UUID.randomUUID();
+        jdbc.update("UPDATE market_idempotency_requests SET status = 'CONFIRMED', "
+                + "execution_token = NULL, result_reference = ?, updated_at = CURRENT_TIMESTAMP "
+                + "WHERE id = ?", tradeId, idempotency.id());
+        jdbc.update("INSERT INTO market_p2p_trades "
+                + "(id, offer_id, seller_user_id, buyer_user_id, player_id, "
+                + "player_name_snapshot, quantity, unit_price, total_amount, quote_id, "
+                + "quote_version, idempotency_request_id, confirmed_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+                tradeId, offer.id(), seller.id(), buyer.id(), player.id(), player.name(),
+                quote.price(), quote.price(), quote.quoteId(), quote.version(), idempotency.id());
+
+        assertThatThrownBy(() -> purchase(key, 1L))
+                .isInstanceOfSatisfying(TokenMarketException.class, exception ->
+                        assertThat(exception.reason()).isEqualTo(
+                                TokenMarketException.Reason.HISTORICAL_RESULT_UNAVAILABLE));
     }
 
     @Test

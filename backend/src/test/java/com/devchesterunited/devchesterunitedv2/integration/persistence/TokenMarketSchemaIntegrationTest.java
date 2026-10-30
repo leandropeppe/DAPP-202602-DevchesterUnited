@@ -38,11 +38,11 @@ class TokenMarketSchemaIntegrationTest extends PostgresTestSupport {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void aplicaV19YV20DespuesDeV15YExponeElEsquemaCompleto() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("22");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("23");
         assertThat(jdbc.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE version IN "
-                        + "('15', '19', '20', '21', '22') ORDER BY version",
-                String.class)).containsExactly("15", "19", "20", "21", "22");
+                        + "('15', '19', '20', '21', '22', '23') ORDER BY version",
+                String.class)).containsExactly("15", "19", "20", "21", "22", "23");
 
         List<String> tables = jdbc.queryForList("""
                 SELECT table_name
@@ -185,7 +185,7 @@ class TokenMarketSchemaIntegrationTest extends PostgresTestSupport {
         int migrationsBefore = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM flyway_schema_history", Integer.class);
         flyway.migrate();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("22");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("23");
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history",
                 Integer.class)).isEqualTo(migrationsBefore);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE version = '20'",
@@ -193,6 +193,8 @@ class TokenMarketSchemaIntegrationTest extends PostgresTestSupport {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE version = '21'",
                 Integer.class)).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE version = '22'",
+                Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE version = '23'",
                 Integer.class)).isEqualTo(1);
     }
 

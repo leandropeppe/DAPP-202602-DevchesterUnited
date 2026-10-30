@@ -20,6 +20,12 @@ Solo el vendedor puede cancelar. Libera la cantidad restante y devuelve el estad
 
 Request conceptual: `quantity`, `quote_id`, `quote_version`, `Idempotency-Key`. El servidor calcula `total = current_unit_price * quantity`. Si la identidad/versión no coincide o dejó de ser válida responde 409 con código `QUOTE_CHANGED`, sin mutaciones, y devuelve `current_quote` con la cotización vigente si existe. Si no existe cotización válida, devuelve `current_quote: null`, estado `SUSPENDED` y la oferta no es confirmable. El frontend debe obtener/mostrar la cotización válida y confirmar nuevamente con otra `Idempotency-Key`; no puede reutilizar la key que produjo el 409. La compra parcial devuelve restante y reserva actualizados; la total devuelve `FILLED`.
 
+En una respuesta exitosa, el envelope conserva `status: "success"`. Dentro de `data`, `status` representa exclusivamente el estado persistido de la oferta: `PARTIALLY_FILLED` para una compra parcial y `FILLED` para una compra total. `data.operation_status` representa el estado de la operación/idempotencia (`CONFIRMED` o `PROCESSING`) y solo se incluye cuando existe semánticamente; una compra liquidada siempre devuelve `operation_status: "CONFIRMED"`. Una operación `PROCESSING` no se presenta como compra liquidada ni contiene un settlement confirmado.
+
+Cuando la cotización no está disponible, la respuesta es HTTP 409 con el código de error correspondiente, `current_quote: null` serializado explícitamente y `offer_status: "SUSPENDED"`. `SUSPENDED` es un estado operativo derivado para la respuesta: no se persiste en la oferta, no cancela ni libera reservas y no cambia el estado del mercado.
+
+Si una solicitud idempotente confirmada referencia un trade histórico sin snapshot de oferta, el replay responde HTTP 409 con código `HISTORICAL_RESULT_UNAVAILABLE`. No se reconstruyen cantidades desde la oferta actual ni se ejecuta una nueva compra.
+
 ## Compatibilidad y consultas existentes
 
 - `POST /api/v1/market/purchases` conserva request, validaciones, idempotencia y respuesta de compra primaria.
@@ -29,7 +35,7 @@ Request conceptual: `quantity`, `quote_id`, `quote_version`, `Idempotency-Key`. 
 
 ## Errores mínimos
 
-`400 MANUAL_PRICE_NOT_ALLOWED`, `400 INVALID_QUANTITY`, `401` sin JWT, `403 FORBIDDEN`, `404 OFFER_NOT_FOUND`, `409 QUOTE_CHANGED`, `409 IDEMPOTENCY_CONFLICT`, `409 OFFER_ALREADY_CANCELLED`, `409 INSUFFICIENT_AVAILABLE_QUANTITY`, `409 INSUFFICIENT_CREDITS`, `409 OFFER_NOT_PURCHASABLE`, `410` para la venta legacy y `503` si el mercado no está listo, según el envelope de errores vigente.
+`400 MANUAL_PRICE_NOT_ALLOWED`, `400 INVALID_QUANTITY`, `401` sin JWT, `403 FORBIDDEN`, `404 OFFER_NOT_FOUND`, `409 QUOTE_CHANGED`, `409 IDEMPOTENCY_CONFLICT`, `409 HISTORICAL_RESULT_UNAVAILABLE`, `409 OFFER_ALREADY_CANCELLED`, `409 INSUFFICIENT_AVAILABLE_QUANTITY`, `409 INSUFFICIENT_CREDITS`, `409 OFFER_NOT_PURCHASABLE`, `410` para la venta legacy y `503` si el mercado no está listo, según el envelope de errores vigente.
 
 ## OpenAPI
 

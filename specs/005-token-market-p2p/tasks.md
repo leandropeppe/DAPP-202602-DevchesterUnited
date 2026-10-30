@@ -111,7 +111,7 @@ description: "Task list for Token Market P2P"
 
 - [x] T033 [P] [US3] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/market/MarketP2PPurchaseServiceTest.java` para cálculo oficial, compra parcial/completa, propia oferta, cantidad restante y saldo insuficiente
 - [x] T034 [P] [US3] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PTradeAtomicityIntegrationTest.java` para cuentas, tenencias, reserva, movimientos, trade y asientos en un único commit/rollback
-- [ ] T035 [P] [US3] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2PPurchaseControllerTest.java` para request, quote observada, respuestas parciales/completas y errores
+- [x] T035 [P] [US3] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2PPurchaseControllerTest.java` para request, quote observada, respuestas parciales/completas y errores
 
 ### Implementation for User Story 3
 
@@ -119,7 +119,7 @@ description: "Task list for Token Market P2P"
 - [x] T037 [US3] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2PPurchaseExecutionServiceImpl.java` con revalidación de jugador, quote identity/version y orden de locks P2P
 - [x] T038 [US3] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2PPurchasePersistenceServiceImpl.java` para débito/crédito, transferencia de tokens, reducción de `remaining_quantity` y `reserved_quantity`, movimientos y asientos atómicos
 - [x] T039 [US3] Implementar la actualización de costo de adquisición/PnL en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/market/entity/TenenciaMercadoEntity.java` y los servicios de tenencia existentes sin alterar las reglas de valorización
-- [ ] T040 [US3] Agregar endpoint `POST /api/v1/market/p2p/offers/{offerId}/purchases` en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/market/MarketController.java`
+- [x] T040 [US3] Agregar endpoint `POST /api/v1/market/p2p/offers/{offerId}/purchases` en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/market/MarketController.java`
 
 **Checkpoint**: Una compra P2P parcial o total es atómica, idempotente y usa exclusivamente la quote oficial confirmada.
 

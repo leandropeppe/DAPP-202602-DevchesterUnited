@@ -88,7 +88,9 @@ public class MarketP2PPurchasePersistenceServiceImpl {
                         settlement.quantity(), settlement.quote().pricePerToken(), total),
                 new TradeP2PEntity.Confirmacion(settlement.quote().quoteId(),
                         settlement.quote().version(), settlement.requestId(),
-                        settlement.confirmedAt()));
+                        settlement.confirmedAt()),
+                new TradeP2PEntity.Snapshot(offer.getEstado(), remaining,
+                        resources.sellerHolding().getCantidadReservada()));
         trade.registrarPnlRealizado(pnl);
         trades.saveAndFlush(trade);
         accounting.persistir(trade, resources.buyerAccount().getId(),
@@ -110,13 +112,14 @@ public class MarketP2PPurchasePersistenceServiceImpl {
             throw new TokenMarketException(TokenMarketException.Reason.STALE_REQUEST,
                     "El resultado confirmado no esta disponible.");
         }
-        OfertaVentaP2PEntity offer = ofertas.findById(trade.getOfertaId()).orElseThrow(
-                () -> new TokenMarketException(TokenMarketException.Reason.STALE_REQUEST,
-                        "La oferta del resultado confirmado no esta disponible."));
-        Long reserved = tenencias.findByUsuarioIdAndJugadorId(offer.getVendedorId(),
-                        offer.getJugadorId())
-                .map(TenenciaMercadoEntity::getCantidadReservada).orElse(0L);
-        return resultFromTrade(trade, offer, reserved);
+        if (trade.getEstadoOfertaPosterior() == null
+                || trade.getCantidadRestantePosterior() == null
+                || trade.getCantidadReservadaPosterior() == null) {
+            throw new TokenMarketException(
+                    TokenMarketException.Reason.HISTORICAL_RESULT_UNAVAILABLE,
+                    "El resultado historico no conserva el snapshot de la oferta.");
+        }
+        return resultFromTrade(trade);
     }
 
     private LockedResources lockResources(OfertaVentaP2PEntity offer, UUID buyerId,
@@ -188,18 +191,20 @@ public class MarketP2PPurchasePersistenceServiceImpl {
                 new MarketP2PPurchaseResult.Quote(settlement.quote().quoteId(),
                         settlement.quote().version(), settlement.quote().pricePerToken()),
                 new MarketP2PPurchaseResult.Quantities(settlement.quantity(), remaining,
-                        reserved), total), MarketIdempotencyStatus.CONFIRMED);
+                        reserved, offer.getEstado()), total),
+                MarketIdempotencyStatus.CONFIRMED);
     }
 
-    private MarketP2PPurchaseResult resultFromTrade(TradeP2PEntity trade,
-            OfertaVentaP2PEntity offer, Long reserved) {
+    private MarketP2PPurchaseResult resultFromTrade(TradeP2PEntity trade) {
         return new MarketP2PPurchaseResult(trade.getSolicitudIdempotenciaId(), trade.getId(),
-                offer.getId(), trade.getCompradorId(), new MarketP2PPurchaseResult.Settlement(
+                trade.getOfertaId(), trade.getCompradorId(), new MarketP2PPurchaseResult.Settlement(
                 trade.getVendedorId(), trade.getJugadorId(), trade.getQuantity(),
                 new MarketP2PPurchaseResult.Quote(trade.getQuoteId(),
                         trade.getVersionCotizacion(), trade.getPrecioUnitario()),
                 new MarketP2PPurchaseResult.Quantities(trade.getQuantity(),
-                        offer.getCantidadRestante(), reserved), trade.getMontoTotal()),
+                        trade.getCantidadRestantePosterior(),
+                        trade.getCantidadReservadaPosterior(),
+                        trade.getEstadoOfertaPosterior()), trade.getMontoTotal()),
                 MarketIdempotencyStatus.CONFIRMED);
     }
 

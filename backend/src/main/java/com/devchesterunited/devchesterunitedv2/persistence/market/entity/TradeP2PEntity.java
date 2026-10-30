@@ -22,6 +22,9 @@ public class TradeP2PEntity {
 
     public record Confirmacion(UUID quoteId, Long versionCotizacion,
             UUID solicitudIdempotenciaId, Instant confirmadoEn) { }
+
+    public record Snapshot(String offerStatus, Long remainingQuantity,
+            Long reservedQuantity) { }
     @Id
     @Column(nullable = false)
     private UUID id;
@@ -86,6 +89,12 @@ public class TradeP2PEntity {
     private BigDecimal montoTotal;
     @Column(name = "realized_pnl", precision = 28, scale = 8)
     private BigDecimal pnlRealizado;
+    @Column(name = "offer_status_after_trade", length = 20)
+    private String estadoOfertaPosterior;
+    @Column(name = "remaining_quantity_after_trade")
+    private Long cantidadRestantePosterior;
+    @Column(name = "reserved_quantity_after_trade")
+    private Long cantidadReservadaPosterior;
     @Column(name = "quote_id", nullable = false)
     private UUID quoteId;
     @Column(name = "quote_version", nullable = false)
@@ -112,7 +121,7 @@ public class TradeP2PEntity {
     protected TradeP2PEntity() { }
 
     public TradeP2PEntity(Identidad identidad, Liquidacion liquidacion,
-            Confirmacion confirmacion) {
+            Confirmacion confirmacion, Snapshot snapshot) {
         this.id = identidad.id();
         this.ofertaId = identidad.ofertaId();
         this.vendedorId = identidad.vendedorId();
@@ -126,6 +135,11 @@ public class TradeP2PEntity {
         this.versionCotizacion = confirmacion.versionCotizacion();
         this.solicitudIdempotenciaId = confirmacion.solicitudIdempotenciaId();
         this.confirmadoEn = confirmacion.confirmadoEn();
+        if (snapshot != null) {
+            this.estadoOfertaPosterior = snapshot.offerStatus();
+            this.cantidadRestantePosterior = snapshot.remainingQuantity();
+            this.cantidadReservadaPosterior = snapshot.reservedQuantity();
+        }
     }
 
     public UUID getId() { return id; }
@@ -144,6 +158,9 @@ public class TradeP2PEntity {
     public BigDecimal getPrecioUnitario() { return precioUnitario; }
     public BigDecimal getMontoTotal() { return montoTotal; }
     public BigDecimal getPnlRealizado() { return pnlRealizado; }
+    public String getEstadoOfertaPosterior() { return estadoOfertaPosterior; }
+    public Long getCantidadRestantePosterior() { return cantidadRestantePosterior; }
+    public Long getCantidadReservadaPosterior() { return cantidadReservadaPosterior; }
     public void registrarPnlRealizado(BigDecimal pnl) {
         if (pnl == null) {
             throw new IllegalArgumentException("El PnL realizado es obligatorio.");
