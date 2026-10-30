@@ -13,6 +13,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.market.entity.Tenenci
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VigenciaCotizacionMercado;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.AsignacionCreditosInicialesRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
@@ -131,7 +132,7 @@ class TokenMarketRepositoryIntegrationTest extends PostgresTestSupport {
 
         VersionCotizacionMercadoId versionId = new VersionCotizacionMercadoId(quoteId, 1L);
         cotizaciones.saveAndFlush(new VersionCotizacionMercadoEntity(versionId, jugador.getId(),
-                new BigDecimal("1.00"), AHORA, AHORA, null, "VALID", null, AHORA));
+                new BigDecimal("1.00"), new VigenciaCotizacionMercado(AHORA, AHORA, null), "VALID", null, AHORA));
         cabeceras.saveAndFlush(new CabeceraCotizacionMercadoEntity(jugador.getId(), quoteId, 1L, AHORA));
 
         solicitudes.saveAndFlush(new SolicitudIdempotenciaMercadoEntity(solicitudId, usuarioId,

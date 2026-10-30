@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.e2e.market;
 
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.CotizacionActualEstrategiaEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.CotizacionActualEstrategiaKey;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EjecucionValorizacionEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EstrategiaValorizacionEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EstrategiaVisibleEntity;
@@ -50,8 +51,8 @@ class CotizacionActualE2ETest extends PostgresTestSupport {
         visibles.save(new EstrategiaVisibleEntity("POSITIONAL", 1, Instant.now()));
         ejecuciones.save(new EjecucionValorizacionEntity(EXECUTION, "MANUAL", Instant.now(), Instant.now(), "COMPLETADA"));
         Instant ahora = Instant.now();
-        actuales.save(new CotizacionActualEstrategiaEntity(PLAYER, "GENERAL", 1, EXECUTION, d(".40"), d("40"), BigDecimal.ZERO, BigDecimal.ONE, ahora));
-        actuales.save(new CotizacionActualEstrategiaEntity(PLAYER, "POSITIONAL", 1, EXECUTION, d(".80"), d("80"), BigDecimal.ZERO, BigDecimal.ONE, ahora));
+        actuales.save(new CotizacionActualEstrategiaEntity(new CotizacionActualEstrategiaKey(PLAYER, "GENERAL", 1), EXECUTION, d(".40"), d("40"), BigDecimal.ZERO, BigDecimal.ONE, ahora));
+        actuales.save(new CotizacionActualEstrategiaEntity(new CotizacionActualEstrategiaKey(PLAYER, "POSITIONAL", 1), EXECUTION, d(".80"), d("80"), BigDecimal.ZERO, BigDecimal.ONE, ahora));
         historicos.save(new HistoricoCotizacionEstrategiaEntity(UUID.randomUUID(), PLAYER, "GENERAL", 1, EXECUTION, ahora, d(".40"), d("40"), BigDecimal.ZERO, BigDecimal.ONE, "{\"source\":\"general\"}"));
         historicos.save(new HistoricoCotizacionEstrategiaEntity(UUID.randomUUID(), PLAYER, "POSITIONAL", 1, EXECUTION, ahora, d(".80"), d("80"), BigDecimal.ZERO, BigDecimal.ONE, "{\"source\":\"positional\"}"));
     }

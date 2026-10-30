@@ -47,15 +47,15 @@ public class VersionCotizacionMercadoEntity {
     protected VersionCotizacionMercadoEntity() { }
 
     public VersionCotizacionMercadoEntity(VersionCotizacionMercadoId id, UUID jugadorId,
-            BigDecimal precioPorToken, Instant publicadoEn, Instant validoDesde,
-            Instant validoHasta, String estadoVigencia, String referenciaEstrategia,
+            BigDecimal precioPorToken, VigenciaCotizacionMercado vigencia,
+            String estadoVigencia, String referenciaEstrategia,
             Instant creadoEn) {
         this.id = id;
         this.jugadorId = jugadorId;
         this.precioPorToken = precioPorToken;
-        this.publicadoEn = publicadoEn;
-        this.validoDesde = validoDesde;
-        this.validoHasta = validoHasta;
+        this.publicadoEn = vigencia.publicadoEn();
+        this.validoDesde = vigencia.validoDesde();
+        this.validoHasta = vigencia.validoHasta();
         this.estadoVigencia = estadoVigencia;
         this.referenciaEstrategia = referenciaEstrategia;
         this.creadoEn = creadoEn;

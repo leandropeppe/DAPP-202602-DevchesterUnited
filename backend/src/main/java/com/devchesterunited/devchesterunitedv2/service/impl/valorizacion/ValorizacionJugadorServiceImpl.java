@@ -211,8 +211,8 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
     private void persistir(ResultadoValorizacion resultado, EstrategiaValorizacion estrategia,
             UUID ejecucionId, Instant calculadaAt) {
         String trazabilidad = trazabilidadJson(resultado, estrategia);
-        actualRepository.save(new CotizacionActualEstrategiaEntity(resultado.jugadorId(), resultado.estrategiaId(),
-                resultado.version(), ejecucionId, resultado.score(), resultado.valor(),
+        actualRepository.save(new CotizacionActualEstrategiaEntity(new CotizacionActualEstrategiaKey(
+                resultado.jugadorId(), resultado.estrategiaId(), resultado.version()), ejecucionId, resultado.score(), resultado.valor(),
                 estrategia.valorBase(), estrategia.factorEscala(), calculadaAt));
         historicoRepository.save(new HistoricoCotizacionEstrategiaEntity(UUID.randomUUID(), resultado.jugadorId(),
                 resultado.estrategiaId(), resultado.version(), ejecucionId, calculadaAt, resultado.score(),

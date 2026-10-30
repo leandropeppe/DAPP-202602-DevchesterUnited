@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.CotizacionActualEstrategiaEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.CotizacionActualEstrategiaKey;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EjecucionValorizacionEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EstrategiaValorizacionEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.CotizacionActualEstrategiaRepository;
@@ -44,9 +45,9 @@ class CotizacionPorEstrategiaIntegrationTest extends PostgresTestSupport {
                 new BigDecimal("1.00"), new BigDecimal("99.00"), "{}"));
         UUID ejecucion = UUID.randomUUID();
         ejecuciones.save(new EjecucionValorizacionEntity(ejecucion, "MANUAL", ahora, ahora, "INICIADA"));
-        actuales.save(new CotizacionActualEstrategiaEntity(PLAYER_ID, "GENERAL", 1, ejecucion,
+        actuales.save(new CotizacionActualEstrategiaEntity(new CotizacionActualEstrategiaKey(PLAYER_ID, "GENERAL", 1), ejecucion,
                 new BigDecimal(".50"), new BigDecimal("50.50"), new BigDecimal("1.00"), new BigDecimal("99.00"), ahora));
-        actuales.save(new CotizacionActualEstrategiaEntity(PLAYER_ID, "POSITIONAL", 1, ejecucion,
+        actuales.save(new CotizacionActualEstrategiaEntity(new CotizacionActualEstrategiaKey(PLAYER_ID, "POSITIONAL", 1), ejecucion,
                 new BigDecimal(".70"), new BigDecimal("70.30"), new BigDecimal("1.00"), new BigDecimal("99.00"), ahora));
         assertThat(actuales.findByJugadorId(PLAYER_ID)).hasSize(2);
         assertThat(historicos.findByJugadorIdAndEstrategiaIdAndEstrategiaVersionOrderByCalculadaAtDesc(

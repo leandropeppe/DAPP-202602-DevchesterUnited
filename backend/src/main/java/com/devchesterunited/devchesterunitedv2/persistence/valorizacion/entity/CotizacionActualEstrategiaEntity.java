@@ -20,9 +20,10 @@ public class CotizacionActualEstrategiaEntity {
     @Column(name = "factor_escala") private BigDecimal factorEscala;
     @Column(name = "calculada_at") private Instant calculadaAt;
     protected CotizacionActualEstrategiaEntity() { }
-    public CotizacionActualEstrategiaEntity(UUID jugadorId, String estrategiaId, int version, UUID ejecucionId,
+    public CotizacionActualEstrategiaEntity(CotizacionActualEstrategiaKey clave, UUID ejecucionId,
             BigDecimal score, BigDecimal cotizacion, BigDecimal valorBase, BigDecimal factorEscala, Instant calculadaAt) {
-        this.jugadorId=jugadorId; this.estrategiaId=estrategiaId; this.estrategiaVersion=version; this.ejecucionId=ejecucionId;
+        this.jugadorId=clave.getJugadorId(); this.estrategiaId=clave.getEstrategiaId();
+        this.estrategiaVersion=clave.getEstrategiaVersion(); this.ejecucionId=ejecucionId;
         this.score=score; this.cotizacion=cotizacion; this.valorBase=valorBase; this.factorEscala=factorEscala; this.calculadaAt=calculadaAt;
     }
     public UUID getJugadorId() { return jugadorId; }

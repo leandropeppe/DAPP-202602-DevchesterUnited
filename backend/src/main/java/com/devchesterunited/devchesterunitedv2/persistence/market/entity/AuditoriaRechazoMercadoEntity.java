@@ -46,15 +46,14 @@ public class AuditoriaRechazoMercadoEntity {
     protected AuditoriaRechazoMercadoEntity() { }
 
     public AuditoriaRechazoMercadoEntity(UUID id, UUID usuarioId, String tipoOperacion,
-            UUID jugadorId, String hashClaveIdempotencia, String codigoMotivo,
-            String hashParametros, Instant creadoEn) {
+            UUID jugadorId, DatosRechazoMercado datosRechazo, Instant creadoEn) {
         this.id = id;
         this.usuarioId = usuarioId;
         this.tipoOperacion = tipoOperacion;
         this.jugadorId = jugadorId;
-        this.hashClaveIdempotencia = hashClaveIdempotencia;
-        this.codigoMotivo = codigoMotivo;
-        this.hashParametros = hashParametros;
+        this.hashClaveIdempotencia = datosRechazo.hashClaveIdempotencia();
+        this.codigoMotivo = datosRechazo.codigoMotivo();
+        this.hashParametros = datosRechazo.hashParametros();
         this.creadoEn = creadoEn;
     }
 

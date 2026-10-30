@@ -11,6 +11,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.Ju
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EstadoMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VigenciaCotizacionMercado;
 import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
@@ -160,7 +161,7 @@ class MarketQuoteValidationServiceTest {
             Instant validUntil) {
         return new VersionCotizacionMercadoEntity(
                 new VersionCotizacionMercadoId(QUOTE_ID, 3L), PLAYER_ID,
-                new BigDecimal("1.25"), NOW, NOW, validUntil, status.name(),
+                new BigDecimal("1.25"), new VigenciaCotizacionMercado(NOW, NOW, validUntil), status.name(),
                 "valuation-v1", NOW);
     }
 }

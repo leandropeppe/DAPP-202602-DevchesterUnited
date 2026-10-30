@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.unit.market;
 
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VigenciaCotizacionMercado;
 import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
@@ -121,9 +122,7 @@ class VersionCotizacionMercadoMapperTest {
                 new VersionCotizacionMercadoId(quoteId, version),
                 playerId,
                 price,
-                publishedAt,
-                validFrom,
-                validUntil,
+                new VigenciaCotizacionMercado(publishedAt, validFrom, validUntil),
                 status,
                 strategyReference,
                 CREADA);

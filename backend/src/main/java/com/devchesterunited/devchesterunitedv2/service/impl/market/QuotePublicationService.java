@@ -5,6 +5,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.Ju
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CabeceraCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VigenciaCotizacionMercado;
 import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
@@ -156,9 +157,10 @@ public class QuotePublicationService implements QuotePublicationPort {
                 id,
                 request.playerId(),
                 request.pricePerToken(),
-                canonicalTimestamp(request.publishedAt()),
-                canonicalTimestamp(request.validFrom()),
-                request.validUntil() == null ? null : canonicalTimestamp(request.validUntil()),
+                new VigenciaCotizacionMercado(
+                        canonicalTimestamp(request.publishedAt()),
+                        canonicalTimestamp(request.validFrom()),
+                        request.validUntil() == null ? null : canonicalTimestamp(request.validUntil())),
                 QuoteValidityStatus.VALID.name(),
                 request.strategyReference(),
                 canonicalTimestamp(clock.instant()));

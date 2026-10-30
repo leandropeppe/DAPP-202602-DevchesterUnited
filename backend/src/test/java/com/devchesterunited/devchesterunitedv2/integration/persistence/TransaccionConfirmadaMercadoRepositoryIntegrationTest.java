@@ -2,10 +2,12 @@ package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.AuditoriaRechazoMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.ContraparteMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.DatosRechazoMercado;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.SolicitudIdempotenciaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TransaccionConfirmadaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VigenciaCotizacionMercado;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.AuditoriaRechazoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.SolicitudIdempotenciaMercadoRepository;
@@ -168,7 +170,7 @@ class TransaccionConfirmadaMercadoRepositoryIntegrationTest {
                 FIRST_CONFIRMATION);
         AuditoriaRechazoMercadoEntity rejected = new AuditoriaRechazoMercadoEntity(
                 UUID.randomUUID(), fixture.userId(), "SALE", fixture.playerOne(),
-                "key-hash", "INSUFFICIENT_HOLDING", "parameters-hash",
+                new DatosRechazoMercado("key-hash", "INSUFFICIENT_HOLDING", "parameters-hash"),
                 FIRST_CONFIRMATION.plusSeconds(1));
         rechazos.saveAndFlush(rejected);
 
@@ -354,7 +356,7 @@ class TransaccionConfirmadaMercadoRepositoryIntegrationTest {
         UUID transactionId = UUID.randomUUID();
         cotizaciones.saveAndFlush(new VersionCotizacionMercadoEntity(
                 new VersionCotizacionMercadoId(quoteId, 1L), playerId,
-                new BigDecimal(unitPrice), FIRST_CONFIRMATION, FIRST_CONFIRMATION, null,
+                new BigDecimal(unitPrice), new VigenciaCotizacionMercado(FIRST_CONFIRMATION, FIRST_CONFIRMATION, null),
                 "VALID", null, FIRST_CONFIRMATION));
         solicitudes.saveAndFlush(new SolicitudIdempotenciaMercadoEntity(requestId, userId,
                 "key-" + requestId, operation, "parameters-" + requestId, "CONFIRMED",

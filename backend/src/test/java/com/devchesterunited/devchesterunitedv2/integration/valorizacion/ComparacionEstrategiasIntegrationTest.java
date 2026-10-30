@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.integration.valorizacion;
 
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.CotizacionActualEstrategiaEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.CotizacionActualEstrategiaKey;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EjecucionValorizacionEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.EstrategiaValorizacionEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.HistoricoCotizacionEstrategiaEntity;
@@ -60,9 +61,9 @@ class ComparacionEstrategiasIntegrationTest extends PostgresTestSupport {
         UUID ejecucion = UUID.randomUUID();
         ejecuciones.save(new EjecucionValorizacionEntity(ejecucion, "MANUAL", ahora, ahora, "COMPLETADA"));
 
-        actuales.save(new CotizacionActualEstrategiaEntity(PLAYER_ID, "GENERAL", 1, ejecucion,
+        actuales.save(new CotizacionActualEstrategiaEntity(new CotizacionActualEstrategiaKey(PLAYER_ID, "GENERAL", 1), ejecucion,
                 d(".40"), d(".40"), BigDecimal.ZERO, BigDecimal.ONE, ahora));
-        actuales.save(new CotizacionActualEstrategiaEntity(PLAYER_ID, "POSITIONAL", 1, ejecucion,
+        actuales.save(new CotizacionActualEstrategiaEntity(new CotizacionActualEstrategiaKey(PLAYER_ID, "POSITIONAL", 1), ejecucion,
                 d(".80"), d(".80"), BigDecimal.ZERO, BigDecimal.ONE, ahora));
         historicos.save(historico(ejecucion, "GENERAL", d(".40"), ahora));
         historicos.save(historico(ejecucion, "POSITIONAL", d(".80"), ahora));

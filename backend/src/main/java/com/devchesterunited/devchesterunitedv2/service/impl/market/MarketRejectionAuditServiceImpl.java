@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.AuditoriaRechazoMercadoEntity;
+import com.devchesterunited.devchesterunitedv2.persistence.market.entity.DatosRechazoMercado;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.AuditoriaRechazoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketRejectedAttempt;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketRejectionAuditService;
@@ -37,7 +38,8 @@ public class MarketRejectionAuditServiceImpl implements MarketRejectionAuditServ
         Objects.requireNonNull(attempt, "El intento rechazado es obligatorio.");
         auditoria.save(new AuditoriaRechazoMercadoEntity(
                 UUID.randomUUID(), attempt.usuarioId(), attempt.tipoOperacion(),
-                attempt.jugadorId(), attempt.hashClaveIdempotencia(), attempt.codigoMotivo(),
-                attempt.hashParametros(), attempt.creadoEn()));
+                attempt.jugadorId(), new DatosRechazoMercado(
+                        attempt.hashClaveIdempotencia(), attempt.codigoMotivo(),
+                        attempt.hashParametros()), attempt.creadoEn()));
     }
 }

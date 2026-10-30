@@ -12,6 +12,16 @@ public class CotizacionActualEstrategiaKey implements Serializable {
         // Constructor requerido por JPA para reconstruir la clave compuesta.
     }
 
+    public CotizacionActualEstrategiaKey(UUID jugadorId, String estrategiaId, int estrategiaVersion) {
+        this.jugadorId = jugadorId;
+        this.estrategiaId = estrategiaId;
+        this.estrategiaVersion = estrategiaVersion;
+    }
+
+    public UUID getJugadorId() { return jugadorId; }
+    public String getEstrategiaId() { return estrategiaId; }
+    public int getEstrategiaVersion() { return estrategiaVersion; }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof CotizacionActualEstrategiaKey k)) return false;
