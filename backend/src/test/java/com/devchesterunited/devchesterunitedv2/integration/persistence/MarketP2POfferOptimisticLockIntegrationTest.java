@@ -31,6 +31,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.Arrays;
 import java.util.List;
@@ -137,6 +138,28 @@ class MarketP2POfferOptimisticLockIntegrationTest extends PostgresTestSupport {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void conservaOrdenDeTimestampsAlActualizarLaOferta() {
+        OffsetDateTime creado = jdbc.queryForObject(
+                "SELECT created_at FROM market_p2p_offers WHERE id = ?",
+                OffsetDateTime.class, ofertaId);
+
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        transaction.executeWithoutResult(status -> {
+            OfertaVentaP2PEntity oferta = ofertas.findById(ofertaId).orElseThrow();
+            oferta.actualizarCantidades(9L, 1L, 0L,
+                    OfertaVentaP2PEntity.PARTIALLY_FILLED, NOW.plusSeconds(1));
+            ofertas.saveAndFlush(oferta);
+        });
+
+        OffsetDateTime actualizado = jdbc.queryForObject(
+                "SELECT updated_at FROM market_p2p_offers WHERE id = ?",
+                OffsetDateTime.class, ofertaId);
+        assertThat(actualizado).isAfterOrEqualTo(creado);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM market_p2p_offers "
+                + "WHERE id = ? AND created_at <= updated_at", Long.class, ofertaId)).isEqualTo(1L);
     }
 
     @Test

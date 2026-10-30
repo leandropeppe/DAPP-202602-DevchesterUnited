@@ -98,6 +98,11 @@ public class OfertaVentaP2PEntity {
         validarInvariantes();
     }
 
+    @PrePersist
+    private void inicializarVersion() {
+        actualizadoEn = creadoEn;
+    }
+
     public void actualizarCantidades(Long restante, Long vendida, Long liberada,
             String nuevoEstado, Instant momento) {
         cantidadRestante = restante;

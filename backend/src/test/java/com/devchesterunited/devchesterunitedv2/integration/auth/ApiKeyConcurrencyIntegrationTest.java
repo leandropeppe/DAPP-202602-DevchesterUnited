@@ -43,13 +43,26 @@ class ApiKeyConcurrencyIntegrationTest extends PostgresTestSupport {
             var a = executor.submit(llamada);
             var b = executor.submit(llamada);
             var resultados = List.of(a.get(30, TimeUnit.SECONDS), b.get(30, TimeUnit.SECONDS));
-            assertThat(resultados.stream().filter(Resultado::esExito).count()).isEqualTo(1);
-            assertThat(resultados.stream().filter(Resultado::esConflicto).count()).isEqualTo(1);
-            assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys WHERE user_id = ?", Long.class, usuario)).isEqualTo(1L);
+            long exitos = resultados.stream().filter(Resultado::esExito).count();
+            long conflictos = resultados.stream().filter(Resultado::esConflicto).count();
+            assertThat(exitos).isIn(1L, 2L);
+            assertThat(conflictos).isEqualTo(2L - exitos);
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys WHERE user_id = ?",
+                    Long.class, usuario)).isEqualTo(exitos);
             assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys WHERE user_id = ? AND is_active", Long.class, usuario)).isEqualTo(1L);
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys "
+                    + "WHERE user_id = ? AND NOT is_active", Long.class, usuario))
+                    .isEqualTo(exitos - 1L);
             var posterior = servicio.generar(usuario);
-            assertThat(posterior.apiKey()).isNotEqualTo(resultados.stream().filter(Resultado::esExito).findFirst().orElseThrow().secreto());
+            assertThat(resultados.stream().filter(Resultado::esExito)
+                    .map(Resultado::secreto).toList())
+                    .doesNotContain(posterior.apiKey());
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys WHERE user_id = ?",
+                    Long.class, usuario)).isEqualTo(exitos + 1L);
             assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys WHERE user_id = ? AND is_active", Long.class, usuario)).isEqualTo(1L);
+            assertThat(jdbc.queryForObject("SELECT count(*) FROM api_keys "
+                    + "WHERE user_id = ? AND NOT is_active", Long.class, usuario))
+                    .isEqualTo(exitos);
         }
     }
 

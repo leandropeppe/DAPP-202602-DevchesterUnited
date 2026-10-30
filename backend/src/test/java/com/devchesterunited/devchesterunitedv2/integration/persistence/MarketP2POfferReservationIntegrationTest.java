@@ -66,6 +66,9 @@ class MarketP2POfferReservationIntegrationTest extends PostgresTestSupport {
         assertThat(jdbc.queryForObject("SELECT SUM(remaining_quantity) FROM market_p2p_offers "
                 + "WHERE seller_user_id = ? AND player_id = ? AND status IN ('OPEN', 'PARTIALLY_FILLED')",
                 Long.class, seller.id(), player.id())).isEqualTo(4L);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM market_p2p_offers "
+                + "WHERE seller_user_id = ? AND player_id = ? AND created_at <= updated_at",
+                Long.class, seller.id(), player.id())).isEqualTo(1L);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM market_movements "
                 + "WHERE token_user_id = ? OR credit_account_id IN "
                 + "(SELECT id FROM market_credit_accounts WHERE user_id = ?)",

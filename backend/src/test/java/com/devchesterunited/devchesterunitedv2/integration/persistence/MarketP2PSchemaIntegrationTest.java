@@ -12,7 +12,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** T018: verifica V21 sobre PostgreSQL 16 descartable. */
+/** Verifica V21/V22 sobre PostgreSQL 16 descartable. */
 @SpringBootTest(properties = "token-market.initialization.auto-start=false")
 @Testcontainers
 class MarketP2PSchemaIntegrationTest {
@@ -47,6 +47,12 @@ class MarketP2PSchemaIntegrationTest {
         assertThat(constraintExists("fk_market_p2p_trade_buyer_holding")).isTrue();
         assertThat(indexExists("ix_market_p2p_offers_player_status_created")).isTrue();
         assertThat(indexExists("ix_market_p2p_entries_user_date")).isTrue();
+        assertThat(columnExists("market_p2p_trades", "realized_pnl")).isTrue();
+        assertThat(tableExists("market_p2p_movements")).isTrue();
+        assertThat(constraintExists("fk_p2p_movement_trade")).isTrue();
+        assertThat(constraintExists("uq_p2p_movement_trade_role")).isTrue();
+        assertThat(constraintExists("ck_p2p_movement_sign")).isTrue();
+        assertThat(indexExists("ix_p2p_movements_trade")).isTrue();
     }
 
     @Test
@@ -54,6 +60,15 @@ class MarketP2PSchemaIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT column_default FROM information_schema.columns "
                 + "WHERE table_name = 'market_holdings' AND column_name = 'reserved_quantity'",
                 String.class)).contains("0");
+    }
+
+    @Test
+    void aplicaV22ConPnlHistoricoNullable() {
+        assertThat(jdbc.queryForObject("SELECT success FROM flyway_schema_history "
+                + "WHERE version = '22'", Boolean.class)).isTrue();
+        assertThat(jdbc.queryForObject("SELECT is_nullable FROM information_schema.columns "
+                + "WHERE table_name = 'market_p2p_trades' AND column_name = 'realized_pnl'",
+                String.class)).isEqualTo("YES");
     }
 
     private boolean tableExists(String table) {

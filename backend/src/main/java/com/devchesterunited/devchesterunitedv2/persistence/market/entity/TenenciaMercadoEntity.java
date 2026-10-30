@@ -88,16 +88,25 @@ public class TenenciaMercadoEntity {
     }
 
     public void consumirReserva(Long cantidad, Instant momento) {
+        consumirReserva(cantidad, null, momento);
+    }
+
+    /** Consume una reserva y, cuando existe importe, distribuye el costo vendido. */
+    public BigDecimal consumirReserva(Long cantidad, BigDecimal importeVenta, Instant momento) {
         validarCantidadReserva(cantidad, momento);
         if (cantidad > cantidadReservada || cantidad > quantity) {
             throw new IllegalStateException("La tenencia no tiene suficiente reserva.");
         }
+        BigDecimal costoVendido = costoProporcional(cantidad);
+        BigDecimal pnl = importeVenta == null ? BigDecimal.ZERO.setScale(8)
+                : importeVenta.setScale(8, RoundingMode.UNNECESSARY).subtract(costoVendido)
+                .setScale(8, RoundingMode.UNNECESSARY);
         cantidadReservada -= cantidad;
         quantity -= cantidad;
-        if (quantity == 0) {
-            costoAdquisicion = BigDecimal.ZERO.setScale(8);
-        }
+        costoAdquisicion = quantity == 0 ? BigDecimal.ZERO.setScale(8)
+                : costoAdquisicion.subtract(costoVendido).setScale(8, RoundingMode.UNNECESSARY);
         actualizadoEn = momento;
+        return pnl;
     }
 
     /** Adds a purchase to the stored total acquisition cost, not to an average. */
@@ -163,6 +172,15 @@ public class TenenciaMercadoEntity {
                 || cantidadReservada > quantity) {
             throw new IllegalStateException("La reserva de la tenencia no es válida.");
         }
+    }
+
+    private BigDecimal costoProporcional(Long cantidad) {
+        if (cantidad.equals(quantity)) {
+            return costoAdquisicion;
+        }
+        return costoAdquisicion.multiply(BigDecimal.valueOf(cantidad))
+                .divide(BigDecimal.valueOf(quantity), 8, RoundingMode.HALF_EVEN)
+                .setScale(8, RoundingMode.UNNECESSARY);
     }
 
     private void validarEstadoInicial() {

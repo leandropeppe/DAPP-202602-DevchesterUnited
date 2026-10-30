@@ -56,6 +56,12 @@ public class MarketIdempotencyServiceImpl implements MarketIdempotencyService,
 
     @Override
     @Transactional
+    public MarketIdempotencyClaim reclamarConPropiedad(MarketP2PIdempotencyRequest request) {
+        return claimService.reclamarConPropiedad(request);
+    }
+
+    @Override
+    @Transactional
     public MarketIdempotencyResult confirmar(UUID solicitudId, UUID tokenEjecucion,
             UUID referenciaResultado) {
         SolicitudIdempotenciaMercadoEntity entity = findWithoutLock(solicitudId);

@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.Immutable;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -83,6 +84,8 @@ public class TradeP2PEntity {
     private BigDecimal precioUnitario;
     @Column(name = "total_amount", nullable = false, precision = 20, scale = 2)
     private BigDecimal montoTotal;
+    @Column(name = "realized_pnl", precision = 28, scale = 8)
+    private BigDecimal pnlRealizado;
     @Column(name = "quote_id", nullable = false)
     private UUID quoteId;
     @Column(name = "quote_version", nullable = false)
@@ -140,6 +143,13 @@ public class TradeP2PEntity {
     public Long getQuantity() { return quantity; }
     public BigDecimal getPrecioUnitario() { return precioUnitario; }
     public BigDecimal getMontoTotal() { return montoTotal; }
+    public BigDecimal getPnlRealizado() { return pnlRealizado; }
+    public void registrarPnlRealizado(BigDecimal pnl) {
+        if (pnl == null) {
+            throw new IllegalArgumentException("El PnL realizado es obligatorio.");
+        }
+        this.pnlRealizado = pnl.setScale(8, RoundingMode.UNNECESSARY);
+    }
     public UUID getQuoteId() { return quoteId; }
     public Long getVersionCotizacion() { return versionCotizacion; }
     public UUID getSolicitudIdempotenciaId() { return solicitudIdempotenciaId; }
