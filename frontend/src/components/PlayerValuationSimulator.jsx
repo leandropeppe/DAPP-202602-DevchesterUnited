@@ -278,7 +278,7 @@ export default function PlayerValuationSimulator ({ playerId, jwt, onClose }) {
   }
 
   return (
-    <dialog open className="player-simulator__backdrop" aria-modal="true" aria-labelledby="simulator-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+    <dialog open className="player-simulator__backdrop" aria-modal="true" aria-labelledby="simulator-title">
       <div className="player-simulator">
         <header className="player-simulator__header">
           <div>
