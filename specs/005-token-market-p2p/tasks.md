@@ -135,15 +135,15 @@ description: "Task list for Token Market P2P"
 
 ### Tests for User Story 4
 
-- [ ] T041 [P] [US4] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/market/MarketP2PCancellationServiceTest.java` para ownership, estados terminales, original/vendido/liberado y no revertir trades
-- [ ] T042 [P] [US4] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PCancellationIntegrationTest.java` para liberación atómica y auditoría append-only
-- [ ] T043 [P] [US4] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2PCancellationControllerTest.java` para autorización e idempotencia de cancelación
+- [x] T041 [P] [US4] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/market/MarketP2PCancellationServiceTest.java` para ownership, estados terminales, original/vendido/liberado y no revertir trades
+- [x] T042 [P] [US4] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PCancellationIntegrationTest.java` para liberación atómica y auditoría append-only
+- [x] T043 [P] [US4] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2PCancellationControllerTest.java` para autorización e idempotencia de cancelación
 
 ### Implementation for User Story 4
 
-- [ ] T044 [P] [US4] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/market/MarketP2PCancellationService.java`
-- [ ] T045 [US4] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2PCancellationServiceImpl.java` con lock de oferta/tenencia, claim idempotente y rechazo de una nueva cancelación sobre oferta cancelada
-- [ ] T046 [US4] Crear endpoint `POST /api/v1/market/p2p/offers/{offerId}/cancel` y DTOs OpenAPI en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/market/MarketController.java` y `controller/market/dto/`
+- [x] T044 [P] [US4] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/interfaces/market/MarketP2PCancellationService.java`
+- [x] T045 [US4] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2PCancellationServiceImpl.java` con lock de oferta/tenencia, claim idempotente y rechazo de una nueva cancelación sobre oferta cancelada
+- [x] T046 [US4] Crear endpoint `POST /api/v1/market/p2p/offers/{offerId}/cancel` y DTOs OpenAPI en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/controller/market/MarketController.java` y `controller/market/dto/`
 
 **Checkpoint**: Cancelar libera solo tokens no vendidos, es replay-safe y conserva auditoría.
 

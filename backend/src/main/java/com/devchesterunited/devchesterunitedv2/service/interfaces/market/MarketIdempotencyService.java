@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.service.interfaces.market;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyClaim;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PCancelCommand;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PIdempotencyRequest;
 
 import java.util.Optional;
@@ -17,6 +18,10 @@ public interface MarketIdempotencyService {
 
     default MarketIdempotencyClaim reclamarConPropiedad(MarketP2PIdempotencyRequest solicitud) {
         throw new UnsupportedOperationException("La idempotencia P2P no esta implementada.");
+    }
+
+    default MarketIdempotencyClaim reclamarConPropiedad(MarketP2PCancelCommand solicitud) {
+        throw new UnsupportedOperationException("La idempotencia de cancelacion P2P no esta implementada.");
     }
 
     MarketIdempotencyResult confirmar(UUID solicitudId, UUID tokenEjecucion,

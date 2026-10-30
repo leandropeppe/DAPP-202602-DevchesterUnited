@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PCancelCommand;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -30,6 +31,15 @@ public final class MarketIdempotencyParameterHasher {
                 + field(normalizePositive(identity.quantity(), "quantity"))
                 + field(normalizeUuid(identity.quote().quoteId()))
                 + field(normalizePositive(identity.quote().version(), "quoteVersion"));
+        return sha256(canonical);
+    }
+
+    public static String hash(MarketP2PCancelCommand request) {
+        if (request == null || request.usuarioId() == null || request.offerId() == null
+                || request.claveIdempotencia() == null || request.claveIdempotencia().isBlank()) {
+            throw new IllegalArgumentException("La solicitud de cancelacion no es valida.");
+        }
+        String canonical = field("P2P_CANCEL") + field(normalizeUuid(request.offerId()));
         return sha256(canonical);
     }
 

@@ -6,6 +6,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.market.repository.Sol
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyClaim;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PCancelCommand;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PIdempotencyRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -61,6 +62,19 @@ public class MarketIdempotencyClaimService {
         String operation = "P2P_PURCHASE";
         String hash = MarketIdempotencyParameterHasher.hash(request);
         return reclamarInterno(request.usuarioId(), normalizedKey, operation, hash);
+    }
+
+    @Transactional
+    public MarketIdempotencyClaim reclamarConPropiedad(MarketP2PCancelCommand request) {
+        if (request == null || request.usuarioId() == null || request.offerId() == null
+                || request.claveIdempotencia() == null || request.claveIdempotencia().isBlank()
+                || request.claveIdempotencia().trim().length() > 200) {
+            throw new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
+                    "La solicitud de cancelacion P2P no es valida.");
+        }
+        String normalizedKey = request.claveIdempotencia().trim();
+        return reclamarInterno(request.usuarioId(), normalizedKey, "P2P_CANCEL",
+                MarketIdempotencyParameterHasher.hash(request));
     }
 
     private MarketIdempotencyClaim reclamarInterno(UUID usuarioId, String normalizedKey,

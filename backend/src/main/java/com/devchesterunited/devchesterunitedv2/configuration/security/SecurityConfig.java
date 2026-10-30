@@ -42,7 +42,8 @@ public class SecurityConfig {
                     access.requestMatchers(HttpMethod.POST, "/api/v1/market/p2p/offers")
                             .authenticated();
                     access.requestMatchers(HttpMethod.POST,
-                            "/api/v1/market/p2p/offers/*/purchases")
+                            "/api/v1/market/p2p/offers/*/purchases",
+                            "/api/v1/market/p2p/offers/*/cancel")
                             .authenticated();
                     access.requestMatchers(HttpMethod.POST, "/api/v1/market/sales")
                             .authenticated();
