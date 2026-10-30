@@ -19,6 +19,8 @@ public record MarketP2POfferListResponseDTO(
         private final UUID playerId;
         @JsonProperty("seller_alias")
         private final String sellerAlias;
+        @JsonProperty("mine")
+        private final boolean mine;
         @JsonProperty("remaining_quantity")
         private final Long remainingQuantity;
         @JsonProperty("status")
@@ -32,6 +34,7 @@ public record MarketP2POfferListResponseDTO(
             this.offerId = view.identity().offerId();
             this.playerId = view.identity().playerId();
             this.sellerAlias = view.identity().sellerAlias();
+            this.mine = view.identity().mine();
             this.remainingQuantity = view.availability().remainingQuantity();
             this.status = view.availability().status();
             this.purchasable = view.availability().purchasable();
@@ -44,6 +47,7 @@ public record MarketP2POfferListResponseDTO(
         public UUID getOfferId() { return offerId; }
         public UUID getPlayerId() { return playerId; }
         public String getSellerAlias() { return sellerAlias; }
+        public boolean isMine() { return mine; }
         public Long getRemainingQuantity() { return remainingQuantity; }
         public String getStatus() { return status; }
         public boolean isPurchasable() { return purchasable; }

@@ -219,10 +219,10 @@ description: "Task list for Token Market P2P"
 - [ ] T065 [US6] Extender `MarketPortfolioServiceImpl.java`, `MarketPortfolioPosition.java` y DTOs `controller/market/dto/` con `total_quantity`, `reserved_quantity` y `available_quantity`
 - [ ] T066 [US6] Extender `MarketTransactionServiceImpl.java`, `MarketTransactionFilter.java`, repositories y mappers para unir registros legacy y asientos P2P sin reclasificar ventas históricas
 - [ ] T067 [US6] Actualizar OpenAPI de `/portfolio` y `/transactions` en `MarketController.java` para los nuevos campos y tipos `PRIMARY_PURCHASE`, `P2P_PURCHASE`, `P2P_SALE`
-- [ ] T068 [P] [US6] Extender `frontend/src/api/http.js` para consumir portfolio, ofertas, compras/cancelaciones y transacciones con los nuevos contratos
+- [x] T068 [P] [US6] Extender `frontend/src/api/http.js` para consumir portfolio, ofertas, compras/cancelaciones y transacciones con los nuevos contratos
 - [ ] T069 [P] [US6] Actualizar `frontend/src/views/MarketPortfolioPage.jsx` y componentes asociados para mostrar total/reservado/disponible y eliminar la acción de venta al superusuario
-- [ ] T070 [P] [US6] Crear `frontend/src/views/MarketP2POffersPage.jsx` y `frontend/src/components/MarketP2POfferCard.jsx` para listado, alias, cotización, estados y acciones permitidas
-- [ ] T071 [P] [US6] Crear/actualizar `frontend/src/components/MarketP2PConfirmationModal.jsx` y `frontend/src/styles/market.css` para confirmación sin precio manual, 409 `QUOTE_CHANGED`, nueva key y suspensión
+- [x] T070 [P] [US6] Crear `frontend/src/views/MarketP2POffersPage.jsx` y `frontend/src/components/MarketP2POfferCard.jsx` para listado, alias, cotización, estados y acciones permitidas
+- [x] T071 [P] [US6] Crear/actualizar `frontend/src/components/MarketP2PConfirmationModal.jsx` y `frontend/src/styles/market.css` para confirmación sin precio manual, 409 `QUOTE_CHANGED`, nueva key y suspensión
 - [ ] T072 [P] [US6] Actualizar `frontend/src/views/MarketTransactionsPage.jsx` para diferenciar tipos de historial y mantener ventas legacy visibles
 
 **Checkpoint**: Backend y frontend muestran saldos/reservas/historial coherentes y no habilitan venta al superusuario.

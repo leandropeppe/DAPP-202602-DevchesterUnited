@@ -53,6 +53,7 @@ class MarketP2POfferQueryTest {
                 new MarketP2POfferQuery(USER_ID, null, null, false, 1, 20)).offers().get(0);
 
         assertThat(view.identity().sellerAlias()).isEqualTo("seller-public");
+        assertThat(view.identity().mine()).isFalse();
         assertThat(view.availability().status()).isEqualTo("PURCHASABLE");
         assertThat(view.availability().purchasable()).isTrue();
         assertThat(view.quote().unitPrice()).isEqualByComparingTo("2.50");
@@ -87,6 +88,7 @@ class MarketP2POfferQueryTest {
                 new MarketP2POfferQuery(USER_ID, PLAYER_ID, "PARTIALLY_FILLED", true, 2, 5));
 
         assertThat(result.offers()).hasSize(1);
+        assertThat(result.offers().get(0).identity().mine()).isTrue();
         assertThat(result.pagination().paginaActual()).isEqualTo(2);
         verify(offers).buscarPublico(PLAYER_ID, "PARTIALLY_FILLED", true, USER_ID, NOW,
                 PageRequest.of(1, 5));

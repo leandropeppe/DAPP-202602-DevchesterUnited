@@ -6,7 +6,7 @@ Todos los endpoints requieren el JWT existente. El `user_id` efectivo siempre se
 
 ### `GET /api/v1/market/p2p/offers`
 
-Lista ofertas visibles con `offer_id`, jugador, un `seller_alias` no sensible, `remaining_quantity`, estado derivado, cotización oficial informativa (`quote_id`, `version`, `unit_price`, vigencia) y `purchasable`. Nunca incluye correo, hash, saldo, identificador de cuenta ni datos de autenticación del vendedor. Usa `page` desde 1 y `limit` entre 1 y 100, con metadatos `pagina`, `limite`, `totalPaginas`, `totalElementos`, como el historial actual. Filtros básicos: `playerId`, `status` y `mine`; orden estable `created_at DESC, id DESC`. Las ofertas sin jugador activo/cotización válida siguen visibles como suspendidas.
+Lista ofertas visibles con `offer_id`, jugador, un `seller_alias` no sensible, `mine`, `remaining_quantity`, estado derivado, cotización oficial informativa (`quote_id`, `version`, `unit_price`, vigencia) y `purchasable`. `mine` es un booleano calculado exclusivamente comparando el vendedor persistido con el usuario autenticado; nunca se acepta desde el cliente. Nunca incluye correo, hash, saldo, identificador de cuenta ni datos de autenticación del vendedor. Usa `page` desde 1 y `limit` entre 1 y 100, con metadatos `pagina`, `limite`, `totalPaginas`, `totalElementos`, como el historial actual. Filtros básicos: `playerId`, `status` y `mine`; orden estable `created_at DESC, id DESC`. Las ofertas sin jugador activo/cotización válida siguen visibles como suspendidas.
 
 ### `POST /api/v1/market/p2p/offers`
 

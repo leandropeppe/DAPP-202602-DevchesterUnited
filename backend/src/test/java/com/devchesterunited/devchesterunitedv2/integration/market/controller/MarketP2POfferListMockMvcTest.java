@@ -56,6 +56,7 @@ class MarketP2POfferListMockMvcTest {
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.data.offers[0].offer_id").value(OFFER_ID.toString()))
                 .andExpect(jsonPath("$.data.offers[0].seller_alias").value("public-alias"))
+                .andExpect(jsonPath("$.data.offers[0].mine").value(true))
                 .andExpect(jsonPath("$.data.offers[0].purchasable").value(true))
                 .andExpect(jsonPath("$.data.pagination.current_page").value(2))
                 .andExpect(jsonPath("$.data.pagination.page_size").value(5));
@@ -92,7 +93,7 @@ class MarketP2POfferListMockMvcTest {
 
     private MarketP2POfferPageResult pageResult() {
         MarketP2POfferView view = new MarketP2POfferView(
-                new MarketP2POfferView.Identity(OFFER_ID, PLAYER_ID, "public-alias"),
+                new MarketP2POfferView.Identity(OFFER_ID, PLAYER_ID, "public-alias", true),
                 new MarketP2POfferView.Availability(3L, "PURCHASABLE", true),
                 new MarketP2POfferView.Quote(UUID.randomUUID(), 2L, new BigDecimal("2.50"),
                         Instant.parse("2026-10-30T11:00:00Z"),

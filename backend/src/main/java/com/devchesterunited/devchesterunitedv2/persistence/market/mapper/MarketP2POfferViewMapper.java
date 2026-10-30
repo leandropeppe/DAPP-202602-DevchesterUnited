@@ -27,7 +27,8 @@ public final class MarketP2POfferViewMapper {
                 quote.quoteId(), quote.version(), quote.pricePerToken(), quote.publishedAt(),
                 quote.validFrom(), quote.validUntil());
         return new MarketP2POfferView(
-                new MarketP2POfferView.Identity(offer.getId(), offer.getJugadorId(), sellerAlias),
+                new MarketP2POfferView.Identity(offer.getId(), offer.getJugadorId(), sellerAlias,
+                        viewerId.equals(offer.getVendedorId())),
                 new MarketP2POfferView.Availability(offer.getCantidadRestante(), derivedStatus,
                         purchasable), quoteView);
     }
@@ -48,7 +49,7 @@ public final class MarketP2POfferViewMapper {
                 quote.validFrom(), quote.validUntil());
         return new MarketP2POfferView(
                 new MarketP2POfferView.Identity(offer.getOfferId(), offer.getPlayerId(),
-                        offer.getSellerAlias()),
+                        offer.getSellerAlias(), viewerId.equals(offer.getSellerId())),
                 new MarketP2POfferView.Availability(offer.getRemainingQuantity(), status,
                         purchasable), quoteView);
     }

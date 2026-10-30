@@ -6,7 +6,11 @@ import java.util.UUID;
 
 /** Vista publica de una oferta, separando estado persistido y disponibilidad derivada. */
 public record MarketP2POfferView(Identity identity, Availability availability, Quote quote) {
-    public record Identity(UUID offerId, UUID playerId, String sellerAlias) { }
+    public record Identity(UUID offerId, UUID playerId, String sellerAlias, boolean mine) {
+        public Identity(UUID offerId, UUID playerId, String sellerAlias) {
+            this(offerId, playerId, sellerAlias, false);
+        }
+    }
 
     public record Availability(Long remainingQuantity, String status, boolean purchasable) { }
 
