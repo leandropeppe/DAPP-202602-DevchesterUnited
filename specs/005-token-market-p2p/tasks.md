@@ -159,15 +159,15 @@ description: "Task list for Token Market P2P"
 
 ### Tests for User Story 5
 
-- [ ] T047 [P] [US5] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/market/MarketP2POfferQueryTest.java` para filtros, estados derivados, orden estable y alias público
-- [ ] T048 [P] [US5] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2POfferListMockMvcTest.java` para `page`, `limit`, `playerId`, `status`, `mine` y metadatos
+- [x] T047 [P] [US5] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/market/MarketP2POfferQueryTest.java` para filtros, estados derivados, orden estable y alias público
+- [x] T048 [P] [US5] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2POfferListMockMvcTest.java` para `page`, `limit`, `playerId`, `status`, `mine` y metadatos
 
 ### Implementation for User Story 5
 
-- [ ] T049 [US5] Implementar consultas paginadas en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/market/repository/OfertaVentaP2PRepository.java` con orden `created_at DESC, id DESC`
-- [ ] T050 [US5] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2POfferQueryServiceImpl.java` para calcular `PURCHASABLE`/`SUSPENDED` según jugador y quote actuales
-- [ ] T051 [US5] Crear endpoint `GET /api/v1/market/p2p/offers` en `MarketController.java`, respetando `page` desde 1, `limit` 1..100 y el envelope de paginación existente
-- [ ] T052 [US5] Implementar mapeo de `seller_alias` en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/market/mapper/` sin exponer correo, cuenta, saldo, hash, JWT o identificadores sensibles
+- [x] T049 [US5] Implementar consultas paginadas en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/market/repository/OfertaVentaP2PRepository.java` con orden `created_at DESC, id DESC`
+- [x] T050 [US5] Crear `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/impl/market/MarketP2POfferQueryServiceImpl.java` para calcular `PURCHASABLE`/`SUSPENDED` según jugador y quote actuales
+- [x] T051 [US5] Crear endpoint `GET /api/v1/market/p2p/offers` en `MarketController.java`, respetando `page` desde 1, `limit` 1..100 y el envelope de paginación existente
+- [x] T052 [US5] Implementar mapeo de `seller_alias` en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/persistence/market/mapper/` sin exponer correo, cuenta, saldo, hash, JWT o identificadores sensibles
 
 **Checkpoint**: El listado es paginado, filtrable, estable y no filtra información privada.
 
