@@ -80,7 +80,7 @@ public class MarketInitializationCoordinator {
                 return estados.marcarReady(iniciado.epoca()).orElseThrow(() ->
                         new IllegalStateException(
                                 "La ejecución de inicialización perdió la propiedad del epoch."));
-            } catch (RuntimeException | Error original) {
+            } catch (RuntimeException original) {
                 marcarFalloSinOcultarError(iniciado.epoca(), original);
                 throw original;
             }
@@ -89,7 +89,7 @@ public class MarketInitializationCoordinator {
     private void marcarFalloSinOcultarError(long epoch, Throwable original) {
         try {
             estados.marcarFailed(epoch, MOTIVO_FALLO_BOOTSTRAP);
-        } catch (RuntimeException | Error falloAlRegistrar) {
+        } catch (RuntimeException falloAlRegistrar) {
             original.addSuppressed(falloAlRegistrar);
         }
     }

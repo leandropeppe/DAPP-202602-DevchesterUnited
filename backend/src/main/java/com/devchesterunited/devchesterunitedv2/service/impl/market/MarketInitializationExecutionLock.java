@@ -26,24 +26,32 @@ public class MarketInitializationExecutionLock {
     public <T> T ejecutar(Operacion<T> operacion) {
         try (Connection connection = dataSource.getConnection()) {
             adquirir(connection);
-            try {
-                T resultado = operacion.ejecutar();
-                liberar(connection);
-                return resultado;
-            } catch (RuntimeException | Error original) {
-                try {
-                    liberar(connection);
-                } catch (SQLException falloLiberacion) {
-                    original.addSuppressed(falloLiberacion);
-                }
-                throw original;
-            } catch (SQLException falloLiberacion) {
-                throw new IllegalStateException(
-                        "No se pudo liberar el lock de inicializacion.", falloLiberacion);
-            }
+            return ejecutarOperacionConLock(connection, operacion);
         } catch (SQLException exception) {
             throw new IllegalStateException("No se pudo adquirir el lock de inicializacion.",
                     exception);
+        }
+    }
+
+    private static <T> T ejecutarOperacionConLock(Connection connection, Operacion<T> operacion) {
+        try {
+            T resultado = operacion.ejecutar();
+            liberar(connection);
+            return resultado;
+        } catch (RuntimeException original) {
+            liberarTrasFallo(connection, original);
+            throw original;
+        } catch (SQLException falloLiberacion) {
+            throw new IllegalStateException(
+                    "No se pudo liberar el lock de inicializacion.", falloLiberacion);
+        }
+    }
+
+    private static void liberarTrasFallo(Connection connection, RuntimeException original) {
+        try {
+            liberar(connection);
+        } catch (SQLException falloLiberacion) {
+            original.addSuppressed(falloLiberacion);
         }
     }
 

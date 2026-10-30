@@ -124,7 +124,7 @@
     display: grid;
 
     grid-template-columns:
-            310px
+            325px
             minmax(0, 1fr);
 
     gap: 28px;
@@ -135,19 +135,6 @@
 /* =========================================================
    REUSED PLAYER CARD - DETAIL ONLY
    ========================================================= */
-
-.player-detail__hero-layout {
-    position: relative;
-    z-index: 3;
-
-    display: grid;
-    grid-template-columns:
-            325px
-            minmax(0, 1fr);
-
-    gap: 28px;
-    align-items: stretch;
-}
 
 .player-detail__player-card {
     width: 100%;

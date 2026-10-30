@@ -79,7 +79,7 @@ class FootballDataAdapterTest {
     }
 
     @Test
-    void rechazaDuplicadoSinResolucionInequivoca() throws Exception {
+    void rechazaDuplicadoSinResolucionInequivoca() {
         assertThatThrownBy(() -> sincronizarConDuplicado("2026-02-02T00:00:00Z", "2026-02-02T00:00:00Z", false))
                 .isInstanceOf(FootballDataException.class);
         detenerServidor();

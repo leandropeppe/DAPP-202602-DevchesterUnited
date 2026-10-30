@@ -7,9 +7,9 @@ import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MetricaValori
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -32,7 +32,7 @@ class ValidacionEscenarioSimulacionTest {
         assertCodigo(Map.of(MetricaValorizacion.GOALS, BigDecimal.valueOf(-1)), CodigoErrorSimulacion.VALOR_FUERA_DE_RANGO);
         assertCodigo(Map.of(MetricaValorizacion.PASS_SUCCESS, BigDecimal.valueOf(101)), CodigoErrorSimulacion.VALOR_FUERA_DE_RANGO);
         assertCodigo(Map.of(MetricaValorizacion.RATING, BigDecimal.valueOf(10.01)), CodigoErrorSimulacion.VALOR_FUERA_DE_RANGO);
-        Map<MetricaValorizacion, BigDecimal> nulo = new HashMap<>();
+        Map<MetricaValorizacion, BigDecimal> nulo = new EnumMap<>(MetricaValorizacion.class);
         nulo.put(MetricaValorizacion.SHOTS, null);
         assertCodigo(nulo, CodigoErrorSimulacion.VALOR_FUERA_DE_RANGO);
     }

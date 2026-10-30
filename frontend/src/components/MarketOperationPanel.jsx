@@ -695,7 +695,7 @@ function SaleConfirmationView ({
               ¿Querés vender tokens de{' '}
               <strong>
                 {player.name}
-              </strong>
+              </strong>{' '}
               ?
             </>
           }
@@ -1097,7 +1097,7 @@ export default function MarketOperationPanel ({
                 de{' '}
                 <strong>
                   {player.name}
-                </strong>
+                </strong>{' '}
                 ?
               </>
             }
