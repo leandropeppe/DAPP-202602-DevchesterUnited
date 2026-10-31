@@ -77,7 +77,7 @@ export default function MarketP2POffersPage () {
   }
 
   function openOfferOperation (offer) {
-    if (offer.mine && ['OPEN', 'PARTIALLY_FILLED', 'PURCHASABLE'].includes(offer.status)) openOperation('cancel', offer.playerName || `Oferta ${offer.offer_id}`, offer)
+    if (offer.mine && ['OPEN', 'PARTIALLY_FILLED', 'PURCHASABLE', 'SUSPENDED'].includes(offer.status)) openOperation('cancel', offer.playerName || `Oferta ${offer.offer_id}`, offer)
     else if (!offer.mine && offer.status === 'PURCHASABLE') openOperation('purchase', offer.playerName || `Oferta ${offer.offer_id}`, offer, offer.remainingQuantity)
   }
 

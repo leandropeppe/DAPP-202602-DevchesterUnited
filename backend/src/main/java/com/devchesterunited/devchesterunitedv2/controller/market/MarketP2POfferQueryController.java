@@ -43,15 +43,26 @@ public class MarketP2POfferQueryController {
     @ApiResponse(responseCode = "401", description = "JWT ausente o invalido.")
     public ResponseEntity<SuccessResponseDTO<MarketP2POfferListResponseDTO>> list(
             @AuthenticationPrincipal Jwt jwt,
-            @Parameter(name = "playerId", in = ParameterIn.QUERY)
+            @Parameter(name = "playerId", in = ParameterIn.QUERY,
+                    description = "Identificador UUID del jugador.",
+                    schema = @Schema(type = "string", format = "uuid"))
             @RequestParam(required = false) String playerId,
-            @Parameter(name = "status", in = ParameterIn.QUERY)
+            @Parameter(name = "status", in = ParameterIn.QUERY,
+                    description = "Estado persistido o derivado de la oferta.",
+                    schema = @Schema(type = "string", allowableValues = {
+                            "OPEN", "PARTIALLY_FILLED", "PURCHASABLE", "SUSPENDED", "FILLED", "CANCELLED"}))
             @RequestParam(required = false) String status,
-            @Parameter(name = "mine", in = ParameterIn.QUERY)
+            @Parameter(name = "mine", in = ParameterIn.QUERY,
+                    description = "Filtra por ofertas del usuario autenticado.",
+                    schema = @Schema(type = "boolean", defaultValue = "false"))
             @RequestParam(defaultValue = "false") boolean mine,
-            @Parameter(name = "page", in = ParameterIn.QUERY)
+            @Parameter(name = "page", in = ParameterIn.QUERY,
+                    description = "Pagina desde 1.",
+                    schema = @Schema(type = "integer", minimum = "1", defaultValue = "1"))
             @RequestParam(defaultValue = "1") int page,
-            @Parameter(name = "limit", in = ParameterIn.QUERY)
+            @Parameter(name = "limit", in = ParameterIn.QUERY,
+                    description = "Registros por pagina, entre 1 y 100.",
+                    schema = @Schema(type = "integer", minimum = "1", maximum = "100", defaultValue = "20"))
             @RequestParam(defaultValue = "20") int limit) {
         UUID userId = userIdFrom(jwt);
         UUID parsedPlayer = parsePlayerId(playerId);

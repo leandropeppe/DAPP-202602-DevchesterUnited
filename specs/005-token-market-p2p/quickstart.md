@@ -4,7 +4,7 @@ Este documento describe cómo se verificará la implementación cuando exista c�
 
 ## Preparación
 
-1. Aplicar la migración V21 en un PostgreSQL de pruebas mediante el flujo normal del proyecto.
+1. Levantar un PostgreSQL de pruebas y permitir que Flyway aplique, mediante el flujo normal del proyecto, todas las migraciones vigentes de Token Market, incluidas V21, V22 y V23.
 2. Levantar el backend con las credenciales de prueba y el frontend con la configuración local existente.
 3. Crear/usar dos usuarios registrados, un jugador activo con quote válida, saldo suficiente y una tenencia del vendedor.
 4. Verificar que el superusuario tenga inventario para el flujo primario.

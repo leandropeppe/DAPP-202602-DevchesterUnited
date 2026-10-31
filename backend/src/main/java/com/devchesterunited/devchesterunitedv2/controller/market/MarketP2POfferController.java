@@ -6,6 +6,8 @@ import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketP2POf
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP2POfferService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -49,7 +51,10 @@ public class MarketP2POfferController {
             content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
     public ResponseEntity<SuccessResponseDTO<MarketP2POfferResponseDTO>> publish(
             @AuthenticationPrincipal Jwt jwt,
-            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Parameter(name = "Idempotency-Key", in = ParameterIn.HEADER, required = true,
+                    description = "Clave nueva por operacion logica; maximo 200 caracteres.",
+                    schema = @Schema(type = "string", minLength = 1, maxLength = 200))
+            @RequestHeader(value = "Idempotency-Key", required = true) String idempotencyKey,
             @Valid @RequestBody MarketP2POfferRequestDTO request) {
         UUID usuarioId = usuarioDesde(jwt);
         request.validarCamposAdicionales();

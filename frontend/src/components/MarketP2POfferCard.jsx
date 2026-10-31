@@ -23,7 +23,7 @@ export default function MarketP2POfferCard ({ offer, onAction }) {
     : status === 'PURCHASABLE'
       ? 'Comprar oferta'
       : 'Operación no disponible'
-  const actionEnabled = (ownOffer && ['OPEN', 'PARTIALLY_FILLED', 'PURCHASABLE'].includes(status)) ||
+  const actionEnabled = (ownOffer && ['OPEN', 'PARTIALLY_FILLED', 'PURCHASABLE', 'SUSPENDED'].includes(status)) ||
     (!ownOffer && status === 'PURCHASABLE')
 
   return (

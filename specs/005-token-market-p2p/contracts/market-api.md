@@ -29,7 +29,7 @@ Si una solicitud idempotente confirmada referencia un trade histórico sin snaps
 ## Compatibilidad y consultas existentes
 
 - `POST /api/v1/market/purchases` conserva request, validaciones, idempotencia y respuesta de compra primaria.
-- `POST /api/v1/market/sales` responde siempre `410 Gone` para nuevos intentos, sin llamar al servicio de settlement ni insertar auditoría como transacción confirmada. El historial conserva las ventas anteriores.
+- `POST /api/v1/market/sales` responde `410 Gone` para intentos nuevos autenticados y sintácticamente válidos, sin llamar al servicio de settlement ni insertar auditoría como transacción confirmada. Las validaciones de autenticación y formato conservan sus respuestas convencionales. El historial conserva las ventas anteriores.
 - El endpoint actual de portfolio agrega por posición `total_quantity`, `reserved_quantity` y `available_quantity`.
 - El endpoint actual de transacciones devuelve tipos normalizados `PRIMARY_PURCHASE`, `P2P_PURCHASE`, `P2P_SALE` y conserva el tipo histórico de ventas al superusuario.
 
@@ -74,4 +74,4 @@ persistan. Nunca se incluyen asientos de otra identidad JWT.
 
 ## OpenAPI
 
-Los DTOs, códigos, esquemas de error, `Idempotency-Key`, scopes/autenticación y respuestas paginadas deben reflejarse en la anotación/documentación OpenAPI existente de `MarketController`. El contrato final debe mantener nombres y envelope consistentes con los endpoints actuales.
+Los DTOs, códigos, esquemas de error, `Idempotency-Key`, scopes/autenticación y respuestas paginadas deben reflejarse en las anotaciones/documentación OpenAPI de `MarketController` y de los controladores P2P separados. El contrato final debe mantener nombres y envelope consistentes con los endpoints actuales.

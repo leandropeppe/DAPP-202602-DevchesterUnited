@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springdoc.core.annotations.ParameterObject;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -86,34 +87,10 @@ public class MarketController {
             content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
     public ResponseEntity<SuccessResponseDTO<MarketTransactionsResponseDTO>> transactions(
             @AuthenticationPrincipal Jwt jwt,
-            @Parameter(name = "playerId", in = ParameterIn.QUERY,
-                    description = "Identificador UUID del jugador.",
-                    schema = @Schema(type = "string", format = "uuid"))
-            @RequestParam(required = false) String playerId,
-            @Parameter(name = "type", in = ParameterIn.QUERY,
-                    description = "Tipo: PRIMARY_PURCHASE, SALE legacy, P2P_PURCHASE o P2P_SALE. "
-                            + "PURCHASE se conserva como alias compatible de PRIMARY_PURCHASE.",
-                    schema = @Schema(type = "string", allowableValues = {"PRIMARY_PURCHASE", "PURCHASE",
-                            "SALE", "P2P_PURCHASE", "P2P_SALE"}))
-            @RequestParam(required = false) String type,
-            @Parameter(name = "from", in = ParameterIn.QUERY,
-                    description = "Instante ISO-8601 inclusivo.",
-                    schema = @Schema(type = "string", format = "date-time"))
-            @RequestParam(required = false) String from,
-            @Parameter(name = "to", in = ParameterIn.QUERY,
-                    description = "Instante ISO-8601 exclusivo.",
-                    schema = @Schema(type = "string", format = "date-time"))
-            @RequestParam(required = false) String to,
-            @Parameter(name = "page", in = ParameterIn.QUERY,
-                    description = "Pagina desde 1.",
-                    schema = @Schema(type = "integer", minimum = "1", defaultValue = "1"))
-            @RequestParam(defaultValue = "1") String page,
-            @Parameter(name = "limit", in = ParameterIn.QUERY,
-                    description = "Registros por pagina, entre 1 y 100.",
-                    schema = @Schema(type = "integer", minimum = "1", maximum = "100", defaultValue = "20"))
-            @RequestParam(defaultValue = "20") String limit) {
+            @ParameterObject MarketTransactionQueryParams query) {
         UUID usuarioId = usuarioDesde(jwt);
-        MarketTransactionFilter filtro = transactionFilter(playerId, type, from, to, page, limit);
+        MarketTransactionFilter filtro = transactionFilter(query.getPlayerId(), query.getType(),
+                query.getFrom(), query.getTo(), query.getPage(), query.getLimit());
         var result = transactions.consultar(usuarioId, filtro);
         return ResponseEntity.ok(new SuccessResponseDTO<>(
                 MarketTransactionsResponseDTO.fromDomain(result)));

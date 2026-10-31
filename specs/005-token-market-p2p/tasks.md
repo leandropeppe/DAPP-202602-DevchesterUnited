@@ -183,18 +183,18 @@ description: "Task list for Token Market P2P"
 
 ### Tests for User Story 7
 
-- [ ] T053 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PPurchaseConcurrencyIntegrationTest.java` para compradores concurrentes sobre el mismo remanente
-- [ ] T054 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PPublicationConcurrencyIntegrationTest.java` para publicaciones concurrentes sobre una misma tenencia
-- [ ] T055 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PCancelPurchaseConcurrencyIntegrationTest.java` para compra/cancelación concurrentes
-- [ ] T056 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PCrossUserLockConcurrencyIntegrationTest.java` para compras cruzadas y compatibilidad con compra primaria sin deadlocks
-- [ ] T057 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PIdempotencyConcurrencyIntegrationTest.java` para replay idéntico, key con parámetros distintos, pérdida de respuesta y recuperación
-- [ ] T058 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2PQuoteChangedMockMvcTest.java` para 409, `current_quote`, suspensión y obligación de nueva key
+- [x] T053 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PPurchaseConcurrencyIntegrationTest.java` para compradores concurrentes sobre el mismo remanente
+- [x] T054 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PPublicationConcurrencyIntegrationTest.java` para publicaciones concurrentes sobre una misma tenencia
+- [x] T055 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PCancelPurchaseConcurrencyIntegrationTest.java` para compra/cancelación concurrentes
+- [x] T056 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PCrossUserLockConcurrencyIntegrationTest.java` para compras cruzadas y compatibilidad con compra primaria sin deadlocks
+- [x] T057 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/persistence/MarketP2PIdempotencyConcurrencyIntegrationTest.java` para replay idéntico, key con parámetros distintos, pérdida de respuesta y recuperación
+- [x] T058 [P] [US7] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2PQuoteChangedMockMvcTest.java` para 409, `current_quote`, suspensión y obligación de nueva key
 
 ### Implementation for User Story 7
 
-- [ ] T059 [US7] Revisar los servicios P2P y `MarketIdempotencyClaimService.java` para que todas las operaciones usen la misma semántica de claim, ownership y resultado confirmado
-- [ ] T060 [US7] Añadir comprobaciones SQL/domain para no negatividad de balances, tenencias, reservas, inventario y remanentes en `persistence/market` y `modelo/market`
-- [ ] T061 [US7] Verificar con dos conexiones PostgreSQL que el orden de locks documentado en `specs/005-token-market-p2p/research.md` se mantiene durante publication, purchase, cancel y primary purchase
+- [x] T059 [US7] Revisar los servicios P2P y `MarketIdempotencyClaimService.java` para que todas las operaciones usen la misma semántica de claim, ownership y resultado confirmado
+- [x] T060 [US7] Añadir comprobaciones SQL/domain para no negatividad de balances, tenencias, reservas, inventario y remanentes en `persistence/market` y `modelo/market`
+- [x] T061 [US7] Verificar con dos conexiones PostgreSQL que el orden de locks documentado en `specs/005-token-market-p2p/research.md` se mantiene durante publication, purchase, cancel y primary purchase
 
 **Checkpoint**: Las invariantes sobreviven concurrencia, reintentos, cambios de quote y errores de transporte.
 
@@ -233,10 +233,10 @@ description: "Task list for Token Market P2P"
 
 **Purpose**: Completar contratos, documentación y validación sin ampliar el alcance.
 
-- [ ] T073 [P] Crear/actualizar tests de contrato OpenAPI en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/contract/market/MarketP2PApiContractTest.java` para endpoints, errores, autenticación, paginación y HTTP 410
-- [ ] T074 [P] Crear tests frontend nuevos en `frontend/src/components/MarketP2POfferCard.test.jsx`, `frontend/src/components/MarketP2PConfirmationModal.test.jsx` y `frontend/src/views/MarketPortfolioPage.test.jsx` sin modificar ni borrar tests existentes
-- [ ] T075 Ejecutar los escenarios de `specs/005-token-market-p2p/quickstart.md` contra entorno de pruebas, sin usar cuotas reales ni WhoScored
-- [ ] T076 Revisar `specs/005-token-market-p2p/contracts/market-api.md`, `contracts/quote-contract.md` y anotaciones OpenAPI para que no haya divergencias
+- [x] T073 [P] Crear/actualizar tests de contrato OpenAPI en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/contract/market/MarketP2PApiContractTest.java` para endpoints, errores, autenticación, paginación y HTTP 410
+- [x] T074 [P] Crear tests frontend nuevos en `frontend/src/components/MarketP2POfferCard.test.jsx`, `frontend/src/components/MarketP2PConfirmationModal.test.jsx` y `frontend/src/views/MarketPortfolioPage.test.jsx` sin modificar ni borrar tests existentes
+- [x] T075 Ejecutar los escenarios de `specs/005-token-market-p2p/quickstart.md` contra entorno de pruebas, sin usar cuotas reales ni WhoScored
+- [x] T076 Revisar `specs/005-token-market-p2p/contracts/market-api.md`, `contracts/quote-contract.md` y anotaciones OpenAPI para que no haya divergencias
 - [ ] T077 Ejecutar desde `backend/build.gradle` la compilación backend, desde `frontend/package.json` la compilación frontend, la suite completa, tests Testcontainers, revisión de seguridad y SonarCloud según la Constitution
 - [ ] T078 Verificar en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/`, `backend/src/main/java/com/devchesterunited/devchesterunitedv2/scraping/` y `backend/src/test/` que no se modificaron Player Valuation, Player Statistics Sync, WhoScored ni los tests existentes no autorizados
 

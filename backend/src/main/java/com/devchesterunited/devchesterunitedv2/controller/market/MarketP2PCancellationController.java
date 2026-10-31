@@ -6,6 +6,8 @@ import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PCancelCommand;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP2PCancellationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -41,11 +43,15 @@ public class MarketP2PCancellationController {
     @ApiResponse(responseCode = "400", description = "Solicitud invalida.")
     @ApiResponse(responseCode = "401", description = "JWT ausente o invalido.")
     @ApiResponse(responseCode = "404", description = "Oferta inexistente o no perteneciente al usuario.")
+    @ApiResponse(responseCode = "403", description = "El usuario no puede cancelar la oferta.")
     @ApiResponse(responseCode = "409", description = "Oferta ya completada, cancelada o conflicto de idempotencia.")
     public ResponseEntity<SuccessResponseDTO<MarketP2PCancellationResponseDTO>> cancel(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID offerId,
-            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+            @Parameter(name = "Idempotency-Key", in = ParameterIn.HEADER, required = true,
+                    description = "Clave nueva por operacion logica; maximo 200 caracteres.",
+                    schema = @Schema(type = "string", minLength = 1, maxLength = 200))
+            @RequestHeader(value = "Idempotency-Key", required = true) String idempotencyKey) {
         UUID userId = userIdFrom(jwt);
         String key = normalizeIdempotencyKey(idempotencyKey);
         var result = cancellations.cancelar(new MarketP2PCancelCommand(userId, offerId, key));

@@ -57,7 +57,6 @@ public class MarketP2PPurchasePersistenceServiceImpl {
                         "La oferta no esta disponible para compra."));
         validateOffer(offer, settlement);
         BigDecimal total = total(settlement.quote().pricePerToken(), settlement.quantity());
-        tenencias.ensureCanonicalZero(settlement.buyerId(), settlement.target().playerId());
         LockedResources resources = lockResources(offer, settlement.buyerId(),
                 settlement.target().playerId());
 
@@ -132,11 +131,15 @@ public class MarketP2PPurchasePersistenceServiceImpl {
         if (sellerId.compareTo(buyerId) < 0) {
             sellerAccount = lockAccount(sellerId);
             buyerAccount = lockAccount(buyerId);
-            sellerHolding = lockHolding(sellerId, playerId);
-            buyerHolding = lockHolding(buyerId, playerId);
         } else {
             buyerAccount = lockAccount(buyerId);
             sellerAccount = lockAccount(sellerId);
+        }
+        tenencias.ensureCanonicalZero(buyerId, playerId);
+        if (sellerId.compareTo(buyerId) < 0) {
+            sellerHolding = lockHolding(sellerId, playerId);
+            buyerHolding = lockHolding(buyerId, playerId);
+        } else {
             buyerHolding = lockHolding(buyerId, playerId);
             sellerHolding = lockHolding(sellerId, playerId);
         }

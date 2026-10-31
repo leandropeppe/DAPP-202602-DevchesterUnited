@@ -36,6 +36,7 @@ class MarketPurchasePersistenceIntegrationTest extends PostgresTestSupport {
     private UUID counterpartyId;
     private UUID requestId;
     private UUID quoteId;
+    private java.time.Instant confirmedAt;
 
     @BeforeEach
     void fixture() {
@@ -65,6 +66,11 @@ class MarketPurchasePersistenceIntegrationTest extends PostgresTestSupport {
         jdbc.update("UPDATE market_credit_accounts SET balance = 0.00, "
                 + "updated_at = GREATEST(created_at, ?) "
                 + "WHERE counterparty_id = ?", NOW, counterpartyId);
+        OffsetDateTime counterpartyCreatedAt = jdbc.queryForObject(
+                "SELECT created_at FROM market_credit_accounts WHERE counterparty_id = ?",
+                OffsetDateTime.class, counterpartyId);
+        confirmedAt = counterpartyCreatedAt.toInstant().isAfter(NOW.toInstant())
+                ? counterpartyCreatedAt.toInstant() : NOW.toInstant();
         jdbc.update("INSERT INTO market_token_issuances "
                 + "(player_id, counterparty_id, issued_quantity, inventory_quantity, created_at, "
                 + "updated_at) VALUES (?, ?, 100, 100, ?, ?)", playerId, counterpartyId, NOW, NOW);
@@ -86,7 +92,7 @@ class MarketPurchasePersistenceIntegrationTest extends PostgresTestSupport {
     void persisteEnPostgresLaTransferenciaLaTenenciaYLosCuatroMovimientos() {
         UUID transactionId = purchases.persistirCompra(new MarketPurchaseSettlement(
                 requestId, userId, playerId, "Purchase Player", counterpartyId, quoteId, 1L,
-                3L, new BigDecimal("1.25"), new BigDecimal("3.75"), NOW.toInstant()));
+                3L, new BigDecimal("1.25"), new BigDecimal("3.75"), confirmedAt));
         entityManager.flush();
 
         assertThat(jdbc.queryForObject("SELECT balance FROM market_credit_accounts "

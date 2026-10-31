@@ -132,9 +132,14 @@ public abstract class PostgresTestSupport {
         limpiarCancelacionesP2P(jdbc, playerId);
         limpiarTradesP2P(jdbc, playerId);
         jdbc.update("DELETE FROM market_p2p_offers WHERE player_id = ?", playerId);
-        jdbc.update("DELETE FROM market_movements WHERE player_id = ?", playerId);
-        jdbc.update("DELETE FROM market_movements WHERE transaction_id IN "
-                + "(SELECT id FROM market_confirmed_transactions WHERE player_id = ?)", playerId);
+        jdbc.update("ALTER TABLE market_movements DISABLE TRIGGER trg_market_movements_immutable");
+        try {
+            jdbc.update("DELETE FROM market_movements WHERE player_id = ?", playerId);
+            jdbc.update("DELETE FROM market_movements WHERE transaction_id IN "
+                    + "(SELECT id FROM market_confirmed_transactions WHERE player_id = ?)", playerId);
+        } finally {
+            jdbc.update("ALTER TABLE market_movements ENABLE TRIGGER trg_market_movements_immutable");
+        }
         jdbc.update("DELETE FROM market_holdings WHERE player_id = ?", playerId);
         jdbc.update("DELETE FROM market_rejected_attempts WHERE player_id = ?", playerId);
         jdbc.update("DELETE FROM market_token_issuances WHERE player_id = ?", playerId);

@@ -11,6 +11,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.*;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPortfolioService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,21 +35,30 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
     private final Clock clock;
     private final JugadorRepository jugadores;
 
+    @Component
+    public record Dependencies(QuotePublicationPort cotizaciones,
+            VersionCotizacionMercadoRepository versiones,
+            VersionCotizacionMercadoMapper mapper, Clock clock,
+            JugadorRepository jugadores) {
+        public Dependencies {
+            Objects.requireNonNull(cotizaciones);
+            Objects.requireNonNull(versiones);
+            Objects.requireNonNull(mapper);
+            Objects.requireNonNull(clock);
+        }
+    }
+
     @Autowired
     public MarketPortfolioServiceImpl(TenenciaMercadoRepository tenencias,
             PnLRealizadoMercadoRepository pnlRealizado,
-            QuotePublicationPort cotizaciones,
-            VersionCotizacionMercadoRepository versiones,
-            VersionCotizacionMercadoMapper mapper,
-            Clock clock,
-            JugadorRepository jugadores) {
+            Dependencies dependencies) {
         this.tenencias = Objects.requireNonNull(tenencias);
         this.pnlRealizado = Objects.requireNonNull(pnlRealizado);
-        this.cotizaciones = Objects.requireNonNull(cotizaciones);
-        this.versiones = Objects.requireNonNull(versiones);
-        this.mapper = Objects.requireNonNull(mapper);
-        this.clock = Objects.requireNonNull(clock);
-        this.jugadores = Objects.requireNonNull(jugadores);
+        this.cotizaciones = dependencies.cotizaciones();
+        this.versiones = dependencies.versiones();
+        this.mapper = dependencies.mapper();
+        this.clock = dependencies.clock();
+        this.jugadores = dependencies.jugadores();
     }
 
     /** Constructor de compatibilidad para consumidores de servicio existentes. */
@@ -58,13 +68,8 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
             VersionCotizacionMercadoRepository versiones,
             VersionCotizacionMercadoMapper mapper,
             Clock clock) {
-        this.tenencias = Objects.requireNonNull(tenencias);
-        this.pnlRealizado = Objects.requireNonNull(pnlRealizado);
-        this.cotizaciones = Objects.requireNonNull(cotizaciones);
-        this.versiones = Objects.requireNonNull(versiones);
-        this.mapper = Objects.requireNonNull(mapper);
-        this.clock = Objects.requireNonNull(clock);
-        this.jugadores = null;
+        this(tenencias, pnlRealizado,
+                new Dependencies(cotizaciones, versiones, mapper, clock, null));
     }
 
     @Override
@@ -122,9 +127,11 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
                         .setScale(INTERNAL_SCALE, RoundingMode.HALF_EVEN))
                 : Optional.empty();
 
-        return new MarketPortfolioResult(posiciones, realizado, noRealizado, combinado,
-                todasValuadas, posiciones.size(), tokensTotales, costoPendienteTotal,
-                valorActualTotal);
+        return new MarketPortfolioResult(posiciones,
+                new MarketPortfolioResult.Summary(realizado, noRealizado, combinado,
+                        todasValuadas),
+                new MarketPortfolioResult.Totals(posiciones.size(), tokensTotales,
+                        costoPendienteTotal, valorActualTotal));
     }
 
     private Map<UUID, JugadorPortfolioProjection> cargarDescripciones(
@@ -182,16 +189,12 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
         MarketPortfolioQuote quote = historica.map(this::toPortfolioQuote).orElse(null);
         return new PositionValuation(
                 new MarketPortfolioPosition(
-                        jugadorId,
-                        cantidad,
-                        tenencia.getCantidadReservada(),
-                        costoTotal,
-                        costoPromedio,
-                        quote == null ? MarketQuoteAvailability.ABSENT
-                                : MarketQuoteAvailability.HISTORICAL,
-                        Optional.ofNullable(quote),
-                        Optional.empty(),
-                        Optional.empty()),
+                        jugadorId, cantidad, tenencia.getCantidadReservada(),
+                        new MarketPortfolioPosition.Costs(costoTotal, costoPromedio),
+                        new MarketPortfolioPosition.Valuation(
+                                quote == null ? MarketQuoteAvailability.ABSENT
+                                        : MarketQuoteAvailability.HISTORICAL,
+                                Optional.ofNullable(quote), Optional.empty(), Optional.empty())),
                 Optional.empty());
     }
 
@@ -210,15 +213,11 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
                 .setScale(INTERNAL_SCALE, RoundingMode.HALF_EVEN);
         return new PositionValuation(
                 new MarketPortfolioPosition(
-                        jugadorId,
-                        cantidad,
-                        cantidadReservada,
-                        costoTotal,
-                        costoPromedio,
-                        MarketQuoteAvailability.CURRENT,
-                        Optional.of(toPortfolioQuote(quote)),
-                        Optional.of(valorActual),
-                        Optional.of(pnl)),
+                        jugadorId, cantidad, cantidadReservada,
+                        new MarketPortfolioPosition.Costs(costoTotal, costoPromedio),
+                        new MarketPortfolioPosition.Valuation(MarketQuoteAvailability.CURRENT,
+                                Optional.of(toPortfolioQuote(quote)), Optional.of(valorActual),
+                                Optional.of(pnl))),
                 Optional.of(pnl));
     }
 

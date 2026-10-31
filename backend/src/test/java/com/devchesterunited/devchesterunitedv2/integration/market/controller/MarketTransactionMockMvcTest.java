@@ -7,6 +7,7 @@ import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPurchaseService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketSaleService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketTransactionService;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -18,6 +19,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransact
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionRecord;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.shared.PaginacionResultado;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -63,6 +65,11 @@ class MarketTransactionMockMvcTest {
     @MockitoBean private MarketSaleService sales;
     @MockitoBean private MarketPortfolioService portfolios;
     @MockitoBean private MarketTransactionService transactions;
+
+    @BeforeEach
+    void limpiaInvocacionesDelServicioDeHistorial() {
+        clearInvocations(transactions);
+    }
 
     @Test
     void historialAutenticadoDevuelveSuccessPaginacionYSnapshotCompleto() throws Exception {
@@ -258,8 +265,12 @@ class MarketTransactionMockMvcTest {
 
     private static MarketTransactionRecord transaction(UUID id, UUID playerId, String type,
             Instant confirmedAt, BigDecimal unitPrice, BigDecimal totalAmount, BigDecimal pnl) {
-        return new MarketTransactionRecord(id, USER_A, playerId, "Player snapshot", type, 2L,
-                unitPrice, totalAmount, COUNTERPARTY, QUOTE_A, 7L, IDEMPOTENCY_A, pnl, confirmedAt);
+        return new MarketTransactionRecord(
+                new MarketTransactionRecord.Identity(id, USER_A, playerId),
+                new MarketTransactionRecord.Snapshot("Player snapshot", type),
+                new MarketTransactionRecord.Amounts(2L, unitPrice, totalAmount),
+                new MarketTransactionRecord.Settlement(COUNTERPARTY, QUOTE_A, 7L),
+                new MarketTransactionRecord.Audit(IDEMPOTENCY_A, pnl, confirmedAt));
     }
 
     private static RequestPostProcessor jwtFor(UUID userId) {

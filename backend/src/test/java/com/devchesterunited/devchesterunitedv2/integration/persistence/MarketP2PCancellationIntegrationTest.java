@@ -2,10 +2,12 @@ package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PCancelCommand;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PCancelResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2POfferQuery;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PQuoteIdentity;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseCommand;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseResult;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP2PCancellationService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP2POfferQueryService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP2PPurchaseService;
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.support.fixtures.market.MarketP2PFixtureBuilder;
@@ -40,6 +42,9 @@ class MarketP2PCancellationIntegrationTest extends PostgresTestSupport {
     @Autowired
     private MarketP2PPurchaseService purchases;
 
+    @Autowired
+    private MarketP2POfferQueryService offerQueries;
+
     private MarketP2PFixtureBuilder.FixtureUser seller;
     private MarketP2PFixtureBuilder.FixtureUser buyer;
     private MarketP2PFixtureBuilder.FixturePlayer player;
@@ -72,6 +77,30 @@ class MarketP2PCancellationIntegrationTest extends PostgresTestSupport {
         assertThat(result.status()).isEqualTo("CANCELLED");
         assertThat(result.originalQuantity()).isEqualTo(OFFER_QUANTITY);
         assertThat(result.soldQuantity()).isZero();
+        assertThat(result.releasedQuantity()).isEqualTo(OFFER_QUANTITY);
+        assertOffer(0L, 0L, OFFER_QUANTITY, "CANCELLED");
+        assertThat(reservedQuantity()).isZero();
+        assertCancellationAudit(0L, OFFER_QUANTITY);
+    }
+
+    @Test
+    void cancelaOfertaOperativamenteSuspendidaPorQuoteInvalidada() {
+        jdbc.update("UPDATE market_quote_headers SET validity_status = 'INVALIDATED', "
+                + "invalidated_at = CURRENT_TIMESTAMP, invalidation_reason = 'test' "
+                + "WHERE player_id = ?", player.id());
+
+        var suspended = offerQueries.consultar(new MarketP2POfferQuery(seller.id(),
+                player.id(), "SUSPENDED", true, 1, 20));
+
+        assertThat(suspended.offers()).singleElement()
+                .satisfies(view -> {
+                    assertThat(view.availability().status()).isEqualTo("SUSPENDED");
+                    assertThat(view.availability().purchasable()).isFalse();
+                });
+
+        MarketP2PCancelResult result = cancellations.cancelar(cancelCommand("suspended-key"));
+
+        assertThat(result.status()).isEqualTo("CANCELLED");
         assertThat(result.releasedQuantity()).isEqualTo(OFFER_QUANTITY);
         assertOffer(0L, 0L, OFFER_QUANTITY, "CANCELLED");
         assertThat(reservedQuantity()).isZero();

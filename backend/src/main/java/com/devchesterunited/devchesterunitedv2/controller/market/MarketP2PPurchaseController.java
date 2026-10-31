@@ -9,6 +9,8 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurch
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PQuoteIdentity;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP2PPurchaseService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -49,12 +51,16 @@ public class MarketP2PPurchaseController {
     @ApiResponse(responseCode = "400", description = "Solicitud invalida.")
     @ApiResponse(responseCode = "401", description = "JWT ausente o invalido.")
     @ApiResponse(responseCode = "404", description = "Oferta inexistente.")
-    @ApiResponse(responseCode = "409", description = "Cotizacion, saldo, cantidad o idempotencia en conflicto.")
+    @ApiResponse(responseCode = "409", description = "Cotizacion, saldo, cantidad o idempotencia en conflicto.",
+            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketP2PErrorResponseDTO.class)))
     @ApiResponse(responseCode = "503", description = "Mercado no operativo.")
     public ResponseEntity<SuccessResponseDTO<MarketP2PPurchaseResponseDTO>> purchase(
             @AuthenticationPrincipal Jwt jwt,
             @PathVariable UUID offerId,
-            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Parameter(name = "Idempotency-Key", in = ParameterIn.HEADER, required = true,
+                    description = "Clave nueva por confirmacion; no se reutiliza tras QUOTE_CHANGED.",
+                    schema = @Schema(type = "string", minLength = 1, maxLength = 200))
+            @RequestHeader(value = "Idempotency-Key", required = true) String idempotencyKey,
             @Valid @RequestBody MarketP2PPurchaseRequestDTO request) {
         UUID userId = userIdFrom(jwt);
         request.validateFields();

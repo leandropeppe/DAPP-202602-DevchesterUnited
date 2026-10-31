@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PCancelCommand;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyClaimService;
 import com.devchesterunited.devchesterunitedv2.support.fixtures.market.MarketP2PFixtureBuilder;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,6 +82,27 @@ class MarketP2PIdempotencyIntegrationTest {
                 .isInstanceOfSatisfying(TokenMarketException.class,
                         error -> assertThat(error.reason())
                                 .isEqualTo(TokenMarketException.Reason.IDEMPOTENCY_CONFLICT));
+    }
+
+    @Test
+    void aplicaLaMismaSemanticaDeOperacionYUsuarioEnOfertaCompraYCancelacion() {
+        claims.reclamarConPropiedad(request("shared-key", "P2P_OFFER", 2L));
+
+        assertThatThrownBy(() -> claims.reclamarConPropiedad(
+                new MarketP2PCancelCommand(userId, UUID.randomUUID(), "shared-key")))
+                .isInstanceOfSatisfying(TokenMarketException.class,
+                        error -> assertThat(error.reason())
+                                .isEqualTo(TokenMarketException.Reason.IDEMPOTENCY_CONFLICT));
+
+        assertThatThrownBy(() -> claims.reclamarConPropiedad(
+                request("shared-key", "P2P_PURCHASE", 2L)))
+                .isInstanceOfSatisfying(TokenMarketException.class,
+                        error -> assertThat(error.reason())
+                                .isEqualTo(TokenMarketException.Reason.IDEMPOTENCY_CONFLICT));
+
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM market_idempotency_requests "
+                + "WHERE user_id = ? AND idempotency_key = 'shared-key'", Long.class, userId))
+                .isEqualTo(1L);
     }
 
     private MarketIdempotencyRequest request(String key, String operation, long quantity) {

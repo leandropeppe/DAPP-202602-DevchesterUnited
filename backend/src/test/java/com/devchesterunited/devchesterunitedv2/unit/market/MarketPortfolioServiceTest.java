@@ -60,11 +60,8 @@ class MarketPortfolioServiceTest {
         service = new MarketPortfolioServiceImpl(
                 tenencias,
                 pnlRealizado,
-                cotizaciones,
-                versiones,
-                mapper,
-                Clock.fixed(NOW, ZoneOffset.UTC),
-                jugadores);
+                new MarketPortfolioServiceImpl.Dependencies(cotizaciones, versiones, mapper,
+                        Clock.fixed(NOW, ZoneOffset.UTC), jugadores));
     }
 
     @Test

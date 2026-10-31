@@ -51,8 +51,9 @@ class MarketP2PPortfolioHistoryMockMvcTest {
     @Test
     void portfolioExponeCantidadesExtendidasYRechazaUsuarioArbitrario() throws Exception {
         MarketPortfolioPosition position = new MarketPortfolioPosition(PLAYER, 10,
-                new BigDecimal("20.00"), new BigDecimal("2.00"), MarketQuoteAvailability.ABSENT,
-                Optional.empty(), Optional.empty(), Optional.empty());
+                new MarketPortfolioPosition.Costs(new BigDecimal("20.00"), new BigDecimal("2.00")),
+                new MarketPortfolioPosition.Valuation(MarketQuoteAvailability.ABSENT,
+                        Optional.empty(), Optional.empty(), Optional.empty()));
         when(portfolios.consultar(USER)).thenReturn(new MarketPortfolioResult(List.of(position),
                 BigDecimal.ZERO, Optional.of(BigDecimal.ZERO), Optional.of(BigDecimal.ZERO), true));
 

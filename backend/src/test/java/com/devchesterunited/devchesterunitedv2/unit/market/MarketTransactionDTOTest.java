@@ -79,19 +79,12 @@ class MarketTransactionDTOTest {
 
     private static MarketTransactionRecord transaction(BigDecimal pnl) {
         return new MarketTransactionRecord(
-                TRANSACTION_ID,
-                UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff"),
-                PLAYER_ID,
-                "Historical Player",
-                "SALE",
-                2L,
-                new BigDecimal("2.50"),
-                new BigDecimal("5.00"),
-                COUNTERPARTY_ID,
-                QUOTE_ID,
-                1L,
-                REQUEST_ID,
-                pnl,
-                CONFIRMED_AT);
+                new MarketTransactionRecord.Identity(TRANSACTION_ID,
+                        UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff"), PLAYER_ID),
+                new MarketTransactionRecord.Snapshot("Historical Player", "SALE"),
+                new MarketTransactionRecord.Amounts(2L, new BigDecimal("2.50"),
+                        new BigDecimal("5.00")),
+                new MarketTransactionRecord.Settlement(COUNTERPARTY_ID, QUOTE_ID, 1L),
+                new MarketTransactionRecord.Audit(REQUEST_ID, pnl, CONFIRMED_AT));
     }
 }

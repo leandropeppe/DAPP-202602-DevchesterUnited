@@ -40,7 +40,7 @@ describe('MarketP2POffersPage', () => {
     expect(screen.getByText('Suspendida')).toBeInTheDocument()
     expect(screen.getByText('Vendedor 2')).toBeInTheDocument()
     expect(screen.getByText('Tu oferta')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Cancelar oferta' })).toBeEnabled()
+    expect(screen.getAllByRole('button', { name: 'Cancelar oferta' })[0]).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Operación no disponible' })).toBeDisabled()
     expect(screen.getByText('Página 1 de 2')).toBeInTheDocument()
     expect(screen.queryByText(/correo|email|saldo/i)).not.toBeInTheDocument()
@@ -110,6 +110,34 @@ describe('MarketP2POffersPage', () => {
     await user.click(screen.getAllByRole('button', { name: 'Cancelar oferta' }).at(-1))
     await waitFor(() => expect(api.cancelMarketP2POffer).toHaveBeenCalledTimes(1))
     expect(api.cancelMarketP2POffer.mock.calls[0][0]).toMatchObject({ offerId: 'offer-own', idempotencyKey: expect.any(String) })
+  })
+
+  it('permite cancelar una oferta propia SUSPENDED mediante el flujo HTTP existente', async () => {
+    saveJwt(`header.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.signature`)
+    mockPortfolio()
+    api.getMarketP2POffers.mockResolvedValue({ data: { offers: [{ offer_id: 'offer-suspended-own', player_id: 'player-1', seller_alias: 'Yo', remaining_quantity: 2, status: 'SUSPENDED', mine: true, purchasable: false, quote: null }], pagination: { current_page: 1, page_size: 20, total_pages: 1, total_records: 1 } } })
+    api.cancelMarketP2POffer.mockResolvedValue({ data: { status: 'CANCELLED' } })
+    renderPage()
+    await screen.findByText('Tu oferta')
+
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Cancelar oferta' }))
+    expect(screen.getAllByRole('button', { name: 'Cancelar oferta' })[0]).toBeEnabled()
+    await user.click(screen.getAllByRole('button', { name: 'Cancelar oferta' }).at(-1))
+
+    await waitFor(() => expect(api.cancelMarketP2POffer).toHaveBeenCalledTimes(1))
+    expect(api.cancelMarketP2POffer.mock.calls[0][0]).toMatchObject({ offerId: 'offer-suspended-own', idempotencyKey: expect.any(String) })
+  })
+
+  it('no permite cancelar una oferta SUSPENDED ajena', async () => {
+    saveJwt(`header.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.signature`)
+    mockPortfolio()
+    api.getMarketP2POffers.mockResolvedValue({ data: { offers: [{ offer_id: 'offer-suspended-other', player_id: 'player-2', seller_alias: 'Otro', remaining_quantity: 2, status: 'SUSPENDED', mine: false, purchasable: false, quote: null }], pagination: { current_page: 1, page_size: 20, total_pages: 1, total_records: 1 } } })
+    renderPage()
+    await screen.findByText('Otro')
+
+    expect(screen.getByRole('button', { name: /Operaci.n no disponible/i })).toBeDisabled()
+    expect(api.cancelMarketP2POffer).not.toHaveBeenCalled()
   })
 
   it('muestra QUOTE_CHANGED y exige una nueva clave antes de confirmar', async () => {

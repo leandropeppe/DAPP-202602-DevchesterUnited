@@ -91,21 +91,30 @@ public class MarketTransactionServiceImpl implements MarketTransactionService {
     }
 
     private static MarketTransactionRecord toRecord(TransaccionConfirmadaMercadoEntity entity) {
-        return new MarketTransactionRecord(entity.getId(), entity.getUsuarioId(),
-                entity.getJugadorId(), entity.getNombreJugadorSnapshot(), entity.getTipoOperacion(),
-                entity.getQuantity(), entity.getPrecioUnitario(), entity.getMontoTotal(),
-                entity.getContraparteId(), entity.getQuoteId(), entity.getVersionCotizacion(),
-                entity.getSolicitudIdempotenciaId(), entity.getPnlRealizado(),
-                entity.getConfirmadoEn());
+        return new MarketTransactionRecord(
+                new MarketTransactionRecord.Identity(entity.getId(), entity.getUsuarioId(),
+                        entity.getJugadorId()),
+                new MarketTransactionRecord.Snapshot(entity.getNombreJugadorSnapshot(),
+                        entity.getTipoOperacion()),
+                new MarketTransactionRecord.Amounts(entity.getQuantity(),
+                        entity.getPrecioUnitario(), entity.getMontoTotal()),
+                new MarketTransactionRecord.Settlement(entity.getContraparteId(),
+                        entity.getQuoteId(), entity.getVersionCotizacion()),
+                new MarketTransactionRecord.Audit(entity.getSolicitudIdempotenciaId(),
+                        entity.getPnlRealizado(), entity.getConfirmadoEn()));
     }
 
     private static MarketTransactionRecord toRecord(MarketUnifiedTransactionProjection projection) {
-        return new MarketTransactionRecord(projection.getTransactionId(),
-                projection.getUserId(), projection.getPlayerId(),
-                projection.getPlayerNameSnapshot(), projection.getOperationType(),
-                projection.getQuantity(), projection.getUnitPrice(), projection.getTotalAmount(),
-                projection.getCounterpartyId(), projection.getQuoteId(),
-                projection.getQuoteVersion(), projection.getIdempotencyRequestId(),
-                projection.getRealizedPnl(), projection.getConfirmedAt());
+        return new MarketTransactionRecord(
+                new MarketTransactionRecord.Identity(projection.getTransactionId(),
+                        projection.getUserId(), projection.getPlayerId()),
+                new MarketTransactionRecord.Snapshot(projection.getPlayerNameSnapshot(),
+                        projection.getOperationType()),
+                new MarketTransactionRecord.Amounts(projection.getQuantity(),
+                        projection.getUnitPrice(), projection.getTotalAmount()),
+                new MarketTransactionRecord.Settlement(projection.getCounterpartyId(),
+                        projection.getQuoteId(), projection.getQuoteVersion()),
+                new MarketTransactionRecord.Audit(projection.getIdempotencyRequestId(),
+                        projection.getRealizedPnl(), projection.getConfirmedAt()));
     }
 }
