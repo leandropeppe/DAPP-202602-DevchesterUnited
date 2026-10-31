@@ -4,7 +4,7 @@ param(
     [string]$HostUrl = 'https://sonarcloud.io',
     [string]$Token = $env:SONAR_TOKEN,
     [string]$Branch = $env:GITHUB_REF_NAME,
-    [int]$MaxOpenIssues = 20
+    [int]$MaxOpenIssues = 10
 )
 
 Set-StrictMode -Version Latest

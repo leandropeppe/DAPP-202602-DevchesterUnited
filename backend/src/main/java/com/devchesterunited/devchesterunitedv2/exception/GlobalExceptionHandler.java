@@ -1,9 +1,12 @@
 package com.devchesterunited.devchesterunitedv2.exception;
 
 import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketP2PQuoteResponseDTO;
+import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketP2PErrorResponseDTO;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ExcepcionSimulacion;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -52,8 +55,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(TokenMarketException.class)
-    public ResponseEntity<Object> tokenMarket(TokenMarketException exception) {
-        return response(statusFor(exception.reason()));
+    public ResponseEntity<Object> tokenMarket(TokenMarketException exception,
+            HttpServletRequest request) {
+        HttpStatus status = statusFor(exception.reason());
+        if (exception.reason() == TokenMarketException.Reason.QUOTE_UNAVAILABLE
+                && isP2PPurchaseRequest(request)) {
+            return ResponseEntity.status(status).body(new MarketP2PErrorResponseDTO(
+                    genericMessage(status), publicCode(exception.reason()), null, "SUSPENDED"));
+        }
+        return ResponseEntity.status(status).body(new ErrorResponseDTO(
+                genericMessage(status), publicCode(exception.reason()),
+                MarketP2PQuoteResponseDTO.fromDomain(exception.currentQuote())));
     }
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> invalidInput(ConstraintViolationException exception) {
@@ -132,11 +144,34 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private static HttpStatus statusFor(TokenMarketException.Reason reason) {
         return switch (reason) {
             case MARKET_NOT_READY -> HttpStatus.SERVICE_UNAVAILABLE;
-            case ACCOUNT_NOT_FOUND, OPERATION_NOT_FOUND -> HttpStatus.NOT_FOUND;
-            case INVALID_INPUT -> HttpStatus.BAD_REQUEST;
+            case ACCOUNT_NOT_FOUND, OPERATION_NOT_FOUND, OFFER_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case INVALID_INPUT, MANUAL_PRICE_NOT_ALLOWED -> HttpStatus.BAD_REQUEST;
             case INACTIVE_PLAYER, QUOTE_UNAVAILABLE, INSUFFICIENT_BALANCE,
                     INSUFFICIENT_INVENTORY,
-                    IDEMPOTENCY_CONFLICT, STALE_REQUEST -> HttpStatus.CONFLICT;
+                    IDEMPOTENCY_CONFLICT, STALE_REQUEST, QUOTE_CHANGED,
+                    OFFER_ALREADY_CANCELLED, OFFER_NOT_PURCHASABLE,
+                    INSUFFICIENT_AVAILABLE_QUANTITY, INSUFFICIENT_CREDITS,
+                    HISTORICAL_RESULT_UNAVAILABLE -> HttpStatus.CONFLICT;
+        };
+    }
+
+    private static boolean isP2PPurchaseRequest(HttpServletRequest request) {
+        return request != null
+                && request.getRequestURI().matches("/api/v1/market/p2p/offers/[^/]+/purchases");
+    }
+
+    private static String publicCode(TokenMarketException.Reason reason) {
+        return reason == TokenMarketException.Reason.INSUFFICIENT_BALANCE
+                ? "INSUFFICIENT_CREDITS" : reason.name();
+    }
+
+    private static String genericMessage(HttpStatus status) {
+        return switch (status.value()) {
+            case 400 -> "La solicitud no es válida.";
+            case 404 -> "Recurso no encontrado.";
+            case 409 -> "La solicitud entra en conflicto con el estado actual del recurso.";
+            case 503 -> "El servicio no está disponible temporalmente.";
+            default -> "No se pudo procesar la solicitud.";
         };
     }
 

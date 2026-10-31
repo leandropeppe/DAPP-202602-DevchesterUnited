@@ -37,6 +37,20 @@ class MarketIdempotencyParameterHasherTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test
+    void conservaCanonicalizacionHistoricaDeSale() {
+        assertThat(MarketIdempotencyParameterHasher.hash(request(" SALE ", 1L, 1L)))
+                .isEqualTo("d722aba40b7df448c17987b79ef7ec92e8ab61cf4c6f6920666bb180a85ece8a");
+    }
+
+    @Test
+    void conservaCanonicalizacionHistoricaDeOfertaP2P() {
+        assertThat(MarketIdempotencyParameterHasher.hash(request(" p2p_offer ", 1L, 7L)))
+                .isEqualTo("9ee673c0263de783eb2f2224db0880a3b861863651996140033cdf021ff9a8bb");
+        assertThat(MarketIdempotencyParameterHasher.hash(request("P2P_OFFER", 1L, 1L)))
+                .isEqualTo(MarketIdempotencyParameterHasher.hash(request("P2P_OFFER", 1L, 7L)));
+    }
+
     private static MarketIdempotencyRequest request(String operation, long quantity,
             long quoteVersion) {
         return new MarketIdempotencyRequest(USER_ID, "market-key", operation, PLAYER_ID,

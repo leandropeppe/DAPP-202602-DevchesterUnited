@@ -8,11 +8,13 @@ const DEFAULT_ERROR_MESSAGES = {
 }
 
 export class HttpError extends Error {
-  constructor (status, message, details = null) {
+  constructor (status, message, details = null, code = null, currentQuote = undefined) {
     super(message)
     this.name = 'HttpError'
     this.status = status
     this.details = details
+    this.code = code
+    this.currentQuote = currentQuote
   }
 }
 
@@ -96,7 +98,9 @@ export async function request (path, {
     throw new HttpError(
         response.status,
         message,
-        payload?.errors || null
+        payload?.errors || null,
+        payload?.code || null,
+        payload?.current_quote
     )
   }
 
@@ -269,4 +273,39 @@ export const getMarketTransactions = ({ filters = {}, jwt } = {}) => request(
   '/market/transactions' + marketQuery(filters,
     ['playerId', 'type', 'from', 'to', 'page', 'limit']),
   { jwt }
+)
+
+export const getMarketP2POffers = ({ filters = {}, jwt } = {}) => request(
+  '/market/p2p/offers' + marketQuery(filters,
+    ['playerId', 'status', 'mine', 'page', 'limit']),
+  { jwt }
+)
+
+export const publishMarketP2POffer = ({ body, idempotencyKey, jwt } = {}) => request(
+  '/market/p2p/offers',
+  {
+    method: 'POST',
+    body,
+    jwt,
+    headers: { 'Idempotency-Key': idempotencyKey }
+  }
+)
+
+export const purchaseMarketP2POffer = ({ offerId, body, idempotencyKey, jwt } = {}) => request(
+  '/market/p2p/offers/' + encodeURIComponent(offerId) + '/purchases',
+  {
+    method: 'POST',
+    body,
+    jwt,
+    headers: { 'Idempotency-Key': idempotencyKey }
+  }
+)
+
+export const cancelMarketP2POffer = ({ offerId, idempotencyKey, jwt } = {}) => request(
+  '/market/p2p/offers/' + encodeURIComponent(offerId) + '/cancel',
+  {
+    method: 'POST',
+    jwt,
+    headers: { 'Idempotency-Key': idempotencyKey }
+  }
 )

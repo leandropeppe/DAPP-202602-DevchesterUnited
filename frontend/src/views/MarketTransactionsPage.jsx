@@ -74,6 +74,19 @@ function isTransactionsResponse (response) {
   )
 }
 
+function operationLabel (operationType) {
+  if (operationType === 'PRIMARY_PURCHASE' || operationType === 'PURCHASE') return 'Compra primaria'
+  if (operationType === 'SALE') return 'Venta legacy'
+  if (operationType === 'P2P_PURCHASE') return 'Compra P2P'
+  if (operationType === 'P2P_SALE') return 'Venta P2P'
+  const operationSuffix = operationType ? `: ${operationType}` : ''
+  return `Tipo de operación no reconocido${operationSuffix}`
+}
+
+function showsRealizedPnl (transaction) {
+  return transaction?.realized_pnl !== null && transaction?.realized_pnl !== undefined
+}
+
 function transactionPlayerName (
     transaction
 ) {
@@ -85,6 +98,39 @@ function transactionPlayerName (
   name.trim()
       ? name.trim()
       : 'Jugador sin nombre disponible'
+}
+
+function amount (value) {
+  if (value === null || value === undefined) {
+    return '—'
+  }
+
+  return Number(value).toLocaleString('es-AR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
+
+function transactionDate (value) {
+  if (!value) {
+    return 'Fecha no disponible'
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Fecha no disponible'
+  }
+
+  return new Intl.DateTimeFormat('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).format(date)
 }
 
 function playerOptionKey (name) {
@@ -418,203 +464,293 @@ export default function MarketTransactionsPage () {
               Buscar jugador por nombre
             </span>
 
-              <select
-                  id="market-transaction-player"
-                  name="playerId"
-                  value={filters.playerId}
-                  onChange={update}
-                  disabled={
-                      state.status ===
-                      'loading'
+            <select
+                id="market-transaction-player"
+                name="playerId"
+                value={filters.playerId}
+                onChange={update}
+                disabled={state.status === 'loading'}
+            >
+              <option value="">
+                Todos los jugadores
+              </option>
+
+              {playerOptions.map(
+                  option => {
+                    const key =
+                        playerOptionKey(
+                            option.name
+                        )
+
+                    duplicateIndexes[key] =
+                        (duplicateIndexes[key] || 0) + 1
+
+                    const suffix =
+                        duplicateNames[key] > 1
+                            ? ` (${duplicateIndexes[key]})`
+                            : ''
+
+                    return (
+                        <option
+                            key={option.id}
+                            value={option.id}
+                        >
+                          {option.name}
+                          {suffix}
+                        </option>
+                    )
                   }
-              >
-                <option value="">
-                  Todos los jugadores
-                </option>
+              )}
+            </select>
 
-                {playerOptions.map(
-                    option => {
-                      const key =
-                          playerOptionKey(
-                              option.name
-                          )
+            <small className="muted">
+              Opciones disponibles en las
+              transacciones cargadas.
+            </small>
+          </label>
 
-                      duplicateIndexes[key] =
-                          (
-                              duplicateIndexes[key] ||
-                              0
-                          ) + 1
-
-                      const suffix =
-                          duplicateNames[key] > 1
-                              ? ` (${duplicateIndexes[key]})`
-                              : ''
-
-                      return (
-                          <option
-                              key={option.id}
-                              value={option.id}
-                          >
-                            {option.name}
-                            {suffix}
-                          </option>
-                      )
-                    }
-                )}
-              </select>
-
-              <small className="muted">
-                Opciones disponibles en las
-                transacciones cargadas.
-              </small>
-            </label>
-
-            <label className="field">
+          <label className="field">
             <span>
               Tipo
             </span>
 
-              <select
-                  name="type"
-                  value={filters.type}
-                  onChange={update}
-              >
-                <option value="">
-                  Todos
-                </option>
+            <select
+                name="type"
+                value={filters.type}
+                onChange={update}
+            >
+              <option value="">
+                Todos
+              </option>
 
-                <option value="PURCHASE">
-                  Compras
-                </option>
+              <option value="PRIMARY_PURCHASE">
+                Compras primarias
+              </option>
 
-                <option value="SALE">
-                  Ventas
-                </option>
-              </select>
-            </label>
+              <option value="PURCHASE">
+                Compras
+              </option>
 
-            <label className="field">
+              <option value="SALE">
+                Ventas legacy
+              </option>
+
+              <option value="P2P_PURCHASE">
+                Compras P2P
+              </option>
+
+              <option value="P2P_SALE">
+                Ventas P2P
+              </option>
+            </select>
+          </label>
+
+          <label className="field">
             <span>
               Desde
             </span>
 
-              <input
-                  type="datetime-local"
-                  name="from"
-                  value={filters.from}
-                  onChange={update}
-              />
-            </label>
+            <input
+                type="datetime-local"
+                name="from"
+                value={filters.from}
+                onChange={update}
+            />
+          </label>
 
-            <label className="field">
+          <label className="field">
             <span>
               Hasta
             </span>
 
-              <input
-                  type="datetime-local"
-                  name="to"
-                  value={filters.to}
-                  onChange={update}
-              />
-            </label>
-          </div>
+            <input
+                type="datetime-local"
+                name="to"
+                value={filters.to}
+                onChange={update}
+            />
+          </label>
+        </div>
 
-          <div className="market-filters__actions">
-            <button
-                className="button button--primary"
-                type="submit"
-            >
-              Aplicar filtros
-            </button>
+        <div className="market-filters__actions">
+          <button
+              className="button button--primary"
+              type="submit"
+          >
+            Aplicar filtros
+          </button>
 
-            <button
-                className="button button--secondary"
-                type="button"
-                onClick={clearFilters}
-                disabled={
-                    state.status === 'loading'
-                }
-            >
-              Limpiar filtros
-            </button>
-          </div>
-        </form>
-
-        {transactions.length === 0 ? (
-            <output className="empty-state">
-              No hay transacciones confirmadas
-              para estos filtros.
-            </output>
-        ) : (
-            <div className="market-transactions-list">
-              {transactions.map(
-                  transaction => (
-                      <MarketTransactionCard
-                          key={
-                            transaction.transaction_id
-                          }
-                          transaction={transaction}
-                      />
-                  )
-              )}
-            </div>
-        )}
-
-        <MarketTransactionActivityChart
-            jwt={session.jwt}
-            filters={appliedFilters}
-            initialResult={result}
-        />
-
-        <nav
-            className="pagination"
-            aria-label="Paginación del historial"
-        >
           <button
               className="button button--secondary"
               type="button"
-              onClick={() =>
-                  setPage(
-                      current =>
-                          Math.max(
-                              1,
-                              current - 1
-                          )
-                  )
-              }
-              disabled={page <= 1}
+              onClick={clearFilters}
+              disabled={state.status === 'loading'}
           >
-            Anterior
+            Limpiar filtros
           </button>
+        </div>
+      </form>
 
-          <span className="pagination__label">
+      {transactions.length === 0 ? (
+          <output className="empty-state">
+            No hay transacciones confirmadas
+            para estos filtros.
+          </output>
+      ) : (
+          <div className="market-transactions-list">
+            {transactions.map(
+                transaction => {
+                  const legacyOperation =
+                      transaction.operation_type === 'PURCHASE' ||
+                      transaction.operation_type === 'SALE'
+
+                  if (legacyOperation) {
+                    return (
+                        <MarketTransactionCard
+                            key={transaction.transaction_id}
+                            transaction={transaction}
+                            operationLabel={operationLabel(
+                                transaction.operation_type
+                            )}
+                        />
+                    )
+                  }
+
+                  return (
+                      <article
+                          className="card market-transaction-card"
+                          data-player-id={transaction.player_id}
+                          key={transaction.transaction_id}
+                      >
+                        <div>
+                          <strong>
+                            {operationLabel(
+                                transaction.operation_type
+                            )}
+                          </strong>
+
+                          <span>
+                            {transactionDate(
+                                transaction.confirmed_at
+                            )}
+                          </span>
+                        </div>
+
+                        <p className="market-transaction-card__snapshot">
+                          {transactionPlayerName(transaction)}
+                        </p>
+
+                        <dl>
+                          <div>
+                            <dt>
+                              Cantidad
+                            </dt>
+
+                            <dd>
+                              {transaction.quantity}
+                            </dd>
+                          </div>
+
+                          <div>
+                            <dt>
+                              Precio unitario
+                            </dt>
+
+                            <dd>
+                              {amount(transaction.unit_price)}
+                            </dd>
+                          </div>
+
+                          <div>
+                            <dt>
+                              Total
+                            </dt>
+
+                            <dd>
+                              {amount(transaction.total_amount)}
+                            </dd>
+                          </div>
+
+                          <div>
+                            <dt>
+                              Versión cotización
+                            </dt>
+
+                            <dd>
+                              {transaction.quote_version}
+                            </dd>
+                          </div>
+
+                          {showsRealizedPnl(transaction) ? (
+                              <div>
+                                <dt>
+                                  P/L realizada
+                                </dt>
+
+                                <dd>
+                                  {amount(transaction.realized_pnl)}
+                                </dd>
+                              </div>
+                          ) : null}
+                        </dl>
+                      </article>
+                  )
+                }
+            )}
+          </div>
+      )}
+
+      <MarketTransactionActivityChart
+          jwt={session.jwt}
+          filters={appliedFilters}
+          initialResult={result}
+      />
+
+      <nav
+          className="pagination"
+          aria-label="Paginación del historial"
+      >
+        <button
+            className="button button--secondary"
+            type="button"
+            onClick={() =>
+                setPage(
+                    current =>
+                        Math.max(
+                            1,
+                            current - 1
+                        )
+                )
+            }
+            disabled={page <= 1}
+        >
+          Anterior
+        </button>
+
+        <span className="pagination__label">
           Página{' '}
-            {pagination.current_page ||
-                page}{' '}
-            de{' '}
-            {pagination.total_pages ||
-                0}
+          {pagination.current_page || page}{' '}
+          de{' '}
+          {pagination.total_pages || 0}
         </span>
 
-          <button
-              className="button button--secondary"
-              type="button"
-              onClick={() =>
-                  setPage(
-                      current =>
-                          current + 1
-                  )
-              }
-              disabled={
-                  !pagination.total_pages ||
-                  page >=
-                  pagination.total_pages
-              }
-          >
-            Siguiente
-          </button>
-        </nav>
-      </section>
+        <button
+            className="button button--secondary"
+            type="button"
+            onClick={() =>
+                setPage(
+                    current =>
+                        current + 1
+                )
+            }
+            disabled={
+                !pagination.total_pages ||
+                page >= pagination.total_pages
+            }
+        >
+          Siguiente
+        </button>
+      </nav>
+    </section>
   )
 }

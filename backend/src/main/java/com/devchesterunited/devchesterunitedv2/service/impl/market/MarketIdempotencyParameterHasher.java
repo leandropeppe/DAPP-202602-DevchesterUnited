@@ -1,6 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PCancelCommand;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -13,11 +15,35 @@ public final class MarketIdempotencyParameterHasher {
     private MarketIdempotencyParameterHasher() { }
 
     public static String hash(MarketIdempotencyRequest request) {
-        String canonical = field(normalizeOperation(request.tipoOperacion()))
-                + field(normalizeUuid(request.jugadorId()))
-                + field(normalizePositive(request.cantidad(), "cantidad"))
-                + field(normalizeUuid(request.cotizacionId()))
-                + field(normalizePositive(request.versionCotizacion(), "versionCotizacion"));
+        String operation = normalizeOperation(request.tipoOperacion());
+        String canonical = "P2P_OFFER".equals(operation)
+                ? offerCanonical(request, operation)
+                : primaryCanonical(request, operation);
+        return sha256(canonical);
+    }
+
+    public static String hash(MarketP2PIdempotencyRequest request) {
+        request.validar();
+        var identity = request.identidad();
+        String canonical = field("P2P_PURCHASE")
+                + field(normalizeUuid(identity.offerId()))
+                + field(normalizeUuid(identity.playerId()))
+                + field(normalizePositive(identity.quantity(), "quantity"))
+                + field(normalizeUuid(identity.quote().quoteId()))
+                + field(normalizePositive(identity.quote().version(), "quoteVersion"));
+        return sha256(canonical);
+    }
+
+    public static String hash(MarketP2PCancelCommand request) {
+        if (request == null || request.usuarioId() == null || request.offerId() == null
+                || request.claveIdempotencia() == null || request.claveIdempotencia().isBlank()) {
+            throw new IllegalArgumentException("La solicitud de cancelacion no es valida.");
+        }
+        String canonical = field("P2P_CANCEL") + field(normalizeUuid(request.offerId()));
+        return sha256(canonical);
+    }
+
+    private static String sha256(String canonical) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
                     .digest(canonical.getBytes(StandardCharsets.UTF_8));
@@ -29,6 +55,18 @@ public final class MarketIdempotencyParameterHasher {
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 no esta disponible en la JVM.", exception);
         }
+    }
+
+    private static String offerCanonical(MarketIdempotencyRequest request, String operation) {
+        return field(operation) + field(normalizeUuid(request.jugadorId()))
+                + field(normalizePositive(request.cantidad(), "cantidad"));
+    }
+
+    private static String primaryCanonical(MarketIdempotencyRequest request, String operation) {
+        return field(operation) + field(normalizeUuid(request.jugadorId()))
+                + field(normalizePositive(request.cantidad(), "cantidad"))
+                + field(normalizeUuid(request.cotizacionId()))
+                + field(normalizePositive(request.versionCotizacion(), "versionCotizacion"));
     }
 
     private static String field(String value) {

@@ -70,7 +70,8 @@ function operationClassName (operationType) {
 }
 
 export default function MarketTransactionCard ({
-                                                   transaction
+                                                   transaction,
+                                                   operationLabel: customOperationLabel
                                                }) {
     const operationClass =
         operationClassName(
@@ -84,7 +85,7 @@ export default function MarketTransactionCard ({
         >
             <div>
                 <strong>
-                    {operationLabel(
+                    {customOperationLabel ?? operationLabel(
                         transaction.operation_type
                     )}
                 </strong>

@@ -116,11 +116,14 @@ class MarketPortfolioDTOTest {
     @Test
     void serializaDescripcionCanonicaDeLaPosicion() throws Exception {
         MarketPortfolioPosition position = new MarketPortfolioPosition(
-                PLAYER_ID, 3L, new BigDecimal("4.50000000"), new BigDecimal("1.50000000"),
-                MarketQuoteAvailability.CURRENT, Optional.empty(),
-                Optional.of(new BigDecimal("6.00000000")),
-                Optional.of(new BigDecimal("1.50000000")),
-                "Kenny Tete", "Fulham", "Premier League");
+                new MarketPortfolioPosition.Identity(PLAYER_ID, "Kenny Tete", "Fulham",
+                        "Premier League"),
+                new MarketPortfolioPosition.Quantities(3L, 0L),
+                new MarketPortfolioPosition.Costs(new BigDecimal("4.50000000"),
+                        new BigDecimal("1.50000000")),
+                new MarketPortfolioPosition.Valuation(MarketQuoteAvailability.CURRENT,
+                        Optional.empty(), Optional.of(new BigDecimal("6.00000000")),
+                        Optional.of(new BigDecimal("1.50000000"))));
 
         var json = mapper.readTree(mapper.writeValueAsString(
                 MarketPortfolioPositionResponseDTO.fromDomain(position)));
@@ -138,14 +141,13 @@ class MarketPortfolioDTOTest {
             boolean withQuote, boolean withValues) {
         return new MarketPortfolioPosition(
                 PLAYER_ID,
-                3L,
-                new BigDecimal("4.50000000"),
-                new BigDecimal("1.50000000"),
-                availability,
-                withQuote ? Optional.of(new MarketPortfolioQuote(
-                        QUOTE_ID, 2L, new BigDecimal("2.00"), PUBLISHED, VALID_FROM, null))
-                        : Optional.empty(),
-                withValues ? Optional.of(new BigDecimal("6.00000000")) : Optional.empty(),
-                withValues ? Optional.of(new BigDecimal("1.50000000")) : Optional.empty());
+                3L, new MarketPortfolioPosition.Costs(new BigDecimal("4.50000000"),
+                        new BigDecimal("1.50000000")),
+                new MarketPortfolioPosition.Valuation(availability,
+                        withQuote ? Optional.of(new MarketPortfolioQuote(
+                                QUOTE_ID, 2L, new BigDecimal("2.00"), PUBLISHED, VALID_FROM, null))
+                                : Optional.empty(),
+                        withValues ? Optional.of(new BigDecimal("6.00000000")) : Optional.empty(),
+                        withValues ? Optional.of(new BigDecimal("1.50000000")) : Optional.empty()));
     }
 }

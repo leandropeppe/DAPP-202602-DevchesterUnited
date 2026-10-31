@@ -132,8 +132,9 @@ describe('validación estructural de portfolio e historial', () => {
     expect(screen.queryByText(/posiciones abiertas/i)).not.toBeInTheDocument()
   })
 
-  it('abre el modal de venta del jugador seleccionado', async () => {
+  it('navega al flujo de publicacion P2P del jugador seleccionado', async () => {
     const user = userEvent.setup()
+    const onNavigate = vi.fn()
     marketApi.getMarketPortfolio.mockResolvedValueOnce({
       data: {
         open_positions: [{
@@ -156,12 +157,10 @@ describe('validación estructural de portfolio e historial', () => {
       }
     })
 
-    render(<MarketPortfolioPage />)
-    await user.click(await screen.findByRole('button', { name: 'Vender' }))
+    render(<MarketPortfolioPage onNavigate={onNavigate} />)
+    await user.click(await screen.findByRole('button', { name: 'Publicar oferta P2P' }))
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Confirmar venta' })).toBeInTheDocument()
-    expect(within(screen.getByRole('dialog')).getByText('Jugador real')).toBeInTheDocument()
+    expect(onNavigate).toHaveBeenCalledWith('/market/p2p/offers?publishPlayerId=11111111-1111-4111-8111-111111111111')
   })
 
   it('actualiza cantidad y total, limita los controles y cancela sin vender', async () => {
@@ -223,10 +222,10 @@ describe('validación estructural de portfolio e historial', () => {
     render(<MarketPortfolioPage />)
     expect(await screen.findByRole('heading', { name: 'Jugador real' })).toBeInTheDocument()
     expect(screen.getByText('Equipo real · Liga real')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Vender' }))
-    expect(screen.getByRole('heading', { name: 'Confirmar venta' })).toBeInTheDocument()
-    expect(screen.getByRole('spinbutton')).toHaveAttribute('max', '2')
-    expect(screen.getByText(/Tokens disponibles:/)).toHaveTextContent('2')
+    expect(screen.getByText('Total')).toBeInTheDocument()
+    expect(screen.getByText('Reservados')).toBeInTheDocument()
+    expect(screen.getByText('Disponibles')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Publicar oferta P2P' })).toBeInTheDocument()
   })
 
   it('rechaza 4 tokens cuando la tenencia disponible es 3 y permite 3', async () => {
@@ -254,106 +253,32 @@ describe('validación estructural de portfolio e historial', () => {
     expect(screen.getByRole('spinbutton')).toHaveAttribute('max', '100')
   })
 
-  it('recarga el portfolio después de mostrar la confirmación de venta', async () => {
+  it('expone la accion P2P y no la venta primaria desde portfolio', async () => {
     const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    marketApi.getMarketPortfolio.mockResolvedValueOnce({ data: {
+      open_positions: [{ player_id: '11111111-1111-4111-8111-111111111111', player_name: 'Jugador disponible', quantity: 2, reserved_quantity: 1, total_quantity: 2, available_quantity: 1, quote_availability: 'CURRENT', quote_id: '22222222-2222-4222-8222-222222222222', quote_version: 4, unit_price: 1 }],
+      open_players: 1, total_tokens: 2, total_pending_acquisition_cost: 2, total_current_value: 2, realized_pnl: 0, combined_result_complete: true
+    } })
 
-    const initialPortfolio = {
-      data: {
-        open_positions: [{
-          player_id: '11111111-1111-4111-8111-111111111111',
-          player_name: 'Jugador vendido',
-          quantity: 2,
-          quote_availability: 'CURRENT',
-          quote_id: '22222222-2222-4222-8222-222222222222',
-          quote_version: 4,
-          unit_price: 1
-        }],
-        open_players: 1,
-        total_tokens: 2,
-        total_pending_acquisition_cost: 2,
-        total_current_value: 2,
-        realized_pnl: 0,
-        unrealized_pnl: 0,
-        combined_result: 0,
-        combined_result_complete: true
-      }
-    }
+    render(<MarketPortfolioPage onNavigate={onNavigate} />)
+    expect(await screen.findByText('Disponibles')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Publicar oferta P2P' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Vender' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta P2P' }))
+    expect(onNavigate).toHaveBeenCalledWith('/market/p2p/offers?publishPlayerId=11111111-1111-4111-8111-111111111111')
+  })
 
-    const refreshedPortfolio = {
-      ...initialPortfolio,
-      data: {
-        ...initialPortfolio.data,
-        open_positions: [{
-          ...initialPortfolio.data.open_positions[0],
-          quantity: 1
-        }],
-        total_tokens: 1,
-        total_pending_acquisition_cost: 1,
-        total_current_value: 1
-      }
-    }
+  it('muestra cantidades cero y bloquea publicar si no hay disponibilidad', async () => {
+    marketApi.getMarketPortfolio.mockResolvedValueOnce({ data: {
+      open_positions: [{ player_id: '11111111-1111-4111-8111-111111111111', player_name: 'Jugador reservado', quantity: 2, total_quantity: 2, reserved_quantity: 2, available_quantity: 0, quote_availability: 'CURRENT', quote_id: '22222222-2222-4222-8222-222222222222', quote_version: 4, unit_price: 1 }],
+      open_players: 1, total_tokens: 2, total_pending_acquisition_cost: 2, total_current_value: 2, realized_pnl: 0, combined_result_complete: true
+    } })
 
-    marketApi.getMarketPortfolio
-        .mockResolvedValueOnce(initialPortfolio)
-        .mockResolvedValueOnce(refreshedPortfolio)
-
-    marketApi.sellMarketTokens.mockResolvedValueOnce({
-      data: {
-        ...completeOperation,
-        status: 'CONFIRMED'
-      }
-    })
-
-    render(<MarketPortfolioPage />)
-
-    await user.click(
-        await screen.findByRole('button', {
-          name: 'Vender'
-        })
-    )
-
-    await user.click(
-        screen.getByRole('button', {
-          name: /confirmar venta/i
-        })
-    )
-
-    await waitFor(() =>
-        expect(
-            marketApi.sellMarketTokens
-        ).toHaveBeenCalledWith(
-            expect.objectContaining({
-              body: expect.objectContaining({
-                quantity: 1,
-                player_id: '11111111-1111-4111-8111-111111111111'
-              })
-            })
-        )
-    )
-
-    expect(
-        await screen.findByRole('heading', {
-          name: 'Venta realizada'
-        })
-    ).toBeInTheDocument()
-
-    expect(
-        marketApi.getMarketPortfolio
-    ).toHaveBeenCalledTimes(1)
-
-    await waitFor(
-        () =>
-            expect(
-                marketApi.getMarketPortfolio
-            ).toHaveBeenCalledTimes(2),
-        {
-          timeout: 3000
-        }
-    )
-
-    expect(
-        await screen.findByText('1 tokens')
-    ).toBeInTheDocument()
+    render(<MarketPortfolioPage onNavigate={vi.fn()} />)
+    const card = await screen.findByRole('heading', { name: 'Jugador reservado' })
+    expect(within(card.closest('article')).getByText('0')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Publicar oferta P2P' })).not.toBeInTheDocument()
   })
 
   it('no presenta como vacío un historial sin paginación obligatoria', async () => {
@@ -386,6 +311,25 @@ describe('validación estructural de portfolio e historial', () => {
 
     expect(await screen.findByText(/tipo de operación no reconocido/i)).toBeInTheDocument()
     expect(screen.queryByText('Venta')).not.toBeInTheDocument()
+  })
+
+  it('diferencia los cuatro tipos del historial unificado y solo muestra PnL disponible', async () => {
+    marketApi.getMarketTransactions.mockResolvedValueOnce({ data: {
+      transactions: [
+        { transaction_id: 'tx-primary', confirmed_at: '2026-10-19T12:00:00Z', player_name_snapshot: 'Primario', player_id: '11111111-1111-4111-8111-111111111111', operation_type: 'PRIMARY_PURCHASE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: null },
+        { transaction_id: 'tx-sale', confirmed_at: '2026-10-19T11:00:00Z', player_name_snapshot: 'Legacy', player_id: '22222222-2222-4222-8222-222222222222', operation_type: 'SALE', quantity: 1, unit_price: 2, total_amount: 2, quote_version: 1, realized_pnl: 0.5 },
+        { transaction_id: 'tx-purchase', confirmed_at: '2026-10-19T10:00:00Z', player_name_snapshot: 'P2P compra', player_id: '33333333-3333-4333-8333-333333333333', operation_type: 'P2P_PURCHASE', quantity: 1, unit_price: 3, total_amount: 3, quote_version: 1, realized_pnl: null },
+        { transaction_id: 'tx-p2p-sale', confirmed_at: '2026-10-19T09:00:00Z', player_name_snapshot: 'P2P venta', player_id: '44444444-4444-4444-8444-444444444444', operation_type: 'P2P_SALE', quantity: 1, unit_price: 4, total_amount: 4, quote_version: 1, realized_pnl: 1.25 }
+      ],
+      pagination: { current_page: 1, page_size: 20, total_pages: 1, total_records: 4 }
+    } })
+
+    render(<MarketTransactionsPage />)
+    expect(await screen.findByText('Compra primaria')).toBeInTheDocument()
+    expect(screen.getByText('Venta legacy')).toBeInTheDocument()
+    expect(screen.getByText('Compra P2P')).toBeInTheDocument()
+    expect(screen.getByText('Venta P2P')).toBeInTheDocument()
+    expect(screen.getAllByText('P/L realizada')).toHaveLength(2)
   })
 
   it('formatea fechas en la zona horaria local y muestra fallback para fechas inválidas', async () => {

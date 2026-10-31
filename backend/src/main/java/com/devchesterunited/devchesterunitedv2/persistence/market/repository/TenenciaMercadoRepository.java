@@ -41,8 +41,9 @@ public interface TenenciaMercadoRepository
 
     @Modifying
     @Query(value = """
-            INSERT INTO market_holdings (user_id, player_id, quantity, acquisition_cost, updated_at)
-            VALUES (:usuarioId, :jugadorId, 0, 0, CURRENT_TIMESTAMP)
+            INSERT INTO market_holdings (user_id, player_id, quantity, reserved_quantity,
+                    acquisition_cost, updated_at)
+            VALUES (:usuarioId, :jugadorId, 0, 0, 0, CURRENT_TIMESTAMP)
             ON CONFLICT (user_id, player_id) DO NOTHING
             """, nativeQuery = true)
     int ensureCanonicalZero(@Param("usuarioId") UUID usuarioId,

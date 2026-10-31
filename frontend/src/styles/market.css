@@ -44,6 +44,22 @@
     display: none;
 }
 .market-operation-panel { display: grid; gap: 18px; padding: 24px; }
+.market-p2p-offers-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+.market-p2p-offer-card { display: grid; gap: 18px; padding: 22px; }
+.market-p2p-offer-card__heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.market-p2p-offer-card__heading h2 { margin: 4px 0 0; color: #111827; font-size: 1.15rem; }
+.market-p2p-offer-card__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 0; }
+.market-p2p-offer-card__facts dt { color: #6b7280; font-size: .78rem; }
+.market-p2p-offer-card__facts dd { margin: 4px 0 0; color: #111827; font-weight: 800; overflow-wrap: anywhere; }
+.market-p2p-offer-card__actions { display: flex; justify-content: flex-end; }
+.market-p2p-status { padding: 5px 9px; border-radius: 999px; font-size: .75rem; font-weight: 800; white-space: nowrap; }
+.market-p2p-status--purchasable { background: #dcfce7; color: #166534; }
+.market-p2p-status--suspended { background: #fef3c7; color: #92400e; }
+.market-p2p-status--filled, .market-p2p-status--cancelled { background: #e5e7eb; color: #374151; }
+.market-p2p-checkbox { display: flex; align-items: center; gap: 8px; min-height: 42px; color: #374151; }
+.market-p2p-confirmation__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 16px 0; }
+.market-p2p-confirmation__facts dt { color: #6b7280; font-size: .78rem; }
+.market-p2p-confirmation__facts dd { margin: 4px 0 0; color: #111827; font-weight: 800; }
 .market-operation-panel__heading { display: flex; justify-content: space-between; gap: 16px; }
 .market-operation-panel__heading h2 { margin: 0; color: #111827; font-size: 1.35rem; }
 .market-operation-panel__warning { margin: 0; color: #92400e; }

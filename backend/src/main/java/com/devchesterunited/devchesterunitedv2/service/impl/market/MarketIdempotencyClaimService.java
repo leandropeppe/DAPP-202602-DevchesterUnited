@@ -6,6 +6,8 @@ import com.devchesterunited.devchesterunitedv2.persistence.market.repository.Sol
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyClaim;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PCancelCommand;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PIdempotencyRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -50,18 +52,45 @@ public class MarketIdempotencyClaimService {
         String normalizedKey = request.claveIdempotencia().trim();
         String operation = normalizeOperation(request.tipoOperacion());
         String hash = MarketIdempotencyParameterHasher.hash(request);
+        return reclamarInterno(request.usuarioId(), normalizedKey, operation, hash);
+    }
+
+    @Transactional
+    public MarketIdempotencyClaim reclamarConPropiedad(MarketP2PIdempotencyRequest request) {
+        request.validar();
+        String normalizedKey = request.claveIdempotencia().trim();
+        String operation = "P2P_PURCHASE";
+        String hash = MarketIdempotencyParameterHasher.hash(request);
+        return reclamarInterno(request.usuarioId(), normalizedKey, operation, hash);
+    }
+
+    @Transactional
+    public MarketIdempotencyClaim reclamarConPropiedad(MarketP2PCancelCommand request) {
+        if (request == null || request.usuarioId() == null || request.offerId() == null
+                || request.claveIdempotencia() == null || request.claveIdempotencia().isBlank()
+                || request.claveIdempotencia().trim().length() > 200) {
+            throw new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
+                    "La solicitud de cancelacion P2P no es valida.");
+        }
+        String normalizedKey = request.claveIdempotencia().trim();
+        return reclamarInterno(request.usuarioId(), normalizedKey, "P2P_CANCEL",
+                MarketIdempotencyParameterHasher.hash(request));
+    }
+
+    private MarketIdempotencyClaim reclamarInterno(UUID usuarioId, String normalizedKey,
+            String operation, String hash) {
         Instant now = clock.instant();
 
-        if (!executionLock.tryAcquire(request.usuarioId(), normalizedKey)) {
+        if (!executionLock.tryAcquire(usuarioId, normalizedKey)) {
             MarketIdempotencyResult result = solicitudes
-                    .findByUsuarioIdAndClaveIdempotencia(request.usuarioId(), normalizedKey)
+                    .findByUsuarioIdAndClaveIdempotencia(usuarioId, normalizedKey)
                     .map(entity -> recoverWhileBusy(entity, operation, hash))
-                    .orElseGet(() -> pendiente(request, operation, hash, now));
+                    .orElseGet(() -> pendiente(usuarioId, normalizedKey, operation, hash, now));
             return new MarketIdempotencyClaim(result, false);
         }
 
         Optional<SolicitudIdempotenciaMercadoEntity> existing =
-                solicitudes.findByUsuarioIdAndClaveForUpdate(request.usuarioId(), normalizedKey);
+                solicitudes.findByUsuarioIdAndClaveForUpdate(usuarioId, normalizedKey);
         if (existing.isPresent()) {
             SolicitudIdempotenciaMercadoEntity entity = existing.get();
             if (!operation.equals(entity.getTipoOperacion()) || !hash.equals(entity.getHashParametros())) {
@@ -78,7 +107,7 @@ public class MarketIdempotencyClaimService {
 
         UUID executionToken = UUID.randomUUID();
         SolicitudIdempotenciaMercadoEntity entity = new SolicitudIdempotenciaMercadoEntity(
-                UUID.randomUUID(), request.usuarioId(), normalizedKey, operation, hash,
+                UUID.randomUUID(), usuarioId, normalizedKey, operation, hash,
                 SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING, executionToken, null, now, now);
         try {
             return new MarketIdempotencyClaim(toResult(solicitudes.saveAndFlush(entity)), true);
@@ -88,10 +117,9 @@ public class MarketIdempotencyClaimService {
         }
     }
 
-    private MarketIdempotencyResult pendiente(MarketIdempotencyRequest request, String operation,
-            String hash, Instant now) {
-        return new MarketIdempotencyResult(null, request.usuarioId(),
-                request.claveIdempotencia().trim(), operation, hash,
+    private MarketIdempotencyResult pendiente(UUID usuarioId, String normalizedKey,
+            String operation, String hash, Instant now) {
+        return new MarketIdempotencyResult(null, usuarioId, normalizedKey, operation, hash,
                 com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus.PROCESSING,
                 null, null, now);
     }
@@ -120,7 +148,9 @@ public class MarketIdempotencyClaimService {
                     "El tipo de operacion es obligatorio.");
         }
         String normalized = operation.trim().toUpperCase(Locale.ROOT);
-        if (!"PURCHASE".equals(normalized) && !"SALE".equals(normalized)) {
+        if (!"PURCHASE".equals(normalized) && !"SALE".equals(normalized)
+                && !"P2P_OFFER".equals(normalized) && !"P2P_PURCHASE".equals(normalized)
+                && !"P2P_CANCEL".equals(normalized)) {
             throw new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
                     "El tipo de operacion no es valido.");
         }

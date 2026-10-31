@@ -15,7 +15,10 @@ public record MarketTransactionFilter(
     public MarketTransactionFilter {
         if (tipoOperacion != null
                 && !tipoOperacion.equals("PURCHASE")
-                && !tipoOperacion.equals("SALE")) {
+                && !tipoOperacion.equals("SALE")
+                && !tipoOperacion.equals("PRIMARY_PURCHASE")
+                && !tipoOperacion.equals("P2P_PURCHASE")
+                && !tipoOperacion.equals("P2P_SALE")) {
             throw new IllegalArgumentException("El tipo de operacion no es valido.");
         }
         if (desde != null && hasta != null && !desde.isBefore(hasta)) {

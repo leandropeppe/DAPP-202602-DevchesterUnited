@@ -111,12 +111,15 @@ class MarketPortfolioMockMvcTest {
         MarketPortfolioPosition current = currentPosition(PLAYER_A, QUOTE_A, 2L,
                 "2.00000000", "1.00000000", "4.00000000", "2.00000000");
         MarketPortfolioPosition historical = new MarketPortfolioPosition(PLAYER_B, 1L,
-                new BigDecimal("1.00000000"), new BigDecimal("1.00000000"),
-                MarketQuoteAvailability.HISTORICAL,
-                Optional.of(quote(QUOTE_B, "3.00000000")), Optional.empty(), Optional.empty());
+                new MarketPortfolioPosition.Costs(new BigDecimal("1.00000000"),
+                        new BigDecimal("1.00000000")),
+                new MarketPortfolioPosition.Valuation(MarketQuoteAvailability.HISTORICAL,
+                        Optional.of(quote(QUOTE_B, "3.00000000")), Optional.empty(), Optional.empty()));
         MarketPortfolioPosition absent = new MarketPortfolioPosition(PLAYER_C, 4L,
-                new BigDecimal("4.00000000"), new BigDecimal("1.00000000"),
-                MarketQuoteAvailability.ABSENT, Optional.empty(), Optional.empty(), Optional.empty());
+                new MarketPortfolioPosition.Costs(new BigDecimal("4.00000000"),
+                        new BigDecimal("1.00000000")),
+                new MarketPortfolioPosition.Valuation(MarketQuoteAvailability.ABSENT,
+                        Optional.empty(), Optional.empty(), Optional.empty()));
         when(portfolios.consultar(USER_A)).thenReturn(result(List.of(current, historical, absent),
                 "0.00000000", Optional.empty(), Optional.empty(), false));
 
@@ -207,10 +210,13 @@ class MarketPortfolioMockMvcTest {
 
     private static MarketPortfolioPosition currentPosition(UUID playerId, UUID quoteId, long quantity,
             String pendingCost, String weightedAverageCost, String currentValue, String unrealizedPnl) {
-        return new MarketPortfolioPosition(playerId, quantity, new BigDecimal(pendingCost),
-                new BigDecimal(weightedAverageCost), MarketQuoteAvailability.CURRENT,
-                Optional.of(quote(quoteId, "2.00000000")), Optional.of(new BigDecimal(currentValue)),
-                Optional.of(new BigDecimal(unrealizedPnl)));
+        return new MarketPortfolioPosition(playerId, quantity,
+                new MarketPortfolioPosition.Costs(new BigDecimal(pendingCost),
+                        new BigDecimal(weightedAverageCost)),
+                new MarketPortfolioPosition.Valuation(MarketQuoteAvailability.CURRENT,
+                        Optional.of(quote(quoteId, "2.00000000")),
+                        Optional.of(new BigDecimal(currentValue)),
+                        Optional.of(new BigDecimal(unrealizedPnl))));
     }
 
     private static MarketPortfolioQuote quote(UUID quoteId, String unitPrice) {

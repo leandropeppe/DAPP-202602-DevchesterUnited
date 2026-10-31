@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springdoc.core.annotations.ParameterObject;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,27 +38,26 @@ public class MarketController {
     private final MarketAvailabilityService availability;
     private final MarketIdempotencyService idempotency;
     private final MarketPurchaseService purchases;
-    private final MarketSaleService sales;
     private final MarketPortfolioService portfolios;
     private final MarketTransactionService transactions;
 
     @Autowired
     public MarketController(MarketBalanceService balances, MarketAvailabilityService availability,
             MarketIdempotencyService idempotency, MarketPurchaseService purchases,
-            MarketSaleService sales, MarketPortfolioService portfolios,
-            MarketTransactionService transactions) {
+            MarketPortfolioService portfolios, MarketTransactionService transactions) {
         this.balances = balances;
         this.availability = availability;
         this.idempotency = idempotency;
         this.purchases = purchases;
-        this.sales = sales;
         this.portfolios = portfolios;
         this.transactions = transactions;
     }
 
     @GetMapping("/portfolio")
     @Operation(operationId = "consultarMarketPortfolio", summary = "Consultar portfolio de mercado",
-            description = "Devuelve las posiciones y rentabilidad del usuario autenticado.",
+            description = "Devuelve las posiciones y rentabilidad del usuario autenticado. Cada posición incluye "
+                    + "total_quantity, reserved_quantity y available_quantity, donde available_quantity = "
+                    + "total_quantity - reserved_quantity. La identidad se deriva del JWT.",
             security = @SecurityRequirement(name = "BearerAuth"))
     @ApiResponse(responseCode = "200", description = "Portfolio del usuario autenticado.",
             content = @Content(schema = @Schema(implementation = MarketPortfolioResponseDTO.class)))
@@ -75,7 +75,9 @@ public class MarketController {
     @Operation(operationId = "consultarMarketTransactions",
             summary = "Consultar historial de transacciones",
             description = "Devuelve solo transacciones confirmadas del usuario autenticado. "
-                    + "El filtro from es inclusivo y to es exclusivo.",
+                    + "El filtro from es inclusivo y to es exclusivo. Los tipos son "
+                    + "PRIMARY_PURCHASE, SALE legacy, P2P_PURCHASE y P2P_SALE. El orden es "
+                    + "confirmed_at DESC, transaction_id DESC.",
             security = @SecurityRequirement(name = "BearerAuth"))
     @ApiResponse(responseCode = "200", description = "Historial confirmado del usuario autenticado.",
             content = @Content(schema = @Schema(implementation = MarketTransactionsResponseDTO.class)))
@@ -85,32 +87,10 @@ public class MarketController {
             content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
     public ResponseEntity<SuccessResponseDTO<MarketTransactionsResponseDTO>> transactions(
             @AuthenticationPrincipal Jwt jwt,
-            @Parameter(name = "playerId", in = ParameterIn.QUERY,
-                    description = "Identificador UUID del jugador.",
-                    schema = @Schema(type = "string", format = "uuid"))
-            @RequestParam(required = false) String playerId,
-            @Parameter(name = "type", in = ParameterIn.QUERY,
-                    description = "Tipo de operacion: PURCHASE o SALE.",
-                    schema = @Schema(type = "string", allowableValues = {"PURCHASE", "SALE"}))
-            @RequestParam(required = false) String type,
-            @Parameter(name = "from", in = ParameterIn.QUERY,
-                    description = "Instante ISO-8601 inclusivo.",
-                    schema = @Schema(type = "string", format = "date-time"))
-            @RequestParam(required = false) String from,
-            @Parameter(name = "to", in = ParameterIn.QUERY,
-                    description = "Instante ISO-8601 exclusivo.",
-                    schema = @Schema(type = "string", format = "date-time"))
-            @RequestParam(required = false) String to,
-            @Parameter(name = "page", in = ParameterIn.QUERY,
-                    description = "Pagina desde 1.",
-                    schema = @Schema(type = "integer", minimum = "1", defaultValue = "1"))
-            @RequestParam(defaultValue = "1") String page,
-            @Parameter(name = "limit", in = ParameterIn.QUERY,
-                    description = "Registros por pagina, entre 1 y 100.",
-                    schema = @Schema(type = "integer", minimum = "1", maximum = "100", defaultValue = "20"))
-            @RequestParam(defaultValue = "20") String limit) {
+            @ParameterObject MarketTransactionQueryParams query) {
         UUID usuarioId = usuarioDesde(jwt);
-        MarketTransactionFilter filtro = transactionFilter(playerId, type, from, to, page, limit);
+        MarketTransactionFilter filtro = transactionFilter(query.getPlayerId(), query.getType(),
+                query.getFrom(), query.getTo(), query.getPage(), query.getLimit());
         var result = transactions.consultar(usuarioId, filtro);
         return ResponseEntity.ok(new SuccessResponseDTO<>(
                 MarketTransactionsResponseDTO.fromDomain(result)));
@@ -219,29 +199,15 @@ public class MarketController {
 
     @PostMapping("/sales")
     @Operation(operationId = "venderTokens", summary = "Vender tokens de un jugador",
-            description = "Ejecuta una venta atomica usando la cotizacion exacta indicada por el usuario.",
+            description = "La venta nueva al superusuario fue retirada. El historial de ventas se conserva.",
             security = @SecurityRequirement(name = "BearerAuth"))
-    @ApiResponse(responseCode = "200", description = "Venta confirmada o solicitud pendiente.",
-            content = @Content(schema = @Schema(implementation = MarketSaleResponseDTO.class)))
-    @ApiResponse(responseCode = "400", description = "Solicitud o Idempotency-Key invalida.",
-            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
-    @ApiResponse(responseCode = "401", description = "JWT ausente o invalido.",
-            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
-    @ApiResponse(responseCode = "404", description = "Cuenta de mercado inexistente.",
-            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
-    @ApiResponse(responseCode = "409", description = "Cotizacion, tenencia, reserva o idempotencia en conflicto.",
-            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
-    @ApiResponse(responseCode = "503", description = "Mercado no operativo.",
-            content = @Content(schema = @Schema(implementation = com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO.class)))
+    @ApiResponse(responseCode = "410", description = "La venta nueva al superusuario fue retirada.")
     public ResponseEntity<SuccessResponseDTO<MarketSaleResponseDTO>> sale(
             @AuthenticationPrincipal Jwt jwt,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody MarketSaleRequestDTO request) {
-        UUID usuarioId = usuarioDesde(jwt);
-        String clave = normalizeIdempotencyKey(idempotencyKey);
-        var result = sales.vender(request.toDomain(usuarioId, clave));
-        return ResponseEntity.ok(new SuccessResponseDTO<>(
-                MarketSaleResponseDTO.fromDomain(result)));
+        usuarioDesde(jwt);
+        return ResponseEntity.status(HttpStatus.GONE).build();
     }
 
     @GetMapping("/operations/{idempotency-key}")

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getMarketPortfolio } from '../api/http.js'
-import MarketOperationPanel from '../components/MarketOperationPanel.jsx'
 import MarketPortfolioCharts from '../components/MarketPortfolioCharts.jsx'
 import MarketStateMessage from '../components/MarketStateMessage.jsx'
 import QuoteStatus from '../components/QuoteStatus.jsx'
@@ -28,19 +27,26 @@ function positionName (position) {
   return position.player_name || `Jugador ${position.player_id}`
 }
 
-function canSell (position) {
+function positionQuantities (position) {
+  const total = Number(position.total_quantity ?? position.quantity ?? 0)
+  const reserved = Number(position.reserved_quantity ?? 0)
+  const available = Number(position.available_quantity ?? (total - reserved))
+  return { total, reserved, available }
+}
+
+function canPublish (position) {
+  const quantities = positionQuantities(position)
   return position.quote_availability === 'CURRENT' &&
     position.quote_id !== null && position.quote_id !== undefined && position.quote_id !== '' &&
     position.quote_version !== null && position.quote_version !== undefined &&
     position.unit_price !== null && position.unit_price !== undefined &&
-    Number.isInteger(Number(position.quantity)) && Number(position.quantity) > 0
+    Number.isInteger(quantities.available) && quantities.available > 0
 }
 
-export default function MarketPortfolioPage () {
+export default function MarketPortfolioPage ({ onNavigate }) {
   const session = useSession()
   const [state, setState] = useState({ status: 'loading', message: '' })
   const [portfolio, setPortfolio] = useState(null)
-  const [operation, setOperation] = useState(null)
 
   const load = useCallback(async () => {
     if (!session.jwt || session.isJwtExpired) return
@@ -65,28 +71,6 @@ export default function MarketPortfolioPage () {
 
   const positions = Array.isArray(portfolio?.open_positions) ? portfolio.open_positions : []
 
-  function startSale (position) {
-    if (!canSell(position)) return
-    setOperation({
-      player: {
-        id: position.player_id,
-        name: positionName(position),
-        team: position.team,
-        league: position.league,
-        player_active: true,
-        team_active: true,
-        quote_id: position.quote_id,
-        quote_version: position.quote_version,
-        price_per_token: position.unit_price,
-        quote_status: 'VALID',
-        quote_availability: 'CURRENT',
-        operable: true
-      },
-      availableQuantity: Number(position.quantity),
-      maxQuantity: Number(position.quantity)
-    })
-  }
-
   return (
     <section className="market-page" aria-labelledby="portfolio-title">
       <div className="page-heading">
@@ -109,12 +93,16 @@ export default function MarketPortfolioPage () {
           <div className="market-positions-list">
             {positions.map((position) => (
               <article className="card market-position-card" key={position.player_id}>
+                {(() => { const quantities = positionQuantities(position); return <>
                 <div>
                   <h2>{positionName(position)}</h2>
-                  <span>{position.quantity} tokens</span>
+                  <span>{quantities.total} tokens</span>
                   {position.team || position.league ? <p>{position.team || 'Equipo no disponible'} · {position.league || 'Liga no disponible'}</p> : null}
                 </div>
                 <dl className="market-position-card__facts">
+                  <div><dt>Total</dt><dd>{quantities.total}</dd></div>
+                  <div><dt>Reservados</dt><dd>{quantities.reserved}</dd></div>
+                  <div><dt>Disponibles</dt><dd>{quantities.available}</dd></div>
                   <div><dt>Costo pendiente</dt><dd>{amount(position.pending_acquisition_cost)}</dd></div>
                   <div><dt>Costo promedio</dt><dd>{amount(position.weighted_average_cost)}</dd></div>
                   <div><dt>Última cotización</dt><dd>{amount(position.unit_price)}</dd></div>
@@ -122,26 +110,15 @@ export default function MarketPortfolioPage () {
                   <div><dt>P/L no realizada</dt><dd>{amount(position.unrealized_pnl)}</dd></div>
                 </dl>
                 <QuoteStatus status={position.quote_availability} price={position.unit_price === null ? null : amount(position.unit_price)} />
-                {canSell(position)
-                  ? <button className="button button--primary" type="button" onClick={() => startSale(position)}>Vender</button>
+                {canPublish(position)
+                  ? <button className="button button--primary" type="button" onClick={() => onNavigate?.(`/market/p2p/offers?publishPlayerId=${encodeURIComponent(position.player_id)}`)}>Publicar oferta P2P</button>
                   : null}
+                </> })()}
               </article>
             ))}
           </div>
         )}
       <MarketPortfolioCharts positions={positions} />
-      {operation
-        ? <MarketOperationPanel
-            player={operation.player}
-            type="SALE"
-            availableQuantity={operation.availableQuantity}
-            maxQuantity={operation.maxQuantity}
-            jwt={session.jwt}
-            modalOnly
-            onClose={() => setOperation(null)}
-            onConfirmed={() => { void load() }}
-          />
-        : null}
     </section>
   )
 }
