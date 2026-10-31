@@ -210,15 +210,15 @@ description: "Task list for Token Market P2P"
 
 ### Tests for User Story 6
 
-- [ ] T062 [P] [US6] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/market/MarketP2PPortfolioHistoryMappingTest.java` para total/reservado/disponible y tipos históricos
-- [ ] T063 [P] [US6] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/MarketP2PUnifiedHistoryIntegrationTest.java` para aislamiento por usuario, orden, legacy sales y asientos P2P
-- [ ] T064 [P] [US6] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2PPortfolioHistoryMockMvcTest.java` para DTOs extendidos y filtros de historial
+- [x] T062 [P] [US6] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/market/MarketP2PPortfolioHistoryMappingTest.java` para total/reservado/disponible y tipos históricos
+- [x] T063 [P] [US6] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/MarketP2PUnifiedHistoryIntegrationTest.java` para aislamiento por usuario, orden, legacy sales y asientos P2P
+- [x] T064 [P] [US6] Crear `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/market/controller/MarketP2PPortfolioHistoryMockMvcTest.java` para DTOs extendidos y filtros de historial
 
 ### Implementation for User Story 6
 
-- [ ] T065 [US6] Extender `MarketPortfolioServiceImpl.java`, `MarketPortfolioPosition.java` y DTOs `controller/market/dto/` con `total_quantity`, `reserved_quantity` y `available_quantity`
-- [ ] T066 [US6] Extender `MarketTransactionServiceImpl.java`, `MarketTransactionFilter.java`, repositories y mappers para unir registros legacy y asientos P2P sin reclasificar ventas históricas
-- [ ] T067 [US6] Actualizar OpenAPI de `/portfolio` y `/transactions` en `MarketController.java` para los nuevos campos y tipos `PRIMARY_PURCHASE`, `P2P_PURCHASE`, `P2P_SALE`
+- [x] T065 [US6] Extender `MarketPortfolioServiceImpl.java`, `MarketPortfolioPosition.java` y DTOs `controller/market/dto/` con `total_quantity`, `reserved_quantity` y `available_quantity`
+- [x] T066 [US6] Extender `MarketTransactionServiceImpl.java`, `MarketTransactionFilter.java`, repositories y mappers para unir registros legacy y asientos P2P sin reclasificar ventas históricas
+- [x] T067 [US6] Actualizar OpenAPI de `/portfolio` y `/transactions` en `MarketController.java` para los nuevos campos y tipos `PRIMARY_PURCHASE`, `P2P_PURCHASE`, `P2P_SALE`
 - [x] T068 [P] [US6] Extender `frontend/src/api/http.js` para consumir portfolio, ofertas, compras/cancelaciones y transacciones con los nuevos contratos
 - [ ] T069 [P] [US6] Actualizar `frontend/src/views/MarketPortfolioPage.jsx` y componentes asociados para mostrar total/reservado/disponible y eliminar la acción de venta al superusuario
 - [x] T070 [P] [US6] Crear `frontend/src/views/MarketP2POffersPage.jsx` y `frontend/src/components/MarketP2POfferCard.jsx` para listado, alias, cotización, estados y acciones permitidas

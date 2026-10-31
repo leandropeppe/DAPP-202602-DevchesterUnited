@@ -28,7 +28,10 @@ public record MarketTransactionRecord(
         Objects.requireNonNull(jugadorId);
         Objects.requireNonNull(nombreJugadorSnapshot);
         Objects.requireNonNull(tipoOperacion);
-        if (!tipoOperacion.equals("PURCHASE") && !tipoOperacion.equals("SALE")) {
+        if (!tipoOperacion.equals("PURCHASE") && !tipoOperacion.equals("SALE")
+                && !tipoOperacion.equals("PRIMARY_PURCHASE")
+                && !tipoOperacion.equals("P2P_PURCHASE")
+                && !tipoOperacion.equals("P2P_SALE")) {
             throw new IllegalArgumentException("El tipo de operacion no es valido.");
         }
         if (cantidad <= 0 || quoteVersion <= 0) {

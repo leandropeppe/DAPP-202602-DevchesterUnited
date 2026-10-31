@@ -111,6 +111,20 @@ class MarketPortfolioServiceTest {
     }
 
     @Test
+    void exponeReservaYDisponibleDesdeLaTenenciaPersistida() {
+        givenHoldings(holdingWithReservation(USER_ID, PLAYER_ID, 10L, 3L,
+                "20.00000000"));
+        givenNoRealizedPnl();
+        givenAbsentQuote(PLAYER_ID);
+
+        var position = service.consultar(USER_ID).posicionesAbiertas().get(0);
+
+        assertThat(position.cantidad()).isEqualTo(10L);
+        assertThat(position.cantidadReservada()).isEqualTo(3L);
+        assertThat(position.cantidad() - position.cantidadReservada()).isEqualTo(7L);
+    }
+
+    @Test
     void excluyePosicionesConCantidadCero() {
         givenHoldings(holding(USER_ID, PLAYER_ID, 0L, "0.00000000"));
         givenNoRealizedPnl();
@@ -359,6 +373,14 @@ class MarketPortfolioServiceTest {
                 quantity,
                 new BigDecimal(cost),
                 NOW);
+    }
+
+    private TenenciaMercadoEntity holdingWithReservation(UUID userId, UUID playerId,
+            long quantity, long reserved, String cost) {
+        return new TenenciaMercadoEntity(
+                new TenenciaMercadoId(userId, playerId), null, null,
+                new TenenciaMercadoEntity.Estado(quantity, reserved,
+                        new BigDecimal(cost), NOW));
     }
 
     private QuoteVersion quote(String price, QuoteValidityStatus status) {

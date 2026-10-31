@@ -54,7 +54,9 @@ public class MarketController {
 
     @GetMapping("/portfolio")
     @Operation(operationId = "consultarMarketPortfolio", summary = "Consultar portfolio de mercado",
-            description = "Devuelve las posiciones y rentabilidad del usuario autenticado.",
+            description = "Devuelve las posiciones y rentabilidad del usuario autenticado. Cada posición incluye "
+                    + "total_quantity, reserved_quantity y available_quantity, donde available_quantity = "
+                    + "total_quantity - reserved_quantity. La identidad se deriva del JWT.",
             security = @SecurityRequirement(name = "BearerAuth"))
     @ApiResponse(responseCode = "200", description = "Portfolio del usuario autenticado.",
             content = @Content(schema = @Schema(implementation = MarketPortfolioResponseDTO.class)))
@@ -72,7 +74,9 @@ public class MarketController {
     @Operation(operationId = "consultarMarketTransactions",
             summary = "Consultar historial de transacciones",
             description = "Devuelve solo transacciones confirmadas del usuario autenticado. "
-                    + "El filtro from es inclusivo y to es exclusivo.",
+                    + "El filtro from es inclusivo y to es exclusivo. Los tipos son "
+                    + "PRIMARY_PURCHASE, SALE legacy, P2P_PURCHASE y P2P_SALE. El orden es "
+                    + "confirmed_at DESC, transaction_id DESC.",
             security = @SecurityRequirement(name = "BearerAuth"))
     @ApiResponse(responseCode = "200", description = "Historial confirmado del usuario autenticado.",
             content = @Content(schema = @Schema(implementation = MarketTransactionsResponseDTO.class)))
@@ -87,8 +91,10 @@ public class MarketController {
                     schema = @Schema(type = "string", format = "uuid"))
             @RequestParam(required = false) String playerId,
             @Parameter(name = "type", in = ParameterIn.QUERY,
-                    description = "Tipo de operacion: PURCHASE o SALE.",
-                    schema = @Schema(type = "string", allowableValues = {"PURCHASE", "SALE"}))
+                    description = "Tipo: PRIMARY_PURCHASE, SALE legacy, P2P_PURCHASE o P2P_SALE. "
+                            + "PURCHASE se conserva como alias compatible de PRIMARY_PURCHASE.",
+                    schema = @Schema(type = "string", allowableValues = {"PRIMARY_PURCHASE", "PURCHASE",
+                            "SALE", "P2P_PURCHASE", "P2P_SALE"}))
             @RequestParam(required = false) String type,
             @Parameter(name = "from", in = ParameterIn.QUERY,
                     description = "Instante ISO-8601 inclusivo.",

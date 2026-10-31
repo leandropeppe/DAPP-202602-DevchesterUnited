@@ -169,7 +169,8 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
                 .filter(quote -> quote.isValidAt(momento))
                 .filter(MarketPortfolioServiceImpl::isOperationalValuation);
         if (actual.isPresent()) {
-            return currentPosition(jugadorId, cantidad, costoTotal, costoPromedio,
+            return currentPosition(jugadorId, cantidad, tenencia.getCantidadReservada(),
+                    costoTotal, costoPromedio,
                     actual.get());
         }
 
@@ -183,6 +184,7 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
                 new MarketPortfolioPosition(
                         jugadorId,
                         cantidad,
+                        tenencia.getCantidadReservada(),
                         costoTotal,
                         costoPromedio,
                         quote == null ? MarketQuoteAvailability.ABSENT
@@ -199,7 +201,8 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
     }
 
     private PositionValuation currentPosition(UUID jugadorId, long cantidad,
-            BigDecimal costoTotal, BigDecimal costoPromedio, QuoteVersion quote) {
+            long cantidadReservada, BigDecimal costoTotal, BigDecimal costoPromedio,
+            QuoteVersion quote) {
         BigDecimal valorActual = quote.pricePerToken()
                 .multiply(BigDecimal.valueOf(cantidad))
                 .setScale(INTERNAL_SCALE, RoundingMode.HALF_EVEN);
@@ -209,6 +212,7 @@ public class MarketPortfolioServiceImpl implements MarketPortfolioService {
                 new MarketPortfolioPosition(
                         jugadorId,
                         cantidad,
+                        cantidadReservada,
                         costoTotal,
                         costoPromedio,
                         MarketQuoteAvailability.CURRENT,

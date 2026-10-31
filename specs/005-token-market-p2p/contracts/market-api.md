@@ -33,6 +33,41 @@ Si una solicitud idempotente confirmada referencia un trade histórico sin snaps
 - El endpoint actual de portfolio agrega por posición `total_quantity`, `reserved_quantity` y `available_quantity`.
 - El endpoint actual de transacciones devuelve tipos normalizados `PRIMARY_PURCHASE`, `P2P_PURCHASE`, `P2P_SALE` y conserva el tipo histórico de ventas al superusuario.
 
+### `GET /api/v1/market/portfolio`
+
+Requiere JWT y siempre consulta el portfolio del usuario autenticado; no acepta un
+identificador de usuario como selector. Cada elemento de `data.open_positions`
+mantiene los campos existentes (`quantity`, `pending_acquisition_cost`,
+`weighted_average_cost` y la información de cotización) y agrega:
+
+- `total_quantity`: cantidad total persistida en la tenencia.
+- `reserved_quantity`: cantidad comprometida en ofertas P2P activas.
+- `available_quantity`: `total_quantity - reserved_quantity`.
+
+Las tres cantidades son no negativas y se calculan a partir de `market_holdings`.
+Publicar o cancelar una oferta solo modifica `reserved_quantity`; una compra P2P
+confirmada modifica también `total_quantity` según la liquidación.
+
+### `GET /api/v1/market/transactions`
+
+Requiere JWT y devuelve únicamente los asientos confirmados del usuario autenticado.
+Los filtros disponibles son `playerId`, `type`, `from`, `to`, `page` y `limit`.
+`from` es inclusivo, `to` exclusivo, `page` comienza en 1 y `limit` admite de 1 a
+100 registros. La respuesta conserva el envelope y los metadatos de paginación
+existentes.
+
+Los valores de `operation_type` son:
+
+- `PRIMARY_PURCHASE`: compra primaria persistida originalmente como `PURCHASE`.
+- `SALE`: venta legacy al superusuario, conservada sin reclasificación.
+- `P2P_PURCHASE`: asiento P2P del comprador.
+- `P2P_SALE`: asiento P2P del vendedor.
+
+El resultado se ordena de forma determinista por `confirmed_at DESC` y
+`transaction_id DESC`. `realized_pnl` se incluye cuando existe para el asiento
+correspondiente, especialmente en las ventas P2P y operaciones legacy que lo
+persistan. Nunca se incluyen asientos de otra identidad JWT.
+
 ## Errores mínimos
 
 `400 MANUAL_PRICE_NOT_ALLOWED`, `400 INVALID_QUANTITY`, `401` sin JWT, `403 FORBIDDEN`, `404 OFFER_NOT_FOUND`, `409 QUOTE_CHANGED`, `409 IDEMPOTENCY_CONFLICT`, `409 HISTORICAL_RESULT_UNAVAILABLE`, `409 OFFER_ALREADY_CANCELLED`, `409 INSUFFICIENT_AVAILABLE_QUANTITY`, `409 INSUFFICIENT_CREDITS`, `409 OFFER_NOT_PURCHASABLE`, `410` para la venta legacy y `503` si el mercado no está listo, según el envelope de errores vigente.
