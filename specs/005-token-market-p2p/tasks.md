@@ -238,7 +238,9 @@ description: "Task list for Token Market P2P"
 - [x] T075 Ejecutar los escenarios de `specs/005-token-market-p2p/quickstart.md` contra entorno de pruebas, sin usar cuotas reales ni WhoScored
 - [x] T076 Revisar `specs/005-token-market-p2p/contracts/market-api.md`, `contracts/quote-contract.md` y anotaciones OpenAPI para que no haya divergencias
 - [ ] T077 Ejecutar desde `backend/build.gradle` la compilación backend, desde `frontend/package.json` la compilación frontend, la suite completa, tests Testcontainers, revisión de seguridad y SonarCloud según la Constitution
-- [ ] T078 Verificar en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/`, `backend/src/main/java/com/devchesterunited/devchesterunitedv2/scraping/` y `backend/src/test/` que no se modificaron Player Valuation, Player Statistics Sync, WhoScored ni los tests existentes no autorizados
+- [x] T078 Verificar en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/service/`, `backend/src/main/java/com/devchesterunited/devchesterunitedv2/scraping/` y `backend/src/test/` que no se modificaron Player Valuation, Player Statistics Sync, WhoScored ni los tests existentes no autorizados
+
+**Estado de cierre:** T078 queda validada mediante la auditoría Git reportada para el commit `6071d54`, con 41 archivos dentro del alcance autorizado y sin modificaciones ajenas en WhoScored, scraping, valorización, estadísticas o migraciones no relacionadas. T077 permanece pendiente: aunque la compilación, las suites y CI #217 finalizaron correctamente, el paso `Verify SonarCloud Quality Gate and issue limits` fue omitido y aún falta evidencia de `Quality Gate=OK` y del cumplimiento de los límites de issues, vulnerabilidades y code smells críticos.
 
 ---
 
