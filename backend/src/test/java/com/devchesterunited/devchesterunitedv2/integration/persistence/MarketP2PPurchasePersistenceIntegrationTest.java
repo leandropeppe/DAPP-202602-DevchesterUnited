@@ -208,7 +208,8 @@ abstract class MarketP2PPurchasePersistenceIntegrationTest extends PostgresTestS
                 buyer, key, "P2P_PURCHASE", hash);
         UUID tradeId = UUID.randomUUID();
         jdbc.update("UPDATE market_idempotency_requests SET status = 'CONFIRMED', "
-                + "execution_token = NULL, result_reference = ?, updated_at = CURRENT_TIMESTAMP "
+                + "execution_token = NULL, result_reference = ?, "
+                + "updated_at = GREATEST(created_at, CURRENT_TIMESTAMP) "
                 + "WHERE id = ?", tradeId, idempotency.id());
         jdbc.update("INSERT INTO market_p2p_trades "
                 + "(id, offer_id, seller_user_id, buyer_user_id, player_id, "

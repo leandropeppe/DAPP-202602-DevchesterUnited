@@ -31,7 +31,7 @@ describe('demostracion controlada T073/T074', () => {
 
     render(<MarketTransactionsPage />)
     expect(await screen.findByRole('heading', { name: 'Historial de transacciones' })).toBeInTheDocument()
-    expect(screen.getByText('Venta')).toBeInTheDocument()
+    expect(screen.getByText('Venta legacy')).toBeInTheDocument()
     const transactionSnapshot = screen.getAllByText(/T073 Demo Player 1/).at(-1)
     expect(transactionSnapshot).toHaveTextContent('T073 Demo Player 1')
     expect(marketApi.getMarketTransactions).toHaveBeenCalledWith({ jwt: 'jwt-demo-user-1', filters: { playerId: undefined, type: undefined, from: undefined, to: undefined, page: 1, limit: 20 } })

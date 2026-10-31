@@ -22,7 +22,10 @@ function normalizeOffer (offer) {
 }
 
 function normalizePosition (position) {
-  return { ...position, playerId: position?.player_id, playerName: position?.player_name, quantity: Number(position?.available_quantity ?? position?.quantity ?? 0), quote: position?.quote_id ? { quoteId: position.quote_id, quoteVersion: position.quote_version, unitPrice: position.unit_price } : null }
+  const totalQuantity = Number(position?.total_quantity ?? position?.quantity ?? 0)
+  const reservedQuantity = Number(position?.reserved_quantity ?? 0)
+  const availableQuantity = Number(position?.available_quantity ?? (totalQuantity - reservedQuantity))
+  return { ...position, playerId: position?.player_id, playerName: position?.player_name, totalQuantity, reservedQuantity, availableQuantity, quantity: availableQuantity, quote: position?.quote_id ? { quoteId: position.quote_id, quoteVersion: position.quote_version, unitPrice: position.unit_price } : null }
 }
 
 function isOfferListResponse (response) { return response?.data && Array.isArray(response.data.offers) && response.data.pagination }
@@ -39,7 +42,7 @@ export default function MarketP2POffersPage () {
   const [operationState, setOperationState] = useState({ status: 'idle', message: '' })
   const [quantity, setQuantity] = useState('1')
   const [idempotencyKey, setIdempotencyKey] = useState(null)
-  const [publicationPlayerId, setPublicationPlayerId] = useState('')
+  const [publicationPlayerId, setPublicationPlayerId] = useState(() => new URLSearchParams(window.location.search).get('publishPlayerId') || '')
 
   const load = useCallback(async (requestedPage, requestedFilters) => {
     if (!session.jwt || session.isJwtExpired) return
@@ -52,8 +55,12 @@ export default function MarketP2POffersPage () {
       if (!isOfferListResponse(offersResponse)) throw new Error('El servidor devolvió un listado de ofertas incompleto.')
       if (!isPortfolioResponse(portfolioResponse)) throw new Error('El servidor devolvió un portfolio incompleto.')
       setResult({ offers: offersResponse.data.offers.map(normalizeOffer), pagination: offersResponse.data.pagination })
-      setPositions(portfolioResponse.data.open_positions.map(normalizePosition))
-      setPublicationPlayerId((current) => current || portfolioResponse.data.open_positions.find((position) => position.quote_id && Number(position.quantity) > 0)?.player_id || '')
+      const normalizedPositions = portfolioResponse.data.open_positions.map(normalizePosition)
+      setPositions(normalizedPositions)
+      setPublicationPlayerId((current) => {
+        if (current && normalizedPositions.some((position) => position.playerId === current && position.quote && position.quantity > 0)) return current
+        return normalizedPositions.find((position) => position.quote && position.quantity > 0)?.playerId || ''
+      })
       setState({ status: 'success', message: '' })
     } catch (error) {
       setState({ status: error?.status === 503 ? 'unavailable' : 'error', message: errorMessage(error) })

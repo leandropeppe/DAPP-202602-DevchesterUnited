@@ -43,7 +43,7 @@ function Application () {
       {route === '/registro' ? <RegistrationPage onNavigate={navigate} /> : null}
       {route === '/login' ? <LoginPage onNavigate={navigate} session={session} /> : null}
       {route === '/catalogo' ? <CatalogPage onNavigate={navigate} /> : null}
-      {route === '/market/portfolio' ? <MarketPortfolioPage /> : null}
+      {route === '/market/portfolio' ? <MarketPortfolioPage onNavigate={navigate} /> : null}
       {route === '/market/transactions' ? <MarketTransactionsPage /> : null}
       {route === '/market/p2p/offers' ? <MarketP2POffersPage /> : null}
       {PLAYER_DETAIL_ROUTE.test(route) ? <PlayerDetailPage playerId={playerIdFromRoute(route)} onNavigate={navigate} /> : null}

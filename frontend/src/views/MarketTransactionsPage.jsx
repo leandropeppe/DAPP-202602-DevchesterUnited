@@ -27,10 +27,16 @@ function isTransactionsResponse (response) {
 }
 
 function operationLabel (operationType) {
-  if (operationType === 'PURCHASE') return 'Compra'
-  if (operationType === 'SALE') return 'Venta'
+  if (operationType === 'PRIMARY_PURCHASE' || operationType === 'PURCHASE') return 'Compra primaria'
+  if (operationType === 'SALE') return 'Venta legacy'
+  if (operationType === 'P2P_PURCHASE') return 'Compra P2P'
+  if (operationType === 'P2P_SALE') return 'Venta P2P'
   const operationSuffix = operationType ? `: ${operationType}` : ''
   return `Tipo de operaci\u00f3n no reconocido${operationSuffix}`
+}
+
+function showsRealizedPnl (transaction) {
+  return transaction?.realized_pnl !== null && transaction?.realized_pnl !== undefined
 }
 
 function transactionPlayerName (transaction) {
@@ -149,7 +155,7 @@ export default function MarketTransactionsPage () {
           </label>
           <label className="field">Tipo<select name="type" value={filters.type} onChange={update}>
             <option value="">Todos</option>
-            <option value="PURCHASE">Compras</option><option value="SALE">Ventas</option></select></label>
+            <option value="PRIMARY_PURCHASE">Compras primarias</option><option value="SALE">Ventas legacy</option><option value="P2P_PURCHASE">Compras P2P</option><option value="P2P_SALE">Ventas P2P</option></select></label>
           <label className="field">Desde<input type="datetime-local" name="from" value={filters.from} onChange={update} /></label>
           <label className="field">Hasta<input type="datetime-local" name="to" value={filters.to} onChange={update} /></label>
         </div>
@@ -160,7 +166,7 @@ export default function MarketTransactionsPage () {
       </form>
       {transactions.length === 0
         ? <output className="empty-state">No hay transacciones confirmadas para estos filtros.</output>
-        : <div className="market-transactions-list">{transactions.map((transaction) => <article className="card market-transaction-card" data-player-id={transaction.player_id} key={transaction.transaction_id}><div><strong>{operationLabel(transaction.operation_type)}</strong><span>{transactionDate(transaction.confirmed_at)}</span></div><p className="market-transaction-card__snapshot">{transactionPlayerName(transaction)}</p><dl><div><dt>Cantidad</dt><dd>{transaction.quantity}</dd></div><div><dt>Precio unitario</dt><dd>{amount(transaction.unit_price)}</dd></div><div><dt>Total</dt><dd>{amount(transaction.total_amount)}</dd></div><div><dt>Versión cotización</dt><dd>{transaction.quote_version}</dd></div><div><dt>P/L realizada</dt><dd>{amount(transaction.realized_pnl)}</dd></div></dl></article>)}</div>}
+        : <div className="market-transactions-list">{transactions.map((transaction) => <article className="card market-transaction-card" data-player-id={transaction.player_id} key={transaction.transaction_id}><div><strong>{operationLabel(transaction.operation_type)}</strong><span>{transactionDate(transaction.confirmed_at)}</span></div><p className="market-transaction-card__snapshot">{transactionPlayerName(transaction)}</p><dl><div><dt>Cantidad</dt><dd>{transaction.quantity}</dd></div><div><dt>Precio unitario</dt><dd>{amount(transaction.unit_price)}</dd></div><div><dt>Total</dt><dd>{amount(transaction.total_amount)}</dd></div><div><dt>Versión cotización</dt><dd>{transaction.quote_version}</dd></div>{showsRealizedPnl(transaction) ? <div><dt>P/L realizada</dt><dd>{amount(transaction.realized_pnl)}</dd></div> : null}</dl></article>)}</div>}
       <MarketTransactionActivityChart jwt={session.jwt} filters={appliedFilters} initialResult={result} />
       <nav className="pagination" aria-label="Paginación del historial"><button className="button button--secondary" type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1}>Anterior</button><span className="pagination__label">Página {pagination.current_page || page} de {pagination.total_pages || 0}</span><button className="button button--secondary" type="button" onClick={() => setPage((current) => current + 1)} disabled={!pagination.total_pages || page >= pagination.total_pages}>Siguiente</button></nav>
     </section>

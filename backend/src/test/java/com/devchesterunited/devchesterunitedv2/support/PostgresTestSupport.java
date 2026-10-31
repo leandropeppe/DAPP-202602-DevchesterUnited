@@ -112,6 +112,9 @@ public abstract class PostgresTestSupport {
                 UNION SELECT player_id FROM market_confirmed_transactions
                 UNION SELECT player_id FROM market_rejected_attempts
                 UNION SELECT player_id FROM market_movements WHERE player_id IS NOT NULL
+                UNION SELECT player_id FROM market_p2p_offers
+                UNION SELECT player_id FROM market_p2p_trades
+                UNION SELECT player_id FROM market_p2p_movements WHERE player_id IS NOT NULL
                 """, (rs, row) -> rs.getObject(1, UUID.class));
         limpiarJugadoresYDependencias(jdbc, playerIds.toArray(UUID[]::new));
     }
@@ -124,6 +127,11 @@ public abstract class PostgresTestSupport {
     }
 
     private static void limpiarJugadorYDependencias(JdbcTemplate jdbc, UUID playerId) {
+        limpiarMovimientosP2P(jdbc, playerId);
+        limpiarAsientosP2P(jdbc, playerId);
+        limpiarCancelacionesP2P(jdbc, playerId);
+        limpiarTradesP2P(jdbc, playerId);
+        jdbc.update("DELETE FROM market_p2p_offers WHERE player_id = ?", playerId);
         jdbc.update("DELETE FROM market_movements WHERE player_id = ?", playerId);
         jdbc.update("DELETE FROM market_movements WHERE transaction_id IN "
                 + "(SELECT id FROM market_confirmed_transactions WHERE player_id = ?)", playerId);
@@ -150,6 +158,45 @@ public abstract class PostgresTestSupport {
             jdbc.update("ALTER TABLE market_quote_versions ENABLE TRIGGER trg_market_quote_versions_immutable");
         }
         jdbc.update("DELETE FROM jugadores WHERE id = ?", playerId);
+    }
+
+    private static void limpiarMovimientosP2P(JdbcTemplate jdbc, UUID playerId) {
+        jdbc.update("ALTER TABLE market_p2p_movements DISABLE TRIGGER trg_market_p2p_movements_immutable");
+        try {
+            jdbc.update("DELETE FROM market_p2p_movements WHERE trade_id IN "
+                    + "(SELECT id FROM market_p2p_trades WHERE player_id = ?)", playerId);
+        } finally {
+            jdbc.update("ALTER TABLE market_p2p_movements ENABLE TRIGGER trg_market_p2p_movements_immutable");
+        }
+    }
+
+    private static void limpiarAsientosP2P(JdbcTemplate jdbc, UUID playerId) {
+        jdbc.update("ALTER TABLE market_p2p_trade_entries DISABLE TRIGGER trg_market_p2p_trade_entries_immutable");
+        try {
+            jdbc.update("DELETE FROM market_p2p_trade_entries WHERE trade_id IN "
+                    + "(SELECT id FROM market_p2p_trades WHERE player_id = ?)", playerId);
+        } finally {
+            jdbc.update("ALTER TABLE market_p2p_trade_entries ENABLE TRIGGER trg_market_p2p_trade_entries_immutable");
+        }
+    }
+
+    private static void limpiarCancelacionesP2P(JdbcTemplate jdbc, UUID playerId) {
+        jdbc.update("ALTER TABLE market_p2p_offer_cancellations DISABLE TRIGGER trg_market_p2p_cancellations_immutable");
+        try {
+            jdbc.update("DELETE FROM market_p2p_offer_cancellations WHERE offer_id IN "
+                    + "(SELECT id FROM market_p2p_offers WHERE player_id = ?)", playerId);
+        } finally {
+            jdbc.update("ALTER TABLE market_p2p_offer_cancellations ENABLE TRIGGER trg_market_p2p_cancellations_immutable");
+        }
+    }
+
+    private static void limpiarTradesP2P(JdbcTemplate jdbc, UUID playerId) {
+        jdbc.update("ALTER TABLE market_p2p_trades DISABLE TRIGGER trg_market_p2p_trades_immutable");
+        try {
+            jdbc.update("DELETE FROM market_p2p_trades WHERE player_id = ?", playerId);
+        } finally {
+            jdbc.update("ALTER TABLE market_p2p_trades ENABLE TRIGGER trg_market_p2p_trades_immutable");
+        }
     }
 
     /** Elimina un usuario de fixture junto con sus filas de mercado dependientes. */
