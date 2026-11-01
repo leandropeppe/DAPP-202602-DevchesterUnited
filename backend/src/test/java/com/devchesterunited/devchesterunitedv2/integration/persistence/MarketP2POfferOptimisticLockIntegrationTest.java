@@ -36,6 +36,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -133,9 +134,9 @@ class MarketP2POfferOptimisticLockIntegrationTest extends PostgresTestSupport {
             Throwable secondFailure = second.get(30, TimeUnit.SECONDS);
 
             List<Throwable> failures = Arrays.asList(firstFailure, secondFailure);
-            assertThat(failures).anyMatch(failure -> failure == null);
+            assertThat(failures).anyMatch(Objects::isNull);
             assertThat(failures)
-                    .anyMatch(failure -> failure instanceof ObjectOptimisticLockingFailureException);
+                    .anyMatch(ObjectOptimisticLockingFailureException.class::isInstance);
         } finally {
             executor.shutdownNow();
         }

@@ -81,10 +81,10 @@ class IdentidadJugadorResolverTest {
 
     @ParameterizedTest
     @CsvSource({
-        "Tarik Muharemovic, Tarik Muharemovi�?",
+        "Tarik Muharemovic, Tarik Muharemović",
         "Josko Gvardiol, Joško Gvardiol",
         "Ronald Araujo, Ronald Araújo",
-        "Amar Dedic, Amar Dedi�?",
+        "Amar Dedic, Amar Dedić",
         "Kiernan Dewsbury-Hall, Kiernan Dewsbury Hall",
         "Dan Ballard, Daniel Ballard",
         "Josh King, Joshua King",

@@ -9,8 +9,15 @@ import { errorMessage } from './formUtils.js'
 const EMPTY_RESULT = { offers: [], pagination: { current_page: 1, page_size: 20, total_pages: 0, total_records: 0 } }
 
 function newIdempotencyKey () {
-  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID()
-  return `p2p-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  const cryptoApi = globalThis.crypto
+  if (typeof cryptoApi?.randomUUID === 'function') return cryptoApi.randomUUID()
+  if (typeof cryptoApi?.getRandomValues === 'function') {
+    const randomBytes = new Uint8Array(16)
+    cryptoApi.getRandomValues(randomBytes)
+    const randomPart = Array.from(randomBytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+    return `p2p-${randomPart}`
+  }
+  throw new Error('No hay una API criptográfica disponible para generar una clave segura.')
 }
 
 function normalizeQuote (quote) {
@@ -70,9 +77,19 @@ export default function MarketP2POffersPage () {
   useEffect(() => { void load(page, filters) }, [filters, load, page])
 
   function openOperation (mode, subject, target, limit = null) {
+    let key
+    try {
+      key = newIdempotencyKey()
+    } catch (error) {
+      setOperation(null)
+      setIdempotencyKey(null)
+      setOperationState({ status: 'idle', message: '' })
+      setState({ status: 'error', message: errorMessage(error) })
+      return
+    }
     setOperation({ mode, subject, target, maxQuantity: limit })
     setQuantity('1')
-    setIdempotencyKey(newIdempotencyKey())
+    setIdempotencyKey(key)
     setOperationState({ status: 'idle', message: '' })
   }
 

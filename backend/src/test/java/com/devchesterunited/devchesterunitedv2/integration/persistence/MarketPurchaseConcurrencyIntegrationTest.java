@@ -97,7 +97,7 @@ class MarketPurchaseConcurrencyIntegrationTest extends PostgresTestSupport {
     @Test
     void dosComprasDelMismoUsuarioNoPuedenGastarDosVecesElSaldo() throws Exception {
         Fixture fixture = fixture(1, new BigDecimal("1.25"), 100);
-        List<CallOutcome> outcomes = concurrently(
+        concurrently(
                 () -> purchase(fixture.request(fixture.userOne, "balance-one", 1)),
                 () -> purchase(fixture.request(fixture.userOne, "balance-two", 1)));
 
@@ -127,8 +127,8 @@ class MarketPurchaseConcurrencyIntegrationTest extends PostgresTestSupport {
                 .map(MarketPurchaseResult.class::cast)
                 .filter(result -> result.estado() == MarketIdempotencyStatus.CONFIRMED)
                 .toList();
-        assertThat(confirmedResults).hasSizeBetween(1, 2);
-        assertThat(confirmedResults).allMatch(result -> result.transaccionId() != null);
+        assertThat(confirmedResults).hasSizeBetween(1, 2)
+                .allMatch(result -> result.transaccionId() != null);
         assertThat(confirmedResults.stream()
                 .map(MarketPurchaseResult::transaccionId)
                 .distinct()

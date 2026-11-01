@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.integration.persistence;
 
-import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PCancelCommand;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseCommand;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PQuoteIdentity;

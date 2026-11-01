@@ -24,6 +24,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -110,13 +112,13 @@ class MarketP2PQuoteChangedMockMvcTest extends PostgresTestSupport {
 
         var captor = org.mockito.ArgumentCaptor.forClass(
                 com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseCommand.class);
-        org.mockito.Mockito.verify(purchases, org.mockito.Mockito.times(2)).comprar(captor.capture());
+        verify(purchases, times(2)).comprar(captor.capture());
         assertThat(captor.getAllValues().get(0).claveIdempotencia()).isEqualTo("old-key");
         assertThat(captor.getAllValues().get(1).claveIdempotencia()).isEqualTo("new-key");
     }
 
     private void stubOffer() {
-        OfertaVentaP2PEntity offer = org.mockito.Mockito.mock(OfertaVentaP2PEntity.class);
+        OfertaVentaP2PEntity offer = mock(OfertaVentaP2PEntity.class);
         doReturn(PLAYER_ID).when(offer).getJugadorId();
         when(offers.findById(OFFER_ID)).thenReturn(Optional.of(offer));
     }

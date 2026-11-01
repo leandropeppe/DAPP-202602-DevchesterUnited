@@ -55,8 +55,8 @@ class MarketP2PPublicationConcurrencyIntegrationTest extends PostgresTestSupport
                 .allMatch(outcome -> outcome.error() instanceof TokenMarketException)).isTrue();
         Long reserved = jdbc.queryForObject("SELECT reserved_quantity FROM market_holdings "
                 + "WHERE user_id = ? AND player_id = ?", Long.class, seller.id(), player.id());
-        assertThat(reserved).isBetween(0L, 2L);
-        assertThat(reserved).isEqualTo(2L);
+        assertThat(reserved).isBetween(0L, 2L)
+                .isEqualTo(2L);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM market_p2p_offers "
                 + "WHERE seller_user_id = ? AND player_id = ?", Long.class, seller.id(), player.id()))
                 .isEqualTo(1L);

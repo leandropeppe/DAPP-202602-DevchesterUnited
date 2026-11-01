@@ -104,7 +104,7 @@ public class MarketP2PCancellationServiceImpl implements MarketP2PCancellationSe
                     .filter(auditoria -> command.usuarioId().equals(auditoria.getActorId()))
                     .filter(auditoria -> command.offerId().equals(auditoria.getOfertaId()))
                     .map(this::result)
-                    .orElseThrow(() -> staleRequest());
+                    .orElseThrow(this::staleRequest);
         }
         return new MarketP2PCancelResult(command.offerId(), null, null, null,
                 result.estado().name());

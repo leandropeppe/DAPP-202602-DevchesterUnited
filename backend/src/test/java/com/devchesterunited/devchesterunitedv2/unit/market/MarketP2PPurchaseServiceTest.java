@@ -11,7 +11,6 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyParameterHasher;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketP2PAccountingPersistenceService;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketP2PPurchasePersistenceServiceImpl;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.AsientoP2PEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CuentaCreditosMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.OfertaVentaP2PEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoEntity;

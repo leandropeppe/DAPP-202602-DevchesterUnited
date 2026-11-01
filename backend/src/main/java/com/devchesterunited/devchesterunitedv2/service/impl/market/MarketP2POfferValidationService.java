@@ -47,12 +47,12 @@ public class MarketP2POfferValidationService {
             throw mercadoNoOperativo();
         }
         JugadorEntity jugador = jugadores.findByIdForUpdate(jugadorId)
-                .orElseThrow(() -> jugadorInactivo());
+                .orElseThrow(this::jugadorInactivo);
         if (!jugador.isActivo()) {
             throw jugadorInactivo();
         }
         CabeceraCotizacionMercadoEntity cabecera = cabeceras.findByJugadorIdForUpdate(jugadorId)
-                .orElseThrow(() -> cotizacionNoDisponible());
+                .orElseThrow(this::cotizacionNoDisponible);
         return versiones.findExactVigente(jugadorId, cabecera.getQuoteId(),
                         cabecera.getVersionActual(), clock.instant())
                 .map(mapper::toDomain)

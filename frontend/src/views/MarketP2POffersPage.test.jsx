@@ -17,6 +17,7 @@ describe('MarketP2POffersPage', () => {
     cleanup()
     clearSession()
     vi.clearAllMocks()
+    vi.unstubAllGlobals()
   })
 
   function mockPortfolio () {
@@ -156,5 +157,42 @@ describe('MarketP2POffersPage', () => {
     await waitFor(() => expect(api.purchaseMarketP2POffer).toHaveBeenCalledTimes(2))
     expect(api.purchaseMarketP2POffer.mock.calls[1][0].idempotencyKey).not.toBe(firstKey)
     expect(api.purchaseMarketP2POffer.mock.calls[1][0].body).toMatchObject({ quote_id: 'quote-2', quote_version: 2 })
+  })
+
+  it('usa getRandomValues para generar la clave idempotente cuando randomUUID no esta disponible', async () => {
+    const bytes = Uint8Array.from({ length: 16 }, (_, index) => index)
+    const getRandomValues = vi.fn((target) => {
+      target.set(bytes)
+      return target
+    })
+    vi.stubGlobal('crypto', { getRandomValues })
+    saveJwt(`header.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.signature`)
+    mockPortfolio()
+    api.getMarketP2POffers.mockResolvedValue({ data: { offers: [], pagination: { current_page: 1, page_size: 20, total_pages: 0, total_records: 0 } } })
+    api.publishMarketP2POffer.mockResolvedValue({ data: { offer_id: 'offer-new' } })
+    renderPage()
+    await screen.findByText('No hay ofertas P2P para estos filtros.')
+
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Publicar oferta' }))
+    await user.click(screen.getAllByRole('button', { name: 'Publicar oferta' }).at(-1))
+
+    await waitFor(() => expect(api.publishMarketP2POffer).toHaveBeenCalledTimes(1))
+    expect(getRandomValues).toHaveBeenCalledTimes(1)
+    expect(api.publishMarketP2POffer.mock.calls[0][0].idempotencyKey).toBe('p2p-000102030405060708090a0b0c0d0e0f')
+  })
+
+  it('impide iniciar una operacion cuando no existe Web Crypto', async () => {
+    vi.stubGlobal('crypto', undefined)
+    saveJwt(`header.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.signature`)
+    mockPortfolio()
+    api.getMarketP2POffers.mockResolvedValue({ data: { offers: [], pagination: { current_page: 1, page_size: 20, total_pages: 0, total_records: 0 } } })
+    renderPage()
+    await screen.findByText('No hay ofertas P2P para estos filtros.')
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Publicar oferta' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('No hay una API criptográfica disponible para generar una clave segura.')
+    expect(api.publishMarketP2POffer).not.toHaveBeenCalled()
   })
 })

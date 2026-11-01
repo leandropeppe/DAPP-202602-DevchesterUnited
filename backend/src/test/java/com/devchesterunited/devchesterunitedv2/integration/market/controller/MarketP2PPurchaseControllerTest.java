@@ -25,7 +25,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -268,8 +270,8 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
     }
 
     private static OfertaVentaP2PEntity offer() {
-        OfertaVentaP2PEntity offer = org.mockito.Mockito.mock(OfertaVentaP2PEntity.class);
-        org.mockito.Mockito.doReturn(PLAYER_ID).when(offer).getJugadorId();
+        OfertaVentaP2PEntity offer = mock(OfertaVentaP2PEntity.class);
+        doReturn(PLAYER_ID).when(offer).getJugadorId();
         return offer;
     }
 

@@ -98,10 +98,10 @@ class MarketP2POfferQueryRepositoryIntegrationTest extends PostgresTestSupport {
                 .map(MarketP2POfferProjection::getOfferId).toList();
 
         assertThat(ids).containsExactlyElementsOf(ids.stream()
-                .sorted(Comparator.comparing(UUID::toString).reversed()).toList());
-        assertThat(ids).containsExactlyElementsOf(fixtureOffers.stream()
-                .map(MarketP2PFixtureBuilder.FixtureOffer::id)
-                .sorted(Comparator.comparing(UUID::toString).reversed()).toList());
+                .sorted(Comparator.comparing(UUID::toString).reversed()).toList())
+                .containsExactlyElementsOf(fixtureOffers.stream()
+                        .map(MarketP2PFixtureBuilder.FixtureOffer::id)
+                        .sorted(Comparator.comparing(UUID::toString).reversed()).toList());
     }
 
     @Test

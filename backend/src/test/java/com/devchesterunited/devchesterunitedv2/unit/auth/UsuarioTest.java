@@ -12,7 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/** Contrato Java propuesto por T012: constructor completo y getters en espa�f±ol. */
+/** Contrato Java propuesto por T012: constructor completo y getters en español. */
 class UsuarioTest {
     private static final Instant FECHA = Instant.parse("2026-09-01T12:00:00Z");
     private static final String HASH = "$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW";

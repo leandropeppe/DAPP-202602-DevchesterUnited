@@ -21,9 +21,9 @@ class JugadorTest {
 
     @Test
     void construccionValidaConservaEstadoInterno() {
-        var jugador = crear(ID, "Juli�f¡n �flvarez", "Forward", 9, "Argentina");
+        var jugador = crear(ID, "Julián Álvarez", "Forward", 9, "Argentina");
         assertThat(jugador.getId()).isEqualTo(ID);
-        assertThat(jugador.getNombre()).isEqualTo("Juli�f¡n �flvarez");
+        assertThat(jugador.getNombre()).isEqualTo("Julián Álvarez");
         assertThat(jugador.getEquipoId()).isEqualTo(EQUIPO);
         assertThat(jugador.getPosicion()).isEqualTo("Forward");
         assertThat(jugador.getDorsal()).isEqualTo(9);

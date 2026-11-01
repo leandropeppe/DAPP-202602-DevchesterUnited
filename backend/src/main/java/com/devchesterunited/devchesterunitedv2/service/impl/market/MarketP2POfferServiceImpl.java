@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
-import java.util.UUID;
 
 /** Orquesta el claim, la validación oficial y la reserva de una oferta P2P. */
 @Service

@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -70,7 +71,7 @@ class MarketP2PPortfolioHistoryMockMvcTest {
 
     @Test
     void historialAceptaPaginacionTiposP2PYAislaElJwt() throws Exception {
-        MarketTransactionRecord record = org.mockito.Mockito.mock(MarketTransactionRecord.class);
+        MarketTransactionRecord record = mock(MarketTransactionRecord.class);
         when(record.id()).thenReturn(UUID.randomUUID());
         when(record.confirmadoEn()).thenReturn(Instant.parse("2026-10-30T12:00:00Z"));
         when(record.jugadorId()).thenReturn(PLAYER);
