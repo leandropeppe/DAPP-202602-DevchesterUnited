@@ -20,7 +20,8 @@ class MarketP2PLockOrderTest {
 
     @Test
     void rechazaIdentificadoresAusentes() {
-        assertThatThrownBy(() -> MarketP2PLockOrder.compareIds(null, UUID.randomUUID()))
+        UUID otherId = UUID.randomUUID();
+        assertThatThrownBy(() -> MarketP2PLockOrder.compareIds(null, otherId))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

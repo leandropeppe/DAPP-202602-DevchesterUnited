@@ -118,17 +118,17 @@ class MarketP2PUnifiedHistoryIntegrationTest extends PostgresTestSupport {
                 new MarketTransactionFilter(null, null, null, null, 1, 20));
 
         assertThat(all.paginacion().totalRegistros()).isEqualTo(4L);
-        assertThat(all.transacciones()).extracting(record -> record.tipoOperacion())
+        assertThat(all.transacciones()).extracting(transactionRecord -> transactionRecord.tipoOperacion())
                 .containsExactly("P2P_PURCHASE", "P2P_SALE", "SALE", "PRIMARY_PURCHASE");
-        assertThat(firstPage.transacciones()).extracting(record -> record.tipoOperacion())
+        assertThat(firstPage.transacciones()).extracting(transactionRecord -> transactionRecord.tipoOperacion())
                 .containsExactly("P2P_PURCHASE", "P2P_SALE");
-        assertThat(secondPage.transacciones()).extracting(record -> record.tipoOperacion())
+        assertThat(secondPage.transacciones()).extracting(transactionRecord -> transactionRecord.tipoOperacion())
                 .containsExactly("SALE", "PRIMARY_PURCHASE");
         assertThat(firstPage.transacciones()).doesNotHaveDuplicates();
         assertThat(secondPage.transacciones()).doesNotHaveDuplicates();
-        assertThat(buyerHistory.transacciones()).extracting(record -> record.tipoOperacion())
+        assertThat(buyerHistory.transacciones()).extracting(transactionRecord -> transactionRecord.tipoOperacion())
                 .containsExactly("P2P_PURCHASE");
-        assertThat(all.transacciones()).allMatch(record -> record.usuarioId().equals(seller.id()));
+        assertThat(all.transacciones()).allMatch(transactionRecord -> transactionRecord.usuarioId().equals(seller.id()));
         assertThat(offer.id()).isNotNull();
     }
 

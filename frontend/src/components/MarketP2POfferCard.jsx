@@ -13,16 +13,18 @@ const STATUS_LABELS = {
   CANCELLED: 'Cancelada'
 }
 
+function getActionLabel (ownOffer, status) {
+  if (ownOffer) return 'Cancelar oferta'
+  if (status === 'PURCHASABLE') return 'Comprar oferta'
+  return 'Operación no disponible'
+}
+
 export default function MarketP2POfferCard ({ offer, onAction }) {
   const status = offer?.status || 'SUSPENDED'
   const quote = offer?.quote
   const statusLabel = STATUS_LABELS[status] || status
   const ownOffer = Boolean(offer?.mine)
-  const actionLabel = ownOffer
-    ? 'Cancelar oferta'
-    : status === 'PURCHASABLE'
-      ? 'Comprar oferta'
-      : 'Operación no disponible'
+  const actionLabel = getActionLabel(ownOffer, status)
   const actionEnabled = (ownOffer && ['OPEN', 'PARTIALLY_FILLED', 'PURCHASABLE', 'SUSPENDED'].includes(status)) ||
     (!ownOffer && status === 'PURCHASABLE')
 

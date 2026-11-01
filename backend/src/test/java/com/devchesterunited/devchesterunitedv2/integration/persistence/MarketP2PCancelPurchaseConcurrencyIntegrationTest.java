@@ -89,7 +89,7 @@ class MarketP2PCancelPurchaseConcurrencyIntegrationTest extends PostgresTestSupp
                 .isEqualTo(1L);
         long trades = jdbc.queryForObject("SELECT COUNT(*) FROM market_p2p_trades "
                 + "WHERE offer_id = ?", Long.class, offer.id());
-        long cancellations = jdbc.queryForObject("SELECT COUNT(*) FROM market_p2p_offer_cancellations "
+        long cancellationCount = jdbc.queryForObject("SELECT COUNT(*) FROM market_p2p_offer_cancellations "
                 + "WHERE offer_id = ?", Long.class, offer.id());
         long movements = jdbc.queryForObject("SELECT COUNT(*) FROM market_p2p_movements "
                 + "WHERE trade_id IN (SELECT id FROM market_p2p_trades WHERE offer_id = ?)",
@@ -99,12 +99,12 @@ class MarketP2PCancelPurchaseConcurrencyIntegrationTest extends PostgresTestSupp
                 Long.class, offer.id());
         if ("FILLED".equals(status)) {
             assertThat(trades).isEqualTo(1L);
-            assertThat(cancellations).isZero();
+            assertThat(cancellationCount).isZero();
             assertThat(movements).isEqualTo(4L);
             assertThat(entries).isEqualTo(2L);
         } else {
             assertThat(trades).isZero();
-            assertThat(cancellations).isEqualTo(1L);
+            assertThat(cancellationCount).isEqualTo(1L);
             assertThat(movements).isZero();
             assertThat(entries).isZero();
         }

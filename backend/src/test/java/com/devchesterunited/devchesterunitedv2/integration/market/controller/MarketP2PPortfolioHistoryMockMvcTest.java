@@ -71,21 +71,21 @@ class MarketP2PPortfolioHistoryMockMvcTest {
 
     @Test
     void historialAceptaPaginacionTiposP2PYAislaElJwt() throws Exception {
-        MarketTransactionRecord record = mock(MarketTransactionRecord.class);
-        when(record.id()).thenReturn(UUID.randomUUID());
-        when(record.confirmadoEn()).thenReturn(Instant.parse("2026-10-30T12:00:00Z"));
-        when(record.jugadorId()).thenReturn(PLAYER);
-        when(record.nombreJugadorSnapshot()).thenReturn("Player");
-        when(record.tipoOperacion()).thenReturn("P2P_PURCHASE");
-        when(record.cantidad()).thenReturn(2L);
-        when(record.precioUnitario()).thenReturn(new BigDecimal("2.00"));
-        when(record.montoTotal()).thenReturn(new BigDecimal("4.00"));
-        when(record.contraparteId()).thenReturn(UUID.randomUUID());
-        when(record.quoteId()).thenReturn(UUID.randomUUID());
-        when(record.quoteVersion()).thenReturn(1L);
-        when(record.solicitudIdempotenciaId()).thenReturn(UUID.randomUUID());
+        MarketTransactionRecord transactionRecord = mock(MarketTransactionRecord.class);
+        when(transactionRecord.id()).thenReturn(UUID.randomUUID());
+        when(transactionRecord.confirmadoEn()).thenReturn(Instant.parse("2026-10-30T12:00:00Z"));
+        when(transactionRecord.jugadorId()).thenReturn(PLAYER);
+        when(transactionRecord.nombreJugadorSnapshot()).thenReturn("Player");
+        when(transactionRecord.tipoOperacion()).thenReturn("P2P_PURCHASE");
+        when(transactionRecord.cantidad()).thenReturn(2L);
+        when(transactionRecord.precioUnitario()).thenReturn(new BigDecimal("2.00"));
+        when(transactionRecord.montoTotal()).thenReturn(new BigDecimal("4.00"));
+        when(transactionRecord.contraparteId()).thenReturn(UUID.randomUUID());
+        when(transactionRecord.quoteId()).thenReturn(UUID.randomUUID());
+        when(transactionRecord.quoteVersion()).thenReturn(1L);
+        when(transactionRecord.solicitudIdempotenciaId()).thenReturn(UUID.randomUUID());
         when(transactions.consultar(eq(USER), any())).thenReturn(new MarketTransactionResult(
-                List.of(record), new PaginacionResultado(2, 10, 1, 1)));
+                List.of(transactionRecord), new PaginacionResultado(2, 10, 1, 1)));
 
         mvc.perform(get("/api/v1/market/transactions").queryParam("type", "P2P_PURCHASE")
                         .queryParam("page", "2").queryParam("limit", "10")

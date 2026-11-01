@@ -59,7 +59,8 @@ class MarketP2PPurchaseServiceTest {
 
     @Test
     void comandoInvalidoRechazaCantidadOfertaYCotizacion() {
-        assertThatThrownBy(() -> command(null, 0L, 0L).validar())
+        MarketP2PPurchaseCommand invalidCommand = command(null, 0L, 0L);
+        assertThatThrownBy(invalidCommand::validar)
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -121,7 +122,8 @@ class MarketP2PPurchaseServiceTest {
 
     @Test
     void cotizacionVersionadaEsParteObligatoriaDeLaCompra() {
-        assertThatThrownBy(() -> command(OFFER_ID, 1L, null).validar())
+        MarketP2PPurchaseCommand invalidCommand = command(OFFER_ID, 1L, null);
+        assertThatThrownBy(invalidCommand::validar)
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -155,7 +157,8 @@ class MarketP2PPurchaseServiceTest {
         when(tenencias.findByUsuarioIdAndJugadorIdForUpdate(SELLER_ID, PLAYER_ID))
                 .thenReturn(Optional.of(sellerHolding));
 
-        assertThatThrownBy(() -> persistence.liquidar(settlement()))
+        MarketP2PPurchaseSettlement settlement = settlement();
+        assertThatThrownBy(() -> persistence.liquidar(settlement))
                 .isInstanceOfSatisfying(TokenMarketException.class, exception ->
                         assertThat(exception.reason())
                                 .isEqualTo(TokenMarketException.Reason.INSUFFICIENT_BALANCE));

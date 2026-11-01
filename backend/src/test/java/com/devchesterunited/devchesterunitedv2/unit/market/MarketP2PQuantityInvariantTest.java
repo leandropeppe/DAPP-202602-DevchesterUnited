@@ -31,10 +31,13 @@ class MarketP2PQuantityInvariantTest {
 
     @Test
     void rechazaCantidadesQueNoConservanLaInvariante() {
-        assertThatThrownBy(() -> new OfertaVentaP2PEntity(UUID.randomUUID(), USER, PLAYER,
-                new OfertaVentaP2PEntity.Cantidades(10L, 5L, 4L, 0L),
-                OfertaVentaP2PEntity.PARTIALLY_FILLED,
-                new OfertaVentaP2PEntity.Auditoria(REQUEST, NOW, NOW)))
+        UUID offerId = UUID.randomUUID();
+        OfertaVentaP2PEntity.Cantidades quantities =
+                new OfertaVentaP2PEntity.Cantidades(10L, 5L, 4L, 0L);
+        OfertaVentaP2PEntity.Auditoria audit =
+                new OfertaVentaP2PEntity.Auditoria(REQUEST, NOW, NOW);
+        assertThatThrownBy(() -> new OfertaVentaP2PEntity(offerId, USER, PLAYER,
+                quantities, OfertaVentaP2PEntity.PARTIALLY_FILLED, audit))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -50,10 +53,10 @@ class MarketP2PQuantityInvariantTest {
 
     @Test
     void rechazaReservaSuperiorALaTenencia() {
-        assertThatThrownBy(() -> new TenenciaMercadoEntity(
-                new com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoId(
-                        USER, PLAYER), null, null,
-                new TenenciaMercadoEntity.Estado(4L, 5L, BigDecimal.ZERO, NOW)))
+        var holdingId = new com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoId(
+                USER, PLAYER);
+        var state = new TenenciaMercadoEntity.Estado(4L, 5L, BigDecimal.ZERO, NOW);
+        assertThatThrownBy(() -> new TenenciaMercadoEntity(holdingId, null, null, state))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

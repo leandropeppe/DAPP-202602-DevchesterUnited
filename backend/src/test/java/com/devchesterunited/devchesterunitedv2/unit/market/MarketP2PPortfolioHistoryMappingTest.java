@@ -43,21 +43,21 @@ class MarketP2PPortfolioHistoryMappingTest {
     @Test
     void conservaLosTiposHistoricosNormalizados() {
         for (String type : new String[]{"PRIMARY_PURCHASE", "P2P_PURCHASE", "P2P_SALE"}) {
-            MarketTransactionRecord record = org.mockito.Mockito.mock(MarketTransactionRecord.class);
-            org.mockito.Mockito.when(record.id()).thenReturn(ID);
-            org.mockito.Mockito.when(record.confirmadoEn()).thenReturn(NOW);
-            org.mockito.Mockito.when(record.jugadorId()).thenReturn(PLAYER);
-            org.mockito.Mockito.when(record.nombreJugadorSnapshot()).thenReturn("Player snapshot");
-            org.mockito.Mockito.when(record.tipoOperacion()).thenReturn(type);
-            org.mockito.Mockito.when(record.cantidad()).thenReturn(2L);
-            org.mockito.Mockito.when(record.precioUnitario()).thenReturn(new BigDecimal("2.00"));
-            org.mockito.Mockito.when(record.montoTotal()).thenReturn(new BigDecimal("4.00"));
-            org.mockito.Mockito.when(record.contraparteId()).thenReturn(COUNTERPARTY);
-            org.mockito.Mockito.when(record.quoteId()).thenReturn(QUOTE);
-            org.mockito.Mockito.when(record.quoteVersion()).thenReturn(1L);
-            org.mockito.Mockito.when(record.solicitudIdempotenciaId()).thenReturn(ID);
+            MarketTransactionRecord transactionRecord = org.mockito.Mockito.mock(MarketTransactionRecord.class);
+            org.mockito.Mockito.when(transactionRecord.id()).thenReturn(ID);
+            org.mockito.Mockito.when(transactionRecord.confirmadoEn()).thenReturn(NOW);
+            org.mockito.Mockito.when(transactionRecord.jugadorId()).thenReturn(PLAYER);
+            org.mockito.Mockito.when(transactionRecord.nombreJugadorSnapshot()).thenReturn("Player snapshot");
+            org.mockito.Mockito.when(transactionRecord.tipoOperacion()).thenReturn(type);
+            org.mockito.Mockito.when(transactionRecord.cantidad()).thenReturn(2L);
+            org.mockito.Mockito.when(transactionRecord.precioUnitario()).thenReturn(new BigDecimal("2.00"));
+            org.mockito.Mockito.when(transactionRecord.montoTotal()).thenReturn(new BigDecimal("4.00"));
+            org.mockito.Mockito.when(transactionRecord.contraparteId()).thenReturn(COUNTERPARTY);
+            org.mockito.Mockito.when(transactionRecord.quoteId()).thenReturn(QUOTE);
+            org.mockito.Mockito.when(transactionRecord.quoteVersion()).thenReturn(1L);
+            org.mockito.Mockito.when(transactionRecord.solicitudIdempotenciaId()).thenReturn(ID);
 
-            var dto = MarketTransactionResponseDTO.fromDomain(record);
+            var dto = MarketTransactionResponseDTO.fromDomain(transactionRecord);
             assertThat(dto.tipoOperacion()).isEqualTo(type);
         }
     }

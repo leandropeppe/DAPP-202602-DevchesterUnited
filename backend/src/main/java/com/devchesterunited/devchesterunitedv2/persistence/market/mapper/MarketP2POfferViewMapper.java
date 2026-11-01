@@ -21,8 +21,7 @@ public final class MarketP2POfferViewMapper {
         boolean active = OfertaVentaP2PEntity.OPEN.equals(offer.getEstado())
                 || OfertaVentaP2PEntity.PARTIALLY_FILLED.equals(offer.getEstado());
         boolean purchasable = operational && active && !viewerId.equals(offer.getVendedorId());
-        String derivedStatus = active ? (operational ? "PURCHASABLE" : "SUSPENDED")
-                : offer.getEstado();
+        String derivedStatus = statusFor(active, operational, offer.getEstado());
         MarketP2POfferView.Quote quoteView = quote == null ? null : new MarketP2POfferView.Quote(
                 quote.quoteId(), quote.version(), quote.pricePerToken(), quote.publishedAt(),
                 quote.validFrom(), quote.validUntil());
@@ -42,8 +41,7 @@ public final class MarketP2POfferViewMapper {
         boolean active = OfertaVentaP2PEntity.OPEN.equals(offer.getPersistedStatus())
                 || OfertaVentaP2PEntity.PARTIALLY_FILLED.equals(offer.getPersistedStatus());
         boolean purchasable = operational && active && !viewerId.equals(offer.getSellerId());
-        String status = active ? (operational ? "PURCHASABLE" : "SUSPENDED")
-                : offer.getPersistedStatus();
+        String status = statusFor(active, operational, offer.getPersistedStatus());
         MarketP2POfferView.Quote quoteView = quote == null ? null : new MarketP2POfferView.Quote(
                 quote.quoteId(), quote.version(), quote.pricePerToken(), quote.publishedAt(),
                 quote.validFrom(), quote.validUntil());
@@ -65,5 +63,12 @@ public final class MarketP2POfferViewMapper {
                 offer.getUnitPrice(), offer.getPublishedAt(), offer.getValidFrom(),
                 offer.getValidUntil(), QuoteValidityStatus.valueOf(offer.getQuoteValidityStatus()),
                 offer.getStrategyReference());
+    }
+
+    private static String statusFor(boolean active, boolean operational, String persistedStatus) {
+        if (!active) {
+            return persistedStatus;
+        }
+        return operational ? "PURCHASABLE" : "SUSPENDED";
     }
 }

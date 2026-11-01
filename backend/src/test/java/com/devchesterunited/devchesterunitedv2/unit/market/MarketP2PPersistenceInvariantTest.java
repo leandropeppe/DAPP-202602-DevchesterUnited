@@ -41,8 +41,9 @@ class MarketP2PPersistenceInvariantTest {
                 null, null, null,
                 new TenenciaMercadoEntity.Estado(3L, 2L, BigDecimal.ZERO.setScale(8), NOW));
 
+        Instant reservationTime = NOW.plusSeconds(1);
         assertThrows(IllegalStateException.class,
-                () -> tenencia.reservar(2L, NOW.plusSeconds(1)));
+                () -> tenencia.reservar(2L, reservationTime));
     }
 
     @Test

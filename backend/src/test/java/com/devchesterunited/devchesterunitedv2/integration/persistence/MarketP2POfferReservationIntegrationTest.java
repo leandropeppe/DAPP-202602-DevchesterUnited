@@ -32,7 +32,6 @@ class MarketP2POfferReservationIntegrationTest extends PostgresTestSupport {
 
     private MarketP2PFixtureBuilder.FixtureUser seller;
     private MarketP2PFixtureBuilder.FixturePlayer player;
-    private MarketP2PFixtureBuilder.FixtureQuote quote;
 
     @BeforeEach
     void fixture() {
@@ -40,7 +39,7 @@ class MarketP2POfferReservationIntegrationTest extends PostgresTestSupport {
         seller = builder.createUser("reservation", new BigDecimal("100.00"));
         player = builder.createPlayer("P2P Reservation Player");
         builder.createHolding(seller, player, 10L, new BigDecimal("10.00000000"));
-        quote = builder.createQuote(player, new BigDecimal("2.50"), 1L);
+        builder.createQuote(player, new BigDecimal("2.50"), 1L);
         jdbc.update("INSERT INTO market_state (id, status, epoch, created_at, updated_at) "
                 + "VALUES (1, 'READY', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) "
                 + "ON CONFLICT (id) DO UPDATE SET status = 'READY'");

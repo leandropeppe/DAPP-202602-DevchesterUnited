@@ -3,6 +3,13 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import MarketP2POfferCard from './MarketP2POfferCard.jsx'
 
+const STATUS_LABELS = {
+  PURCHASABLE: 'Disponible para comprar',
+  SUSPENDED: 'Suspendida',
+  FILLED: 'Completada',
+  CANCELLED: 'Cancelada'
+}
+
 function offer (overrides = {}) {
   return {
     offer_id: 'offer-1',
@@ -38,7 +45,7 @@ describe('MarketP2POfferCard', () => {
   ])('representa el estado %s sin habilitar una accion invalida', (status, label, enabled) => {
     render(<MarketP2POfferCard offer={offer({ status })} onAction={vi.fn()} />)
 
-    expect(screen.getByText(status === 'PURCHASABLE' ? 'Disponible para comprar' : status === 'SUSPENDED' ? 'Suspendida' : status === 'FILLED' ? 'Completada' : status === 'CANCELLED' ? 'Cancelada' : status)).toBeInTheDocument()
+    expect(screen.getByText(STATUS_LABELS[status] || status)).toBeInTheDocument()
     if (enabled) expect(screen.getByRole('button', { name: label })).toBeEnabled()
     else expect(screen.getByRole('button', { name: label })).toBeDisabled()
   })

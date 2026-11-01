@@ -83,10 +83,11 @@ class MarketP2PInvariantIntegrationTest extends PostgresTestSupport {
                 2L, "invariant-rollback-offer"));
         Snapshot before = snapshot(published.offerId());
         installFailureTrigger();
+        MarketP2PPurchaseCommand rollbackCommand = new MarketP2PPurchaseCommand(
+                buyer.id(), "invariant-rollback-buy", published.offerId(), player.id(), 1L,
+                new MarketP2PQuoteIdentity(quote.quoteId(), quote.version()));
         try {
-            assertThatThrownBy(() -> purchases.comprar(new MarketP2PPurchaseCommand(
-                    buyer.id(), "invariant-rollback-buy", published.offerId(), player.id(), 1L,
-                    new MarketP2PQuoteIdentity(quote.quoteId(), quote.version()))))
+            assertThatThrownBy(() -> purchases.comprar(rollbackCommand))
                     .isInstanceOf(DataAccessException.class);
         } finally {
             removeFailureTrigger();
@@ -99,15 +100,18 @@ class MarketP2PInvariantIntegrationTest extends PostgresTestSupport {
     void checksSqlRechazanValoresNegativosOSobreReserva() {
         var published = offers.publicar(new MarketP2POfferCommand(seller.id(), player.id(),
                 2L, "invariant-check-offer"));
+        UUID sellerId = seller.id();
+        UUID playerId = player.id();
+        UUID offerId = published.offerId();
         assertThatThrownBy(() -> jdbc.update("UPDATE market_credit_accounts SET balance = -1 "
-                + "WHERE user_id = ?", seller.id())).isInstanceOf(DataAccessException.class);
+                + "WHERE user_id = ?", sellerId)).isInstanceOf(DataAccessException.class);
         assertThatThrownBy(() -> jdbc.update("UPDATE market_holdings SET reserved_quantity = 5 "
-                + "WHERE user_id = ? AND player_id = ?", seller.id(), player.id()))
+                + "WHERE user_id = ? AND player_id = ?", sellerId, playerId))
                 .isInstanceOf(DataAccessException.class);
         assertThatThrownBy(() -> jdbc.update("UPDATE market_p2p_offers SET remaining_quantity = -1 "
-                + "WHERE id = ?", published.offerId())).isInstanceOf(DataAccessException.class);
+                + "WHERE id = ?", offerId)).isInstanceOf(DataAccessException.class);
         assertThatThrownBy(() -> jdbc.update("UPDATE market_holdings SET quantity = -1 "
-                + "WHERE user_id = ? AND player_id = ?", seller.id(), player.id()))
+                + "WHERE user_id = ? AND player_id = ?", sellerId, playerId))
                 .isInstanceOf(DataAccessException.class);
         assertInvariants();
     }

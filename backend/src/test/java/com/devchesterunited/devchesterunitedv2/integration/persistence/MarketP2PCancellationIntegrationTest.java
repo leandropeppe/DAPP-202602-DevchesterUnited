@@ -144,8 +144,9 @@ class MarketP2PCancellationIntegrationTest extends PostgresTestSupport {
     void rollbackRevierteOfertaReservaAuditoriaEIdempotencia() {
         Snapshot before = snapshot();
         installFailureTrigger();
+        MarketP2PCancelCommand rollbackCommand = cancelCommand("rollback-key");
         try {
-            assertThatThrownBy(() -> cancellations.cancelar(cancelCommand("rollback-key")))
+            assertThatThrownBy(() -> cancellations.cancelar(rollbackCommand))
                     .isInstanceOf(DataAccessException.class);
         } finally {
             removeFailureTrigger();
@@ -158,9 +159,11 @@ class MarketP2PCancellationIntegrationTest extends PostgresTestSupport {
 
     @Test
     void dosCancelacionesConcurrentesLiberanUnaSolaVez() throws Exception {
+        MarketP2PCancelCommand firstCancel = cancelCommand("concurrent-a");
+        MarketP2PCancelCommand secondCancel = cancelCommand("concurrent-b");
         List<Outcome> outcomes = concurrently(
-                () -> cancellations.cancelar(cancelCommand("concurrent-a")),
-                () -> cancellations.cancelar(cancelCommand("concurrent-b")));
+                () -> cancellations.cancelar(firstCancel),
+                () -> cancellations.cancelar(secondCancel));
 
         assertThat(outcomes.stream().filter(Outcome::successful).count()).isEqualTo(1L);
         assertThat(outcomes.stream().filter(outcome -> !outcome.successful()).count())
@@ -174,12 +177,14 @@ class MarketP2PCancellationIntegrationTest extends PostgresTestSupport {
     @Test
     void compraYCancelacionConcurrentesConservanLaCantidadTotal() throws Exception {
         CyclicBarrier barrier = new CyclicBarrier(3);
+        MarketP2PPurchaseCommand purchaseCommand = new MarketP2PPurchaseCommand(
+                buyer.id(), "race-purchase-key", offer.id(), player.id(), OFFER_QUANTITY,
+                new MarketP2PQuoteIdentity(quote.quoteId(), quote.version()));
+        MarketP2PCancelCommand cancelCommand = this.cancelCommand("race-cancel-key");
         Callable<Outcome> purchase = () -> runOutcome(barrier,
-                () -> purchases.comprar(new MarketP2PPurchaseCommand(
-                        buyer.id(), "race-purchase-key", offer.id(), player.id(), OFFER_QUANTITY,
-                        new MarketP2PQuoteIdentity(quote.quoteId(), quote.version()))));
+                () -> purchases.comprar(purchaseCommand));
         Callable<Outcome> cancel = () -> runOutcome(barrier,
-                () -> cancellations.cancelar(cancelCommand("race-cancel-key")));
+                () -> cancellations.cancelar(cancelCommand));
 
         var executor = Executors.newFixedThreadPool(2);
         try {
@@ -215,11 +220,12 @@ class MarketP2PCancellationIntegrationTest extends PostgresTestSupport {
     void auditoriaEsAppendOnly() {
         cancellations.cancelar(cancelCommand("immutable-key"));
 
+        var offerId = offer.id();
         assertThatThrownBy(() -> jdbc.update("UPDATE market_p2p_offer_cancellations "
-                + "SET released_quantity = 1 WHERE offer_id = ?", offer.id()))
+                + "SET released_quantity = 1 WHERE offer_id = ?", offerId))
                 .isInstanceOf(DataAccessException.class);
         assertThatThrownBy(() -> jdbc.update("DELETE FROM market_p2p_offer_cancellations "
-                + "WHERE offer_id = ?", offer.id()))
+                + "WHERE offer_id = ?", offerId))
                 .isInstanceOf(DataAccessException.class);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM market_p2p_offer_cancellations "
                 + "WHERE offer_id = ?", Long.class, offer.id())).isEqualTo(1L);
