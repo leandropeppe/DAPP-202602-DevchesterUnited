@@ -788,7 +788,7 @@ export default function MarketP2POffersPage () {
                     updateFilter
                   }
               />
-
+              {' '}
               Solo mis ofertas
             </label>
 

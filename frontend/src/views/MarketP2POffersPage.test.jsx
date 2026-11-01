@@ -12,6 +12,10 @@ function renderPage () {
   return render(<SessionProvider><MarketP2POffersPage /></SessionProvider>)
 }
 
+function mockPortfolio () {
+  api.getMarketPortfolio.mockResolvedValue({ data: { open_positions: [{ player_id: 'player-1', player_name: 'Jugador 1', quantity: 4, quote_id: 'quote-1', quote_version: 2, unit_price: 12.5 }] } })
+}
+
 describe('MarketP2POffersPage', () => {
   afterEach(() => {
     cleanup()
@@ -19,10 +23,6 @@ describe('MarketP2POffersPage', () => {
     vi.clearAllMocks()
     vi.unstubAllGlobals()
   })
-
-  function mockPortfolio () {
-    api.getMarketPortfolio.mockResolvedValue({ data: { open_positions: [{ player_id: 'player-1', player_name: 'Jugador 1', quantity: 4, quote_id: 'quote-1', quote_version: 2, unit_price: 12.5 }] } })
-  }
 
   it('muestra estados, alias público y paginación sin habilitar operaciones', async () => {
     saveJwt(`header.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.signature`)

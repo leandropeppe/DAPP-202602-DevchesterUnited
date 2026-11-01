@@ -12,6 +12,13 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../api/http.js', () => api)
 
+async function preparePage () {
+  saveJwt(`header.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.signature`)
+  mockMarket()
+  renderPage()
+  await screen.findByRole('heading', { name: 'Federico Valverde' })
+}
+
 function renderPage () {
   return render(<SessionProvider><MarketP2POffersPage /></SessionProvider>)
 }
@@ -30,13 +37,6 @@ describe('MarketP2POffersPage filtros explícitos', () => {
     clearSession()
     vi.clearAllMocks()
   })
-
-  async function preparePage () {
-    saveJwt(`header.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.signature`)
-    mockMarket()
-    renderPage()
-    await screen.findByRole('heading', { name: 'Federico Valverde' })
-  }
 
   it('no consulta mientras se editan nombre, estado o mis ofertas', async () => {
     await preparePage()

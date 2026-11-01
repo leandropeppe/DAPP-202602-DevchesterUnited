@@ -35,9 +35,14 @@ export default function MarketP2PConfirmationModal ({ open, mode, subject, quote
   const title = confirmationTitle(isPublish, isCancel)
   const confirmActionLabel = actionLabel(state, isPublish, isCancel)
 
+  function handleCancel (event) {
+    event.preventDefault()
+    onCancel()
+  }
+
   return createPortal(
     <div className="market-purchase-confirmation">
-      <div className="market-purchase-confirmation__dialog" role="dialog" aria-modal="true" aria-labelledby="p2p-confirmation-title">
+      <dialog open className="market-purchase-confirmation__dialog" aria-labelledby="p2p-confirmation-title" onCancel={handleCancel}>
         {state === 'success'
           ? <><h3 id="p2p-confirmation-title">Operacion confirmada</h3><p>La operacion se completo correctamente.</p><button className="button button--primary" type="button" onClick={onCancel}>Cerrar</button></>
           : <>
@@ -49,7 +54,7 @@ export default function MarketP2PConfirmationModal ({ open, mode, subject, quote
             {message ? <p className="field-error" role="alert">{message}</p> : null}
             <div className="market-purchase-confirmation__actions"><button className="button button--secondary" type="button" onClick={onCancel} disabled={state === 'loading'}>Volver</button><button className="button button--buy" type="button" onClick={onConfirm} disabled={state === 'loading' || !validQuantity}>{confirmActionLabel}</button></div>
           </>}
-      </div>
+      </dialog>
     </div>,
     document.body
   )
