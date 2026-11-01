@@ -40,15 +40,33 @@ class HistoricoCotizacionE2ETest extends PostgresTestSupport {
     @BeforeEach
     void preparar() {
         historicos.deleteAll(); visibles.deleteAll(); ejecuciones.deleteAll(); estrategias.deleteAll();
-        estrategias.save(new EstrategiaValorizacionEntity("GENERAL", 1, "General", "GENERAL", true, false, BigDecimal.ZERO, BigDecimal.ONE, "{}"));
-        estrategias.save(new EstrategiaValorizacionEntity("POSITIONAL", 1, "Positional", "POSICIONAL", true, false, BigDecimal.ZERO, BigDecimal.ONE, "{}"));
+        estrategias.save(EstrategiaValorizacionEntity.builder().id("GENERAL").version(1)
+                .nombre("General").tipo("GENERAL").habilitadaParaCalculo(true)
+                .esProvisoria(false).valorBase(BigDecimal.ZERO).factorEscala(BigDecimal.ONE)
+                .configuracionJson("{}").build());
+        estrategias.save(EstrategiaValorizacionEntity.builder().id("POSITIONAL").version(1)
+                .nombre("Positional").tipo("POSICIONAL").habilitadaParaCalculo(true)
+                .esProvisoria(false).valorBase(BigDecimal.ZERO).factorEscala(BigDecimal.ONE)
+                .configuracionJson("{}").build());
         visibles.save(new EstrategiaVisibleEntity("POSITIONAL", 1, Instant.now()));
         ejecuciones.save(new EjecucionValorizacionEntity(EXECUTION, "MANUAL", Instant.now(), Instant.now(), "COMPLETADA"));
         Instant reciente = Instant.now();
         Instant anterior = reciente.minusSeconds(60);
-        historicos.save(new HistoricoCotizacionEstrategiaEntity(UUID.randomUUID(), PLAYER, "POSITIONAL", 1, EXECUTION, reciente, d(".80"), d("80"), BigDecimal.ZERO, BigDecimal.ONE, "{\"order\":\"recent\"}"));
-        historicos.save(new HistoricoCotizacionEstrategiaEntity(UUID.randomUUID(), PLAYER, "POSITIONAL", 1, EXECUTION, anterior, d(".70"), d("70"), BigDecimal.ZERO, BigDecimal.ONE, "{\"order\":\"old\"}"));
-        historicos.save(new HistoricoCotizacionEstrategiaEntity(UUID.randomUUID(), PLAYER, "GENERAL", 1, EXECUTION, reciente, d(".40"), d("40"), BigDecimal.ZERO, BigDecimal.ONE, "{\"source\":\"general\"}"));
+        historicos.save(HistoricoCotizacionEstrategiaEntity.builder().id(UUID.randomUUID())
+                .jugadorId(PLAYER).estrategiaId("POSITIONAL").version(1).ejecucionId(EXECUTION)
+                .calculadaAt(reciente).score(d(".80")).cotizacion(d("80"))
+                .valorBase(BigDecimal.ZERO).factorEscala(BigDecimal.ONE)
+                .trazabilidadJson("{\"order\":\"recent\"}").build());
+        historicos.save(HistoricoCotizacionEstrategiaEntity.builder().id(UUID.randomUUID())
+                .jugadorId(PLAYER).estrategiaId("POSITIONAL").version(1).ejecucionId(EXECUTION)
+                .calculadaAt(anterior).score(d(".70")).cotizacion(d("70"))
+                .valorBase(BigDecimal.ZERO).factorEscala(BigDecimal.ONE)
+                .trazabilidadJson("{\"order\":\"old\"}").build());
+        historicos.save(HistoricoCotizacionEstrategiaEntity.builder().id(UUID.randomUUID())
+                .jugadorId(PLAYER).estrategiaId("GENERAL").version(1).ejecucionId(EXECUTION)
+                .calculadaAt(reciente).score(d(".40")).cotizacion(d("40"))
+                .valorBase(BigDecimal.ZERO).factorEscala(BigDecimal.ONE)
+                .trazabilidadJson("{\"source\":\"general\"}").build());
     }
 
     @AfterEach

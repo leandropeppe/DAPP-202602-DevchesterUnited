@@ -135,13 +135,21 @@ class TokenMarketRepositoryIntegrationTest extends PostgresTestSupport {
                 new BigDecimal("1.00"), new VigenciaCotizacionMercado(AHORA, AHORA, null), "VALID", null, AHORA));
         cabeceras.saveAndFlush(new CabeceraCotizacionMercadoEntity(jugador.getId(), quoteId, 1L, AHORA));
 
-        solicitudes.saveAndFlush(new SolicitudIdempotenciaMercadoEntity(solicitudId, usuarioId,
-                "repo-key", "PURCHASE", "repo-hash", "CONFIRMED", null, transaccionId, AHORA, AHORA));
-        transacciones.saveAndFlush(new TransaccionConfirmadaMercadoEntity(transaccionId, usuarioId,
-                jugador.getId(), jugador.getNombre(), "PURCHASE", 2L, new BigDecimal("1.00"),
-                new BigDecimal("2.00"), contraparteId, quoteId, 1L, solicitudId, null, AHORA));
-        movimientos.saveAndFlush(new MovimientoMercadoEntity(movimientoId, transaccionId, "TOKEN",
-                null, usuarioId, null, jugador.getId(), new BigDecimal("2.00000000"), AHORA));
+        solicitudes.saveAndFlush(SolicitudIdempotenciaMercadoEntity.builder().id(solicitudId)
+                .usuarioId(usuarioId).claveIdempotencia("repo-key").tipoOperacion("PURCHASE")
+                .hashParametros("repo-hash").status("CONFIRMED").tokenEjecucion(null)
+                .referenciaResultado(transaccionId).creadoEn(AHORA).actualizadoEn(AHORA).build());
+        transacciones.saveAndFlush(TransaccionConfirmadaMercadoEntity.builder().id(transaccionId)
+                .usuarioId(usuarioId).jugadorId(jugador.getId())
+                .nombreJugadorSnapshot(jugador.getNombre()).tipoOperacion("PURCHASE")
+                .quantity(2L).precioUnitario(new BigDecimal("1.00"))
+                .montoTotal(new BigDecimal("2.00")).contraparteId(contraparteId)
+                .quoteId(quoteId).versionCotizacion(1L).solicitudIdempotenciaId(solicitudId)
+                .pnlRealizado(null).confirmadoEn(AHORA).build());
+        movimientos.saveAndFlush(MovimientoMercadoEntity.builder().id(movimientoId)
+                .transaccionId(transaccionId).tipoActivo("TOKEN").cuentaCreditosId(null)
+                .usuarioTokenId(usuarioId).contraparteTokenId(null).jugadorId(jugador.getId())
+                .variacionCantidad(new BigDecimal("2.00000000")).creadoEn(AHORA).build());
         pnl.saveAndFlush(new PnLRealizadoMercadoEntity(usuarioId, BigDecimal.ZERO, AHORA));
 
         assertThat(asignaciones.findByUsuarioIdAndTipoAsignacion(usuarioId, "INITIAL_GRANT")).isPresent();

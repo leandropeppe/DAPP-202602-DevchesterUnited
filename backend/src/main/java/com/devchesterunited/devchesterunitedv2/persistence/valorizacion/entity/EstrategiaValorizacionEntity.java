@@ -30,18 +30,55 @@ public class EstrategiaValorizacionEntity {
 
     protected EstrategiaValorizacionEntity() { }
 
-    public EstrategiaValorizacionEntity(String id, int version, String nombre, String tipo,
-            boolean habilitadaParaCalculo, boolean esProvisoria, BigDecimal valorBase,
-            BigDecimal factorEscala, String configuracionJson) {
-        this.id = id;
-        this.version = version;
-        this.nombre = nombre;
-        this.tipo = tipo;
-        this.habilitadaParaCalculo = habilitadaParaCalculo;
-        this.esProvisoria = esProvisoria;
-        this.valorBase = valorBase;
-        this.factorEscala = factorEscala;
-        this.configuracionJson = configuracionJson;
+    private EstrategiaValorizacionEntity(Builder builder) {
+        this.id = builder.id;
+        this.version = builder.version;
+        this.nombre = builder.nombre;
+        this.tipo = builder.tipo;
+        this.habilitadaParaCalculo = builder.habilitadaParaCalculo;
+        this.esProvisoria = builder.esProvisoria;
+        this.valorBase = builder.valorBase;
+        this.factorEscala = builder.factorEscala;
+        this.configuracionJson = builder.configuracionJson;
+    }
+
+    public static Builder builder() { return new Builder(); }
+
+    public static final class Builder {
+        private String id;
+        private int version;
+        private String nombre;
+        private String tipo;
+        private boolean habilitadaParaCalculo;
+        private boolean esProvisoria;
+        private BigDecimal valorBase;
+        private BigDecimal factorEscala;
+        private String configuracionJson;
+
+        public Builder id(String id) { this.id = id; return this; }
+        public Builder version(int version) { this.version = version; return this; }
+        public Builder nombre(String nombre) { this.nombre = nombre; return this; }
+        public Builder tipo(String tipo) { this.tipo = tipo; return this; }
+        public Builder habilitadaParaCalculo(boolean value) {
+            this.habilitadaParaCalculo = value;
+            return this;
+        }
+        public Builder esProvisoria(boolean value) {
+            this.esProvisoria = value;
+            return this;
+        }
+        public Builder valorBase(BigDecimal valorBase) { this.valorBase = valorBase; return this; }
+        public Builder factorEscala(BigDecimal factorEscala) {
+            this.factorEscala = factorEscala;
+            return this;
+        }
+        public Builder configuracionJson(String configuracionJson) {
+            this.configuracionJson = configuracionJson;
+            return this;
+        }
+        public EstrategiaValorizacionEntity build() {
+            return new EstrategiaValorizacionEntity(this);
+        }
     }
 
     public String getId() { return id; }

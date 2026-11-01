@@ -135,7 +135,8 @@ class MarketInitializationStateServiceTest {
     }
 
     private static EstadoMercadoEntity estado(String status, long epoch) {
-        return new EstadoMercadoEntity(
-                (short) 1, status, epoch, RESERVA, RESERVA, null, AHORA, AHORA);
+        return EstadoMercadoEntity.builder().id((short) 1).status(status).epoch(epoch)
+                .reservaInicialConfigurada(RESERVA).reservaInicialInicializada(RESERVA)
+                .motivoFallo(null).creadoEn(AHORA).actualizadoEn(AHORA).build();
     }
 }

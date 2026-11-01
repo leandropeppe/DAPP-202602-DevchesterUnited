@@ -214,8 +214,10 @@ class MarketSaleServiceImplTest {
     }
 
     private EstadoMercadoEntity estado(String status) {
-        return new EstadoMercadoEntity((short) 1, status, 2L, new BigDecimal("100"),
-                new BigDecimal("100"), null, NOW, NOW);
+        return EstadoMercadoEntity.builder().id((short) 1).status(status).epoch(2L)
+                .reservaInicialConfigurada(new BigDecimal("100"))
+                .reservaInicialInicializada(new BigDecimal("100")).motivoFallo(null)
+                .creadoEn(NOW).actualizadoEn(NOW).build();
     }
 
     private MarketSaleRequest request(Long quantity) {
@@ -223,9 +225,13 @@ class MarketSaleServiceImplTest {
     }
 
     private TransaccionConfirmadaMercadoEntity confirmedSaleTransaction() {
-        return new TransaccionConfirmadaMercadoEntity(TRANSACTION_ID, USER_ID, PLAYER_ID,
-                "Jugador", "SALE", 2L, new BigDecimal("2.00"), new BigDecimal("4.00"),
-                SUPERUSER_ID, QUOTE_ID, 1L, idempotencia.requestId(), new BigDecimal("1.00"), NOW);
+        return TransaccionConfirmadaMercadoEntity.builder().id(TRANSACTION_ID).usuarioId(USER_ID)
+                .jugadorId(PLAYER_ID).nombreJugadorSnapshot("Jugador").tipoOperacion("SALE")
+                .quantity(2L).precioUnitario(new BigDecimal("2.00"))
+                .montoTotal(new BigDecimal("4.00")).contraparteId(SUPERUSER_ID)
+                .quoteId(QUOTE_ID).versionCotizacion(1L)
+                .solicitudIdempotenciaId(idempotencia.requestId())
+                .pnlRealizado(new BigDecimal("1.00")).confirmadoEn(NOW).build();
     }
 
     private void assertReason(TokenMarketException.Reason reason) {

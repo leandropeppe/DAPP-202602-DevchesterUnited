@@ -54,10 +54,14 @@ class ComparacionEstrategiasIntegrationTest extends PostgresTestSupport {
     @Test
     void conservaSeriesSeparadasSinSobrescribirHistoricos() {
         Instant ahora = Instant.now();
-        estrategias.save(new EstrategiaValorizacionEntity("GENERAL", 1, "General", "GENERAL", true, false,
-                BigDecimal.ZERO, BigDecimal.ONE, "{}"));
-        estrategias.save(new EstrategiaValorizacionEntity("POSITIONAL", 1, "Positional", "POSICIONAL", true, false,
-                BigDecimal.ZERO, BigDecimal.ONE, "{}"));
+        estrategias.save(EstrategiaValorizacionEntity.builder().id("GENERAL").version(1)
+                .nombre("General").tipo("GENERAL").habilitadaParaCalculo(true)
+                .esProvisoria(false).valorBase(BigDecimal.ZERO).factorEscala(BigDecimal.ONE)
+                .configuracionJson("{}").build());
+        estrategias.save(EstrategiaValorizacionEntity.builder().id("POSITIONAL").version(1)
+                .nombre("Positional").tipo("POSICIONAL").habilitadaParaCalculo(true)
+                .esProvisoria(false).valorBase(BigDecimal.ZERO).factorEscala(BigDecimal.ONE)
+                .configuracionJson("{}").build());
         UUID ejecucion = UUID.randomUUID();
         ejecuciones.save(new EjecucionValorizacionEntity(ejecucion, "MANUAL", ahora, ahora, "COMPLETADA"));
 
@@ -82,8 +86,11 @@ class ComparacionEstrategiasIntegrationTest extends PostgresTestSupport {
 
     private static HistoricoCotizacionEstrategiaEntity historico(UUID ejecucion, String estrategia,
             BigDecimal score, Instant calculadaAt) {
-        return new HistoricoCotizacionEstrategiaEntity(UUID.randomUUID(), PLAYER_ID, estrategia, 1, ejecucion,
-                calculadaAt, score, score, BigDecimal.ZERO, BigDecimal.ONE, "{\"estrategia\":\"" + estrategia + "\"}");
+        return HistoricoCotizacionEstrategiaEntity.builder().id(UUID.randomUUID())
+                .jugadorId(PLAYER_ID).estrategiaId(estrategia).version(1)
+                .ejecucionId(ejecucion).calculadaAt(calculadaAt).score(score).cotizacion(score)
+                .valorBase(BigDecimal.ZERO).factorEscala(BigDecimal.ONE)
+                .trazabilidadJson("{\"estrategia\":\"" + estrategia + "\"}").build();
     }
 
     private static BigDecimal d(String value) { return new BigDecimal(value); }

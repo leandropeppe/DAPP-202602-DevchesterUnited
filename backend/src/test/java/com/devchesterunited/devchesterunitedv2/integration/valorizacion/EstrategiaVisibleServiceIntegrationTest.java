@@ -53,9 +53,13 @@ class EstrategiaVisibleServiceIntegrationTest extends PostgresTestSupport {
     }
 
     private void prepararEstrategias() {
-        estrategias.save(new EstrategiaValorizacionEntity("GENERAL", 1, "General", "GENERAL", true, false,
-                BigDecimal.ZERO, BigDecimal.ONE, "{}"));
-        estrategias.save(new EstrategiaValorizacionEntity("POSITIONAL", 1, "Positional", "POSICIONAL", true, false,
-                BigDecimal.ZERO, BigDecimal.ONE, "{}"));
+        estrategias.save(EstrategiaValorizacionEntity.builder().id("GENERAL").version(1)
+                .nombre("General").tipo("GENERAL").habilitadaParaCalculo(true)
+                .esProvisoria(false).valorBase(BigDecimal.ZERO).factorEscala(BigDecimal.ONE)
+                .configuracionJson("{}").build());
+        estrategias.save(EstrategiaValorizacionEntity.builder().id("POSITIONAL").version(1)
+                .nombre("Positional").tipo("POSICIONAL").habilitadaParaCalculo(true)
+                .esProvisoria(false).valorBase(BigDecimal.ZERO).factorEscala(BigDecimal.ONE)
+                .configuracionJson("{}").build());
     }
 }

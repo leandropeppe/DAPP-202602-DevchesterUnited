@@ -76,25 +76,85 @@ public class TransaccionConfirmadaMercadoEntity {
 
     protected TransaccionConfirmadaMercadoEntity() { }
 
-    public TransaccionConfirmadaMercadoEntity(UUID id, UUID usuarioId, UUID jugadorId,
-            String nombreJugadorSnapshot, String tipoOperacion, Long quantity,
-            BigDecimal precioUnitario, BigDecimal montoTotal, UUID contraparteId,
-            UUID quoteId, Long versionCotizacion, UUID solicitudIdempotenciaId,
-            BigDecimal pnlRealizado, Instant confirmadoEn) {
-        this.id = id;
-        this.usuarioId = usuarioId;
-        this.jugadorId = jugadorId;
-        this.nombreJugadorSnapshot = nombreJugadorSnapshot;
-        this.tipoOperacion = tipoOperacion;
-        this.quantity = quantity;
-        this.precioUnitario = precioUnitario;
-        this.montoTotal = montoTotal;
-        this.contraparteId = contraparteId;
-        this.quoteId = quoteId;
-        this.versionCotizacion = versionCotizacion;
-        this.solicitudIdempotenciaId = solicitudIdempotenciaId;
-        this.pnlRealizado = pnlRealizado;
-        this.confirmadoEn = confirmadoEn;
+    private TransaccionConfirmadaMercadoEntity(Builder builder) {
+        this.id = builder.id;
+        this.usuarioId = builder.usuarioId;
+        this.jugadorId = builder.jugadorId;
+        this.nombreJugadorSnapshot = builder.nombreJugadorSnapshot;
+        this.tipoOperacion = builder.tipoOperacion;
+        this.quantity = builder.quantity;
+        this.precioUnitario = builder.precioUnitario;
+        this.montoTotal = builder.montoTotal;
+        this.contraparteId = builder.contraparteId;
+        this.quoteId = builder.quoteId;
+        this.versionCotizacion = builder.versionCotizacion;
+        this.solicitudIdempotenciaId = builder.solicitudIdempotenciaId;
+        this.pnlRealizado = builder.pnlRealizado;
+        this.confirmadoEn = builder.confirmadoEn;
+    }
+
+    public static Builder builder() { return new Builder(); }
+
+    public static final class Builder {
+        private UUID id;
+        private UUID usuarioId;
+        private UUID jugadorId;
+        private String nombreJugadorSnapshot;
+        private String tipoOperacion;
+        private Long quantity;
+        private BigDecimal precioUnitario;
+        private BigDecimal montoTotal;
+        private UUID contraparteId;
+        private UUID quoteId;
+        private Long versionCotizacion;
+        private UUID solicitudIdempotenciaId;
+        private BigDecimal pnlRealizado;
+        private Instant confirmadoEn;
+
+        public Builder id(UUID id) { this.id = id; return this; }
+        public Builder usuarioId(UUID usuarioId) { this.usuarioId = usuarioId; return this; }
+        public Builder jugadorId(UUID jugadorId) { this.jugadorId = jugadorId; return this; }
+        public Builder nombreJugadorSnapshot(String value) {
+            this.nombreJugadorSnapshot = value;
+            return this;
+        }
+        public Builder tipoOperacion(String tipoOperacion) {
+            this.tipoOperacion = tipoOperacion;
+            return this;
+        }
+        public Builder quantity(Long quantity) { this.quantity = quantity; return this; }
+        public Builder precioUnitario(BigDecimal value) {
+            this.precioUnitario = value;
+            return this;
+        }
+        public Builder montoTotal(BigDecimal montoTotal) {
+            this.montoTotal = montoTotal;
+            return this;
+        }
+        public Builder contraparteId(UUID contraparteId) {
+            this.contraparteId = contraparteId;
+            return this;
+        }
+        public Builder quoteId(UUID quoteId) { this.quoteId = quoteId; return this; }
+        public Builder versionCotizacion(Long value) {
+            this.versionCotizacion = value;
+            return this;
+        }
+        public Builder solicitudIdempotenciaId(UUID value) {
+            this.solicitudIdempotenciaId = value;
+            return this;
+        }
+        public Builder pnlRealizado(BigDecimal pnlRealizado) {
+            this.pnlRealizado = pnlRealizado;
+            return this;
+        }
+        public Builder confirmadoEn(Instant confirmadoEn) {
+            this.confirmadoEn = confirmadoEn;
+            return this;
+        }
+        public TransaccionConfirmadaMercadoEntity build() {
+            return new TransaccionConfirmadaMercadoEntity(this);
+        }
     }
 
     public UUID getId() { return id; }

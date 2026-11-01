@@ -40,17 +40,50 @@ public class EstadoMercadoEntity {
 
     protected EstadoMercadoEntity() { }
 
-    public EstadoMercadoEntity(Short id, String status, Long epoch,
-            BigDecimal reservaInicialConfigurada, BigDecimal reservaInicialInicializada,
-            String motivoFallo, Instant creadoEn, Instant actualizadoEn) {
-        this.id = id;
-        this.status = status;
-        this.epoch = epoch;
-        this.reservaInicialConfigurada = reservaInicialConfigurada;
-        this.reservaInicialInicializada = reservaInicialInicializada;
-        this.motivoFallo = motivoFallo;
-        this.creadoEn = creadoEn;
-        this.actualizadoEn = actualizadoEn;
+    private EstadoMercadoEntity(Builder builder) {
+        this.id = builder.id;
+        this.status = builder.status;
+        this.epoch = builder.epoch;
+        this.reservaInicialConfigurada = builder.reservaInicialConfigurada;
+        this.reservaInicialInicializada = builder.reservaInicialInicializada;
+        this.motivoFallo = builder.motivoFallo;
+        this.creadoEn = builder.creadoEn;
+        this.actualizadoEn = builder.actualizadoEn;
+    }
+
+    public static Builder builder() { return new Builder(); }
+
+    public static final class Builder {
+        private Short id;
+        private String status;
+        private Long epoch;
+        private BigDecimal reservaInicialConfigurada;
+        private BigDecimal reservaInicialInicializada;
+        private String motivoFallo;
+        private Instant creadoEn;
+        private Instant actualizadoEn;
+
+        public Builder id(Short id) { this.id = id; return this; }
+        public Builder status(String status) { this.status = status; return this; }
+        public Builder epoch(Long epoch) { this.epoch = epoch; return this; }
+        public Builder reservaInicialConfigurada(BigDecimal value) {
+            this.reservaInicialConfigurada = value;
+            return this;
+        }
+        public Builder reservaInicialInicializada(BigDecimal value) {
+            this.reservaInicialInicializada = value;
+            return this;
+        }
+        public Builder motivoFallo(String motivoFallo) {
+            this.motivoFallo = motivoFallo;
+            return this;
+        }
+        public Builder creadoEn(Instant creadoEn) { this.creadoEn = creadoEn; return this; }
+        public Builder actualizadoEn(Instant actualizadoEn) {
+            this.actualizadoEn = actualizadoEn;
+            return this;
+        }
+        public EstadoMercadoEntity build() { return new EstadoMercadoEntity(this); }
     }
 
     public Short getId() { return id; }

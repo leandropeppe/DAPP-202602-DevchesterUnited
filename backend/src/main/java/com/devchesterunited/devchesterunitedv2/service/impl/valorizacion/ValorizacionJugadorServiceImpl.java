@@ -214,9 +214,12 @@ public class ValorizacionJugadorServiceImpl implements ValorizacionJugadorServic
         actualRepository.save(new CotizacionActualEstrategiaEntity(new CotizacionActualEstrategiaKey(
                 resultado.jugadorId(), resultado.estrategiaId(), resultado.version()), ejecucionId, resultado.score(), resultado.valor(),
                 estrategia.valorBase(), estrategia.factorEscala(), calculadaAt));
-        historicoRepository.save(new HistoricoCotizacionEstrategiaEntity(UUID.randomUUID(), resultado.jugadorId(),
-                resultado.estrategiaId(), resultado.version(), ejecucionId, calculadaAt, resultado.score(),
-                resultado.valor(), estrategia.valorBase(), estrategia.factorEscala(), trazabilidad));
+        historicoRepository.save(HistoricoCotizacionEstrategiaEntity.builder()
+                .id(UUID.randomUUID()).jugadorId(resultado.jugadorId())
+                .estrategiaId(resultado.estrategiaId()).version(resultado.version())
+                .ejecucionId(ejecucionId).calculadaAt(calculadaAt).score(resultado.score())
+                .cotizacion(resultado.valor()).valorBase(estrategia.valorBase())
+                .factorEscala(estrategia.factorEscala()).trazabilidadJson(trazabilidad).build());
     }
 
     private static String trazabilidadJson(ResultadoValorizacion resultado, EstrategiaValorizacion estrategia) {

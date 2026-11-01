@@ -24,12 +24,70 @@ public class HistoricoCotizacionEstrategiaEntity {
     @Column(name = "factor_escala", nullable = false) private BigDecimal factorEscala;
     @Column(name = "trazabilidad_json", nullable = false) private String trazabilidadJson;
     protected HistoricoCotizacionEstrategiaEntity() { }
-    public HistoricoCotizacionEstrategiaEntity(UUID id, UUID jugadorId, String estrategiaId, int version,
-            UUID ejecucionId, Instant calculadaAt, BigDecimal score, BigDecimal cotizacion,
-            BigDecimal valorBase, BigDecimal factorEscala, String trazabilidadJson) {
-        this.id=id; this.jugadorId=jugadorId; this.estrategiaId=estrategiaId; this.estrategiaVersion=version;
-        this.ejecucionId=ejecucionId; this.calculadaAt=calculadaAt; this.score=score; this.cotizacion=cotizacion;
-        this.valorBase=valorBase; this.factorEscala=factorEscala; this.trazabilidadJson=trazabilidadJson;
+    private HistoricoCotizacionEstrategiaEntity(Builder builder) {
+        this.id = builder.id;
+        this.jugadorId = builder.jugadorId;
+        this.estrategiaId = builder.estrategiaId;
+        this.estrategiaVersion = builder.version;
+        this.ejecucionId = builder.ejecucionId;
+        this.calculadaAt = builder.calculadaAt;
+        this.score = builder.score;
+        this.cotizacion = builder.cotizacion;
+        this.valorBase = builder.valorBase;
+        this.factorEscala = builder.factorEscala;
+        this.trazabilidadJson = builder.trazabilidadJson;
+    }
+
+    public static Builder builder() { return new Builder(); }
+
+    public static final class Builder {
+        private UUID id;
+        private UUID jugadorId;
+        private String estrategiaId;
+        private int version;
+        private UUID ejecucionId;
+        private Instant calculadaAt;
+        private BigDecimal score;
+        private BigDecimal cotizacion;
+        private BigDecimal valorBase;
+        private BigDecimal factorEscala;
+        private String trazabilidadJson;
+
+        public Builder id(UUID id) { this.id = id; return this; }
+        public Builder jugadorId(UUID jugadorId) { this.jugadorId = jugadorId; return this; }
+        public Builder estrategiaId(String estrategiaId) {
+            this.estrategiaId = estrategiaId;
+            return this;
+        }
+        public Builder version(int version) { this.version = version; return this; }
+        public Builder ejecucionId(UUID ejecucionId) {
+            this.ejecucionId = ejecucionId;
+            return this;
+        }
+        public Builder calculadaAt(Instant calculadaAt) {
+            this.calculadaAt = calculadaAt;
+            return this;
+        }
+        public Builder score(BigDecimal score) { this.score = score; return this; }
+        public Builder cotizacion(BigDecimal cotizacion) {
+            this.cotizacion = cotizacion;
+            return this;
+        }
+        public Builder valorBase(BigDecimal valorBase) {
+            this.valorBase = valorBase;
+            return this;
+        }
+        public Builder factorEscala(BigDecimal factorEscala) {
+            this.factorEscala = factorEscala;
+            return this;
+        }
+        public Builder trazabilidadJson(String trazabilidadJson) {
+            this.trazabilidadJson = trazabilidadJson;
+            return this;
+        }
+        public HistoricoCotizacionEstrategiaEntity build() {
+            return new HistoricoCotizacionEstrategiaEntity(this);
+        }
     }
     public UUID getId() { return id; }
     public UUID getJugadorId() { return jugadorId; }

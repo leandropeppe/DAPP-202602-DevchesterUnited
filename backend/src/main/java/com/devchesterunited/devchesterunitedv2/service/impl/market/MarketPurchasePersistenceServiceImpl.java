@@ -85,28 +85,39 @@ public class MarketPurchasePersistenceServiceImpl implements MarketPurchasePersi
                 settlement.confirmadoEn());
 
         UUID transaccionId = UUID.randomUUID();
-        TransaccionConfirmadaMercadoEntity transaccion = new TransaccionConfirmadaMercadoEntity(
-                transaccionId, settlement.usuarioId(), settlement.jugadorId(),
-                settlement.nombreJugadorSnapshot(), PURCHASE, settlement.cantidad(),
-                settlement.precioUnitario(), settlement.montoTotal(), settlement.contraparteId(),
-                settlement.quoteId(), settlement.versionCotizacion(), settlement.solicitudId(),
-                null, settlement.confirmadoEn());
+        TransaccionConfirmadaMercadoEntity transaccion = TransaccionConfirmadaMercadoEntity.builder()
+                .id(transaccionId).usuarioId(settlement.usuarioId()).jugadorId(settlement.jugadorId())
+                .nombreJugadorSnapshot(settlement.nombreJugadorSnapshot()).tipoOperacion(PURCHASE)
+                .quantity(settlement.cantidad()).precioUnitario(settlement.precioUnitario())
+                .montoTotal(settlement.montoTotal()).contraparteId(settlement.contraparteId())
+                .quoteId(settlement.quoteId()).versionCotizacion(settlement.versionCotizacion())
+                .solicitudIdempotenciaId(settlement.solicitudId()).pnlRealizado(null)
+                .confirmadoEn(settlement.confirmadoEn()).build();
         transacciones.save(transaccion);
 
         movimientos.saveAll(List.of(
-                new MovimientoMercadoEntity(UUID.randomUUID(), transaccionId, CREDIT,
-                        cuentaUsuario.getId(), null, null, null,
-                        settlement.montoTotal().negate(), settlement.confirmadoEn()),
-                new MovimientoMercadoEntity(UUID.randomUUID(), transaccionId, CREDIT,
-                        cuentaSuperuser.getId(), null, null, null,
-                        settlement.montoTotal(), settlement.confirmadoEn()),
-                new MovimientoMercadoEntity(UUID.randomUUID(), transaccionId, TOKEN,
-                        null, settlement.usuarioId(), null, settlement.jugadorId(),
-                        BigDecimal.valueOf(settlement.cantidad()), settlement.confirmadoEn()),
-                new MovimientoMercadoEntity(UUID.randomUUID(), transaccionId, TOKEN,
-                        null, null, settlement.contraparteId(), settlement.jugadorId(),
-                        BigDecimal.valueOf(settlement.cantidad()).negate(),
-                        settlement.confirmadoEn())));
+                MovimientoMercadoEntity.builder().id(UUID.randomUUID()).transaccionId(transaccionId)
+                        .tipoActivo(CREDIT).cuentaCreditosId(cuentaUsuario.getId())
+                        .usuarioTokenId(null).contraparteTokenId(null).jugadorId(null)
+                        .variacionCantidad(settlement.montoTotal().negate())
+                        .creadoEn(settlement.confirmadoEn()).build(),
+                MovimientoMercadoEntity.builder().id(UUID.randomUUID()).transaccionId(transaccionId)
+                        .tipoActivo(CREDIT).cuentaCreditosId(cuentaSuperuser.getId())
+                        .usuarioTokenId(null).contraparteTokenId(null).jugadorId(null)
+                        .variacionCantidad(settlement.montoTotal()).creadoEn(settlement.confirmadoEn())
+                        .build(),
+                MovimientoMercadoEntity.builder().id(UUID.randomUUID()).transaccionId(transaccionId)
+                        .tipoActivo(TOKEN).cuentaCreditosId(null)
+                        .usuarioTokenId(settlement.usuarioId()).contraparteTokenId(null)
+                        .jugadorId(settlement.jugadorId())
+                        .variacionCantidad(BigDecimal.valueOf(settlement.cantidad()))
+                        .creadoEn(settlement.confirmadoEn()).build(),
+                MovimientoMercadoEntity.builder().id(UUID.randomUUID()).transaccionId(transaccionId)
+                        .tipoActivo(TOKEN).cuentaCreditosId(null).usuarioTokenId(null)
+                        .contraparteTokenId(settlement.contraparteId())
+                        .jugadorId(settlement.jugadorId())
+                        .variacionCantidad(BigDecimal.valueOf(settlement.cantidad()).negate())
+                        .creadoEn(settlement.confirmadoEn()).build()));
         return transaccionId;
     }
 

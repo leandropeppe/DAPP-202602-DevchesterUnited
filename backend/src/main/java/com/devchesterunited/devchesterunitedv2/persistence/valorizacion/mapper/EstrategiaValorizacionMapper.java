@@ -8,8 +8,10 @@ public final class EstrategiaValorizacionMapper {
 
     public static EstrategiaValorizacionEntity aEntity(EstrategiaValorizacion estrategia, String nombre,
             String configuracionJson) {
-        return new EstrategiaValorizacionEntity(estrategia.id(), estrategia.version(), nombre,
-                estrategia.tipo().name(), true, estrategia.esProvisoria(), estrategia.valorBase(),
-                estrategia.factorEscala(), configuracionJson);
+        return EstrategiaValorizacionEntity.builder().id(estrategia.id())
+                .version(estrategia.version()).nombre(nombre).tipo(estrategia.tipo().name())
+                .habilitadaParaCalculo(true).esProvisoria(estrategia.esProvisoria())
+                .valorBase(estrategia.valorBase()).factorEscala(estrategia.factorEscala())
+                .configuracionJson(configuracionJson).build();
     }
 }

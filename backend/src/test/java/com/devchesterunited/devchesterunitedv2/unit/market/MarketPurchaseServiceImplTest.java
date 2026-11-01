@@ -191,15 +191,20 @@ class MarketPurchaseServiceImplTest extends MarketPurchaseServiceContractTest {
     }
 
     private EstadoMercadoEntity estado(String status) {
-        return new EstadoMercadoEntity((short) 1, status, 2L, new BigDecimal("100"),
-                new BigDecimal("100"), null, NOW, NOW);
+        return EstadoMercadoEntity.builder().id((short) 1).status(status).epoch(2L)
+                .reservaInicialConfigurada(new BigDecimal("100"))
+                .reservaInicialInicializada(new BigDecimal("100")).motivoFallo(null)
+                .creadoEn(NOW).actualizadoEn(NOW).build();
     }
 
     private TransaccionConfirmadaMercadoEntity transaction() {
-        return new TransaccionConfirmadaMercadoEntity(TRANSACTION_ID, USER_ID, PLAYER_ID,
-                "Jugador de prueba", "PURCHASE", 2L, new BigDecimal("1.25"),
-                new BigDecimal("2.50"), SUPERUSER_ID, QUOTE_ID, 1L,
-                idempotencia.requestId(), null, NOW);
+        return TransaccionConfirmadaMercadoEntity.builder().id(TRANSACTION_ID).usuarioId(USER_ID)
+                .jugadorId(PLAYER_ID).nombreJugadorSnapshot("Jugador de prueba")
+                .tipoOperacion("PURCHASE").quantity(2L)
+                .precioUnitario(new BigDecimal("1.25")).montoTotal(new BigDecimal("2.50"))
+                .contraparteId(SUPERUSER_ID).quoteId(QUOTE_ID).versionCotizacion(1L)
+                .solicitudIdempotenciaId(idempotencia.requestId()).pnlRealizado(null)
+                .confirmadoEn(NOW).build();
     }
 
     private static final class FakeIdempotency implements MarketIdempotencyService {

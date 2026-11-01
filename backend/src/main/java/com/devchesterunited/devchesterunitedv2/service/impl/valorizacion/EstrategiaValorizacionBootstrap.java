@@ -37,9 +37,12 @@ public class EstrategiaValorizacionBootstrap {
         for (EstrategiaValorizacion estrategia : iniciales.habilitadas()) {
             EstrategiaValorizacionKey key = new EstrategiaValorizacionKey(estrategia.id(), estrategia.version());
             if (estrategias.findById(key).isEmpty()) {
-                estrategias.save(new EstrategiaValorizacionEntity(estrategia.id(), estrategia.version(),
-                        nombre(estrategia), estrategia.tipo().name(), true, estrategia.esProvisoria(),
-                        estrategia.valorBase(), estrategia.factorEscala(), configuracionJson(estrategia)));
+                estrategias.save(EstrategiaValorizacionEntity.builder().id(estrategia.id())
+                        .version(estrategia.version()).nombre(nombre(estrategia))
+                        .tipo(estrategia.tipo().name()).habilitadaParaCalculo(true)
+                        .esProvisoria(estrategia.esProvisoria()).valorBase(estrategia.valorBase())
+                        .factorEscala(estrategia.factorEscala())
+                        .configuracionJson(configuracionJson(estrategia)).build());
             }
         }
         EstrategiaVisibleEntity visible = visibles.buscar().orElse(null);

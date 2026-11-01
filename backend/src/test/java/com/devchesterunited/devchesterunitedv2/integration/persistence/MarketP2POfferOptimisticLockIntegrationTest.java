@@ -95,10 +95,12 @@ class MarketP2POfferOptimisticLockIntegrationTest extends PostgresTestSupport {
                     new TenenciaMercadoId(usuarioId, jugadorId), usuario, jugador,
                     new TenenciaMercadoEntity.Estado(10L, 0L,
                             BigDecimal.ZERO.setScale(8), NOW)));
-            solicitudes.saveAndFlush(new SolicitudIdempotenciaMercadoEntity(
-                    solicitudId, usuarioId, "offer-" + ofertaId, "P2P_OFFER", HASH,
-                    SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING, UUID.randomUUID(),
-                    null, NOW, NOW));
+            solicitudes.saveAndFlush(SolicitudIdempotenciaMercadoEntity.builder()
+                    .id(solicitudId).usuarioId(usuarioId).claveIdempotencia("offer-" + ofertaId)
+                    .tipoOperacion("P2P_OFFER").hashParametros(HASH)
+                    .status(SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING)
+                    .tokenEjecucion(UUID.randomUUID()).referenciaResultado(null)
+                    .creadoEn(NOW).actualizadoEn(NOW).build());
             ofertas.saveAndFlush(new OfertaVentaP2PEntity(
                     ofertaId, usuarioId, jugadorId,
                     new OfertaVentaP2PEntity.Cantidades(10L, 10L, 0L, 0L),
@@ -183,10 +185,12 @@ class MarketP2POfferOptimisticLockIntegrationTest extends PostgresTestSupport {
                 new VersionCotizacionMercadoId(quoteId, 1L), jugadorId,
                 BigDecimal.ONE, new VigenciaCotizacionMercado(NOW, NOW, null),
                 "VALID", null, NOW));
-        solicitudes.saveAndFlush(new SolicitudIdempotenciaMercadoEntity(
-                solicitudCompraId, compradorId, "purchase-" + ofertaId, "P2P_PURCHASE",
-                HASH, SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING,
-                UUID.randomUUID(), null, NOW, NOW));
+        solicitudes.saveAndFlush(SolicitudIdempotenciaMercadoEntity.builder()
+                .id(solicitudCompraId).usuarioId(compradorId)
+                .claveIdempotencia("purchase-" + ofertaId).tipoOperacion("P2P_PURCHASE")
+                .hashParametros(HASH).status(SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING)
+                .tokenEjecucion(UUID.randomUUID()).referenciaResultado(null)
+                .creadoEn(NOW).actualizadoEn(NOW).build());
         UUID tradeId = UUID.randomUUID();
         trades.saveAndFlush(new TradeP2PEntity(
                 new TradeP2PEntity.Identidad(tradeId, ofertaId, usuarioId, compradorId, jugadorId),

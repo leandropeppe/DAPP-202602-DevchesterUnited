@@ -39,10 +39,14 @@ class CotizacionPorEstrategiaIntegrationTest extends PostgresTestSupport {
     @Test
     void conservaCotizacionActualEHistoricoSeparadosPorEstrategia() {
         Instant ahora = Instant.now();
-        estrategias.save(new EstrategiaValorizacionEntity("GENERAL", 1, "General", "GENERAL", true, false,
-                new BigDecimal("1.00"), new BigDecimal("99.00"), "{}"));
-        estrategias.save(new EstrategiaValorizacionEntity("POSITIONAL", 1, "Positional", "POSICIONAL", true, true,
-                new BigDecimal("1.00"), new BigDecimal("99.00"), "{}"));
+        estrategias.save(EstrategiaValorizacionEntity.builder().id("GENERAL").version(1)
+                .nombre("General").tipo("GENERAL").habilitadaParaCalculo(true)
+                .esProvisoria(false).valorBase(new BigDecimal("1.00"))
+                .factorEscala(new BigDecimal("99.00")).configuracionJson("{}").build());
+        estrategias.save(EstrategiaValorizacionEntity.builder().id("POSITIONAL").version(1)
+                .nombre("Positional").tipo("POSICIONAL").habilitadaParaCalculo(true)
+                .esProvisoria(true).valorBase(new BigDecimal("1.00"))
+                .factorEscala(new BigDecimal("99.00")).configuracionJson("{}").build());
         UUID ejecucion = UUID.randomUUID();
         ejecuciones.save(new EjecucionValorizacionEntity(ejecucion, "MANUAL", ahora, ahora, "INICIADA"));
         actuales.save(new CotizacionActualEstrategiaEntity(new CotizacionActualEstrategiaKey(PLAYER_ID, "GENERAL", 1), ejecucion,

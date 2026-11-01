@@ -154,7 +154,9 @@ class MarketQuoteValidationServiceTest {
     }
 
     private static EstadoMercadoEntity state(EstadoMercado status) {
-        return new EstadoMercadoEntity((short) 1, status.name(), 4L, null, null, null, NOW, NOW);
+        return EstadoMercadoEntity.builder().id((short) 1).status(status.name()).epoch(4L)
+                .reservaInicialConfigurada(null).reservaInicialInicializada(null).motivoFallo(null)
+                .creadoEn(NOW).actualizadoEn(NOW).build();
     }
 
     private static VersionCotizacionMercadoEntity quoteEntity(QuoteValidityStatus status,

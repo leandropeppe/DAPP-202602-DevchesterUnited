@@ -50,80 +50,91 @@ class MarketP2PApiContractTest {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void documentoOpenApiExponeRutasSeguridadParametrosYEsquemasEstabilizados() throws Exception {
+    void documentoOpenApiExponeRutasYRespuestas() throws Exception {
+        JsonNode document = openApiDocument();
+        assertOperation(document, "/api/v1/market/p2p/offers", "get", Set.of("200", "400", "401"));
+        assertOperation(document, "/api/v1/market/p2p/offers", "post", Set.of("200", "400", "401", "409", "503"));
+        assertOperation(document, "/api/v1/market/p2p/offers/{offerId}/purchases", "post",
+                Set.of("200", "400", "401", "404", "409", "503"));
+        assertOperation(document, "/api/v1/market/p2p/offers/{offerId}/cancel", "post",
+                Set.of("200", "400", "401", "403", "404", "409"));
+        assertOperation(document, "/api/v1/market/portfolio", "get", Set.of("200", "401"));
+        assertOperation(document, "/api/v1/market/transactions", "get", Set.of("200", "400", "401"));
+        assertOperation(document, "/api/v1/market/purchases", "post",
+                Set.of("200", "400", "401", "404", "409", "503"));
+        assertOperation(document, "/api/v1/market/sales", "post", Set.of("410"));
+        assertOperation(document, "/api/v1/market/operations/{idempotency-key}", "get",
+                Set.of("200", "400", "401", "404"));
+    }
+
+    @Test
+    void documentoOpenApiExponeParametrosYHeaders() throws Exception {
+        JsonNode document = openApiDocument();
+        JsonNode offers = operation(document, "/api/v1/market/p2p/offers", "get");
+        assertQueryParameter(offers, "page", "1");
+        assertQueryParameter(offers, "limit", "20");
+        assertQueryParameter(offers, "playerId", null);
+        assertQueryParameter(offers, "status", null);
+        assertQueryParameter(offers, "mine", "false");
+
+        JsonNode transactions = operation(document, "/api/v1/market/transactions", "get");
+        assertQueryParameter(transactions, "page", "1");
+        assertQueryParameter(transactions, "limit", "20");
+        for (String parameter : Set.of("playerId", "type", "from", "to")) {
+            assertQueryParameter(transactions, parameter, null);
+        }
+
+        assertRequiredHeader(operation(document, "/api/v1/market/p2p/offers", "post"), "Idempotency-Key");
+        assertRequiredHeader(operation(document, "/api/v1/market/p2p/offers/{offerId}/purchases", "post"), "Idempotency-Key");
+        assertRequiredHeader(operation(document, "/api/v1/market/p2p/offers/{offerId}/cancel", "post"), "Idempotency-Key");
+    }
+
+    @Test
+    void documentoOpenApiExponeEsquemasYSeguridad() throws Exception {
+        JsonNode document = openApiDocument();
+        JsonNode purchase = operation(document, "/api/v1/market/p2p/offers/{offerId}/purchases", "post");
+        assertThat(purchase.path("responses").path("409").toString())
+                .contains("MarketP2PErrorResponseDTO");
+        Set<String> errorProperties = new HashSet<>();
+        document.path("components").path("schemas")
+                .path("MarketP2PErrorResponseDTO").path("properties")
+                .fieldNames().forEachRemaining(errorProperties::add);
+        assertThat(errorProperties).contains("current_quote", "offer_status", "code", "status");
+
+        assertSchemaProperties(document, "MarketPortfolioPositionResponseDTO",
+                "total_quantity", "reserved_quantity", "available_quantity");
+        assertSchemaProperties(document, "MarketTransactionResponseDTO",
+                "operation_type", "realized_pnl");
+        assertSchemaProperties(document, "MarketP2POfferRequestDTO", "player_id", "quantity");
+        assertSchemaProperties(document, "MarketP2PPurchaseRequestDTO",
+                "quantity", "quote_id", "quote_version");
+
+        assertThat(document.path("components").path("securitySchemes")
+                .path("BearerAuth").path("scheme").asText()).isEqualTo("bearer");
+        for (String path : Set.of(
+                "/api/v1/market/p2p/offers",
+                "/api/v1/market/p2p/offers/{offerId}/purchases",
+                "/api/v1/market/p2p/offers/{offerId}/cancel",
+                "/api/v1/market/portfolio",
+                "/api/v1/market/transactions",
+                "/api/v1/market/purchases",
+                "/api/v1/market/sales",
+                "/api/v1/market/operations/{idempotency-key}")) {
+            for (String method : methodsFor(document, path)) {
+                assertThat(operation(document, path, method).path("security").toString())
+                        .contains("BearerAuth");
+            }
+        }
+    }
+
+    private JsonNode openApiDocument() throws Exception {
         try (var context = new SpringApplicationBuilder(ContractApplication.class)
                 .properties("spring.profiles.active=test", "springdoc.api-docs.enabled=true")
                 .run()) {
             MockMvc mvc = MockMvcBuilders.webAppContextSetup((WebApplicationContext) context)
                     .apply(springSecurity()).build();
-            JsonNode document = mapper.readTree(mvc.perform(get("/v3/api-docs"))
+            return mapper.readTree(mvc.perform(get("/v3/api-docs"))
                     .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
-
-            assertOperation(document, "/api/v1/market/p2p/offers", "get", Set.of("200", "400", "401"));
-            assertOperation(document, "/api/v1/market/p2p/offers", "post", Set.of("200", "400", "401", "409", "503"));
-            assertOperation(document, "/api/v1/market/p2p/offers/{offerId}/purchases", "post",
-                    Set.of("200", "400", "401", "404", "409", "503"));
-            assertOperation(document, "/api/v1/market/p2p/offers/{offerId}/cancel", "post",
-                    Set.of("200", "400", "401", "403", "404", "409"));
-            assertOperation(document, "/api/v1/market/portfolio", "get", Set.of("200", "401"));
-            assertOperation(document, "/api/v1/market/transactions", "get", Set.of("200", "400", "401"));
-            assertOperation(document, "/api/v1/market/purchases", "post",
-                    Set.of("200", "400", "401", "404", "409", "503"));
-            assertOperation(document, "/api/v1/market/sales", "post", Set.of("410"));
-            assertOperation(document, "/api/v1/market/operations/{idempotency-key}", "get",
-                    Set.of("200", "400", "401", "404"));
-
-            JsonNode offers = operation(document, "/api/v1/market/p2p/offers", "get");
-            assertQueryParameter(offers, "page", "1");
-            assertQueryParameter(offers, "limit", "20");
-            assertQueryParameter(offers, "playerId", null);
-            assertQueryParameter(offers, "status", null);
-            assertQueryParameter(offers, "mine", "false");
-
-            JsonNode transactions = operation(document, "/api/v1/market/transactions", "get");
-            assertQueryParameter(transactions, "page", "1");
-            assertQueryParameter(transactions, "limit", "20");
-            for (String parameter : Set.of("playerId", "type", "from", "to")) {
-                assertQueryParameter(transactions, parameter, null);
-            }
-
-            assertRequiredHeader(operation(document, "/api/v1/market/p2p/offers", "post"), "Idempotency-Key");
-            assertRequiredHeader(operation(document, "/api/v1/market/p2p/offers/{offerId}/purchases", "post"), "Idempotency-Key");
-            assertRequiredHeader(operation(document, "/api/v1/market/p2p/offers/{offerId}/cancel", "post"), "Idempotency-Key");
-
-            JsonNode purchase = operation(document, "/api/v1/market/p2p/offers/{offerId}/purchases", "post");
-            assertThat(purchase.path("responses").path("409").toString())
-                    .contains("MarketP2PErrorResponseDTO");
-            Set<String> errorProperties = new HashSet<>();
-            document.path("components").path("schemas")
-                    .path("MarketP2PErrorResponseDTO").path("properties")
-                    .fieldNames().forEachRemaining(errorProperties::add);
-            assertThat(errorProperties).contains("current_quote", "offer_status", "code", "status");
-
-            assertSchemaProperties(document, "MarketPortfolioPositionResponseDTO",
-                    "total_quantity", "reserved_quantity", "available_quantity");
-            assertSchemaProperties(document, "MarketTransactionResponseDTO",
-                    "operation_type", "realized_pnl");
-            assertSchemaProperties(document, "MarketP2POfferRequestDTO", "player_id", "quantity");
-            assertSchemaProperties(document, "MarketP2PPurchaseRequestDTO",
-                    "quantity", "quote_id", "quote_version");
-
-            assertThat(document.path("components").path("securitySchemes")
-                    .path("BearerAuth").path("scheme").asText()).isEqualTo("bearer");
-            for (String path : Set.of(
-                    "/api/v1/market/p2p/offers",
-                    "/api/v1/market/p2p/offers/{offerId}/purchases",
-                    "/api/v1/market/p2p/offers/{offerId}/cancel",
-                    "/api/v1/market/portfolio",
-                    "/api/v1/market/transactions",
-                    "/api/v1/market/purchases",
-                    "/api/v1/market/sales",
-                    "/api/v1/market/operations/{idempotency-key}")) {
-                for (String method : methodsFor(document, path)) {
-                    assertThat(operation(document, path, method).path("security").toString())
-                            .contains("BearerAuth");
-                }
-            }
         }
     }
 

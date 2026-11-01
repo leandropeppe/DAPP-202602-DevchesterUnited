@@ -156,9 +156,12 @@ class MarketTransactionServiceTest {
     }
 
     private static TransaccionConfirmadaMercadoEntity transaction() {
-        return new TransaccionConfirmadaMercadoEntity(TRANSACTION_ID, USER_ID, PLAYER_ID,
-                "Historical Player", "SALE", 2L, new BigDecimal("2.50"),
-                new BigDecimal("5.00"), COUNTERPARTY_ID, QUOTE_ID, 1L, REQUEST_ID,
-                new BigDecimal("1.25000000"), CONFIRMED_AT);
+        return TransaccionConfirmadaMercadoEntity.builder().id(TRANSACTION_ID).usuarioId(USER_ID)
+                .jugadorId(PLAYER_ID).nombreJugadorSnapshot("Historical Player")
+                .tipoOperacion("SALE").quantity(2L).precioUnitario(new BigDecimal("2.50"))
+                .montoTotal(new BigDecimal("5.00")).contraparteId(COUNTERPARTY_ID)
+                .quoteId(QUOTE_ID).versionCotizacion(1L)
+                .solicitudIdempotenciaId(REQUEST_ID)
+                .pnlRealizado(new BigDecimal("1.25000000")).confirmadoEn(CONFIRMED_AT).build();
     }
 }

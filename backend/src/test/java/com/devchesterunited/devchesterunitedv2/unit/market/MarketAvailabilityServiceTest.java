@@ -190,8 +190,9 @@ class MarketAvailabilityServiceTest {
 
     private void givenState(String status, long epoch) {
         when(estados.findSingletonForRead()).thenReturn(Optional.of(
-                new EstadoMercadoEntity((short) 1, status, epoch, null, null,
-                        null, NOW, NOW)));
+                EstadoMercadoEntity.builder().id((short) 1).status(status).epoch(epoch)
+                        .reservaInicialConfigurada(null).reservaInicialInicializada(null)
+                        .motivoFallo(null).creadoEn(NOW).actualizadoEn(NOW).build()));
     }
 
     private void givenCompleteCurrentQuote() {

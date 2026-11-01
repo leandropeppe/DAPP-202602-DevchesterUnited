@@ -106,9 +106,12 @@ public class MarketIdempotencyClaimService {
         }
 
         UUID executionToken = UUID.randomUUID();
-        SolicitudIdempotenciaMercadoEntity entity = new SolicitudIdempotenciaMercadoEntity(
-                UUID.randomUUID(), usuarioId, normalizedKey, operation, hash,
-                SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING, executionToken, null, now, now);
+        SolicitudIdempotenciaMercadoEntity entity = SolicitudIdempotenciaMercadoEntity.builder()
+                .id(UUID.randomUUID()).usuarioId(usuarioId).claveIdempotencia(normalizedKey)
+                .tipoOperacion(operation).hashParametros(hash)
+                .status(SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING)
+                .tokenEjecucion(executionToken).referenciaResultado(null)
+                .creadoEn(now).actualizadoEn(now).build();
         try {
             return new MarketIdempotencyClaim(toResult(solicitudes.saveAndFlush(entity)), true);
         } catch (DataIntegrityViolationException exception) {

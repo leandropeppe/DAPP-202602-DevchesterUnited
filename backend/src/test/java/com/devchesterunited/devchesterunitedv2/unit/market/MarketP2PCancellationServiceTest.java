@@ -222,8 +222,10 @@ class MarketP2PCancellationServiceTest {
     }
 
     private EstadoMercadoEntity readyMarket() {
-        return new EstadoMercadoEntity((short) 1, EstadoMercado.READY.name(), 1L,
-                null, null, null, NOW, NOW);
+        return EstadoMercadoEntity.builder().id((short) 1)
+                .status(EstadoMercado.READY.name()).epoch(1L)
+                .reservaInicialConfigurada(null).reservaInicialInicializada(null)
+                .motivoFallo(null).creadoEn(NOW).actualizadoEn(NOW).build();
     }
 
     private static final UUID TOKEN_ID = UUID.fromString("77777777-7777-7777-7777-777777777777");

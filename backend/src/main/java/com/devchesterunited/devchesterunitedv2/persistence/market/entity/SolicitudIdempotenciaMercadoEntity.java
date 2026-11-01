@@ -55,19 +55,64 @@ public class SolicitudIdempotenciaMercadoEntity {
 
     protected SolicitudIdempotenciaMercadoEntity() { }
 
-    public SolicitudIdempotenciaMercadoEntity(UUID id, UUID usuarioId, String claveIdempotencia,
-            String tipoOperacion, String hashParametros, String status, UUID tokenEjecucion,
-            UUID referenciaResultado, Instant creadoEn, Instant actualizadoEn) {
-        this.id = id;
-        this.usuarioId = usuarioId;
-        this.claveIdempotencia = claveIdempotencia;
-        this.tipoOperacion = tipoOperacion;
-        this.hashParametros = hashParametros;
-        this.status = status;
-        this.tokenEjecucion = tokenEjecucion;
-        this.referenciaResultado = referenciaResultado;
-        this.creadoEn = creadoEn;
-        this.actualizadoEn = actualizadoEn;
+    private SolicitudIdempotenciaMercadoEntity(Builder builder) {
+        this.id = builder.id;
+        this.usuarioId = builder.usuarioId;
+        this.claveIdempotencia = builder.claveIdempotencia;
+        this.tipoOperacion = builder.tipoOperacion;
+        this.hashParametros = builder.hashParametros;
+        this.status = builder.status;
+        this.tokenEjecucion = builder.tokenEjecucion;
+        this.referenciaResultado = builder.referenciaResultado;
+        this.creadoEn = builder.creadoEn;
+        this.actualizadoEn = builder.actualizadoEn;
+    }
+
+    public static Builder builder() { return new Builder(); }
+
+    public static final class Builder {
+        private UUID id;
+        private UUID usuarioId;
+        private String claveIdempotencia;
+        private String tipoOperacion;
+        private String hashParametros;
+        private String status;
+        private UUID tokenEjecucion;
+        private UUID referenciaResultado;
+        private Instant creadoEn;
+        private Instant actualizadoEn;
+
+        public Builder id(UUID id) { this.id = id; return this; }
+        public Builder usuarioId(UUID usuarioId) { this.usuarioId = usuarioId; return this; }
+        public Builder claveIdempotencia(String value) {
+            this.claveIdempotencia = value;
+            return this;
+        }
+        public Builder tipoOperacion(String tipoOperacion) {
+            this.tipoOperacion = tipoOperacion;
+            return this;
+        }
+        public Builder hashParametros(String hashParametros) {
+            this.hashParametros = hashParametros;
+            return this;
+        }
+        public Builder status(String status) { this.status = status; return this; }
+        public Builder tokenEjecucion(UUID tokenEjecucion) {
+            this.tokenEjecucion = tokenEjecucion;
+            return this;
+        }
+        public Builder referenciaResultado(UUID value) {
+            this.referenciaResultado = value;
+            return this;
+        }
+        public Builder creadoEn(Instant creadoEn) { this.creadoEn = creadoEn; return this; }
+        public Builder actualizadoEn(Instant actualizadoEn) {
+            this.actualizadoEn = actualizadoEn;
+            return this;
+        }
+        public SolicitudIdempotenciaMercadoEntity build() {
+            return new SolicitudIdempotenciaMercadoEntity(this);
+        }
     }
 
     public UUID getId() { return id; }

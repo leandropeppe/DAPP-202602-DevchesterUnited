@@ -68,7 +68,9 @@ class MarketBalanceServiceTest {
     }
 
     private static EstadoMercadoEntity estado(String status, long epoch) {
-        return new EstadoMercadoEntity((short) 1, status, epoch, null, null, null, NOW, NOW);
+        return EstadoMercadoEntity.builder().id((short) 1).status(status).epoch(epoch)
+                .reservaInicialConfigurada(null).reservaInicialInicializada(null)
+                .motivoFallo(null).creadoEn(NOW).actualizadoEn(NOW).build();
     }
 
     private static CuentaCreditosMercadoEntity cuenta(String saldo) {

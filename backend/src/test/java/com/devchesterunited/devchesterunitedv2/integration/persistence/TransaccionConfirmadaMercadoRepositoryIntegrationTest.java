@@ -358,14 +358,19 @@ class TransaccionConfirmadaMercadoRepositoryIntegrationTest {
                 new VersionCotizacionMercadoId(quoteId, 1L), playerId,
                 new BigDecimal(unitPrice), new VigenciaCotizacionMercado(FIRST_CONFIRMATION, FIRST_CONFIRMATION, null),
                 "VALID", null, FIRST_CONFIRMATION));
-        solicitudes.saveAndFlush(new SolicitudIdempotenciaMercadoEntity(requestId, userId,
-                "key-" + requestId, operation, "parameters-" + requestId, "CONFIRMED",
-                null, transactionId, confirmedAt, confirmedAt));
-        TransaccionConfirmadaMercadoEntity transaction = new TransaccionConfirmadaMercadoEntity(
-                transactionId, userId, playerId, snapshot, operation, quantity,
-                new BigDecimal(unitPrice), new BigDecimal(totalAmount), fixture.counterpartyId(),
-                quoteId, 1L, requestId,
-                realizedPnl == null ? null : new BigDecimal(realizedPnl), confirmedAt);
+        solicitudes.saveAndFlush(SolicitudIdempotenciaMercadoEntity.builder().id(requestId)
+                .usuarioId(userId).claveIdempotencia("key-" + requestId)
+                .tipoOperacion(operation).hashParametros("parameters-" + requestId)
+                .status("CONFIRMED").tokenEjecucion(null).referenciaResultado(transactionId)
+                .creadoEn(confirmedAt).actualizadoEn(confirmedAt).build());
+        TransaccionConfirmadaMercadoEntity transaction = TransaccionConfirmadaMercadoEntity.builder()
+                .id(transactionId).usuarioId(userId).jugadorId(playerId)
+                .nombreJugadorSnapshot(snapshot).tipoOperacion(operation).quantity(quantity)
+                .precioUnitario(new BigDecimal(unitPrice)).montoTotal(new BigDecimal(totalAmount))
+                .contraparteId(fixture.counterpartyId()).quoteId(quoteId)
+                .versionCotizacion(1L).solicitudIdempotenciaId(requestId)
+                .pnlRealizado(realizedPnl == null ? null : new BigDecimal(realizedPnl))
+                .confirmadoEn(confirmedAt).build();
         transacciones.saveAndFlush(transaction);
         return transaction;
     }

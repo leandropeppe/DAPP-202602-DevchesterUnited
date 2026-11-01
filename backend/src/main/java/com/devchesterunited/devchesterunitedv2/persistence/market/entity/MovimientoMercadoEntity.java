@@ -61,18 +61,56 @@ public class MovimientoMercadoEntity {
 
     protected MovimientoMercadoEntity() { }
 
-    public MovimientoMercadoEntity(UUID id, UUID transaccionId, String tipoActivo,
-            UUID cuentaCreditosId, UUID usuarioTokenId, UUID contraparteTokenId,
-            UUID jugadorId, BigDecimal variacionCantidad, Instant creadoEn) {
-        this.id = id;
-        this.transaccionId = transaccionId;
-        this.tipoActivo = tipoActivo;
-        this.cuentaCreditosId = cuentaCreditosId;
-        this.usuarioTokenId = usuarioTokenId;
-        this.contraparteTokenId = contraparteTokenId;
-        this.jugadorId = jugadorId;
-        this.variacionCantidad = variacionCantidad;
-        this.creadoEn = creadoEn;
+    private MovimientoMercadoEntity(Builder builder) {
+        this.id = builder.id;
+        this.transaccionId = builder.transaccionId;
+        this.tipoActivo = builder.tipoActivo;
+        this.cuentaCreditosId = builder.cuentaCreditosId;
+        this.usuarioTokenId = builder.usuarioTokenId;
+        this.contraparteTokenId = builder.contraparteTokenId;
+        this.jugadorId = builder.jugadorId;
+        this.variacionCantidad = builder.variacionCantidad;
+        this.creadoEn = builder.creadoEn;
+    }
+
+    public static Builder builder() { return new Builder(); }
+
+    public static final class Builder {
+        private UUID id;
+        private UUID transaccionId;
+        private String tipoActivo;
+        private UUID cuentaCreditosId;
+        private UUID usuarioTokenId;
+        private UUID contraparteTokenId;
+        private UUID jugadorId;
+        private BigDecimal variacionCantidad;
+        private Instant creadoEn;
+
+        public Builder id(UUID id) { this.id = id; return this; }
+        public Builder transaccionId(UUID transaccionId) {
+            this.transaccionId = transaccionId;
+            return this;
+        }
+        public Builder tipoActivo(String tipoActivo) { this.tipoActivo = tipoActivo; return this; }
+        public Builder cuentaCreditosId(UUID value) {
+            this.cuentaCreditosId = value;
+            return this;
+        }
+        public Builder usuarioTokenId(UUID value) {
+            this.usuarioTokenId = value;
+            return this;
+        }
+        public Builder contraparteTokenId(UUID value) {
+            this.contraparteTokenId = value;
+            return this;
+        }
+        public Builder jugadorId(UUID jugadorId) { this.jugadorId = jugadorId; return this; }
+        public Builder variacionCantidad(BigDecimal value) {
+            this.variacionCantidad = value;
+            return this;
+        }
+        public Builder creadoEn(Instant creadoEn) { this.creadoEn = creadoEn; return this; }
+        public MovimientoMercadoEntity build() { return new MovimientoMercadoEntity(this); }
     }
 
     public UUID getId() { return id; }
