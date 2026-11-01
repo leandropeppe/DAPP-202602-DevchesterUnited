@@ -598,121 +598,31 @@ export default function MarketTransactionsPage () {
           </output>
       ) : (
           <div className="market-transactions-list">
-            {transactions.map(
-                transaction => {
-                  const legacyOperation =
-                      transaction.operation_type === 'PURCHASE' ||
-                      transaction.operation_type === 'SALE'
-
-                  if (legacyOperation) {
-                    return (
-                        <MarketTransactionCard
-                            key={transaction.transaction_id}
-                            transaction={transaction}
-                            operationLabel={operationLabel(
-                                transaction.operation_type
-                            )}
-                        />
-                    )
-                  }
-
-                  return (
-                      <article
-                          className="card market-transaction-card"
-                          data-player-id={transaction.player_id}
-                          key={transaction.transaction_id}
-                      >
-                        <div>
-                          <strong>
-                            {operationLabel(
-                                transaction.operation_type
-                            )}
-                          </strong>
-
-                          <span>
-                            {transactionDate(
-                                transaction.confirmed_at
-                            )}
-                          </span>
-                        </div>
-
-                        <p className="market-transaction-card__snapshot">
-                          {transactionPlayerName(transaction)}
-                        </p>
-
-                        <dl>
-                          <div>
-                            <dt>
-                              Cantidad
-                            </dt>
-
-                            <dd>
-                              {transaction.quantity}
-                            </dd>
-                          </div>
-
-                          <div>
-                            <dt>
-                              Precio unitario
-                            </dt>
-
-                            <dd>
-                              {amount(transaction.unit_price)}
-                            </dd>
-                          </div>
-
-                          <div>
-                            <dt>
-                              Total
-                            </dt>
-
-                            <dd>
-                              {amount(transaction.total_amount)}
-                            </dd>
-                          </div>
-
-                          <div>
-                            <dt>
-                              Versión cotización
-                            </dt>
-
-                            <dd>
-                              {transaction.quote_version}
-                            </dd>
-                          </div>
-
-                          {showsRealizedPnl(transaction) ? (
-                              <div>
-                                <dt>
-                                  P/L realizada
-                                </dt>
-
-                                <dd>
-                                  {amount(transaction.realized_pnl)}
-                                </dd>
-                              </div>
-                          ) : null}
-                        </dl>
-                      </article>
-                  )
-                }
-            )}
+              {transactions.map((transaction) => (
+                  <MarketTransactionCard
+                      key={transaction.transaction_id}
+                      transaction={transaction}
+                      operationLabel={operationLabel(
+                          transaction.operation_type
+                      )}
+                  />
+              ))}
           </div>
       )}
 
-      <MarketTransactionActivityChart
-          jwt={session.jwt}
-          filters={appliedFilters}
-          initialResult={result}
-      />
+          <MarketTransactionActivityChart
+              jwt={session.jwt}
+              filters={appliedFilters}
+              initialResult={result}
+          />
 
-      <nav
-          className="pagination"
-          aria-label="Paginación del historial"
-      >
-        <button
-            className="button button--secondary"
-            type="button"
+          <nav
+              className="pagination"
+              aria-label="Paginación del historial"
+          >
+              <button
+                  className="button button--secondary"
+                  type="button"
             onClick={() =>
                 setPage(
                     current =>

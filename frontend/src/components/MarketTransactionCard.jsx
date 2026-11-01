@@ -58,11 +58,22 @@ function transactionDate (value) {
 }
 
 function operationClassName (operationType) {
-    if (operationType === 'PURCHASE') {
+    const purchaseOperations = [
+        'PRIMARY_PURCHASE',
+        'PURCHASE',
+        'P2P_PURCHASE'
+    ]
+
+    const saleOperations = [
+        'SALE',
+        'P2P_SALE'
+    ]
+
+    if (purchaseOperations.includes(operationType)) {
         return 'market-transaction-card--purchase'
     }
 
-    if (operationType === 'SALE') {
+    if (saleOperations.includes(operationType)) {
         return 'market-transaction-card--sale'
     }
 

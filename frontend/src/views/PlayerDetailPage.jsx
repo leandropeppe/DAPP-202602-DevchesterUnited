@@ -34,6 +34,8 @@ import {
   errorMessage
 } from './formUtils.js'
 
+import { Calculator } from 'lucide-react'
+
 const SUMMARY = [
   ['generales', 'minsPlayed', 'Minutos jugados', 'clock'],
   ['ofensivas', 'goal', 'Goles', 'ball'],
@@ -554,6 +556,20 @@ function PlayerValuationBack ({
       buildSparklinePoints(
           values
       )
+    const pointCoordinates = points
+        .split(' ')
+        .map((point, index) => {
+            const [cx, cy] = point
+                .split(',')
+                .map(Number)
+
+            return {
+                cx,
+                cy,
+                item: history[index]
+            }
+        })
+
 
   return (
       <div className="valuation-card-back">
@@ -679,6 +695,21 @@ function PlayerValuationBack ({
                       points={points}
                       fill="none"
                   />
+                  {pointCoordinates.map(({ cx, cy, item }, index) => (
+                      <circle
+                          key={`${item.calculatedAt}-${index}`}
+                          cx={cx}
+                          cy={cy}
+                          r="3"
+                          className="valuation-card-back__point"
+                      >
+                          <title>
+                              {`${formatValuation(item.numericValue)} - ${
+                                  new Date(item.calculatedAt).toLocaleDateString('es-AR')
+                              }`}
+                          </title>
+                      </circle>
+                  ))}
 
               </svg>
 
@@ -1226,8 +1257,19 @@ export default function PlayerDetailPage ({
                       }
 
                       <div className="player-detail__purchase">
-                          <button className="button button--primary player-detail__simulator-button" type="button" onClick={() => setSimulatorOpen(true)}>
-                              Simular cotización
+                          <button
+                              className="button button--primary player-detail__simulator-button"
+                              type="button"
+                              onClick={() => setSimulatorOpen(true)}
+                          >
+                            <span className="player-detail__simulator-content">
+                                <Calculator
+                                    className="player-detail__simulator-icon"
+                                    size={17}
+                                    aria-hidden="true"
+                                />
+                                <span>Simular cotización</span>
+                            </span>
                           </button>
                           {marketData.status === 'auth-required'
                               ? <p className="market-operation-panel__warning">Iniciá sesión para comprar tokens.</p>
@@ -1236,7 +1278,9 @@ export default function PlayerDetailPage ({
                               ? <p className="market-operation-panel__warning">Cargando datos de compra…</p>
                               : null}
                           {marketData.status === 'error'
-                              ? <p className="market-operation-panel__warning">No se pudo cargar la información de compra. La información del jugador sigue disponible.</p>
+                              ?
+                              <p className="market-operation-panel__warning">No se pudo cargar la información de compra.
+                                  La información del jugador sigue disponible.</p>
                               : null}
                           {marketData.status === 'success' && marketData.player
                               ? <MarketOperationPanel
@@ -1246,13 +1290,16 @@ export default function PlayerDetailPage ({
                                   embedded
                                   currentHoldings={marketData.holdings}
                                   availableBalance={marketData.balance}
-                                  onConfirmed={() => { void loadMarketData() }}
+                                  onConfirmed={() => {
+                                      void loadMarketData()
+                                  }}
                               />
                               : null}
                           {marketData.status === 'success' && !marketData.player
                               ? <>
                                   <h2>Comprar tokens</h2>
-                                  <p className="market-operation-panel__warning">Este jugador no tiene una cotización operable.</p>
+                                  <p className="market-operation-panel__warning">Este jugador no tiene una cotización
+                                      operable.</p>
                               </>
                               : null}
                       </div>
@@ -1273,7 +1320,7 @@ export default function PlayerDetailPage ({
 
                           <div className="player-statistics__heading">
 
-                              <h2 id="statistics-title">
+                          <h2 id="statistics-title">
                                   Estadísticas
                               </h2>
 

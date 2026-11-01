@@ -1508,6 +1508,27 @@
         background-position: 70% center;
     }
 
+    .player-detail__simulator-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .player-detail__simulator-content {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .player-detail__simulator-icon {
+        position: absolute;
+        right: calc(100% + 0.15rem);
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
     .player-detail__heading h1 {
         font-size: 2rem;
     }
@@ -1566,6 +1587,15 @@
 
     .valuation-card-back__summary strong {
         font-size: .8rem;
+    }
+
+    .valuation-card-back__point {
+        fill: transparent;
+        cursor: pointer;
+    }
+
+    .valuation-card-back__point:hover {
+        fill: currentColor;
     }
 
     .player-detail__player-card .player-card-flip__trigger {
