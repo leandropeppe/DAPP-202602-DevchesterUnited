@@ -47,6 +47,10 @@ public class MarketP2POfferQueryController {
                     description = "Identificador UUID del jugador.",
                     schema = @Schema(type = "string", format = "uuid"))
             @RequestParam(required = false) String playerId,
+            @Parameter(name = "playerName", in = ParameterIn.QUERY,
+                    description = "Fragmento del nombre visible del jugador.",
+                    schema = @Schema(type = "string"))
+            @RequestParam(required = false) String playerName,
             @Parameter(name = "status", in = ParameterIn.QUERY,
                     description = "Estado persistido o derivado de la oferta.",
                     schema = @Schema(type = "string", allowableValues = {
@@ -66,7 +70,8 @@ public class MarketP2POfferQueryController {
             @RequestParam(defaultValue = "20") int limit) {
         UUID userId = userIdFrom(jwt);
         UUID parsedPlayer = parsePlayerId(playerId);
-        var result = queries.consultar(buildQuery(userId, parsedPlayer, status, mine, page, limit));
+        var result = queries.consultar(buildQuery(userId, parsedPlayer, playerName, status,
+                mine, page, limit));
         return ResponseEntity.ok(new SuccessResponseDTO<>(
                 MarketP2POfferListResponseDTO.fromDomain(result)));
     }
@@ -96,10 +101,10 @@ public class MarketP2POfferQueryController {
         }
     }
 
-    private static MarketP2POfferQuery buildQuery(UUID userId, UUID playerId, String status,
-            boolean mine, int page, int limit) {
+    private static MarketP2POfferQuery buildQuery(UUID userId, UUID playerId, String playerName,
+            String status, boolean mine, int page, int limit) {
         try {
-            return new MarketP2POfferQuery(userId, playerId, status, mine, page, limit);
+            return new MarketP2POfferQuery(userId, playerId, playerName, status, mine, page, limit);
         } catch (IllegalArgumentException exception) {
             throw new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
                     exception.getMessage());

@@ -8,6 +8,7 @@ import java.util.UUID;
 public interface MarketP2POfferProjection {
     UUID getOfferId();
     UUID getPlayerId();
+    String getPlayerName();
     UUID getSellerId();
     String getSellerAlias();
     Long getRemainingQuantity();

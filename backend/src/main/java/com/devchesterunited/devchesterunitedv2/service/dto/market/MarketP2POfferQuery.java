@@ -4,14 +4,27 @@ import java.util.Locale;
 import java.util.UUID;
 
 /** Filtros autenticados para la consulta publica de ofertas P2P. */
-public record MarketP2POfferQuery(UUID usuarioId, UUID jugadorId, String estado,
-        boolean soloMias, int pagina, int limite) {
+public record MarketP2POfferQuery(UUID usuarioId, UUID jugadorId, String nombreJugador,
+        String estado, boolean soloMias, int pagina, int limite) {
+
+    public MarketP2POfferQuery(UUID usuarioId, UUID jugadorId, String estado,
+            boolean soloMias, int pagina, int limite) {
+        this(usuarioId, jugadorId, null, estado, soloMias, pagina, limite);
+    }
 
     public MarketP2POfferQuery {
         if (usuarioId == null || pagina < 1 || limite < 1 || limite > 100) {
             throw new IllegalArgumentException("Los filtros de ofertas P2P no son validos.");
         }
+        nombreJugador = normalizarNombre(nombreJugador);
         estado = normalizarEstado(estado);
+    }
+
+    private static String normalizarNombre(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 
     private static String normalizarEstado(String value) {

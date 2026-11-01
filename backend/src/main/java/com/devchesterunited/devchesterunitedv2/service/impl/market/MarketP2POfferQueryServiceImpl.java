@@ -31,9 +31,12 @@ public class MarketP2POfferQueryServiceImpl implements MarketP2POfferQueryServic
     @Transactional(readOnly = true)
     public MarketP2POfferPageResult consultar(MarketP2POfferQuery query) {
         var now = clock.instant();
-        Page<MarketP2POfferProjection> page = offers.buscarPublico(query.jugadorId(),
-                query.estado(), query.soloMias(), query.usuarioId(), now,
-                PageRequest.of(query.pagina() - 1, query.limite()));
+        PageRequest pageRequest = PageRequest.of(query.pagina() - 1, query.limite());
+        Page<MarketP2POfferProjection> page = query.nombreJugador() == null
+                ? offers.buscarPublico(query.jugadorId(), query.estado(), query.soloMias(),
+                query.usuarioId(), now, pageRequest)
+                : offers.buscarPublico(query.jugadorId(), query.nombreJugador(), query.estado(),
+                query.soloMias(), query.usuarioId(), now, pageRequest);
         List<MarketP2POfferView> views = page.getContent().stream()
                 .map(offer -> MarketP2POfferViewMapper.toView(offer, now, query.usuarioId()))
                 .toList();

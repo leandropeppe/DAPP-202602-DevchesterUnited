@@ -17,6 +17,7 @@ public interface OfertaVentaP2PRepository extends JpaRepository<OfertaVentaP2PEn
     @Query(value = """
             SELECT o.id AS offer_id,
                    o.player_id AS player_id,
+                   j.name AS player_name,
                    o.seller_user_id AS seller_id,
                    u.username AS seller_alias,
                    o.remaining_quantity AS remaining_quantity,
@@ -40,6 +41,7 @@ public interface OfertaVentaP2PRepository extends JpaRepository<OfertaVentaP2PEn
                     AND q.version = h.current_version
                     AND q.player_id = h.player_id
              WHERE (:jugadorId IS NULL OR o.player_id = :jugadorId)
+               AND (:nombreJugador IS NULL OR LOWER(j.name) LIKE LOWER(CONCAT('%', :nombreJugador, '%')))
                AND (:soloMias = false OR o.seller_user_id = :vendedorId)
                AND (
                     :estado IS NULL
@@ -75,6 +77,7 @@ public interface OfertaVentaP2PRepository extends JpaRepository<OfertaVentaP2PEn
                     AND q.version = h.current_version
                     AND q.player_id = h.player_id
              WHERE (:jugadorId IS NULL OR o.player_id = :jugadorId)
+               AND (:nombreJugador IS NULL OR LOWER(j.name) LIKE LOWER(CONCAT('%', :nombreJugador, '%')))
                AND (:soloMias = false OR o.seller_user_id = :vendedorId)
                AND (
                     :estado IS NULL
@@ -100,11 +103,17 @@ public interface OfertaVentaP2PRepository extends JpaRepository<OfertaVentaP2PEn
             """, nativeQuery = true)
     Page<MarketP2POfferProjection> buscarPublico(
             @Param("jugadorId") UUID jugadorId,
+            @Param("nombreJugador") String nombreJugador,
             @Param("estado") String estado,
             @Param("soloMias") boolean soloMias,
             @Param("vendedorId") UUID vendedorId,
             @Param("ahora") java.time.Instant ahora,
             Pageable pageable);
+
+    default Page<MarketP2POfferProjection> buscarPublico(UUID jugadorId, String estado,
+            boolean soloMias, UUID vendedorId, java.time.Instant ahora, Pageable pageable) {
+        return buscarPublico(jugadorId, null, estado, soloMias, vendedorId, ahora, pageable);
+    }
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select oferta from OfertaVentaP2PEntity oferta where oferta.id = :id")

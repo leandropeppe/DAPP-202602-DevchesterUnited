@@ -277,7 +277,7 @@ export const getMarketTransactions = ({ filters = {}, jwt } = {}) => request(
 
 export const getMarketP2POffers = ({ filters = {}, jwt } = {}) => request(
   '/market/p2p/offers' + marketQuery(filters,
-    ['playerId', 'status', 'mine', 'page', 'limit']),
+    ['playerId', 'playerName', 'status', 'mine', 'page', 'limit']),
   { jwt }
 )
 

@@ -47,21 +47,24 @@ describe('MarketP2POffersPage', () => {
     expect(screen.queryByText(/correo|email|saldo/i)).not.toBeInTheDocument()
   })
 
-  it('envía filtros al cambiar estado y opción de mis ofertas', async () => {
+  it('no consulta al editar filtros y busca al presionar Buscar', async () => {
     saveJwt(`header.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.signature`)
     mockPortfolio()
     api.getMarketP2POffers.mockResolvedValue({ data: { offers: [], pagination: { current_page: 1, page_size: 20, total_pages: 0, total_records: 0 } } })
     renderPage()
 
     await waitFor(() => expect(api.getMarketP2POffers).toHaveBeenCalled())
-    await import('@testing-library/user-event').then(async ({ default: userEvent }) => {
-      const user = userEvent.setup()
-      await user.selectOptions(screen.getByLabelText('Estado'), 'CANCELLED')
-      await user.click(screen.getByLabelText('Solo mis ofertas'))
-    })
+    const initialCalls = api.getMarketP2POffers.mock.calls.length
+    const user = userEvent.setup()
+    await user.type(screen.getByPlaceholderText('Buscar por nombre'), ' valverde ')
+    await user.selectOptions(screen.getByLabelText('Estado'), 'CANCELLED')
+    await user.click(screen.getByLabelText('Solo mis ofertas'))
+
+    expect(api.getMarketP2POffers).toHaveBeenCalledTimes(initialCalls)
+    await user.click(screen.getByRole('button', { name: 'Buscar' }))
 
     await waitFor(() => expect(api.getMarketP2POffers).toHaveBeenLastCalledWith(expect.objectContaining({
-      filters: expect.objectContaining({ status: 'CANCELLED', mine: 'true', page: 1, limit: 20 })
+      filters: expect.objectContaining({ playerName: 'valverde', status: 'CANCELLED', mine: 'true', page: 1, limit: 20 })
     })))
   })
 
