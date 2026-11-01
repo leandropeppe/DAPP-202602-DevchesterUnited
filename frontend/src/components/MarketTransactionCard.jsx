@@ -157,17 +157,20 @@ export default function MarketTransactionCard ({
                     </dd>
                 </div>
 
-                <div>
-                    <dt>
-                        P/L realizada
-                    </dt>
+                {transaction.realized_pnl !== null &&
+                transaction.realized_pnl !== undefined ? (
+                    <div>
+                        <dt>
+                            P/L realizada
+                        </dt>
 
-                    <dd>
-                        {amount(
-                            transaction.realized_pnl
-                        )}
-                    </dd>
-                </div>
+                        <dd>
+                            {amount(
+                                transaction.realized_pnl
+                            )}
+                        </dd>
+                    </div>
+                ) : null}
             </dl>
         </article>
     )

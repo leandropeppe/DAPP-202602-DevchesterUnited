@@ -25,11 +25,31 @@ const EMPTY_RESULT = {
 }
 
 function newIdempotencyKey () {
-  if (typeof globalThis.crypto?.randomUUID === 'function') {
-    return globalThis.crypto.randomUUID()
+  const cryptoApi = globalThis.crypto
+
+  if (typeof cryptoApi?.randomUUID === 'function') {
+    return cryptoApi.randomUUID()
   }
 
-  return `p2p-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  if (typeof cryptoApi?.getRandomValues === 'function') {
+    const randomBytes = new Uint8Array(16)
+
+    cryptoApi.getRandomValues(randomBytes)
+
+    const randomPart = Array.from(
+        randomBytes,
+        (byte) =>
+            byte
+                .toString(16)
+                .padStart(2, '0')
+    ).join('')
+
+    return `p2p-${randomPart}`
+  }
+
+  throw new Error(
+      'No hay una API criptográfica disponible para generar una clave segura.'
+  )
 }
 
 function normalizeQuote (quote) {
@@ -298,6 +318,27 @@ export default function MarketP2POffersPage () {
       target,
       limit = null
   ) {
+    let key
+
+    try {
+      key = newIdempotencyKey()
+    } catch (error) {
+      setOperation(null)
+      setIdempotencyKey(null)
+
+      setOperationState({
+        status: 'idle',
+        message: ''
+      })
+
+      setState({
+        status: 'error',
+        message: errorMessage(error)
+      })
+
+      return
+    }
+
     setOperation({
       mode,
       subject,
@@ -306,9 +347,7 @@ export default function MarketP2POffersPage () {
     })
 
     setQuantity('1')
-    setIdempotencyKey(
-        newIdempotencyKey()
-    )
+    setIdempotencyKey(key)
 
     setOperationState({
       status: 'idle',
