@@ -26,6 +26,8 @@ import java.time.Instant;
 /** Adquiere y revalida el prefijo de locks de una compra P2P. */
 @Service
 public class MarketP2PPurchaseValidationService {
+    private static final String VALID_QUOTE_STATUS = QuoteValidityStatus.VALID.name();
+
     private final EstadoMercadoRepository estados;
     private final OfertaVentaP2PRepository ofertas;
     private final JugadorRepository jugadores;
@@ -98,12 +100,12 @@ public class MarketP2PPurchaseValidationService {
 
     private QuoteVersion currentQuote(java.util.UUID playerId,
             CabeceraCotizacionMercadoEntity header) {
-        if (!"VALID".equals(header.getEstadoVigencia())) {
+        if (!VALID_QUOTE_STATUS.equals(header.getEstadoVigencia())) {
             return null;
         }
         VersionCotizacionMercadoEntity entity = versiones.findExact(
                 playerId, header.getQuoteId(), header.getVersionActual()).orElse(null);
-        if (entity == null || !"VALID".equals(entity.getEstadoVigencia())) {
+        if (entity == null || !VALID_QUOTE_STATUS.equals(entity.getEstadoVigencia())) {
             return null;
         }
         return new QuoteVersion(entity.getId().getQuoteId(), entity.getId().getVersion(),
@@ -118,7 +120,7 @@ public class MarketP2PPurchaseValidationService {
         MarketP2PQuoteIdentity observed = command.quote();
         return observed.quoteId().equals(header.getQuoteId())
                 && observed.version().equals(header.getVersionActual())
-                && "VALID".equals(header.getEstadoVigencia());
+                && VALID_QUOTE_STATUS.equals(header.getEstadoVigencia());
     }
 
     private TokenMarketException marketNotReady() {

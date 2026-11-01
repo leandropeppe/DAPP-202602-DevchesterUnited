@@ -24,6 +24,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    private static final String RESOURCE_STATE_CONFLICT_MESSAGE =
+            "La solicitud entra en conflicto con el estado actual del recurso.";
+
     @ExceptionHandler(JugadorNoEncontradoException.class)
     public ResponseEntity<Object> playerNotFound(JugadorNoEncontradoException exception) {
         return response(HttpStatus.NOT_FOUND);
@@ -95,7 +98,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> conflict(DataAccessException exception) {
         String mensaje = exception.getMessage() != null && exception.getMessage().contains("ya está registrado")
                 ? "El nombre de usuario o el correo electrónico ya está registrado."
-                : "La solicitud entra en conflicto con el estado actual del recurso.";
+                : RESOURCE_STATE_CONFLICT_MESSAGE;
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponseDTO(mensaje));
     }
 
@@ -169,7 +172,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return switch (status.value()) {
             case 400 -> "La solicitud no es válida.";
             case 404 -> "Recurso no encontrado.";
-            case 409 -> "La solicitud entra en conflicto con el estado actual del recurso.";
+            case 409 -> RESOURCE_STATE_CONFLICT_MESSAGE;
             case 503 -> "El servicio no está disponible temporalmente.";
             default -> "No se pudo procesar la solicitud.";
         };
@@ -182,7 +185,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             case 403 -> "Acceso denegado.";
             case 404 -> "Recurso no encontrado.";
             case 405 -> "Método no permitido.";
-            case 409 -> "La solicitud entra en conflicto con el estado actual del recurso.";
+            case 409 -> RESOURCE_STATE_CONFLICT_MESSAGE;
             case 415 -> "Tipo de contenido no admitido.";
             case 503 -> "El servicio no está disponible temporalmente.";
             default -> status.is5xxServerError() ? "Ocurrió un error interno." : "No se pudo procesar la solicitud.";

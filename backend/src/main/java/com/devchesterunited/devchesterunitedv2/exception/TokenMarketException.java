@@ -1,9 +1,13 @@
 package com.devchesterunited.devchesterunitedv2.exception;
 
+import java.io.Serial;
+
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 
 /** Error operacional tipado del mercado sin introducir una jerarquía extensa de excepciones. */
 public class TokenMarketException extends RuntimeException {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public enum Reason {
         INACTIVE_PLAYER,

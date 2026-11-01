@@ -1,5 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.dto.market;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
@@ -15,7 +17,10 @@ public record QuoteVersion(
         Instant validFrom,
         Instant validUntil,
         QuoteValidityStatus validityStatus,
-        String strategyReference) {
+        String strategyReference) implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public QuoteVersion {
         Objects.requireNonNull(quoteId, "El identificador de cotización es obligatorio.");
