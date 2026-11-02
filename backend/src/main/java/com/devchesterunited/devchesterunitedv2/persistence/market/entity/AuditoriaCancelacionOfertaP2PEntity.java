@@ -34,12 +34,10 @@ public class AuditoriaCancelacionOfertaP2PEntity {
     private Instant canceladaEn;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumns({
-            @JoinColumn(name = "offer_id", referencedColumnName = "id",
-                    insertable = false, updatable = false),
-            @JoinColumn(name = "actor_user_id", referencedColumnName = "seller_user_id",
-                    insertable = false, updatable = false)
-    })
+    @JoinColumn(name = "offer_id", referencedColumnName = "id",
+            insertable = false, updatable = false)
+    @JoinColumn(name = "actor_user_id", referencedColumnName = "seller_user_id",
+            insertable = false, updatable = false)
     private OfertaVentaP2PEntity oferta;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "actor_user_id", insertable = false, updatable = false,

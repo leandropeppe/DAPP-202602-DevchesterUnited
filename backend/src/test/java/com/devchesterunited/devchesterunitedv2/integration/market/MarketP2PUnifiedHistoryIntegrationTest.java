@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.integration.market;
 
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionFilter;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketTransactionRecord;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketTransactionService;
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.devchesterunited.devchesterunitedv2.support.fixtures.market.MarketP2PFixtureBuilder;
@@ -118,15 +119,15 @@ class MarketP2PUnifiedHistoryIntegrationTest extends PostgresTestSupport {
                 new MarketTransactionFilter(null, null, null, null, 1, 20));
 
         assertThat(all.paginacion().totalRegistros()).isEqualTo(4L);
-        assertThat(all.transacciones()).extracting(transactionRecord -> transactionRecord.tipoOperacion())
+        assertThat(all.transacciones()).extracting(MarketTransactionRecord::tipoOperacion)
                 .containsExactly("P2P_PURCHASE", "P2P_SALE", "SALE", "PRIMARY_PURCHASE");
-        assertThat(firstPage.transacciones()).extracting(transactionRecord -> transactionRecord.tipoOperacion())
+        assertThat(firstPage.transacciones()).extracting(MarketTransactionRecord::tipoOperacion)
                 .containsExactly("P2P_PURCHASE", "P2P_SALE");
-        assertThat(secondPage.transacciones()).extracting(transactionRecord -> transactionRecord.tipoOperacion())
+        assertThat(secondPage.transacciones()).extracting(MarketTransactionRecord::tipoOperacion)
                 .containsExactly("SALE", "PRIMARY_PURCHASE");
         assertThat(firstPage.transacciones()).doesNotHaveDuplicates();
         assertThat(secondPage.transacciones()).doesNotHaveDuplicates();
-        assertThat(buyerHistory.transacciones()).extracting(transactionRecord -> transactionRecord.tipoOperacion())
+        assertThat(buyerHistory.transacciones()).extracting(MarketTransactionRecord::tipoOperacion)
                 .containsExactly("P2P_PURCHASE");
         assertThat(all.transacciones()).allMatch(transactionRecord -> transactionRecord.usuarioId().equals(seller.id()));
         assertThat(offer.id()).isNotNull();

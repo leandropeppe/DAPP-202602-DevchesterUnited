@@ -39,14 +39,12 @@ public class TradeP2PEntity {
     private UUID jugadorId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumns({
-            @JoinColumn(name = "offer_id", referencedColumnName = "id",
-                    insertable = false, updatable = false),
-            @JoinColumn(name = "seller_user_id", referencedColumnName = "seller_user_id",
-                    insertable = false, updatable = false),
-            @JoinColumn(name = "player_id", referencedColumnName = "player_id",
-                    insertable = false, updatable = false)
-    })
+    @JoinColumn(name = "offer_id", referencedColumnName = "id",
+            insertable = false, updatable = false)
+    @JoinColumn(name = "seller_user_id", referencedColumnName = "seller_user_id",
+            insertable = false, updatable = false)
+    @JoinColumn(name = "player_id", referencedColumnName = "player_id",
+            insertable = false, updatable = false)
     private OfertaVentaP2PEntity oferta;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -62,21 +60,17 @@ public class TradeP2PEntity {
     private JugadorEntity jugador;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumns({
-            @JoinColumn(name = "seller_user_id", referencedColumnName = "user_id",
-                    insertable = false, updatable = false),
-            @JoinColumn(name = "player_id", referencedColumnName = "player_id",
-                    insertable = false, updatable = false)
-    })
+    @JoinColumn(name = "seller_user_id", referencedColumnName = "user_id",
+            insertable = false, updatable = false)
+    @JoinColumn(name = "player_id", referencedColumnName = "player_id",
+            insertable = false, updatable = false)
     private TenenciaMercadoEntity tenenciaVendedor;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumns({
-            @JoinColumn(name = "buyer_user_id", referencedColumnName = "user_id",
-                    insertable = false, updatable = false),
-            @JoinColumn(name = "player_id", referencedColumnName = "player_id",
-                    insertable = false, updatable = false)
-    })
+    @JoinColumn(name = "buyer_user_id", referencedColumnName = "user_id",
+            insertable = false, updatable = false)
+    @JoinColumn(name = "player_id", referencedColumnName = "player_id",
+            insertable = false, updatable = false)
     private TenenciaMercadoEntity tenenciaComprador;
 
     @Column(name = "player_name_snapshot", nullable = false, length = 200)
@@ -106,14 +100,12 @@ public class TradeP2PEntity {
             nullable = false)
     private SolicitudIdempotenciaMercadoEntity solicitudIdempotencia;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumns({
-            @JoinColumn(name = "quote_id", referencedColumnName = "quote_id",
-                    insertable = false, updatable = false),
-            @JoinColumn(name = "quote_version", referencedColumnName = "version",
-                    insertable = false, updatable = false),
-            @JoinColumn(name = "player_id", referencedColumnName = "player_id",
-                    insertable = false, updatable = false)
-    })
+    @JoinColumn(name = "quote_id", referencedColumnName = "quote_id",
+            insertable = false, updatable = false)
+    @JoinColumn(name = "quote_version", referencedColumnName = "version",
+            insertable = false, updatable = false)
+    @JoinColumn(name = "player_id", referencedColumnName = "player_id",
+            insertable = false, updatable = false)
     private VersionCotizacionMercadoEntity cotizacion;
     @Column(name = "confirmed_at", nullable = false, updatable = false)
     private Instant confirmadoEn;

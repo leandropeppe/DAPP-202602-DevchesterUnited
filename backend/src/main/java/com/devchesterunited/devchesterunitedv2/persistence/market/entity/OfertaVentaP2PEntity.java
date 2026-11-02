@@ -39,12 +39,10 @@ public class OfertaVentaP2PEntity {
     private JugadorEntity jugador;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumns({
-            @JoinColumn(name = "seller_user_id", referencedColumnName = "user_id",
-                    insertable = false, updatable = false),
-            @JoinColumn(name = "player_id", referencedColumnName = "player_id",
-                    insertable = false, updatable = false)
-    })
+    @JoinColumn(name = "seller_user_id", referencedColumnName = "user_id",
+            insertable = false, updatable = false)
+    @JoinColumn(name = "player_id", referencedColumnName = "player_id",
+            insertable = false, updatable = false)
     private TenenciaMercadoEntity tenencia;
 
     @Column(name = "original_quantity", nullable = false)
