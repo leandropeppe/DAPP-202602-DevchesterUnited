@@ -649,61 +649,78 @@ export default function MarketP2POffersPage () {
             Publicá, comprá o cancelá usando la cotización oficial.
           </p>
 
-          <label
-              className="field"
-              htmlFor="p2p-publication-player"
-          >
-          <span>
-            Publicar desde mi posición
-          </span>
+          <div className="market-publication-card">
+            <div className="market-publication-card__intro">
+    <span className="market-publication-card__tag">
+      VENDER TOKENS
+    </span>
 
-            <select
-                id="p2p-publication-player"
-                value={publicationPlayerId}
-                onChange={(event) =>
-                    setPublicationPlayerId(
-                        event.target.value
-                    )
-                }
-                disabled={
-                  !publicationAvailable
-                }
-            >
-              <option value="">
-                Seleccioná un jugador
-              </option>
+              <h2 className="market-publication-card__title">
+                Publicar una oferta
+              </h2>
 
-              {positions
-                  .filter(
-                      (position) =>
-                          position.quote &&
-                          position.quantity > 0
-                  )
-                  .map((position) => (
-                      <option
-                          key={position.playerId}
-                          value={position.playerId}
-                      >
-                        {position.playerName ||
-                            position.playerId}
-                        {' '}
-                        ({position.quantity} tokens)
-                      </option>
-                  ))}
-            </select>
-          </label>
+              <p className="market-publication-card__description">
+                Elegí un jugador de tu portfolio para ofrecer sus tokens.
+              </p>
+            </div>
 
-          <button
-              className="button button--primary"
-              type="button"
-              onClick={openPublication}
-              disabled={
-                  !publicationAvailable ||
-                  !publicationPlayerId
-              }
-          >
-            Publicar oferta
-          </button>
+            <div className="market-publication-card__divider"/>
+
+            <div className="market-publication-card__controls">
+              <label
+                  className="field market-publication-card__field"
+                  htmlFor="p2p-publication-player"
+              >
+      <span>
+        Jugador
+      </span>
+
+                <select
+                    id="p2p-publication-player"
+                    value={publicationPlayerId}
+                    onChange={(event) =>
+                        setPublicationPlayerId(
+                            event.target.value
+                        )
+                    }
+                    disabled={!publicationAvailable}
+                >
+                  <option value="">
+                    Seleccioná un jugador
+                  </option>
+
+                  {positions
+                      .filter(
+                          (position) =>
+                              position.quote &&
+                              position.quantity > 0
+                      )
+                      .map((position) => (
+                          <option
+                              key={position.playerId}
+                              value={position.playerId}
+                          >
+                            {position.playerName || position.playerId}
+                            {' · '}
+                            {position.quantity} tokens disponibles
+                          </option>
+                      ))}
+                </select>
+              </label>
+
+              <button
+                  className="button button--primary market-publication-card__button"
+                  type="button"
+                  onClick={openPublication}
+                  disabled={
+                      !publicationAvailable ||
+                      !publicationPlayerId
+                  }
+              >
+                Publicar oferta
+              </button>
+            </div>
+          </div>
         </div>
 
         <form
