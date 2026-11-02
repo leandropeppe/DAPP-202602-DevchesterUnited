@@ -125,7 +125,9 @@ jobs:
           --console=plain
           -Dsonar.projectBaseDir="${{ github.workspace }}"
           -Dsonar.sources=backend/src/main/java,frontend/src
-          -Dsonar.tests=backend/src/test/java,frontend/tests
+          -Dsonar.tests=backend/src/test/java,frontend/tests,frontend/src
+          -Dsonar.exclusions=frontend/src/**/*.test.js,frontend/src/**/*.test.jsx
+          -Dsonar.test.inclusions=frontend/tests/**,frontend/src/**/*.test.js,frontend/src/**/*.test.jsx
           -Dsonar.coverage.jacoco.xmlReportPaths=backend/build/reports/jacoco/test/jacocoTestReport.xml
           -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
 
