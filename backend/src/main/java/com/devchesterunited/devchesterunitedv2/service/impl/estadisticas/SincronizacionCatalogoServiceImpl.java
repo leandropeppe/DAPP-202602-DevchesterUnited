@@ -1,13 +1,11 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
 import com.devchesterunited.devchesterunitedv2.exception.SincronizacionPersistenciaException;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.IdentidadExternaEquipo;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
@@ -22,8 +20,6 @@ import com.devchesterunited.devchesterunitedv2.service.event.JugadorActivadoEven
 import com.devchesterunited.devchesterunitedv2.service.interfaces.estadisticas.SincronizacionCatalogoService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,15 +31,13 @@ import java.util.stream.Collectors;
 
 @Service
 public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogoService {
-    private static final long LOCK_KEY_1 = 114644L;
-    private static final long LOCK_KEY_2 = 1L;
     private final ProveedorCatalogo adapter;
     private final EquipoRepository equipos;
     private final IdentidadExternaEquipoRepository identidadesEquipos;
     private final JugadorRepository jugadores;
     private final IdentidadExternaJugadorRepository identidades;
-    private final UsuarioRepository usuarios;
-    private final JdbcTemplate jdbc;
+    private final CatalogoUsuarioValidator usuarioValidator;
+    private final CatalogoSyncLock syncLock;
     private final Clock clock;
     private final JugadorMapper jugadorMapper;
     private final ApplicationEventPublisher eventos;
@@ -51,17 +45,18 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     @org.springframework.beans.factory.annotation.Autowired
     public SincronizacionCatalogoServiceImpl(ProveedorCatalogo adapter, EquipoRepository equipos,
             IdentidadExternaEquipoRepository identidadesEquipos,
-            JugadorRepository jugadores, UsuarioRepository usuarios,
-            IdentidadExternaJugadorRepository identidades, JdbcTemplate jdbc, Clock clock,
+            JugadorRepository jugadores, CatalogoUsuarioValidator usuarioValidator,
+            IdentidadExternaJugadorRepository identidades, CatalogoSyncLock syncLock, Clock clock,
             JugadorMapper jugadorMapper, ApplicationEventPublisher eventos) {
         this.adapter = adapter;
         this.equipos = equipos;
         this.identidadesEquipos = Objects.requireNonNull(identidadesEquipos,
                 "identidadesEquipos es obligatoria");
         this.jugadores = jugadores;
-        this.usuarios = usuarios;
+        this.usuarioValidator = Objects.requireNonNull(usuarioValidator,
+                "usuarioValidator es obligatorio");
         this.identidades = Objects.requireNonNull(identidades, "identidades es obligatoria");
-        this.jdbc = jdbc;
+        this.syncLock = Objects.requireNonNull(syncLock, "syncLock es obligatorio");
         this.clock = clock;
         this.jugadorMapper = Objects.requireNonNull(jugadorMapper, "jugadorMapper es obligatorio");
         this.eventos = Objects.requireNonNull(eventos, "eventos es obligatorio");
@@ -70,19 +65,17 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
     /** Constructor compatible con las pruebas unitarias del sincronizador. */
     public SincronizacionCatalogoServiceImpl(ProveedorCatalogo adapter, EquipoRepository equipos,
             IdentidadExternaEquipoRepository identidadesEquipos,
-            JugadorRepository jugadores, UsuarioRepository usuarios,
-            IdentidadExternaJugadorRepository identidades, JdbcTemplate jdbc, Clock clock,
+            JugadorRepository jugadores, CatalogoUsuarioValidator usuarioValidator,
+            IdentidadExternaJugadorRepository identidades, CatalogoSyncLock syncLock, Clock clock,
             JugadorMapper jugadorMapper) {
-        this(adapter, equipos, identidadesEquipos, jugadores, usuarios, identidades, jdbc, clock,
+        this(adapter, equipos, identidadesEquipos, jugadores, usuarioValidator, identidades, syncLock, clock,
                 jugadorMapper, evento -> { });
     }
 
     @Override
     @Transactional(timeout = 150, isolation = Isolation.READ_COMMITTED)
     public SincronizacionResultado sincronizar() {
-        Boolean adquirido = jdbc.queryForObject("SELECT pg_try_advisory_xact_lock(?::integer, ?::integer)", Boolean.class,
-                LOCK_KEY_1, LOCK_KEY_2);
-        if (!Boolean.TRUE.equals(adquirido)) throw new SincronizacionEnCursoException();
+        syncLock.adquirir();
 
         try {
             CatalogoSincronizado snapshot = adapter.sincronizar();
@@ -99,9 +92,7 @@ public class SincronizacionCatalogoServiceImpl implements SincronizacionCatalogo
 
     @Override
     public void validarUsuario(UUID usuarioId) {
-        if (usuarioId == null || !usuarios.existsById(usuarioId)) {
-            throw new BadCredentialsException("No autorizado.");
-        }
+        usuarioValidator.validar(usuarioId);
     }
 
     private SincronizacionResultado publicar(CatalogoSincronizado snapshot, boolean primerSnapshot,

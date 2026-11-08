@@ -2,8 +2,8 @@ package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-
-import static org.assertj.core.api.Assertions.*;
+
+
 
 import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
 import com.devchesterunited.devchesterunitedv2.modelo.equipo.Equipo;
@@ -12,7 +12,6 @@ import com.devchesterunited.devchesterunitedv2.modelo.equipo.TemporadaEquipo;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
-import com.devchesterunited.devchesterunitedv2.persistence.auth.repository.UsuarioRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.EquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.repository.EquipoRepository;
@@ -24,13 +23,16 @@ import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.Id
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.ProveedorCatalogo;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoSyncLock;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoUsuarioValidator;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SincronizacionCatalogoServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -52,13 +54,13 @@ class SincronizacionCatalogoServiceTest {
     @Mock IdentidadExternaEquipoRepository identidadesEquipos;
     @Mock JugadorRepository jugadores;
     @Mock IdentidadExternaJugadorRepository identidades;
-    @Mock UsuarioRepository usuarios;
-    @Mock JdbcTemplate jdbc;
+    @Mock CatalogoUsuarioValidator usuarioValidator;
+    @Mock CatalogoSyncLock syncLock;
     private SincronizacionCatalogoServiceImpl servicio;
 
     @BeforeEach
     void preparar() {
-        servicio = new SincronizacionCatalogoServiceImpl(adapter, equipos, identidadesEquipos, jugadores, usuarios, identidades, jdbc,
+        servicio = new SincronizacionCatalogoServiceImpl(adapter, equipos, identidadesEquipos, jugadores, usuarioValidator, identidades, syncLock,
                 Clock.fixed(AHORA, java.time.ZoneOffset.UTC), new JugadorMapper());
         lenient().when(identidadesEquipos.findAllByProveedorAndExternalIdIn(any(), anyList())).thenReturn(List.of());
         lenient().when(identidadesEquipos.findAllByProveedor(any())).thenReturn(List.of());
@@ -75,7 +77,6 @@ class SincronizacionCatalogoServiceTest {
 
     @Test
     void publicaSnapshotValidoConConteosDeCreacion() {
-        when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
         when(adapter.sincronizar()).thenReturn(snapshot());
 
         var resultado = servicio.sincronizar();
@@ -92,7 +93,6 @@ class SincronizacionCatalogoServiceTest {
 
     @Test
     void resuelveJugadorExistenteDesdeIdentidadYConservaUuidInterno() {
-        when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
         CatalogoSincronizado snapshot = snapshot();
         UUID uuidPersistido = UUID.fromString("70000000-0000-0000-0000-000000000001");
         Equipo equipo = snapshot.equipos().get(0);
@@ -128,7 +128,6 @@ class SincronizacionCatalogoServiceTest {
 
     @Test
     void noReasignaIdentidadExternaExistenteAOtroEquipo() {
-        when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
         CatalogoSincronizado snapshot = snapshot();
         Equipo equipo = snapshot.equipos().get(0);
         UUID uuidEquipoPersistido = UUID.fromString("73000000-0000-0000-0000-000000000001");
@@ -151,7 +150,6 @@ class SincronizacionCatalogoServiceTest {
 
     @Test
     void inactivaEquipoConIdentidadFootballDataAusenteDelSnapshot() {
-        when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
         CatalogoSincronizado snapshot = snapshot();
         UUID uuidEquipoAusente = UUID.fromString("75000000-0000-0000-0000-000000000001");
         EquipoEntity equipoAusente = EquipoEntity.builder().id(uuidEquipoAusente).nombre("Equipo ausente")
@@ -171,7 +169,6 @@ class SincronizacionCatalogoServiceTest {
 
     @Test
     void conservaActivoEquipoSinIdentidadFootballDataAunqueNoEsteEnSnapshot() {
-        when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
         CatalogoSincronizado snapshot = snapshot();
         UUID uuidEquipoLegacy = UUID.fromString("77000000-0000-0000-0000-000000000001");
         when(adapter.sincronizar()).thenReturn(snapshot);
@@ -184,14 +181,32 @@ class SincronizacionCatalogoServiceTest {
 
     @Test
     void lockOcupadoRechazaAntesDeConsultarAdapter() {
-        when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(false);
+        doThrow(new SincronizacionEnCursoException()).when(syncLock).adquirir();
         assertThatThrownBy(servicio::sincronizar).isInstanceOf(SincronizacionEnCursoException.class);
         verifyNoInteractions(adapter);
     }
 
     @Test
+    void validarUsuarioDelegaEnElValidadorExtraido() {
+        UUID usuarioId = UUID.randomUUID();
+
+        servicio.validarUsuario(usuarioId);
+
+        verify(usuarioValidator).validar(usuarioId);
+    }
+
+    @Test
+    void sincronizarConservaElLimiteTransaccionalOriginal() throws NoSuchMethodException {
+        Transactional transactional = SincronizacionCatalogoServiceImpl.class
+                .getMethod("sincronizar").getAnnotation(Transactional.class);
+
+        assertThat(transactional).isNotNull();
+        assertThat(transactional.timeout()).isEqualTo(150);
+        assertThat(transactional.isolation()).isEqualTo(Isolation.READ_COMMITTED);
+    }
+
+    @Test
     void falloDelProveedorSePropagaParaRollbackTransaccional() {
-        when(jdbc.queryForObject(anyString(), eq(Boolean.class), any(), any())).thenReturn(true);
         when(adapter.sincronizar()).thenThrow(new FootballDataException("fallo sintetico"));
         assertThatThrownBy(servicio::sincronizar).isInstanceOf(FootballDataException.class);
         verify(equipos, never()).save(any(EquipoEntity.class));
