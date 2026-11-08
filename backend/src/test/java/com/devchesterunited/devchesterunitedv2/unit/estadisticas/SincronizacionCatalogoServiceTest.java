@@ -23,12 +23,16 @@ import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.Id
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.repository.JugadorRepository;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.ProveedorCatalogo;
+import com.devchesterunited.devchesterunitedv2.service.event.JugadorActivadoEvent;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoSyncLock;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoEquipoWriter;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoJugadorWriter;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoUsuarioValidator;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SincronizacionCatalogoServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Isolation;
@@ -56,12 +60,15 @@ class SincronizacionCatalogoServiceTest {
     @Mock IdentidadExternaJugadorRepository identidades;
     @Mock CatalogoUsuarioValidator usuarioValidator;
     @Mock CatalogoSyncLock syncLock;
+    @Mock org.springframework.context.ApplicationEventPublisher eventos;
     private SincronizacionCatalogoServiceImpl servicio;
 
     @BeforeEach
     void preparar() {
-        servicio = new SincronizacionCatalogoServiceImpl(adapter, equipos, identidadesEquipos, jugadores, usuarioValidator, identidades, syncLock,
-                Clock.fixed(AHORA, java.time.ZoneOffset.UTC), new JugadorMapper());
+        servicio = new SincronizacionCatalogoServiceImpl(adapter,
+                new CatalogoEquipoWriter(equipos, identidadesEquipos),
+                new CatalogoJugadorWriter(jugadores, identidades, new JugadorMapper()),
+                usuarioValidator, syncLock, Clock.fixed(AHORA, java.time.ZoneOffset.UTC), eventos);
         lenient().when(identidadesEquipos.findAllByProveedorAndExternalIdIn(any(), anyList())).thenReturn(List.of());
         lenient().when(identidadesEquipos.findAllByProveedor(any())).thenReturn(List.of());
         lenient().when(equipos.findAll()).thenReturn(List.of());
@@ -87,8 +94,20 @@ class SincronizacionCatalogoServiceTest {
         assertThat(resultado.jugadoresCreados()).isEqualTo(96);
         verify(equipos).flush();
         verify(jugadores).flush();
+        InOrder orden = inOrder(equipos, jugadores);
+        orden.verify(equipos).flush();
+        orden.verify(jugadores).flush();
         verify(identidades, times(96)).save(any(IdentidadExternaJugadorEntity.class));
         verify(identidadesEquipos, times(96)).save(any(IdentidadExternaEquipoEntity.class));
+    }
+
+    @Test
+    void publicaLosIdentificadoresDeJugadoresActivados() {
+        when(adapter.sincronizar()).thenReturn(snapshot());
+
+        servicio.sincronizar();
+
+        verify(eventos, times(96)).publishEvent(any(JugadorActivadoEvent.class));
     }
 
     @Test
