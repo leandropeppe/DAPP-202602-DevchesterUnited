@@ -71,6 +71,24 @@ class MarketP2PPurchaseValidationServiceTest {
     }
 
     @Test
+    void resolverJugadorRechazaOfertaInexistenteConElErrorPublicoEsperado() {
+        when(offers.findById(OFFER)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.resolverJugadorId(OFFER))
+                .isInstanceOfSatisfying(TokenMarketException.class, exception ->
+                        assertThat(exception.reason())
+                                .isEqualTo(TokenMarketException.Reason.OFFER_NOT_FOUND));
+    }
+
+    @Test
+    void resolverJugadorDevuelveElJugadorAsociadoALaOferta() {
+        OfertaVentaP2PEntity offer = givenOffer(4L, SELLER, OfertaVentaP2PEntity.OPEN);
+        when(offers.findById(OFFER)).thenReturn(Optional.of(offer));
+
+        assertThat(service.resolverJugadorId(OFFER)).isEqualTo(PLAYER);
+    }
+
+    @Test
     void aceptaCompraCompletaYRechazaOfertaPropia() {
         givenOffer(4L, SELLER, OfertaVentaP2PEntity.OPEN);
         assertThat(service.validar(command(BUYER, 4L, QUOTE, 1L), UUID.randomUUID()).quantity())
@@ -91,7 +109,7 @@ class MarketP2PPurchaseValidationServiceTest {
                         assertThat(error.reason()).isEqualTo(TokenMarketException.Reason.QUOTE_CHANGED));
     }
 
-    private void givenOffer(long remaining, UUID seller, String status) {
+    private OfertaVentaP2PEntity givenOffer(long remaining, UUID seller, String status) {
         OfertaVentaP2PEntity offer = mock(OfertaVentaP2PEntity.class);
         when(offer.getId()).thenReturn(OFFER);
         when(offer.getVendedorId()).thenReturn(seller);
@@ -99,6 +117,7 @@ class MarketP2PPurchaseValidationServiceTest {
         when(offer.getCantidadRestante()).thenReturn(remaining);
         when(offer.getEstado()).thenReturn(status);
         when(offers.findByIdForUpdate(OFFER)).thenReturn(Optional.of(offer));
+        return offer;
     }
 
     private MarketP2PPurchaseCommand command(UUID buyer, long quantity, UUID quote, long version) {

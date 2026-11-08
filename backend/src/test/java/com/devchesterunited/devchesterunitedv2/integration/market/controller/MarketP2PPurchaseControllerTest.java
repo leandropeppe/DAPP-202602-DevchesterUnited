@@ -1,9 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.integration.market.controller;
 
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.OfertaVentaP2PEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.OfertaVentaP2PRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PQuoteIdentity;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
@@ -19,15 +18,14 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -54,14 +52,10 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
     @MockitoBean
     private MarketP2PPurchaseService purchases;
 
-    @MockitoBean
-    private OfertaVentaP2PRepository offers;
-
     @Test
     void compraParcialPropagaJwtOfertaCotizacionYKey() throws Exception {
-        OfertaVentaP2PEntity fixtureOffer = offer();
-        when(offers.findById(OFFER_ID)).thenReturn(Optional.of(fixtureOffer));
-        when(purchases.comprar(any())).thenReturn(result(2L, 2L, 2L, "CONFIRMED"));
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class))).thenReturn(result(2L, 2L, 2L, "CONFIRMED"));
 
         mvc.perform(post(path())
                         .with(jwtFor(BUYER_ID))
@@ -84,21 +78,25 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
                 .andExpect(jsonPath("$.data.status").value("PARTIALLY_FILLED"))
                 .andExpect(jsonPath("$.data.operation_status").value("CONFIRMED"));
 
-        var command = org.mockito.ArgumentCaptor.forClass(
-                com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseCommand.class);
-        verify(purchases).comprar(command.capture());
-        assertThat(command.getValue().usuarioId()).isEqualTo(BUYER_ID);
-        assertThat(command.getValue().offerId()).isEqualTo(OFFER_ID);
-        assertThat(command.getValue().playerId()).isEqualTo(PLAYER_ID);
-        assertThat(command.getValue().claveIdempotencia()).isEqualTo("p2p-partial");
-        assertThat(command.getValue().quote().quoteId()).isEqualTo(QUOTE_ID);
+        var user = org.mockito.ArgumentCaptor.forClass(UUID.class);
+        var key = org.mockito.ArgumentCaptor.forClass(String.class);
+        var offer = org.mockito.ArgumentCaptor.forClass(UUID.class);
+        var quantity = org.mockito.ArgumentCaptor.forClass(Long.class);
+        var quote = org.mockito.ArgumentCaptor.forClass(MarketP2PQuoteIdentity.class);
+        verify(purchases).comprar(user.capture(), key.capture(), offer.capture(), quantity.capture(),
+                quote.capture());
+        assertThat(user.getValue()).isEqualTo(BUYER_ID);
+        assertThat(key.getValue()).isEqualTo("p2p-partial");
+        assertThat(offer.getValue()).isEqualTo(OFFER_ID);
+        assertThat(quantity.getValue()).isEqualTo(2L);
+        assertThat(quote.getValue().quoteId()).isEqualTo(QUOTE_ID);
+        assertThat(quote.getValue().version()).isEqualTo(1L);
     }
 
     @Test
     void compraCompletaExponeEstadoDeOperacionConfirmadaYOfertaCompleta() throws Exception {
-        OfertaVentaP2PEntity fixtureOffer = offer();
-        when(offers.findById(OFFER_ID)).thenReturn(Optional.of(fixtureOffer));
-        when(purchases.comprar(any())).thenReturn(result(4L, 0L, 0L, "CONFIRMED"));
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class))).thenReturn(result(4L, 0L, 0L, "CONFIRMED"));
 
         mvc.perform(post(path()).with(jwtFor(BUYER_ID))
                         .header("Idempotency-Key", "p2p-full")
@@ -113,9 +111,8 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
 
     @Test
     void replayDevuelveElMismoResultadoSinCambiarElEnvelope() throws Exception {
-        OfertaVentaP2PEntity fixtureOffer = offer();
-        when(offers.findById(OFFER_ID)).thenReturn(Optional.of(fixtureOffer));
-        when(purchases.comprar(any())).thenReturn(result(2L, 2L, 2L, "CONFIRMED"));
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class))).thenReturn(result(2L, 2L, 2L, "CONFIRMED"));
 
         mvc.perform(post(path()).with(jwtFor(BUYER_ID)).header("Idempotency-Key", "same-key")
                 .contentType("application/json").content(body(2))).andExpect(status().isOk());
@@ -124,14 +121,14 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.trade_id").value(TRADE_ID.toString()));
 
-        verify(purchases, times(2)).comprar(any());
+        verify(purchases, times(2)).comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class));
     }
 
     @Test
     void conflictoDeIdempotenciaSeExponeComo409ConCodigoDeNegocio() throws Exception {
-        OfertaVentaP2PEntity fixtureOffer = offer();
-        when(offers.findById(OFFER_ID)).thenReturn(Optional.of(fixtureOffer));
-        when(purchases.comprar(any())).thenThrow(new TokenMarketException(
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class))).thenThrow(new TokenMarketException(
                 TokenMarketException.Reason.IDEMPOTENCY_CONFLICT, "conflict"));
 
         mvc.perform(post(path()).with(jwtFor(BUYER_ID)).header("Idempotency-Key", "reused")
@@ -143,9 +140,8 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
 
     @Test
     void erroresDeNegocioP2PConservan409YCodigo() throws Exception {
-        OfertaVentaP2PEntity fixtureOffer = offer();
-        when(offers.findById(OFFER_ID)).thenReturn(Optional.of(fixtureOffer));
-        when(purchases.comprar(any())).thenThrow(new TokenMarketException(
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class))).thenThrow(new TokenMarketException(
                 TokenMarketException.Reason.INSUFFICIENT_BALANCE, "insufficient"));
 
         mvc.perform(post(path()).with(jwtFor(BUYER_ID)).header("Idempotency-Key", "low-balance")
@@ -155,7 +151,8 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
 
         doThrow(new TokenMarketException(
                 TokenMarketException.Reason.OFFER_NOT_PURCHASABLE, "own-offer"))
-                .when(purchases).comprar(any());
+                .when(purchases).comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                        any(MarketP2PQuoteIdentity.class));
 
         mvc.perform(post(path()).with(jwtFor(SELLER_ID)).header("Idempotency-Key", "own-offer")
                         .contentType("application/json").content(body(1)))
@@ -164,7 +161,8 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
 
         doThrow(new TokenMarketException(
                 TokenMarketException.Reason.INSUFFICIENT_AVAILABLE_QUANTITY, "too-many"))
-                .when(purchases).comprar(any());
+                .when(purchases).comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                        any(MarketP2PQuoteIdentity.class));
         mvc.perform(post(path()).with(jwtFor(BUYER_ID)).header("Idempotency-Key", "too-many")
                         .contentType("application/json").content(body(5)))
                 .andExpect(status().isConflict())
@@ -173,11 +171,10 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
 
     @Test
     void quoteChangedIncluyeLaCotizacionVigente() throws Exception {
-        OfertaVentaP2PEntity fixtureOffer = offer();
-        when(offers.findById(OFFER_ID)).thenReturn(Optional.of(fixtureOffer));
         QuoteVersion current = new QuoteVersion(QUOTE_ID, 2L, PLAYER_ID,
                 new BigDecimal("3.00"), INSTANT, INSTANT, null, QuoteValidityStatus.VALID, "TEST");
-        when(purchases.comprar(any())).thenThrow(new TokenMarketException(
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class))).thenThrow(new TokenMarketException(
                 TokenMarketException.Reason.QUOTE_CHANGED, "changed", current));
 
         mvc.perform(post(path()).with(jwtFor(BUYER_ID)).header("Idempotency-Key", "quote-changed")
@@ -191,9 +188,8 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
 
     @Test
     void quoteUnavailableExponeNullYOfertaSuspendida() throws Exception {
-        OfertaVentaP2PEntity fixtureOffer = offer();
-        when(offers.findById(OFFER_ID)).thenReturn(Optional.of(fixtureOffer));
-        when(purchases.comprar(any())).thenThrow(new TokenMarketException(
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class))).thenThrow(new TokenMarketException(
                 TokenMarketException.Reason.QUOTE_UNAVAILABLE, "unavailable"));
 
         mvc.perform(post(path()).with(jwtFor(BUYER_ID)).header("Idempotency-Key", "quote-unavailable")
@@ -206,9 +202,8 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
 
     @Test
     void replayHistoricoSinSnapshotExponeConflictoPublico() throws Exception {
-        OfertaVentaP2PEntity fixtureOffer = offer();
-        when(offers.findById(OFFER_ID)).thenReturn(Optional.of(fixtureOffer));
-        when(purchases.comprar(any())).thenThrow(new TokenMarketException(
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class))).thenThrow(new TokenMarketException(
                 TokenMarketException.Reason.HISTORICAL_RESULT_UNAVAILABLE, "legacy"));
 
         mvc.perform(post(path()).with(jwtFor(BUYER_ID)).header("Idempotency-Key", "legacy-replay")
@@ -227,7 +222,7 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
                         .contentType("application/json").content(body(1)))
                 .andExpect(status().isUnauthorized());
 
-        verifyNoInteractions(purchases, offers);
+        verifyNoInteractions(purchases);
     }
 
     @Test
@@ -247,32 +242,29 @@ class MarketP2PPurchaseControllerTest extends PostgresTestSupport {
                                 + "\",\"quote_version\":1,\"player_id\":\"" + PLAYER_ID + "\"}"))
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(purchases, offers);
+        verifyNoInteractions(purchases);
     }
 
     @Test
     void keyAusenteOfertaInexistenteYUuidInvalidoRechazanLaSolicitud() throws Exception {
         mvc.perform(post(path()).with(jwtFor(BUYER_ID)).contentType("application/json")
                         .content(body(1))).andExpect(status().isBadRequest());
-        verifyNoInteractions(purchases, offers);
+        verifyNoInteractions(purchases);
 
-        when(offers.findById(OFFER_ID)).thenReturn(Optional.empty());
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class))).thenThrow(new TokenMarketException(
+                        TokenMarketException.Reason.OFFER_NOT_FOUND, "missing"));
         mvc.perform(post(path()).with(jwtFor(BUYER_ID)).header("Idempotency-Key", "missing-offer")
                         .contentType("application/json").content(body(1)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("OFFER_NOT_FOUND"));
-        verify(purchases, never()).comprar(any());
+        verify(purchases).comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class));
 
         mvc.perform(post("/api/v1/market/p2p/offers/not-a-uuid/purchases")
                         .with(jwtFor(BUYER_ID)).header("Idempotency-Key", "bad-uuid")
                         .contentType("application/json").content(body(1)))
                 .andExpect(status().isBadRequest());
-    }
-
-    private static OfertaVentaP2PEntity offer() {
-        OfertaVentaP2PEntity offer = mock(OfertaVentaP2PEntity.class);
-        doReturn(PLAYER_ID).when(offer).getJugadorId();
-        return offer;
     }
 
     private static MarketP2PPurchaseResult result(long quantity, long remaining,

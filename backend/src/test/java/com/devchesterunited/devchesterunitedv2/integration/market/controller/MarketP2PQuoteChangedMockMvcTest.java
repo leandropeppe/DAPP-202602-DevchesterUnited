@@ -1,9 +1,8 @@
 package com.devchesterunited.devchesterunitedv2.integration.market.controller;
 
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.persistence.market.entity.OfertaVentaP2PEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.OfertaVentaP2PRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PQuoteIdentity;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
@@ -18,13 +17,13 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,14 +50,11 @@ class MarketP2PQuoteChangedMockMvcTest extends PostgresTestSupport {
     @MockitoBean
     private MarketP2PPurchaseService purchases;
 
-    @MockitoBean
-    private OfertaVentaP2PRepository offers;
-
     @Test
     void quoteChangedDevuelve409YLaCotizacionVigenteSinLiquidar() throws Exception {
-        stubOffer();
         QuoteVersion current = currentQuote();
-        when(purchases.comprar(any())).thenThrow(new TokenMarketException(
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class))).thenThrow(new TokenMarketException(
                 TokenMarketException.Reason.QUOTE_CHANGED, "changed", current));
 
         mvc.perform(post(path()).with(jwtFor(BUYER_ID))
@@ -71,13 +67,14 @@ class MarketP2PQuoteChangedMockMvcTest extends PostgresTestSupport {
                 .andExpect(jsonPath("$.current_quote.quote_version").value(2))
                 .andExpect(jsonPath("$.current_quote.unit_price").value(3.00));
 
-        verify(purchases).comprar(any());
+        verify(purchases).comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class));
     }
 
     @Test
     void quoteUnavailableDevuelveNullYSuspendedSinConfirmarCompra() throws Exception {
-        stubOffer();
-        when(purchases.comprar(any())).thenThrow(new TokenMarketException(
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class))).thenThrow(new TokenMarketException(
                 TokenMarketException.Reason.QUOTE_UNAVAILABLE, "unavailable"));
 
         mvc.perform(post(path()).with(jwtFor(BUYER_ID))
@@ -87,13 +84,14 @@ class MarketP2PQuoteChangedMockMvcTest extends PostgresTestSupport {
                 .andExpect(jsonPath("$.code").value("QUOTE_UNAVAILABLE"))
                 .andExpect(jsonPath("$.current_quote").value(org.hamcrest.Matchers.nullValue()))
                 .andExpect(jsonPath("$.offer_status").value("SUSPENDED"));
-        verify(purchases).comprar(any());
+        verify(purchases).comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class));
     }
 
     @Test
     void cambioExigeNuevaClaveYLaSegundaConfirmacionEsIndependiente() throws Exception {
-        stubOffer();
-        when(purchases.comprar(any()))
+        when(purchases.comprar(any(UUID.class), anyString(), eq(OFFER_ID), anyLong(),
+                any(MarketP2PQuoteIdentity.class)))
                 .thenThrow(new TokenMarketException(TokenMarketException.Reason.QUOTE_CHANGED,
                         "changed", currentQuote()))
                 .thenReturn(result());
@@ -110,17 +108,10 @@ class MarketP2PQuoteChangedMockMvcTest extends PostgresTestSupport {
                 .andExpect(jsonPath("$.data.trade_id").value(TRADE_ID.toString()))
                 .andExpect(jsonPath("$.data.operation_status").value("CONFIRMED"));
 
-        var captor = org.mockito.ArgumentCaptor.forClass(
-                com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseCommand.class);
-        verify(purchases, times(2)).comprar(captor.capture());
-        assertThat(captor.getAllValues().get(0).claveIdempotencia()).isEqualTo("old-key");
-        assertThat(captor.getAllValues().get(1).claveIdempotencia()).isEqualTo("new-key");
-    }
-
-    private void stubOffer() {
-        OfertaVentaP2PEntity offer = mock(OfertaVentaP2PEntity.class);
-        doReturn(PLAYER_ID).when(offer).getJugadorId();
-        when(offers.findById(OFFER_ID)).thenReturn(Optional.of(offer));
+        var captor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(purchases, times(2)).comprar(any(UUID.class), captor.capture(), eq(OFFER_ID),
+                anyLong(), any(MarketP2PQuoteIdentity.class));
+        assertThat(captor.getAllValues()).containsExactly("old-key", "new-key");
     }
 
     private static QuoteVersion currentQuote() {

@@ -1,9 +1,13 @@
 package com.devchesterunited.devchesterunitedv2.unit.market;
 
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PIdempotencyRequest;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyClaim;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseCommand;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseIdentity;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseSettlement;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseTarget;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PQuoteIdentity;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
@@ -11,6 +15,9 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyParameterHasher;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketP2PAccountingPersistenceService;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketP2PPurchasePersistenceServiceImpl;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketP2PPurchaseExecutionServiceImpl;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketP2PPurchaseValidationService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.CuentaCreditosMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.OfertaVentaP2PEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoEntity;
@@ -35,6 +42,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentCaptor.forClass;
 
 class MarketP2PPurchaseServiceTest {
     private static final UUID USER_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -44,6 +53,56 @@ class MarketP2PPurchaseServiceTest {
     private static final UUID QUOTE_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
     private static final UUID SELLER_ID = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
     private static final UUID REQUEST_ID = UUID.fromString("55555555-5555-5555-5555-555555555555");
+    private static final UUID EXECUTION_TOKEN = UUID.fromString("66666666-6666-6666-6666-666666666666");
+    private static final UUID TRADE_ID = UUID.fromString("77777777-7777-7777-7777-777777777777");
+    private static final String IDEMPOTENCY_KEY = "overload-key";
+
+    @Test
+    void sobrecargaResuelveJugadorConstruyeComandoConservaIdentidadYCompletaCompra() {
+        MarketIdempotencyService idempotency = mock(MarketIdempotencyService.class);
+        MarketP2PPurchaseValidationService validation = mock(MarketP2PPurchaseValidationService.class);
+        MarketP2PPurchasePersistenceServiceImpl persistence = mock(
+                MarketP2PPurchasePersistenceServiceImpl.class);
+        MarketP2PPurchaseExecutionServiceImpl service = new MarketP2PPurchaseExecutionServiceImpl(
+                idempotency, validation, persistence);
+        MarketP2PQuoteIdentity quote = new MarketP2PQuoteIdentity(QUOTE_ID, 2L);
+        MarketP2PPurchaseSettlement settlement = mock(MarketP2PPurchaseSettlement.class);
+        MarketP2PPurchaseResult result = mock(MarketP2PPurchaseResult.class);
+        MarketIdempotencyResult claimedResult = new MarketIdempotencyResult(REQUEST_ID, USER_ID,
+                IDEMPOTENCY_KEY, "P2P_PURCHASE", "hash", MarketIdempotencyStatus.PROCESSING,
+                EXECUTION_TOKEN, null, Instant.parse("2026-01-01T00:00:00Z"));
+        MarketIdempotencyResult confirmedResult = new MarketIdempotencyResult(REQUEST_ID, USER_ID,
+                IDEMPOTENCY_KEY, "P2P_PURCHASE", "hash", MarketIdempotencyStatus.CONFIRMED,
+                EXECUTION_TOKEN, TRADE_ID, Instant.parse("2026-01-01T00:00:01Z"));
+        when(validation.resolverJugadorId(OFFER_ID)).thenReturn(PLAYER_ID);
+        when(idempotency.reclamarConPropiedad(any(MarketP2PIdempotencyRequest.class)))
+                .thenReturn(new MarketIdempotencyClaim(claimedResult, true));
+        when(validation.validar(any(MarketP2PPurchaseCommand.class), eq(REQUEST_ID)))
+                .thenReturn(settlement);
+        when(persistence.liquidar(settlement)).thenReturn(result);
+        when(result.tradeId()).thenReturn(TRADE_ID);
+        when(idempotency.confirmar(REQUEST_ID, EXECUTION_TOKEN, TRADE_ID))
+                .thenReturn(confirmedResult);
+
+        MarketP2PPurchaseResult returned = service.comprar(USER_ID, IDEMPOTENCY_KEY, OFFER_ID,
+                2L, quote);
+
+        var commandCaptor = forClass(MarketP2PPurchaseCommand.class);
+        verify(validation).resolverJugadorId(OFFER_ID);
+        verify(validation).validar(commandCaptor.capture(), eq(REQUEST_ID));
+        MarketP2PPurchaseCommand command = commandCaptor.getValue();
+        assertThat(command.usuarioId()).isEqualTo(USER_ID);
+        assertThat(command.claveIdempotencia()).isEqualTo(IDEMPOTENCY_KEY);
+        assertThat(command.offerId()).isEqualTo(OFFER_ID);
+        assertThat(command.playerId()).isEqualTo(PLAYER_ID);
+        assertThat(command.quantity()).isEqualTo(2L);
+        assertThat(command.quote()).isEqualTo(quote);
+        assertThat(command.idempotencyIdentity()).isEqualTo(
+                new MarketP2PPurchaseIdentity(OFFER_ID, PLAYER_ID, 2L, quote));
+        verify(persistence).liquidar(settlement);
+        verify(idempotency).confirmar(REQUEST_ID, EXECUTION_TOKEN, TRADE_ID);
+        assertThat(returned).isSameAs(result);
+    }
 
     @Test
     void comandoValidoConservaOfertaCantidadYCotizacionObservada() {

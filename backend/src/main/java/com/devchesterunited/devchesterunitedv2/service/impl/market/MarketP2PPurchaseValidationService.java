@@ -98,6 +98,12 @@ public class MarketP2PPurchaseValidationService {
                 quote, command.quantity(), now);
     }
 
+    public java.util.UUID resolverJugadorId(java.util.UUID offerId) {
+        return ofertas.findById(offerId).map(OfertaVentaP2PEntity::getJugadorId)
+                .orElseThrow(() -> new TokenMarketException(
+                        TokenMarketException.Reason.OFFER_NOT_FOUND, "La oferta no existe."));
+    }
+
     private QuoteVersion currentQuote(java.util.UUID playerId,
             CabeceraCotizacionMercadoEntity header) {
         if (!VALID_QUOTE_STATUS.equals(header.getEstadoVigencia())) {

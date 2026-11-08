@@ -8,10 +8,13 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PIdemp
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseCommand;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseSettlement;
+import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PQuoteIdentity;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP2PPurchaseService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 /** Orquesta una compra P2P y deja el settlement en una única transacción. */
 @Service
@@ -26,6 +29,15 @@ public class MarketP2PPurchaseExecutionServiceImpl implements MarketP2PPurchaseS
         this.idempotencia = idempotencia;
         this.validacion = validacion;
         this.persistencia = persistencia;
+    }
+
+    @Override
+    @Transactional
+    public MarketP2PPurchaseResult comprar(UUID usuarioId, String claveIdempotencia,
+            UUID offerId, Long quantity, MarketP2PQuoteIdentity quote) {
+        UUID playerId = validacion.resolverJugadorId(offerId);
+        return comprar(new MarketP2PPurchaseCommand(usuarioId, claveIdempotencia, offerId,
+                playerId, quantity, quote));
     }
 
     @Override

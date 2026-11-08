@@ -4,8 +4,6 @@ import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO
 import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketP2PPurchaseRequestDTO;
 import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketP2PPurchaseResponseDTO;
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
-import com.devchesterunited.devchesterunitedv2.persistence.market.repository.OfertaVentaP2PRepository;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseCommand;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PQuoteIdentity;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketP2PPurchaseService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,12 +31,9 @@ import java.util.UUID;
 @RequestMapping("/api/v1/market/p2p/offers")
 public class MarketP2PPurchaseController {
     private final MarketP2PPurchaseService purchases;
-    private final OfertaVentaP2PRepository offers;
 
-    public MarketP2PPurchaseController(MarketP2PPurchaseService purchases,
-            OfertaVentaP2PRepository offers) {
+    public MarketP2PPurchaseController(MarketP2PPurchaseService purchases) {
         this.purchases = purchases;
-        this.offers = offers;
     }
 
     @PostMapping("/{offerId}/purchases")
@@ -65,12 +60,8 @@ public class MarketP2PPurchaseController {
         UUID userId = userIdFrom(jwt);
         request.validateFields();
         String key = normalizeIdempotencyKey(idempotencyKey);
-        UUID playerId = offers.findById(offerId).map(offer -> offer.getJugadorId())
-                .orElseThrow(() -> new TokenMarketException(TokenMarketException.Reason.OFFER_NOT_FOUND,
-                        "La oferta no existe."));
-        var result = purchases.comprar(new MarketP2PPurchaseCommand(userId, key, offerId,
-                playerId, request.getQuantity(),
-                new MarketP2PQuoteIdentity(request.getQuoteId(), request.getQuoteVersion())));
+        var result = purchases.comprar(userId, key, offerId, request.getQuantity(),
+                new MarketP2PQuoteIdentity(request.getQuoteId(), request.getQuoteVersion()));
         return ResponseEntity.ok(new SuccessResponseDTO<>(
                 MarketP2PPurchaseResponseDTO.fromDomain(result)));
     }
