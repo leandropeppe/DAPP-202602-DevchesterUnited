@@ -1,12 +1,9 @@
 package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
 
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
 
-@Component
 public final class MotorValorizacion {
     private static final String CAMPO_POSICION = "POSICION";
     private static final String METODO_V2 = "Z_SCORE_SIGMOIDE_K_0_65";

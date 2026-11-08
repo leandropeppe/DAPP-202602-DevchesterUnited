@@ -33,6 +33,16 @@ class ValorizacionAlcanceTest {
         }
     }
 
+    @Test
+    void motorValorizacionNoDependeDeSpring() throws IOException {
+        Path motor = SOURCE_ROOT.resolve("modelo/valorizacion/MotorValorizacion.java");
+
+        String source = Files.readString(motor);
+
+        assertFalse(source.contains("org.springframework"));
+        assertFalse(source.contains("@Component"));
+    }
+
     private Stream<Path> javaFiles(Path root) throws IOException {
         if (!Files.exists(root)) {
             return Stream.empty();
