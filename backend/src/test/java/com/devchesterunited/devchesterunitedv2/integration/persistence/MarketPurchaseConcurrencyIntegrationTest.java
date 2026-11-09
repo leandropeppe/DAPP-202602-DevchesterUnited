@@ -127,13 +127,18 @@ class MarketPurchaseConcurrencyIntegrationTest extends PostgresTestSupport {
                 .map(MarketPurchaseResult.class::cast)
                 .filter(result -> result.estado() == MarketIdempotencyStatus.CONFIRMED)
                 .toList();
-        assertThat(confirmedResults).hasSizeBetween(1, 2)
+        assertThat(confirmedResults)
+                .withFailMessage(() -> "Resultados concurrentes: " + describir(outcomes))
+                .hasSizeBetween(1, 2)
                 .allMatch(result -> result.transaccionId() != null);
         assertThat(confirmedResults.stream()
                 .map(MarketPurchaseResult::transaccionId)
                 .distinct()
                 .count()).isEqualTo(1L);
-        assertThat(outcomes.stream().allMatch(this::isAllowedIdempotentOutcome)).isTrue();
+        assertThat(outcomes.stream().allMatch(this::isAllowedIdempotentOutcome))
+                .withFailMessage(() -> "Resultados concurrentes no permitidos: "
+                        + describir(outcomes))
+                .isTrue();
         assertThat(stringValue("SELECT status FROM market_idempotency_requests "
                 + "WHERE user_id = ? AND idempotency_key = ?", fixture.userOne, key))
                 .isEqualTo("CONFIRMED");
@@ -445,6 +450,37 @@ class MarketPurchaseConcurrencyIntegrationTest extends PostgresTestSupport {
         }
         return outcome.error instanceof TokenMarketException exception
                 && exception.reason() == TokenMarketException.Reason.IDEMPOTENCY_CONFLICT;
+    }
+
+    private String describir(List<CallOutcome> outcomes) {
+        return outcomes.stream().map(this::describir).collect(java.util.stream.Collectors.joining("; "));
+    }
+
+    private String describir(CallOutcome outcome) {
+        return "{" + describirResultado(outcome.result) + ", "
+                + describirExcepcion(outcome.error) + "}";
+    }
+
+    private String describirResultado(Object result) {
+        if (result instanceof MarketPurchaseResult purchaseResult) {
+            return "estado=" + purchaseResult.estado()
+                    + ", transaccionId=" + purchaseResult.transaccionId();
+        }
+        if (result == null) {
+            return "resultado=null";
+        }
+        return "resultadoTipo=" + result.getClass().getName();
+    }
+
+    private String describirExcepcion(Throwable error) {
+        if (error == null) {
+            return "excepcion=null";
+        }
+        if (error instanceof TokenMarketException exception) {
+            return "excepcionTipo=" + error.getClass().getName()
+                    + ", reason=" + exception.reason();
+        }
+        return "excepcionTipo=" + error.getClass().getName();
     }
 
     private long longValue(String sql, Object... args) {
