@@ -14,6 +14,7 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
     private final WebDriverFactory webDriverFactory;
     private final WhoScoredStatisticsConfiguration statisticsConfiguration;
     private final WhoScoredStatisticsFeedClient feedClient;
+    private final WhoScoredStatisticsResponseValidator responseValidator;
 
     @Autowired
     public WhoScoredStatisticsAdapter(org.springframework.core.env.Environment environment,
@@ -29,6 +30,7 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         this.webDriverFactory = webDriverFactory;
         this.statisticsConfiguration = statisticsConfiguration;
         this.feedClient = new WhoScoredStatisticsFeedClient(baseUrl, objectMapper, statisticsConfiguration);
+        this.responseValidator = new WhoScoredStatisticsResponseValidator();
     }
 
     @Override
@@ -80,33 +82,12 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         try {
             WhoScoredStatisticsFeedClient.Resultado resultado = feedClient.adquirir(
                     competicion, familia.category(), familia.subcategory(), session);
-            validarCompletitud(resultado.response(), competicion, familia, resultado.url());
+            responseValidator.validar(resultado.response(), competicion, familia.name(), resultado.url());
             return resultado.response();
         } catch (WhoScoredStatisticsException exception) {
             throw exception;
         } catch (RuntimeException exception) {
             throw new WhoScoredStatisticsException("No se pudo leer el JSON de statisticsfeed.", exception);
-        }
-    }
-
-    private void validarCompletitud(WhoScoredStatisticsFeedResponseDTO response,
-            CompeticionEstadistica competicion, FamiliaFeed familia, String url) {
-        List<String> failures = new java.util.ArrayList<>();
-        if (response == null) {
-            failures.add("response == null");
-            throw errorDeCompletitud(new CompletitudContext(competicion, familia, null, null, null,
-                    null, null, url, failures));
-        }
-        Integer currentPage = response.currentPage();
-        Integer totalPages = response.totalPages();
-        Integer resultsPerPage = response.resultsPerPage();
-        Integer totalResults = response.totalResults();
-        Integer playersReceived = response.players() == null ? null : response.players().size();
-        agregarFallosMetadata(response, currentPage, totalPages, resultsPerPage, totalResults,
-                playersReceived, failures);
-        if (!failures.isEmpty()) {
-            throw errorDeCompletitud(new CompletitudContext(competicion, familia, currentPage,
-                    totalPages, resultsPerPage, totalResults, playersReceived, url, failures));
         }
     }
 
@@ -117,57 +98,6 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         }
         return end == value.length() ? value : value.substring(0, end);
     }
-
-    private void agregarFallosMetadata(WhoScoredStatisticsFeedResponseDTO response,
-            Integer currentPage, Integer totalPages, Integer resultsPerPage, Integer totalResults,
-            Integer playersReceived, List<String> failures) {
-        agregarFallosNulos(response, currentPage, totalPages, resultsPerPage, failures);
-        agregarFallosRangos(currentPage, totalPages, totalResults, resultsPerPage, failures);
-        if (totalResults != null && resultsPerPage != null && totalResults > resultsPerPage) {
-            failures.add("totalResults > resultsPerPage");
-        }
-        if (playersReceived != null && totalResults != null && !playersReceived.equals(totalResults)) {
-            failures.add("playersRecibidos != totalResults");
-        }
-    }
-
-    private void agregarFallosNulos(WhoScoredStatisticsFeedResponseDTO response,
-            Integer currentPage, Integer totalPages, Integer resultsPerPage, List<String> failures) {
-        if (currentPage == null) failures.add("currentPage == null");
-        if (totalPages == null) failures.add("totalPages == null");
-        if (response.totalResults() == null) failures.add("totalResults == null");
-        if (resultsPerPage == null) failures.add("resultsPerPage == null");
-        if (response.players() == null) failures.add("playerTableStats == null");
-    }
-
-    private void agregarFallosRangos(Integer currentPage, Integer totalPages, Integer totalResults,
-            Integer resultsPerPage, List<String> failures) {
-        if (currentPage != null && currentPage < 1) failures.add("currentPage < 1");
-        if (totalPages != null && totalPages < 1) failures.add("totalPages < 1");
-        if (totalResults != null && totalResults < 0) failures.add("totalResults < 0");
-        if (resultsPerPage != null && resultsPerPage < 1) failures.add("resultsPerPage < 1");
-        if (currentPage != null && currentPage != 1) failures.add("currentPage != 1");
-        if (totalPages != null && totalPages != 1) failures.add("totalPages != 1");
-    }
-
-    private WhoScoredStatisticsException errorDeCompletitud(CompletitudContext context) {
-        return new WhoScoredStatisticsException("WhoScored devolvio una respuesta paginada o incompleta: "
-                + "competicion=" + context.competicion() + ", familia=" + context.familia()
-                + ", currentPage=" + context.currentPage() + ", totalPages=" + context.totalPages()
-                + ", resultsPerPage=" + context.resultsPerPage() + ", totalResults=" + context.totalResults()
-                + ", playersRecibidos=" + context.playersReceived() + ", adquisicion="
-                + sanitizarAdquisicion(context.url()) + ", fallos=" + context.failures());
-    }
-
-    private record CompletitudContext(CompeticionEstadistica competicion, FamiliaFeed familia,
-            Integer currentPage, Integer totalPages, Integer resultsPerPage, Integer totalResults,
-            Integer playersReceived, String url, List<String> failures) { }
-
-    private String sanitizarAdquisicion(String url) {
-        return url == null ? null : url.replaceAll(
-                "(?i)(api[-_]?key|token|authorization|password|secret)=[^&]*", "$1=[REDACTED]");
-    }
-
 
     private SnapshotEstadisticasJugador consolidar(CompeticionEstadistica competicion,
             Map<FamiliaEstadistica, WhoScoredStatisticsFeedResponseDTO> respuestas) {
