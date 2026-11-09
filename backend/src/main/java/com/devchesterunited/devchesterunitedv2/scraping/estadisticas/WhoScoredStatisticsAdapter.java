@@ -2,27 +2,18 @@ package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
 
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.*;
 
 /** Adapter de WhoScored basado en Selenium y statisticsfeed. */
 @Component
 public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador {
-    private final String baseUrl;
-    private final ObjectMapper objectMapper;
     private final WebDriverFactory webDriverFactory;
     private final WhoScoredStatisticsConfiguration statisticsConfiguration;
+    private final WhoScoredStatisticsFeedClient feedClient;
 
     @Autowired
     public WhoScoredStatisticsAdapter(org.springframework.core.env.Environment environment,
@@ -35,10 +26,9 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
     WhoScoredStatisticsAdapter(String baseUrl, ObjectMapper objectMapper,
             WebDriverFactory webDriverFactory,
             WhoScoredStatisticsConfiguration statisticsConfiguration) {
-        this.baseUrl = quitarBarrasFinales(Objects.requireNonNull(baseUrl));
-        this.objectMapper = Objects.requireNonNull(objectMapper);
         this.webDriverFactory = webDriverFactory;
         this.statisticsConfiguration = statisticsConfiguration;
+        this.feedClient = new WhoScoredStatisticsFeedClient(baseUrl, objectMapper, statisticsConfiguration);
     }
 
     @Override
@@ -80,29 +70,21 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
                 new EnumMap<>(FamiliaEstadistica.class);
         for (FamiliaFeed familia : FamiliaFeed.values()) {
             if (familia == FamiliaFeed.PASSING && !statisticsConfiguration.isPassingEnabled()) continue;
-            respuestas.put(familia.familiaEstadistica(), adquirirFamilia(competicion, familia, session.driver()));
+            respuestas.put(familia.familiaEstadistica(), adquirirFamilia(competicion, familia, session));
         }
         return consolidar(competicion, respuestas);
     }
 
     private WhoScoredStatisticsFeedResponseDTO adquirirFamilia(CompeticionEstadistica competicion,
-            FamiliaFeed familia, WebDriver driver) {
+            FamiliaFeed familia, WebDriverSession session) {
         try {
-            String url = construirUrl(competicion, familia);
-            driver.get(url);
-            WebElement bodyElement = new WebDriverWait(driver, Duration.ofSeconds(30))
-                    .until(ExpectedConditions.presenceOfElementLocated(By.tagName("body")));
-            String body = bodyElement.getDomProperty("textContent");
-            if (body == null || body.isBlank()) {
-                throw new WhoScoredStatisticsException("WhoScored devolvio un body vacio.");
-            }
-            WhoScoredStatisticsFeedResponseDTO response = objectMapper.readValue(
-                    body, WhoScoredStatisticsFeedResponseDTO.class);
-            validarCompletitud(response, competicion, familia, url);
-            return response;
+            WhoScoredStatisticsFeedClient.Resultado resultado = feedClient.adquirir(
+                    competicion, familia.category(), familia.subcategory(), session);
+            validarCompletitud(resultado.response(), competicion, familia, resultado.url());
+            return resultado.response();
         } catch (WhoScoredStatisticsException exception) {
             throw exception;
-        } catch (IOException | RuntimeException exception) {
+        } catch (RuntimeException exception) {
             throw new WhoScoredStatisticsException("No se pudo leer el JSON de statisticsfeed.", exception);
         }
     }
@@ -186,26 +168,6 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
                 "(?i)(api[-_]?key|token|authorization|password|secret)=[^&]*", "$1=[REDACTED]");
     }
 
-    private String construirUrl(CompeticionEstadistica competicion, FamiliaFeed familia) {
-        var pair = statisticsConfiguration.forCompetition(competicion);
-        String endpoint = statisticsConfiguration.getEndpoint();
-        if (!endpoint.startsWith("http://") && !endpoint.startsWith("https://")) {
-            if (baseUrl.isBlank()) throw new WhoScoredStatisticsException("WhoScored no esta configurado.");
-            endpoint = baseUrl + (endpoint.startsWith("/") ? endpoint : "/" + endpoint);
-        }
-        return UriComponentsBuilder.fromUriString(endpoint)
-                .queryParam("category", familia.category())
-                .queryParam("subcategory", familia.subcategory())
-                .queryParam("statsAccumulationType", statisticsConfiguration.getStatsAccumulationType())
-                .queryParam("isCurrent", statisticsConfiguration.isCurrent())
-                .queryParam("stageId", pair.getStageId())
-                .queryParam("tournamentOptions", pair.getTournamentOptions())
-                .queryParam("sortBy", statisticsConfiguration.getSortBy())
-                .queryParam("field", statisticsConfiguration.getField())
-                .queryParam("isMinApp", statisticsConfiguration.isMinApp())
-                .queryParam("numberOfPlayersToPick", statisticsConfiguration.getNumberOfPlayersToPick())
-                .build().encode().toUriString();
-    }
 
     private SnapshotEstadisticasJugador consolidar(CompeticionEstadistica competicion,
             Map<FamiliaEstadistica, WhoScoredStatisticsFeedResponseDTO> respuestas) {
