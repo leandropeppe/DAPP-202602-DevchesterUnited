@@ -27,6 +27,9 @@ import com.devchesterunited.devchesterunitedv2.service.event.JugadorActivadoEven
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoSyncLock;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoEquipoWriter;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoJugadorWriter;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoAusenciaProcessor;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoJugadorActivationPublisher;
+import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoSyncCoordinator;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoUsuarioValidator;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SincronizacionCatalogoServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,10 +68,17 @@ class SincronizacionCatalogoServiceTest {
 
     @BeforeEach
     void preparar() {
+        CatalogoEquipoWriter equipoWriter = new CatalogoEquipoWriter(equipos, identidadesEquipos);
+        CatalogoJugadorWriter jugadorWriter = new CatalogoJugadorWriter(
+                jugadores, identidades, new JugadorMapper());
         servicio = new SincronizacionCatalogoServiceImpl(adapter,
-                new CatalogoEquipoWriter(equipos, identidadesEquipos),
-                new CatalogoJugadorWriter(jugadores, identidades, new JugadorMapper()),
-                usuarioValidator, syncLock, Clock.fixed(AHORA, java.time.ZoneOffset.UTC), eventos);
+                new CatalogoSyncCoordinator(
+                        equipoWriter,
+                        jugadorWriter,
+                        new CatalogoAusenciaProcessor(equipoWriter, jugadorWriter),
+                        new CatalogoJugadorActivationPublisher(eventos),
+                        Clock.fixed(AHORA, java.time.ZoneOffset.UTC)),
+                usuarioValidator, syncLock);
         lenient().when(identidadesEquipos.findAllByProveedorAndExternalIdIn(any(), anyList())).thenReturn(List.of());
         lenient().when(identidadesEquipos.findAllByProveedor(any())).thenReturn(List.of());
         lenient().when(equipos.findAll()).thenReturn(List.of());
