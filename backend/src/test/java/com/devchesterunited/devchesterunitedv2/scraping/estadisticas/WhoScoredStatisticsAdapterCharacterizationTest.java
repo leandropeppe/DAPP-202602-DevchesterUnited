@@ -80,10 +80,30 @@ class WhoScoredStatisticsAdapterCharacterizationTest {
                 .containsExactly(101L, 102L);
     }
 
+    @Test
+    void agrupaPorPlayerIdAunqueAparezcaIntercaladoYRepetidoEnUnaFamilia() {
+        Fixture fixture = fixture(
+                response(player(102, "Jugador Dos", 202L, null),
+                        player(101, "Jugador Uno", 201L, null),
+                        player(102, "Jugador Dos", 202L, null)),
+                response(player(103, "Jugador Tres", 203L, null),
+                        player(101, "Jugador Uno", 201L, null)),
+                response(player(102, "Jugador Dos", 202L, null),
+                        player(103, "Jugador Tres", 203L, null)));
+
+        var registros = fixture.adapter().obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE)
+                .registros();
+
+        assertThat(registros).hasSize(3)
+                .extracting(registro -> registro.identidad().playerId())
+                .containsExactly(102L, 101L, 103L);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
             "\"playerId\":null,\"name\":\"Ana Perez\"",
             "\"playerId\":0,\"name\":\"Ana Perez\"",
+            "\"playerId\":-1,\"name\":\"Ana Perez\"",
             "\"playerId\":101,\"name\":null",
             "\"playerId\":101,\"name\":\"   \""
     })
@@ -119,6 +139,21 @@ class WhoScoredStatisticsAdapterCharacterizationTest {
     }
 
     @Test
+    void conservaElPrimerValorNoNuloIncluidoElCero() {
+        Fixture fixture = fixture(
+                response(playerWithFields(101, "\"goal\":0,\"rating\":0.0"),
+                        playerWithFields(101, "\"goal\":5,\"rating\":9.0")),
+                response(playerWithFields(101, "\"goal\":8,\"rating\":8.0")),
+                response(playerWithFields(101, "\"goal\":7,\"rating\":7.0")));
+
+        var metricas = fixture.adapter().obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE)
+                .registros().get(0).metricas();
+
+        assertThat(metricas.goles()).isZero();
+        assertThat(metricas.valoracion()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
     void conservaCeroDeFamiliaCanonicaAunqueOtraFamiliaTengaOtroValor() {
         Fixture fixture = fixture(
                 response(playerWithMetric(101, "Ana Perez", 201L, "keyPassPerGame", "9.90")),
@@ -132,12 +167,104 @@ class WhoScoredStatisticsAdapterCharacterizationTest {
     }
 
     @Test
+    void aplicaPrioridadesEspecificasDeOfensivaYDefensa() {
+        Fixture fixture = fixture(
+                response(playerWithFields(101, "\"keyPassPerGame\":9.9,"
+                        + "\"dribbleWonPerGame\":9.8,\"tacklePerGame\":9.7")),
+                response(playerWithFields(101, "\"keyPassPerGame\":1.1,"
+                        + "\"dribbleWonPerGame\":2.2")),
+                response(playerWithFields(101, "\"tacklePerGame\":3.3")));
+
+        var metricas = fixture.adapter().obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE)
+                .registros().get(0).metricas();
+
+        assertThat(metricas.pasesClave()).isEqualByComparingTo(new BigDecimal("1.10"));
+        assertThat(metricas.regates()).isEqualByComparingTo(new BigDecimal("2.20"));
+        assertThat(metricas.tackles()).isEqualByComparingTo(new BigDecimal("3.30"));
+    }
+
+    @Test
+    void normalizaNombreYEquipoYConservaElPrimerTeamIdNoNulo() {
+        Fixture fixture = fixture(
+                response(playerWithDetails(101, "  Ana   Perez  ", null, "   ")),
+                response(playerWithDetails(101, "Otro Nombre", 201L, "  Equipo   Unido  ")),
+                response(playerWithDetails(101, "Tercer Nombre", 202L, "Otro Equipo")));
+
+        var identidad = fixture.adapter().obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE)
+                .registros().get(0).identidad();
+
+        assertThat(identidad.nombre()).isEqualTo("Ana Perez");
+        assertThat(identidad.teamId()).isEqualTo(201L);
+        assertThat(identidad.nombreEquipo()).isEqualTo("Equipo Unido");
+    }
+
+    @Test
+    void construyeLasCuatroFamiliasDeMetricasConValoresRepresentativos() {
+        Fixture fixture = fixture(true,
+                response(playerWithFields(101, "\"apps\":12,\"subOn\":2,\"minsPlayed\":900,"
+                        + "\"manOfTheMatch\":1,\"aerialWonPerGame\":1.2,\"rating\":7.4,"
+                        + "\"yellowCard\":1,\"redCard\":0")),
+                response(playerWithFields(101, "\"goal\":8,\"assistTotal\":4,\"shotsPerGame\":2.1,"
+                        + "\"keyPassPerGame\":1.7,\"dribbleWonPerGame\":2.1,"
+                        + "\"foulGivenPerGame\":0.3,\"offsideGivenPerGame\":0.2,"
+                        + "\"dispossessedPerGame\":0.4,\"turnoverPerGame\":0.5")),
+                response(playerWithFields(101, "\"tacklePerGame\":1.9,\"interceptionPerGame\":1.1,"
+                        + "\"foulsPerGame\":0.2,\"offsideWonPerGame\":0.3,\"clearancePerGame\":4.4,"
+                        + "\"wasDribbledPerGame\":0.5,\"outfielderBlockPerGame\":0.6,\"goalOwn\":0")),
+                response(playerWithFields(101, "\"totalPassesPerGame\":44.2,\"passSuccess\":86.44,"
+                        + "\"accurateCrossesPerGame\":1.2,\"accurateLongPassPerGame\":2.3,"
+                        + "\"accurateThroughBallPerGame\":0.4")));
+
+        var metricas = fixture.adapter().obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE)
+                .registros().get(0).metricas();
+
+        assertThat(metricas.generales().apps()).isEqualTo(12);
+        assertThat(metricas.ofensivas().goal()).isEqualTo(8);
+        assertThat(metricas.defensivas().tacklePerGame()).hasToString("1.90");
+        assertThat(metricas.pases().passSuccess()).hasToString("86.44");
+    }
+
+    @Test
     void omitePassingCuandoLaConfiguracionLoDeshabilita() {
         Fixture fixture = fixture(response(player(101, "Ana Perez", 201L, null)), false);
 
         fixture.adapter().obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE);
 
         verify(fixture.driver(), times(3)).get(anyString());
+    }
+
+    @Test
+    void noInventaMetricasDePasesCuandoPassingEstaDeshabilitado() {
+        Fixture fixture = fixture(response(player(101, "Ana Perez", 201L, null)), false);
+
+        var pases = fixture.adapter().obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE)
+                .registros().get(0).metricas().pases();
+
+        assertThat(pases.totalPassesPerGame()).isNull();
+        assertThat(pases.passSuccess()).isNull();
+        assertThat(pases.accurateCrossesPerGame()).isNull();
+        assertThat(pases.accurateLongPassPerGame()).isNull();
+        assertThat(pases.accurateThroughBallPerGame()).isNull();
+    }
+
+    @Test
+    void propagaLaExcepcionExistenteDeMetricasInvalidas() {
+        Fixture fixture = fixture(response(playerWithFields(101, "\"goal\":-1")));
+
+        assertThatThrownBy(() -> fixture.adapter().obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
+                .isInstanceOf(WhoScoredStatisticsException.class)
+                .hasMessage("No se pudo adquirir statisticsfeed de WhoScored.")
+                .hasCauseInstanceOf(IllegalArgumentException.class)
+                .hasRootCauseMessage("La métrica goal no puede ser negativa.");
+    }
+
+    @Test
+    void rechazaJugadorNuloConLaExcepcionYMensajeExistentes() {
+        Fixture fixture = fixture(response("null"));
+
+        assertThatThrownBy(() -> fixture.adapter().obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
+                .isInstanceOf(WhoScoredStatisticsException.class)
+                .hasMessage("WhoScored no proporciono identidad suficiente del jugador.");
     }
 
     @Test
@@ -192,6 +319,10 @@ class WhoScoredStatisticsAdapterCharacterizationTest {
         return fixture("https://example.test", "/statisticsfeed", passingEnabled, response);
     }
 
+    private Fixture fixture(boolean passingEnabled, String... responses) {
+        return fixture("https://example.test", "/statisticsfeed", passingEnabled, responses);
+    }
+
     private Fixture fixture(String baseUrl, String endpoint, boolean passingEnabled, String... responses) {
         WebDriver driver = mock(WebDriver.class);
         WebElement body = mock(WebElement.class);
@@ -244,6 +375,16 @@ class WhoScoredStatisticsAdapterCharacterizationTest {
     private String playerWithMetric(long id, String name, Long teamId, String metric, String value) {
         return "{\"playerId\":" + id + ",\"name\":" + json(name) + ",\"teamId\":"
                 + teamId + ",\"" + metric + "\":" + value + "}";
+    }
+
+    private String playerWithFields(long id, String... fields) {
+        return "{\"playerId\":" + id + ",\"name\":\"Ana Perez\",\"teamId\":201"
+                + (fields.length == 0 ? "" : "," + String.join(",", fields)) + "}";
+    }
+
+    private String playerWithDetails(long id, String name, Long teamId, String teamName) {
+        return "{\"playerId\":" + id + ",\"name\":" + json(name) + ",\"teamId\":"
+                + (teamId == null ? "null" : teamId) + ",\"teamName\":" + json(teamName) + "}";
     }
 
     private String json(String value) {
