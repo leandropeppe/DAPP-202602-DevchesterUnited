@@ -1,11 +1,17 @@
 package com.devchesterunited.devchesterunitedv2.scraping.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.*;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.CompeticionEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.FamiliaEstadistica;
+import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstadisticasJugador;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /** Adapter de WhoScored basado en Selenium y statisticsfeed. */
 @Component
@@ -91,14 +97,6 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         } catch (RuntimeException exception) {
             throw new WhoScoredStatisticsException("No se pudo leer el JSON de statisticsfeed.", exception);
         }
-    }
-
-    private static String quitarBarrasFinales(String value) {
-        int end = value.length();
-        while (end > 0 && value.charAt(end - 1) == '/') {
-            end--;
-        }
-        return end == value.length() ? value : value.substring(0, end);
     }
 
     private static final String SUMMARY_CATEGORY = "summary";
