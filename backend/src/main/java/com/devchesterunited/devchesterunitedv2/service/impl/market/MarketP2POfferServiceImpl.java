@@ -85,13 +85,24 @@ public class MarketP2POfferServiceImpl implements MarketP2POfferService {
     }
 
     private static void validarCommand(MarketP2POfferCommand command) {
-        if (command == null || command.usuarioId() == null || command.jugadorId() == null
-                || command.cantidad() == null || command.cantidad() <= 0
-                || command.claveIdempotencia() == null
-                || command.claveIdempotencia().isBlank()
-                || command.claveIdempotencia().trim().length() > 200) {
+        if (command == null || identidadInvalida(command) || cantidadInvalida(command)
+                || claveInvalida(command)) {
             throw new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
                     "La solicitud de oferta no es valida.");
         }
+    }
+
+    private static boolean identidadInvalida(MarketP2POfferCommand command) {
+        return command.usuarioId() == null || command.jugadorId() == null;
+    }
+
+    private static boolean cantidadInvalida(MarketP2POfferCommand command) {
+        return command.cantidad() == null || command.cantidad() <= 0;
+    }
+
+    private static boolean claveInvalida(MarketP2POfferCommand command) {
+        return command.claveIdempotencia() == null
+                || command.claveIdempotencia().isBlank()
+                || command.claveIdempotencia().trim().length() > 200;
     }
 }
