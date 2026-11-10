@@ -80,25 +80,12 @@ public class MarketP2PPurchasePersistenceServiceImpl {
         assertReservation(offer, resources.sellerHolding());
 
         UUID tradeId = UUID.randomUUID();
-        TradeP2PEntity trade = new TradeP2PEntity(
-                new TradeP2PEntity.Identidad(tradeId, offer.getId(), offer.getVendedorId(),
-                        settlement.buyerId(), settlement.target().playerId()),
-                new TradeP2PEntity.Liquidacion(settlement.target().playerName(),
-                        settlement.quantity(), settlement.quote().pricePerToken(), total),
-                new TradeP2PEntity.Confirmacion(settlement.quote().quoteId(),
-                        settlement.quote().version(), settlement.requestId(),
-                        settlement.confirmedAt()),
-                new TradeP2PEntity.Snapshot(offer.getEstado(), remaining,
-                        resources.sellerHolding().getCantidadReservada()));
-        trade.registrarPnlRealizado(pnl);
+        TradeP2PEntity trade = crearTrade(settlement, tradeId, offer, total, pnl,
+                resources.sellerHolding().getCantidadReservada());
         trades.saveAndFlush(trade);
         accounting.persistir(trade, resources.buyerAccount().getId(),
                 resources.sellerAccount().getId());
-        asientos.saveAll(List.of(
-                entry(tradeId, settlement.buyerId(), AsientoP2PEntity.P2P_PURCHASE,
-                        settlement.quantity(), total, settlement.confirmedAt()),
-                entry(tradeId, offer.getVendedorId(), AsientoP2PEntity.P2P_SALE,
-                        settlement.quantity(), total, settlement.confirmedAt())));
+        asientos.saveAll(crearAsientos(tradeId, settlement, offer, total));
         return result(settlement, tradeId, offer, remaining,
                 resources.sellerHolding().getCantidadReservada(), total);
     }
@@ -183,6 +170,32 @@ public class MarketP2PPurchasePersistenceServiceImpl {
         return new AsientoP2PEntity(
                 new AsientoP2PEntity.Identidad(UUID.randomUUID(), tradeId, userId, role),
                 new AsientoP2PEntity.Importe(quantity, amount, createdAt));
+    }
+
+    private TradeP2PEntity crearTrade(MarketP2PPurchaseSettlement settlement, UUID tradeId,
+            OfertaVentaP2PEntity offer, BigDecimal total, BigDecimal pnl, Long reserved) {
+        TradeP2PEntity trade = new TradeP2PEntity(
+                new TradeP2PEntity.Identidad(tradeId, offer.getId(), offer.getVendedorId(),
+                        settlement.buyerId(), settlement.target().playerId()),
+                new TradeP2PEntity.Liquidacion(settlement.target().playerName(),
+                        settlement.quantity(), settlement.quote().pricePerToken(), total),
+                new TradeP2PEntity.Confirmacion(settlement.quote().quoteId(),
+                        settlement.quote().version(), settlement.requestId(),
+                        settlement.confirmedAt()),
+                new TradeP2PEntity.Snapshot(offer.getEstado(), offer.getCantidadRestante(),
+                        reserved));
+        trade.registrarPnlRealizado(pnl);
+        return trade;
+    }
+
+    private List<AsientoP2PEntity> crearAsientos(UUID tradeId,
+            MarketP2PPurchaseSettlement settlement, OfertaVentaP2PEntity offer,
+            BigDecimal total) {
+        return List.of(
+                entry(tradeId, settlement.buyerId(), AsientoP2PEntity.P2P_PURCHASE,
+                        settlement.quantity(), total, settlement.confirmedAt()),
+                entry(tradeId, offer.getVendedorId(), AsientoP2PEntity.P2P_SALE,
+                        settlement.quantity(), total, settlement.confirmedAt()));
     }
 
     private MarketP2PPurchaseResult result(MarketP2PPurchaseSettlement settlement,
