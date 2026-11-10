@@ -130,6 +130,12 @@ public class OfertaVentaP2PEntity {
     public Instant getActualizadoEn() { return actualizadoEn; }
 
     private void validarInvariantes() {
+        validarCantidades();
+        validarIdentidadYEstado();
+        validarFechas();
+    }
+
+    private void validarCantidades() {
         if (cantidadOriginal == null || cantidadOriginal <= 0 || cantidadRestante == null
                 || cantidadVendida == null || cantidadLiberada == null
                 || cantidadRestante < 0 || cantidadVendida < 0 || cantidadLiberada < 0
@@ -137,10 +143,16 @@ public class OfertaVentaP2PEntity {
                 + cantidadLiberada)) {
             throw new IllegalArgumentException("Las cantidades de la oferta no son válidas.");
         }
+    }
+
+    private void validarIdentidadYEstado() {
         if (vendedorId == null || jugadorId == null || id == null || estado == null
                 || solicitudIdempotenciaId == null || creadoEn == null) {
             throw new IllegalArgumentException("La oferta P2P está incompleta.");
         }
+    }
+
+    private void validarFechas() {
         if (actualizadoEn != null && actualizadoEn.isBefore(creadoEn)) {
             throw new IllegalArgumentException("La actualización de la oferta es anterior a su creación.");
         }
