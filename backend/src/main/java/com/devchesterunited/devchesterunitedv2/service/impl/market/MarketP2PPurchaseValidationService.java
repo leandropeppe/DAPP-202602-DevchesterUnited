@@ -51,51 +51,91 @@ public class MarketP2PPurchaseValidationService {
             java.util.UUID requestId) {
         EstadoMercadoEntity estado = estados.findSingletonForRead()
                 .orElseThrow(this::marketNotReady);
-        if (!EstadoMercado.READY.name().equals(estado.getStatus())) {
-            throw marketNotReady();
-        }
+        validarMercadoOperativo(estado);
         OfertaVentaP2PEntity offer = ofertas.findByIdForUpdate(command.offerId())
                 .orElseThrow(this::offerNotPurchasable);
-        if (!OfertaVentaP2PEntity.OPEN.equals(offer.getEstado())
-                && !OfertaVentaP2PEntity.PARTIALLY_FILLED.equals(offer.getEstado())) {
-            throw offerNotPurchasable();
-        }
-        if (!command.playerId().equals(offer.getJugadorId())) {
-            throw new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
-                    "La oferta no corresponde al jugador solicitado.");
-        }
-        if (command.usuarioId().equals(offer.getVendedorId())) {
-            throw new TokenMarketException(TokenMarketException.Reason.OFFER_NOT_PURCHASABLE,
-                    "El vendedor no puede comprar su propia oferta.");
-        }
-        if (command.quantity() > offer.getCantidadRestante()) {
-            throw new TokenMarketException(TokenMarketException.Reason.INSUFFICIENT_AVAILABLE_QUANTITY,
-                    "La cantidad solicitada supera el remanente de la oferta.");
-        }
+        validarOfertaAbierta(offer);
+        validarJugadorDeOferta(command, offer);
+        validarCompradorDistintoDelVendedor(command, offer);
+        validarCantidadDisponible(command, offer);
 
         JugadorEntity player = jugadores.findByIdForUpdate(command.playerId())
                 .orElseThrow(this::inactivePlayer);
-        if (!player.isActivo()) {
-            throw inactivePlayer();
-        }
+        validarJugadorActivo(player);
         CabeceraCotizacionMercadoEntity header = cabeceras
                 .findByJugadorIdForUpdate(command.playerId())
                 .orElseThrow(this::quoteUnavailable);
         Instant now = clock.instant();
         QuoteVersion quote = currentQuote(command.playerId(), header);
-        if (!sameQuote(command, header)) {
-            throw quoteChanged(quote);
-        }
-        if (quote == null) {
-            throw quoteUnavailable();
-        }
-        if (!quote.isValidAt(now)) {
-            throw quoteUnavailable();
-        }
+        validarIdentidadDeCotizacion(command, header, quote);
+        validarCotizacionDisponible(quote);
+        validarCotizacionVigente(quote, now);
         MarketP2PPurchaseTarget target = new MarketP2PPurchaseTarget(
                 offer.getId(), player.getId(), player.getNombre());
         return new MarketP2PPurchaseSettlement(requestId, command.usuarioId(), target,
                 quote, command.quantity(), now);
+    }
+
+    private void validarMercadoOperativo(EstadoMercadoEntity estado) {
+        if (!EstadoMercado.READY.name().equals(estado.getStatus())) {
+            throw marketNotReady();
+        }
+    }
+
+    private void validarOfertaAbierta(OfertaVentaP2PEntity offer) {
+        if (!OfertaVentaP2PEntity.OPEN.equals(offer.getEstado())
+                && !OfertaVentaP2PEntity.PARTIALLY_FILLED.equals(offer.getEstado())) {
+            throw offerNotPurchasable();
+        }
+    }
+
+    private void validarJugadorDeOferta(MarketP2PPurchaseCommand command,
+            OfertaVentaP2PEntity offer) {
+        if (!command.playerId().equals(offer.getJugadorId())) {
+            throw new TokenMarketException(TokenMarketException.Reason.INVALID_INPUT,
+                    "La oferta no corresponde al jugador solicitado.");
+        }
+    }
+
+    private void validarCompradorDistintoDelVendedor(MarketP2PPurchaseCommand command,
+            OfertaVentaP2PEntity offer) {
+        if (command.usuarioId().equals(offer.getVendedorId())) {
+            throw new TokenMarketException(TokenMarketException.Reason.OFFER_NOT_PURCHASABLE,
+                    "El vendedor no puede comprar su propia oferta.");
+        }
+    }
+
+    private void validarCantidadDisponible(MarketP2PPurchaseCommand command,
+            OfertaVentaP2PEntity offer) {
+        if (command.quantity() > offer.getCantidadRestante()) {
+            throw new TokenMarketException(TokenMarketException.Reason.INSUFFICIENT_AVAILABLE_QUANTITY,
+                    "La cantidad solicitada supera el remanente de la oferta.");
+        }
+    }
+
+    private void validarJugadorActivo(JugadorEntity player) {
+        if (!player.isActivo()) {
+            throw inactivePlayer();
+        }
+    }
+
+    private void validarIdentidadDeCotizacion(MarketP2PPurchaseCommand command,
+            CabeceraCotizacionMercadoEntity header, QuoteVersion quote) {
+        if (!sameQuote(command, header)) {
+            throw quoteChanged(quote);
+        }
+    }
+
+    private void validarCotizacionDisponible(QuoteVersion quote) {
+        if (quote == null) {
+            throw quoteUnavailable();
+        }
+    }
+
+    private void validarCotizacionVigente(QuoteVersion quote, Instant now) {
+        if (!quote.isValidAt(now)) {
+            throw quoteUnavailable();
+        }
     }
 
     public java.util.UUID resolverJugadorId(java.util.UUID offerId) {

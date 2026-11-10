@@ -128,14 +128,26 @@ public class MarketP2PCancellationServiceImpl implements MarketP2PCancellationSe
     }
 
     private void validarEstadoCancelable(OfertaVentaP2PEntity oferta) {
+        validarOfertaNoCancelada(oferta);
+        validarOfertaNoCompletada(oferta);
+        validarOfertaAbiertaParaCancelacion(oferta);
+    }
+
+    private void validarOfertaNoCancelada(OfertaVentaP2PEntity oferta) {
         if (OfertaVentaP2PEntity.CANCELLED.equals(oferta.getEstado())) {
             throw new TokenMarketException(TokenMarketException.Reason.OFFER_ALREADY_CANCELLED,
                     "La oferta ya fue cancelada.");
         }
+    }
+
+    private void validarOfertaNoCompletada(OfertaVentaP2PEntity oferta) {
         if (OfertaVentaP2PEntity.FILLED.equals(oferta.getEstado())) {
             throw new TokenMarketException(TokenMarketException.Reason.OFFER_NOT_PURCHASABLE,
                     "La oferta ya fue completada.");
         }
+    }
+
+    private void validarOfertaAbiertaParaCancelacion(OfertaVentaP2PEntity oferta) {
         if (!OfertaVentaP2PEntity.OPEN.equals(oferta.getEstado())
                 && !OfertaVentaP2PEntity.PARTIALLY_FILLED.equals(oferta.getEstado())) {
             throw new TokenMarketException(TokenMarketException.Reason.OFFER_NOT_PURCHASABLE,
