@@ -164,7 +164,10 @@ class MarketPurchaseConcurrencyIntegrationTest extends PostgresTestSupport {
                 () -> purchase(fixture.request(fixture.userOne, key, 1)),
                 () -> purchase(fixture.request(fixture.userOne, key, 2)));
 
-        assertThat(outcomes.stream().filter(this::confirmed).count()).isEqualTo(1);
+        assertThat(outcomes.stream().filter(this::confirmed).count())
+                .withFailMessage(() -> "Resultados concurrentes con parametros distintos: "
+                        + describir(outcomes))
+                .isEqualTo(1);
         long confirmedQuantity = longValue("SELECT COALESCE(MAX(quantity), 0) "
                 + "FROM market_confirmed_transactions WHERE user_id = ?", fixture.userOne);
         assertThat(confirmedQuantity).isIn(1L, 2L);
