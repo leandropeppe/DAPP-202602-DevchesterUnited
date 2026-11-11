@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.stereotype.Component;
 
 import java.nio.ByteBuffer;
@@ -34,6 +35,17 @@ public class MarketOperationExecutionLock {
         Boolean acquired = jdbc.queryForObject(
                 "SELECT pg_try_advisory_xact_lock(?::bigint)", Boolean.class, key);
         return Boolean.TRUE.equals(acquired);
+    }
+
+    /** Espera hasta adquirir el lock en la transaccion actual. */
+    public void acquire(UUID usuarioId, String claveIdempotencia) {
+        long key = deriveKey(usuarioId, claveIdempotencia);
+        jdbc.execute("SELECT pg_advisory_xact_lock(?::bigint)",
+                (PreparedStatementCallback<Void>) statement -> {
+                    statement.setLong(1, key);
+                    statement.execute();
+                    return null;
+                });
     }
 
     static long deriveKey(UUID usuarioId, String claveIdempotencia) {

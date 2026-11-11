@@ -129,9 +129,7 @@ public class MarketIdempotencyServiceImpl implements MarketIdempotencyService,
     @Transactional
     public void asegurarPropiedadDeEjecucion(UUID solicitudId, UUID tokenEjecucion) {
         SolicitudIdempotenciaMercadoEntity entity = findWithoutLock(solicitudId);
-        if (!executionLock.tryAcquire(entity.getUsuarioId(), entity.getClaveIdempotencia())) {
-            throw staleRequest();
-        }
+        executionLock.acquire(entity.getUsuarioId(), entity.getClaveIdempotencia());
         entity = findForTransition(solicitudId);
         if (!SolicitudIdempotenciaMercadoEntity.STATUS_PROCESSING.equals(entity.getStatus())
                 || tokenEjecucion == null

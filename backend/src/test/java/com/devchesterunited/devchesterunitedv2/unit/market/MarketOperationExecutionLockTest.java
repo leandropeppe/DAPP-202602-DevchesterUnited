@@ -14,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 
 import java.util.UUID;
 
@@ -50,5 +51,16 @@ class MarketOperationExecutionLockTest {
         verify(jdbc).queryForObject(
                 org.mockito.ArgumentMatchers.contains("pg_try_advisory_xact_lock"),
                 eq(Boolean.class), any());
+    }
+
+    @Test
+    void adquiereElLockDeFormaBloqueanteEnLaTransaccionActual() {
+        var lock = new MarketOperationExecutionLock(jdbc);
+
+        lock.acquire(USER_ID, "market-key");
+
+        verify(jdbc).execute(
+                org.mockito.ArgumentMatchers.contains("pg_advisory_xact_lock"),
+                org.mockito.ArgumentMatchers.<PreparedStatementCallback<Void>>any());
     }
 }

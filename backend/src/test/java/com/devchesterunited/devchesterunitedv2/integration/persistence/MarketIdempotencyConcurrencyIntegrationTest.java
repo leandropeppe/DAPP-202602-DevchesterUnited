@@ -14,6 +14,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempote
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketIdempotencyParameterHasher;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketOperationExecutionLock;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyExecutionPort;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketIdempotencyService;
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import org.junit.jupiter.api.AfterEach;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -32,6 +34,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 
 /**
  * T033: concurrencia real de la reclamacion, separada de las compras/ventas.
@@ -50,11 +54,14 @@ class MarketIdempotencyConcurrencyIntegrationTest extends PostgresTestSupport {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
-    @Autowired
+    @MockitoSpyBean
     private MarketOperationExecutionLock operationLock;
 
     @Autowired
     private MarketIdempotencyService idempotency;
+
+    @Autowired
+    private MarketIdempotencyExecutionPort executionGuard;
 
     @Autowired
     private UsuarioRepository usuarios;
@@ -93,6 +100,42 @@ class MarketIdempotencyConcurrencyIntegrationTest extends PostgresTestSupport {
             assertThat(first.get(10, TimeUnit.SECONDS)).isTrue();
         } finally {
             releaseFirst.countDown();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void asegurarPropiedadEsperaElLockTemporalSinMarcarLaSolicitudComoStale() throws Exception {
+        UUID user = createUser();
+        var request = request(user, "execution-key", 1L);
+        MarketIdempotencyResult claim = idempotency.reclamar(request);
+        CountDownLatch lockHeld = new CountDownLatch(1);
+        CountDownLatch acquisitionStarted = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            doAnswer(invocation -> {
+                acquisitionStarted.countDown();
+                return invocation.callRealMethod();
+            }).when(operationLock).acquire(eq(user), eq("execution-key"));
+
+            Future<Boolean> holder = executor.submit(() -> inTransaction(() -> {
+                boolean acquired = operationLock.tryAcquire(user, "execution-key");
+                lockHeld.countDown();
+                await(release);
+                return acquired;
+            }));
+            assertThat(lockHeld.await(10, TimeUnit.SECONDS)).isTrue();
+
+            Future<?> execution = executor.submit(() -> executionGuard
+                    .asegurarPropiedadDeEjecucion(claim.solicitudId(), claim.tokenEjecucion()));
+
+            assertThat(acquisitionStarted.await(10, TimeUnit.SECONDS)).isTrue();
+            release.countDown();
+            assertThat(holder.get(10, TimeUnit.SECONDS)).isTrue();
+            execution.get(10, TimeUnit.SECONDS);
+        } finally {
+            release.countDown();
             executor.shutdownNow();
         }
     }
@@ -165,6 +208,9 @@ class MarketIdempotencyConcurrencyIntegrationTest extends PostgresTestSupport {
         assertThat(reclaimed.solicitudId()).isEqualTo(requestId);
         assertThat(reclaimed.tokenEjecucion()).isNotEqualTo(oldToken);
         assertThatThrownBy(() -> idempotency.confirmar(requestId, oldToken, UUID.randomUUID()))
+                .isInstanceOfSatisfying(TokenMarketException.class, exception ->
+                        assertThat(exception.reason()).isEqualTo(TokenMarketException.Reason.STALE_REQUEST));
+        assertThatThrownBy(() -> executionGuard.asegurarPropiedadDeEjecucion(requestId, oldToken))
                 .isInstanceOfSatisfying(TokenMarketException.class, exception ->
                         assertThat(exception.reason()).isEqualTo(TokenMarketException.Reason.STALE_REQUEST));
         assertThat(jdbc.queryForObject(
