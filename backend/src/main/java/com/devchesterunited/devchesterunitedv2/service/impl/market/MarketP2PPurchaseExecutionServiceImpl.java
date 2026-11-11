@@ -36,13 +36,17 @@ public class MarketP2PPurchaseExecutionServiceImpl implements MarketP2PPurchaseS
     public MarketP2PPurchaseResult comprar(UUID usuarioId, String claveIdempotencia,
             UUID offerId, Long quantity, MarketP2PQuoteIdentity quote) {
         UUID playerId = validacion.resolverJugadorId(offerId);
-        return comprar(new MarketP2PPurchaseCommand(usuarioId, claveIdempotencia, offerId,
+        return ejecutarCompra(new MarketP2PPurchaseCommand(usuarioId, claveIdempotencia, offerId,
                 playerId, quantity, quote));
     }
 
     @Override
     @Transactional
     public MarketP2PPurchaseResult comprar(MarketP2PPurchaseCommand command) {
+        return ejecutarCompra(command);
+    }
+
+    private MarketP2PPurchaseResult ejecutarCompra(MarketP2PPurchaseCommand command) {
         validar(command);
         MarketIdempotencyClaim claim = idempotencia.reclamarConPropiedad(
                 new MarketP2PIdempotencyRequest(command.usuarioId(),
