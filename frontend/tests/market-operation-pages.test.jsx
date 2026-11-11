@@ -10,6 +10,7 @@ const marketApi = vi.hoisted(() => ({
   sellMarketTokens: vi.fn(),
   getMarketOperation: vi.fn(),
   getMarketPortfolio: vi.fn(),
+  getPlayerDetail: vi.fn(),
   getMarketTransactions: vi.fn()
 }))
 
@@ -57,7 +58,7 @@ beforeEach(() => {
     }
   })
   marketApi.getMarketTransactions.mockResolvedValue({
-    data: { transactions: [], pagination: { current_page: 1, page_size: 20, total_pages: 0, total_records: 0 } }
+    data: { transactions: [], pagination: { current_page: 1, page_size: 10, total_pages: 0, total_records: 0 } }
   })
 })
 
@@ -221,7 +222,8 @@ describe('validación estructural de portfolio e historial', () => {
 
     render(<MarketPortfolioPage />)
     expect(await screen.findByRole('heading', { name: 'Jugador real' })).toBeInTheDocument()
-    expect(screen.getByText('Equipo real · Liga real')).toBeInTheDocument()
+    expect(screen.getByText('Equipo real')).toBeInTheDocument()
+    expect(screen.getByText('Liga real')).toBeInTheDocument()
     expect(screen.getByText('Total')).toBeInTheDocument()
     expect(screen.getByText('Reservados')).toBeInTheDocument()
     expect(screen.getByText('Disponibles')).toBeInTheDocument()
@@ -304,7 +306,7 @@ describe('validación estructural de portfolio e historial', () => {
           quote_version: 1,
           realized_pnl: null
         }],
-        pagination: { current_page: 1, page_size: 20, total_pages: 1, total_records: 1 }
+        pagination: { current_page: 1, page_size: 10, total_pages: 1, total_records: 1 }
       }
     })
     render(<MarketTransactionsPage />)
@@ -321,7 +323,7 @@ describe('validación estructural de portfolio e historial', () => {
         { transaction_id: 'tx-purchase', confirmed_at: '2026-10-19T10:00:00Z', player_name_snapshot: 'P2P compra', player_id: '33333333-3333-4333-8333-333333333333', operation_type: 'P2P_PURCHASE', quantity: 1, unit_price: 3, total_amount: 3, quote_version: 1, realized_pnl: null },
         { transaction_id: 'tx-p2p-sale', confirmed_at: '2026-10-19T09:00:00Z', player_name_snapshot: 'P2P venta', player_id: '44444444-4444-4444-8444-444444444444', operation_type: 'P2P_SALE', quantity: 1, unit_price: 4, total_amount: 4, quote_version: 1, realized_pnl: 1.25 }
       ],
-      pagination: { current_page: 1, page_size: 20, total_pages: 1, total_records: 4 }
+      pagination: { current_page: 1, page_size: 10, total_pages: 1, total_records: 4 }
     } })
 
     render(<MarketTransactionsPage />)
@@ -344,7 +346,7 @@ describe('validación estructural de portfolio e historial', () => {
           { transaction_id: 'tx-null-date', confirmed_at: null, player_name_snapshot: 'Jugador sin fecha', player_id: '22222222-2222-4222-8222-222222222222', operation_type: 'PURCHASE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: null },
           { transaction_id: 'tx-invalid-date', confirmed_at: 'fecha inválida', player_name_snapshot: 'Jugador con fecha inválida', player_id: '33333333-3333-4333-8333-333333333333', operation_type: 'SALE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: 0 }
         ],
-        pagination: { current_page: 1, page_size: 20, total_pages: 1, total_records: 3 }
+        pagination: { current_page: 1, page_size: 10, total_pages: 1, total_records: 3 }
       }
     })
 
@@ -369,7 +371,7 @@ describe('validación estructural de portfolio e historial', () => {
           { transaction_id: 'tx-2', confirmed_at: '2026-10-18T12:00:00Z', player_name_snapshot: 'Kenny Tete', player_id: secondPlayerId, operation_type: 'PURCHASE', quantity: 2, unit_price: 1, total_amount: 2, quote_version: 1, realized_pnl: null },
           { transaction_id: 'tx-3', confirmed_at: '2026-10-17T12:00:00Z', player_name_snapshot: null, player_id: '33333333-3333-4333-8333-333333333333', operation_type: 'SALE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: 0 }
         ],
-        pagination: { current_page: 1, page_size: 20, total_pages: 1, total_records: 3 }
+        pagination: { current_page: 1, page_size: 10, total_pages: 1, total_records: 3 }
       }
     })
     render(<MarketTransactionsPage />)
@@ -392,7 +394,7 @@ describe('validación estructural de portfolio e historial', () => {
     expect(screen.getByRole('combobox', { name: 'Tipo' })).toHaveValue('SALE')
     expect(screen.getByLabelText('Desde')).toHaveValue('2026-10-19T10:00')
     expect(screen.getByLabelText('Hasta')).toHaveValue('2026-10-20T10:00')
-    marketApi.getMarketTransactions.mockResolvedValueOnce({ data: { transactions: [], pagination: { current_page: 1, page_size: 20, total_pages: 0, total_records: 0 } } })
+    marketApi.getMarketTransactions.mockResolvedValueOnce({ data: { transactions: [], pagination: { current_page: 1, page_size: 10, total_pages: 0, total_records: 0 } } })
     await user.click(screen.getByRole('button', { name: 'Aplicar filtros' }))
 
     await waitFor(() => expect(marketApi.getMarketTransactions).toHaveBeenCalledWith({
@@ -403,14 +405,14 @@ describe('validación estructural de portfolio e historial', () => {
         from: new Date('2026-10-19T10:00').toISOString(),
         to: new Date('2026-10-20T10:00').toISOString(),
         page: 1,
-        limit: 20
+        limit: 10
       }
     }))
 
-    marketApi.getMarketTransactions.mockResolvedValueOnce({ data: { transactions: [], pagination: { current_page: 1, page_size: 20, total_pages: 0, total_records: 0 } } })
+    marketApi.getMarketTransactions.mockResolvedValueOnce({ data: { transactions: [], pagination: { current_page: 1, page_size: 10, total_pages: 0, total_records: 0 } } })
     await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
     await waitFor(() => expect(marketApi.getMarketTransactions).toHaveBeenCalledWith(expect.objectContaining({
-      filters: expect.objectContaining({ playerId: undefined, type: undefined, from: undefined, to: undefined, page: 1, limit: 20 })
+      filters: expect.objectContaining({ playerId: undefined, type: undefined, from: undefined, to: undefined, page: 1, limit: 10 })
     })))
   })
 
@@ -419,13 +421,13 @@ describe('validación estructural de portfolio e historial', () => {
     const firstPage = {
       data: {
         transactions: [{ transaction_id: 'tx-1', confirmed_at: '2026-10-19T12:00:00Z', player_name_snapshot: 'Jugador página 1', player_id: '11111111-1111-4111-8111-111111111111', operation_type: 'SALE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: 0 }],
-        pagination: { current_page: 1, page_size: 20, total_pages: 2, total_records: 21 }
+        pagination: { current_page: 1, page_size: 10, total_pages: 2, total_records: 21 }
       }
     }
     const secondPage = {
       data: {
         transactions: [{ transaction_id: 'tx-2', confirmed_at: '2026-10-18T12:00:00Z', player_name_snapshot: 'Jugador página 2', player_id: '22222222-2222-4222-8222-222222222222', operation_type: 'PURCHASE', quantity: 1, unit_price: 1, total_amount: 1, quote_version: 1, realized_pnl: null }],
-        pagination: { current_page: 2, page_size: 20, total_pages: 2, total_records: 21 }
+        pagination: { current_page: 2, page_size: 10, total_pages: 2, total_records: 21 }
       }
     }
     marketApi.getMarketTransactions.mockImplementation(({ filters }) => {
@@ -444,6 +446,6 @@ describe('validación estructural de portfolio e historial', () => {
     const playerSelect = screen.getByRole('combobox', { name: /buscar jugador por nombre/i })
     expect(within(playerSelect).getByRole('option', { name: 'Jugador página 1' })).toHaveValue('11111111-1111-4111-8111-111111111111')
     expect(within(playerSelect).getByRole('option', { name: 'Jugador página 2' })).toHaveValue('22222222-2222-4222-8222-222222222222')
-    expect(marketApi.getMarketTransactions).toHaveBeenCalledWith(expect.objectContaining({ filters: expect.objectContaining({ page: 2, limit: 20 }) }))
+    expect(marketApi.getMarketTransactions).toHaveBeenCalledWith(expect.objectContaining({ filters: expect.objectContaining({ page: 2, limit: 10 }) }))
   })
 })
