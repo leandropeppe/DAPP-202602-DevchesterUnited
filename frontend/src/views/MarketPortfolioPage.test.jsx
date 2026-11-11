@@ -252,4 +252,38 @@ describe('MarketPortfolioPage', () => {
     expect((await screen.findAllByText('Mostrando 1–12 de 13 jugadores')).length).toBe(2)
     expect(screen.getByRole('heading', { name: 'Jugador 1' })).toBeInTheDocument()
   })
+
+  it('muestra dos separadores al paginar en una ventana intermedia y carga metadatos', async () => {
+    saveJwt(validJwt())
+    api.getMarketPortfolio.mockResolvedValue({
+      data: {
+        ...baseResponse.data,
+        open_players: 60,
+        total_tokens: 60,
+        open_positions: Array.from({ length: 60 }, (_, index) => ({
+          player_id: `player-${index + 1}`,
+          player_name: `Jugador ${index + 1}`,
+          total_quantity: 1,
+          reserved_quantity: 0,
+          available_quantity: 1,
+          quote_availability: 'CURRENT',
+          unit_price: 1
+        }))
+      }
+    })
+    api.getPlayerDetail.mockResolvedValue({ data: {
+      position: 'Forward',
+      nationality: 'Argentina',
+      valuation: 1
+    } })
+
+    renderPage()
+    await screen.findByRole('heading', { name: 'Jugador 1' })
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: '5' }))
+
+    expect(await screen.findByRole('heading', { name: 'Jugador 25' })).toBeInTheDocument()
+    expect(screen.getAllByText('…')).toHaveLength(2)
+    expect(api.getPlayerDetail).toHaveBeenCalled()
+  })
 })

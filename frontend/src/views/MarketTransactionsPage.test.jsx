@@ -82,6 +82,18 @@ describe('MarketTransactionsPage', () => {
     expect(screen.getAllByText('…').length).toBeGreaterThan(0)
   })
 
+  it('muestra dos separadores en una ventana intermedia de páginas', async () => {
+    authenticate()
+    api.getMarketTransactions.mockImplementation(({ filters }) => Promise.resolve(response(filters.page, filters.limit, 127)))
+    renderPage()
+    await screen.findByText('Mostrando 1–10 de 127 transacciones')
+
+    await userEvent.setup().click(screen.getByRole('button', { name: '5' }))
+    await screen.findByText('Mostrando 41–50 de 127 transacciones')
+
+    expect(screen.getAllByText('…')).toHaveLength(2)
+  })
+
   it('deshabilita la navegación en los extremos', async () => {
     authenticate()
     api.getMarketTransactions.mockResolvedValue(response(1, 10, 10))

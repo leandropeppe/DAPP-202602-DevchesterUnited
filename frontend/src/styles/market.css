@@ -1184,6 +1184,16 @@
     .market-confirmation__success {
         animation: none;
     }
+
+    .market-portfolio-summary-card,
+    .market-portfolio-player-card {
+        transition: none;
+    }
+
+    .market-portfolio-summary-card:hover,
+    .market-portfolio-player-card:hover {
+        transform: none;
+    }
 }
 
 .market-purchase-confirmation__dialog h3 {

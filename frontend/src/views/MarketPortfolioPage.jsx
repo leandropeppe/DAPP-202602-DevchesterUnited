@@ -39,9 +39,9 @@ function pageWindow (currentPage, totalPages) {
   if (currentPage >= totalPages - 2) start = totalPages - 4
   return [
     1,
-    ...(start > 2 ? ['ellipsis'] : []),
+    ...(start > 2 ? ['ellipsis-left'] : []),
     ...Array.from({ length: end - start + 1 }, (_, index) => start + index),
-    ...(end < totalPages - 1 ? ['ellipsis'] : []),
+    ...(end < totalPages - 1 ? ['ellipsis-right'] : []),
     totalPages
   ]
 }
@@ -118,13 +118,15 @@ export default function MarketPortfolioPage ({ onNavigate }) {
     Promise.all(pending).then(entries => {
       if (!active) return
       setCatalogData(current => Object.fromEntries([...Object.entries(current), ...entries]))
+    }, error => {
+      if (active) console.error('No se pudieron cargar los metadatos del portfolio.', error)
     })
     return () => { active = false }
   }, [portfolio, currentPage, pageSize])
 
   const positionWithCatalogData = position => ({
     ...position,
-    ...(catalogData[position.player_id] || {})
+    ...catalogData[position.player_id]
   })
 
   if (!session.jwt || session.isJwtExpired) {
@@ -182,8 +184,8 @@ export default function MarketPortfolioPage ({ onNavigate }) {
               <div className="market-portfolio-pagination__controls">
                 <button className="button button--secondary" type="button" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={currentPage <= 1}>Anterior</button>
                 <div className="market-portfolio-pagination__pages" aria-label="Páginas">
-                  {pageWindow(currentPage, totalPages).map((item, index) => item === 'ellipsis'
-                    ? <span key={`ellipsis-${index}`} aria-hidden="true">…</span>
+                  {pageWindow(currentPage, totalPages).map(item => item === 'ellipsis-left' || item === 'ellipsis-right'
+                    ? <span key={item} aria-hidden="true">…</span>
                     : <button key={item} className={`button ${item === currentPage ? 'button--primary' : 'button--secondary'}`} type="button" aria-current={item === currentPage ? 'page' : undefined} onClick={() => setPage(item)} disabled={item === currentPage}>{item}</button>)}
                 </div>
                 <button className="button button--secondary" type="button" onClick={() => setPage(current => Math.min(totalPages, current + 1))} disabled={!totalPages || currentPage >= totalPages}>Siguiente</button>

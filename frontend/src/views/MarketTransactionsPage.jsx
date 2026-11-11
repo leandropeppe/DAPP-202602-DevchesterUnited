@@ -58,9 +58,9 @@ function pageWindow (currentPage, totalPages) {
 
   return [
     1,
-    ...(start > 2 ? ['ellipsis'] : []),
+    ...(start > 2 ? ['ellipsis-left'] : []),
     ...Array.from({ length: end - start + 1 }, (_, index) => start + index),
-    ...(end < totalPages - 1 ? ['ellipsis'] : []),
+    ...(end < totalPages - 1 ? ['ellipsis-right'] : []),
     totalPages
   ]
 }
@@ -247,8 +247,8 @@ export default function MarketTransactionsPage () {
         <div className="market-transactions-pagination__controls">
           <button className="button button--secondary" type="button" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={updating || currentPage <= 1}>Anterior</button>
           <div className="market-transactions-pagination__pages" aria-label="Páginas">
-            {pageItems.map((item, index) => item === 'ellipsis'
-              ? <span key={`ellipsis-${index}`} aria-hidden="true">…</span>
+            {pageItems.map(item => item === 'ellipsis-left' || item === 'ellipsis-right'
+              ? <span key={item} aria-hidden="true">…</span>
               : <button key={item} className={`button ${item === currentPage ? 'button--primary' : 'button--secondary'}`} type="button" aria-current={item === currentPage ? 'page' : undefined} onClick={() => setPage(item)} disabled={updating || item === currentPage}>{item}</button>)}
           </div>
           <button className="button button--secondary" type="button" onClick={() => setPage(current => Math.min(totalPages, current + 1))} disabled={updating || !totalPages || currentPage >= totalPages}>Siguiente</button>
