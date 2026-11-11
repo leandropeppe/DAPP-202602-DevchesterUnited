@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useState } from 'react'
-import { getMarketPortfolio } from '../api/http.js'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { getMarketPortfolio, getPlayerDetail } from '../api/http.js'
 import MarketPortfolioCharts from '../components/MarketPortfolioCharts.jsx'
+import MarketPortfolioPlayerCard from '../components/MarketPortfolioPlayerCard.jsx'
 import MarketStateMessage from '../components/MarketStateMessage.jsx'
-import QuoteStatus from '../components/QuoteStatus.jsx'
 import { useSession } from '../session/SessionContext.jsx'
 import { errorMessage } from './formUtils.js'
+
+const PAGE_SIZES = [6, 12, 24]
 
 function amount (value) {
   if (value === null || value === undefined) return 'Sin información'
   return Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function metricTone (value) {
+  const number = Number(value)
+  if (!Number.isFinite(number) || number === 0) return 'neutral'
+  return number > 0 ? 'positive' : 'negative'
 }
 
 function isPortfolioResponse (response) {
@@ -23,30 +31,39 @@ function isPortfolioResponse (response) {
     typeof data.combined_result_complete === 'boolean'
 }
 
-function positionName (position) {
-  return position.player_name || `Jugador ${position.player_id}`
+function pageWindow (currentPage, totalPages) {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1)
+  let start = Math.max(2, currentPage - 2)
+  let end = Math.min(totalPages - 1, currentPage + 2)
+  if (currentPage <= 3) end = 5
+  if (currentPage >= totalPages - 2) start = totalPages - 4
+  return [
+    1,
+    ...(start > 2 ? ['ellipsis'] : []),
+    ...Array.from({ length: end - start + 1 }, (_, index) => start + index),
+    ...(end < totalPages - 1 ? ['ellipsis'] : []),
+    totalPages
+  ]
 }
 
-function positionQuantities (position) {
-  const total = Number(position.total_quantity ?? position.quantity ?? 0)
-  const reserved = Number(position.reserved_quantity ?? 0)
-  const available = Number(position.available_quantity ?? (total - reserved))
-  return { total, reserved, available }
-}
-
-function canPublish (position) {
-  const quantities = positionQuantities(position)
-  return position.quote_availability === 'CURRENT' &&
-    position.quote_id !== null && position.quote_id !== undefined && position.quote_id !== '' &&
-    position.quote_version !== null && position.quote_version !== undefined &&
-    position.unit_price !== null && position.unit_price !== undefined &&
-    Number.isInteger(quantities.available) && quantities.available > 0
-}
+const METRICS = [
+  ['open_players', 'Jugadores con posición', 'Cantidad de jugadores con tokens en cartera.'],
+  ['total_tokens', 'Tokens totales', 'Tokens pertenecientes a tus posiciones abiertas.'],
+  ['total_pending_acquisition_cost', 'Costo pendiente total', 'Costo acumulado de adquisición de tus tokens.'],
+  ['total_current_value', 'Valor actual total', 'Valor oficial de mercado de tus posiciones actuales.'],
+  ['realized_pnl', 'P/L realizada', 'Resultado obtenido en operaciones ya cerradas.'],
+  ['unrealized_pnl', 'P/L no realizada', 'Resultado estimado según las cotizaciones actuales.'],
+  ['combined_result', 'Resultado combinado', 'Resultado total cuando el mercado dispone de todos los datos.']
+]
 
 export default function MarketPortfolioPage ({ onNavigate }) {
   const session = useSession()
   const [state, setState] = useState({ status: 'loading', message: '' })
   const [portfolio, setPortfolio] = useState(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(6)
+  const [catalogData, setCatalogData] = useState({})
+  const catalogCache = useRef(new Map())
 
   const load = useCallback(async () => {
     if (!session.jwt || session.isJwtExpired) return
@@ -55,6 +72,7 @@ export default function MarketPortfolioPage ({ onNavigate }) {
       const response = await getMarketPortfolio(session.jwt)
       if (!isPortfolioResponse(response)) throw new Error('El servidor devolvió un portfolio incompleto.')
       setPortfolio(response.data)
+      setPage(1)
       setState({ status: 'success', message: '' })
     } catch (error) {
       setState({ status: error?.status === 503 ? 'unavailable' : 'error', message: errorMessage(error) })
@@ -63,13 +81,61 @@ export default function MarketPortfolioPage ({ onNavigate }) {
 
   useEffect(() => { void load() }, [load])
 
+  const positions = Array.isArray(portfolio?.open_positions) ? portfolio.open_positions : []
+  const totalPages = Math.ceil(positions.length / pageSize)
+  const currentPage = totalPages === 0 ? 1 : Math.min(page, totalPages)
+  const visiblePositions = positions.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const firstRecord = positions.length === 0 ? 0 : ((currentPage - 1) * pageSize) + 1
+  const lastRecord = Math.min(currentPage * pageSize, positions.length)
+
+  useEffect(() => {
+    if (typeof getPlayerDetail !== 'function' || visiblePositions.length === 0) return
+
+    let active = true
+    const pending = visiblePositions
+      .filter(position => !catalogCache.current.has(position.player_id) &&
+        (position.position === undefined || position.position === null || position.position === '' ||
+          position.valuation === undefined || position.valuation === null || position.valuation === '' ||
+          position.nationality === undefined || position.nationality === null || position.nationality === ''))
+      .map(async position => {
+        const playerId = String(position.player_id || '')
+        const catalogId = playerId.startsWith('ply_') ? playerId : `ply_${playerId}`
+        try {
+          const response = await getPlayerDetail(catalogId)
+          const player = response?.data
+          const metadata = player && typeof player === 'object'
+            ? { position: player.position, valuation: player.valuation, nationality: player.nationality }
+            : null
+          catalogCache.current.set(position.player_id, metadata)
+          return [position.player_id, metadata]
+        } catch {
+          catalogCache.current.set(position.player_id, null)
+          return [position.player_id, null]
+        }
+      })
+
+    if (pending.length === 0) return () => { active = false }
+    Promise.all(pending).then(entries => {
+      if (!active) return
+      setCatalogData(current => Object.fromEntries([...Object.entries(current), ...entries]))
+    })
+    return () => { active = false }
+  }, [portfolio, currentPage, pageSize])
+
+  const positionWithCatalogData = position => ({
+    ...position,
+    ...(catalogData[position.player_id] || {})
+  })
+
   if (!session.jwt || session.isJwtExpired) {
     return <section className="market-page" aria-labelledby="portfolio-title"><MarketStateMessage status="error" message="Iniciá sesión para consultar tu portfolio." /></section>
   }
-  if (state.status === 'loading') return <section className="market-page" aria-labelledby="portfolio-title"><MarketStateMessage status="loading" /></section>
-  if (state.status === 'error' || state.status === 'unavailable') return <section className="market-page" aria-labelledby="portfolio-title"><MarketStateMessage status={state.status} message={state.message} /></section>
-
-  const positions = Array.isArray(portfolio?.open_positions) ? portfolio.open_positions : []
+  if (state.status === 'loading') {
+    return <section className="market-page" aria-labelledby="portfolio-title"><MarketStateMessage status="loading" /></section>
+  }
+  if (state.status === 'error' || state.status === 'unavailable') {
+    return <section className="market-page" aria-labelledby="portfolio-title"><MarketStateMessage status={state.status} message={state.message} /></section>
+  }
 
   return (
     <section className="market-page" aria-labelledby="portfolio-title">
@@ -78,46 +144,54 @@ export default function MarketPortfolioPage ({ onNavigate }) {
         <h1 id="portfolio-title">Mi portfolio</h1>
         <p>Posiciones abiertas y resultados entregados por el mercado.</p>
       </div>
-      <div className="market-summary-grid">
-        <div className="card market-summary-card"><span>Jugadores con posición</span><strong>{amount(portfolio?.open_players)}</strong></div>
-        <div className="card market-summary-card"><span>Tokens totales</span><strong>{amount(portfolio?.total_tokens)}</strong></div>
-        <div className="card market-summary-card"><span>Costo pendiente total</span><strong>{amount(portfolio?.total_pending_acquisition_cost)}</strong></div>
-        <div className="card market-summary-card"><span>Valor actual total</span><strong>{amount(portfolio?.total_current_value)}</strong></div>
-        <div className="card market-summary-card"><span>P/L realizada</span><strong>{amount(portfolio?.realized_pnl)}</strong></div>
-        <div className="card market-summary-card"><span>P/L no realizada</span><strong>{amount(portfolio?.unrealized_pnl)}</strong></div>
-        <div className="card market-summary-card"><span>Resultado combinado</span><strong>{amount(portfolio?.combined_result)}</strong></div>
+
+      <div className="market-summary-grid market-portfolio-summary-grid">
+        {METRICS.map(([key, label, description]) => (
+          <article className={`card market-summary-card market-portfolio-summary-card market-portfolio-summary-card--${metricTone(portfolio?.[key])}`} key={key}>
+            <span>{label}</span>
+            <strong>{amount(portfolio?.[key])}</strong>
+            <small>{description}</small>
+          </article>
+        ))}
       </div>
+
       {positions.length === 0
         ? <output className="empty-state">No tenés posiciones abiertas.</output>
         : (
-          <div className="market-positions-list">
-            {positions.map((position) => (
-              <article className="card market-position-card" key={position.player_id}>
-                {(() => { const quantities = positionQuantities(position); return <>
-                <div>
-                  <h2>{positionName(position)}</h2>
-                  <span>{quantities.total} tokens</span>
-                  {position.team || position.league ? <p>{position.team || 'Equipo no disponible'} · {position.league || 'Liga no disponible'}</p> : null}
+          <>
+            <div className="market-portfolio-positions-heading">
+              <div>
+                <h2>Mis jugadores</h2>
+                <p>Disponibilidad, cotizaciones y resultado por posición.</p>
+              </div>
+              <span>Mostrando {firstRecord}–{lastRecord} de {positions.length} jugadores</span>
+            </div>
+            <div className="market-portfolio-players-grid">
+              {visiblePositions.map(position => <MarketPortfolioPlayerCard key={position.player_id} position={positionWithCatalogData(position)} onNavigate={onNavigate} />)}
+            </div>
+            <nav className="pagination market-portfolio-pagination" aria-label="Paginación de posiciones">
+              <div className="market-portfolio-pagination__summary">
+                <span>Mostrando {firstRecord}–{lastRecord} de {positions.length} jugadores</span>
+                <label>
+                  <span>Jugadores por página</span>
+                  <select aria-label="Jugadores por página" value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1) }}>
+                    {PAGE_SIZES.map(size => <option key={size} value={size}>{size}</option>)}
+                  </select>
+                </label>
+              </div>
+              <div className="market-portfolio-pagination__controls">
+                <button className="button button--secondary" type="button" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={currentPage <= 1}>Anterior</button>
+                <div className="market-portfolio-pagination__pages" aria-label="Páginas">
+                  {pageWindow(currentPage, totalPages).map((item, index) => item === 'ellipsis'
+                    ? <span key={`ellipsis-${index}`} aria-hidden="true">…</span>
+                    : <button key={item} className={`button ${item === currentPage ? 'button--primary' : 'button--secondary'}`} type="button" aria-current={item === currentPage ? 'page' : undefined} onClick={() => setPage(item)} disabled={item === currentPage}>{item}</button>)}
                 </div>
-                <dl className="market-position-card__facts">
-                  <div><dt>Total</dt><dd>{quantities.total}</dd></div>
-                  <div><dt>Reservados</dt><dd>{quantities.reserved}</dd></div>
-                  <div><dt>Disponibles</dt><dd>{quantities.available}</dd></div>
-                  <div><dt>Costo pendiente</dt><dd>{amount(position.pending_acquisition_cost)}</dd></div>
-                  <div><dt>Costo promedio</dt><dd>{amount(position.weighted_average_cost)}</dd></div>
-                  <div><dt>Última cotización</dt><dd>{amount(position.unit_price)}</dd></div>
-                  <div><dt>Valor actual</dt><dd>{amount(position.current_value)}</dd></div>
-                  <div><dt>P/L no realizada</dt><dd>{amount(position.unrealized_pnl)}</dd></div>
-                </dl>
-                <QuoteStatus status={position.quote_availability} price={position.unit_price === null ? null : amount(position.unit_price)} />
-                {canPublish(position)
-                  ? <button className="button button--primary" type="button" onClick={() => onNavigate?.(`/market/p2p/offers?publishPlayerId=${encodeURIComponent(position.player_id)}`)}>Publicar oferta P2P</button>
-                  : null}
-                </> })()}
-              </article>
-            ))}
-          </div>
+                <button className="button button--secondary" type="button" onClick={() => setPage(current => Math.min(totalPages, current + 1))} disabled={!totalPages || currentPage >= totalPages}>Siguiente</button>
+              </div>
+            </nav>
+          </>
         )}
+
       <MarketPortfolioCharts positions={positions} />
     </section>
   )
