@@ -124,7 +124,7 @@ describe('MarketPortfolioPage', () => {
     api.getMarketPortfolio.mockRejectedValue({ status: 503 })
     renderPage()
 
-    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent(/no est/)
     expect(screen.getByRole('alert')).not.toHaveTextContent(/password|stack|database/i)
   })
