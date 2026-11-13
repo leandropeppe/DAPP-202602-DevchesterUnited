@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.controller.jugador;
 
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionScheduler;
 import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.estadisticas.dto.EstadisticasJugadorResponseDTO;
@@ -20,6 +19,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.Simulacion
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.CodigoErrorSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ExcepcionSimulacion;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.CotizacionConsultaService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.ValorizacionEjecucionPort;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -43,14 +43,14 @@ public class JugadorController {
 
     private final JugadorService servicio;
     private final CotizacionConsultaService cotizacionConsulta;
-    private final ValorizacionScheduler valorizacionScheduler;
+    private final ValorizacionEjecucionPort valorizacionEjecucion;
     private final SimulacionCotizacionService simulacionService;
 
     public JugadorController(JugadorService servicio, CotizacionConsultaService cotizacionConsulta,
-            ValorizacionScheduler valorizacionScheduler, SimulacionCotizacionService simulacionService) {
+            ValorizacionEjecucionPort valorizacionEjecucion, SimulacionCotizacionService simulacionService) {
         this.servicio = servicio;
         this.cotizacionConsulta = cotizacionConsulta;
-        this.valorizacionScheduler = valorizacionScheduler;
+        this.valorizacionEjecucion = valorizacionEjecucion;
         this.simulacionService = simulacionService;
     }
 
@@ -234,7 +234,7 @@ public class JugadorController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
     @PostMapping("/quotes/recalculate")
     public ResponseEntity<SuccessResponseDTO<String>> recalcularCotizaciones() {
-        valorizacionScheduler.ejecutarSemanal();
+        valorizacionEjecucion.ejecutarSemanal();
         return ResponseEntity.ok(new SuccessResponseDTO<>("Cotizaciones recalculadas correctamente"));
     }
 

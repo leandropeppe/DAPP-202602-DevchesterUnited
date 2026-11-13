@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.contract.simulacion;
 
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionScheduler;
 import com.devchesterunited.devchesterunitedv2.controller.jugador.JugadorController;
 import com.devchesterunited.devchesterunitedv2.exception.GlobalExceptionHandler;
 import com.devchesterunited.devchesterunitedv2.exception.JugadorNoEncontradoException;
@@ -11,6 +10,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.Simulacion
 import com.devchesterunited.devchesterunitedv2.service.interfaces.jugador.JugadorService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.simulacion.SimulacionCotizacionService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.CotizacionConsultaService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.ValorizacionEjecucionPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,7 +34,7 @@ class SimulacionCotizacionControllerContractTest {
     void setUp() {
         service = mock(SimulacionCotizacionService.class);
         JugadorController controller = new JugadorController(mock(JugadorService.class),
-                mock(CotizacionConsultaService.class), mock(ValorizacionScheduler.class), service);
+                mock(CotizacionConsultaService.class), mock(ValorizacionEjecucionPort.class), service);
         mvc = MockMvcBuilders.standaloneSetup(controller)
                 .setValidator(new LocalValidatorFactoryBean())
                 .setControllerAdvice(new GlobalExceptionHandler()).build();

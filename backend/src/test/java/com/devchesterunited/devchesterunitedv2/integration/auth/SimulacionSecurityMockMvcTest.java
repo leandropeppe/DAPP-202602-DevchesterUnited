@@ -2,12 +2,12 @@ package com.devchesterunited.devchesterunitedv2.integration.auth;
 
 import com.devchesterunited.devchesterunitedv2.configuration.security.SecurityConfig;
 import com.devchesterunited.devchesterunitedv2.configuration.security.SecurityErrorHandler;
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionScheduler;
 import com.devchesterunited.devchesterunitedv2.controller.jugador.JugadorController;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.SimulacionResultadoDTO;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.jugador.JugadorService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.simulacion.SimulacionCotizacionService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.CotizacionConsultaService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.ValorizacionEjecucionPort;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -36,7 +36,7 @@ class SimulacionSecurityMockMvcTest {
     @Autowired MockMvc mvc;
     @MockitoBean JugadorService jugadores;
     @MockitoBean CotizacionConsultaService cotizaciones;
-    @MockitoBean ValorizacionScheduler scheduler;
+    @MockitoBean ValorizacionEjecucionPort scheduler;
     @MockitoBean SimulacionCotizacionService simulacion;
 
     @Test
