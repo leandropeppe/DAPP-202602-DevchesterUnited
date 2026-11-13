@@ -1,6 +1,7 @@
-package com.devchesterunited.devchesterunitedv2.modelo.simulacion;
+package com.devchesterunited.devchesterunitedv2.service.impl.simulacion;
 
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasEstadisticasJugador;
+import com.devchesterunited.devchesterunitedv2.modelo.simulacion.CatalogoMetricaSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.MetricaValorizacion;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.EstadisticaSimulacionDTO;

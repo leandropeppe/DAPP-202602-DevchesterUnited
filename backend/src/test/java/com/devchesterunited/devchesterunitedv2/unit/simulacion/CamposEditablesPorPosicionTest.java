@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.unit.simulacion;
 
-import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ConfiguradorMetricasSimulacion;
+import com.devchesterunited.devchesterunitedv2.service.impl.simulacion.ConfiguradorMetricasSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaPosicionalV2;
 import com.devchesterunited.devchesterunitedv2.support.fixtures.valorizacion.SimulacionPosicionesFixtures;
 import org.junit.jupiter.api.Test;
