@@ -1,15 +1,15 @@
+
 package com.devchesterunited.devchesterunitedv2.architecture;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
 
+import static com.tngtech.archunit.core.importer.ImportOption.Predefined.DO_NOT_INCLUDE_TESTS;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static com.tngtech.archunit.core.importer.ImportOption.Predefined.DO_NOT_INCLUDE_TESTS;
-
 
 class ArchitectureTest {
 
@@ -25,27 +25,11 @@ class ArchitectureTest {
                 .importPackages(BASE_PACKAGE);
     }
 
-    @Test
-    void persistenciaNoDebeDependerDeControllers() {
-        noClasses()
-                .that()
-                .resideInAPackage("..persistence..")
-                .should()
-                .dependOnClassesThat()
-                .resideInAPackage("..controller..")
-                .check(clases);
-    }
-
-    @Test
-    void servicesNoDebenDependerDeControllers() {
-        noClasses()
-                .that()
-                .resideInAPackage("..service..")
-                .should()
-                .dependOnClassesThat()
-                .resideInAPackage("..controller..")
-                .check(clases);
-    }
+    // ============================================================
+    // 1. CAPA CONTROLLER - API REST
+    // Verifica la ubicación de controllers y evita accesos
+    // directos a componentes internos de persistencia.
+    // ============================================================
 
     @Test
     void controllersRestDebenEstarEnPaqueteController() {
@@ -55,20 +39,6 @@ class ArchitectureTest {
                         org.springframework.web.bind.annotation.RestController.class)
                 .should()
                 .resideInAPackage("..controller..")
-                .check(clases);
-    }
-
-    @Test
-    void modeloNoDebeDependerDeControllersNiPersistencia() {
-        noClasses()
-                .that()
-                .resideInAPackage("..modelo..")
-                .should()
-                .dependOnClassesThat()
-                .resideInAnyPackage(
-                        "..controller..",
-                        "..persistence.."
-                )
                 .check(clases);
     }
 
@@ -83,16 +53,33 @@ class ArchitectureTest {
                 .check(clases);
     }
 
-    /*
     @Test
-    void paquetesPrincipalesNoDebenTenerDependenciasCirculares() {
-        SlicesRuleDefinition.slices()
-                .matching("com.devchesterunited.devchesterunitedv2.(*)..")
+    void controllersNoDebenDependerDeEntidadesJpa() {
+        noClasses()
+                .that()
+                .resideInAPackage("..controller..")
                 .should()
-                .beFreeOfCycles()
+                .dependOnClassesThat()
+                .areAnnotatedWith(jakarta.persistence.Entity.class)
                 .check(clases);
     }
-    */
+
+    // ============================================================
+    // 2. CAPA SERVICE - LOGICA DE APLICACION
+    // Impide dependencias hacia controllers y mantiene
+    // las interfaces independientes de las implementaciones.
+    // ============================================================
+
+    @Test
+    void servicesNoDebenDependerDeControllers() {
+        noClasses()
+                .that()
+                .resideInAPackage("..service..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("..controller..")
+                .check(clases);
+    }
 
     @Test
     void interfacesDeServiciosNoDebenDependerDeImplementaciones() {
@@ -105,13 +92,20 @@ class ArchitectureTest {
                 .check(clases);
     }
 
+    // ============================================================
+    // 3. CAPA PERSISTENCE - ACCESO A DATOS
+    // Protege la independencia de persistencia respecto
+    // de controllers, contratos HTTP y servicios.
+    // ============================================================
+
     @Test
-    void entidadesJpaDebenEstarEnPersistencia() {
-        classes()
+    void persistenciaNoDebeDependerDeControllers() {
+        noClasses()
                 .that()
-                .areAnnotatedWith(jakarta.persistence.Entity.class)
-                .should()
                 .resideInAPackage("..persistence..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("..controller..")
                 .check(clases);
     }
 
@@ -151,6 +145,26 @@ class ArchitectureTest {
                 .check(clases);
     }
 
+    // ============================================================
+    // 4. MODELO DE DOMINIO
+    // Mantiene el modelo independiente de la API,
+    // la persistencia y los servicios.
+    // ============================================================
+
+    @Test
+    void modeloNoDebeDependerDeControllersNiPersistencia() {
+        noClasses()
+                .that()
+                .resideInAPackage("..modelo..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(
+                        "..controller..",
+                        "..persistence.."
+                )
+                .check(clases);
+    }
+
     @Test
     void entidadesJpaNoDebenDependerDeServicios() {
         noClasses()
@@ -162,14 +176,91 @@ class ArchitectureTest {
                 .check(clases);
     }
 
+    // ============================================================
+    // 5. CONVENCIONES JPA
+    // Verifica que las entidades estén ubicadas
+    // en la capa correspondiente.
+    // ============================================================
+
     @Test
-    void controllersNoDebenDependerDeEntidadesJpa() {
+    void entidadesJpaDebenEstarEnPersistencia() {
+        classes()
+                .that()
+                .areAnnotatedWith(jakarta.persistence.Entity.class)
+                .should()
+                .resideInAPackage("..persistence..")
+                .check(clases);
+    }
+
+    // ============================================================
+    // 6. DEPENDENCIAS CIRCULARES - DEUDA TECNICA
+    // Diagnóstico inicial: 58 recorridos circulares.
+    // Pendiente de refactorización progresiva.
+    // ============================================================
+
+
+/*
+    @Test
+    void paquetesPrincipalesNoDebenTenerDependenciasCirculares() {
+        SlicesRuleDefinition.slices()
+                .matching("com.devchesterunited.devchesterunitedv2.(*)..")
+                .should()
+                .beFreeOfCycles()
+                .check(clases);
+    }
+*/
+
+
+
+
+    // ============================================================
+    // 7. RESTRICCIONES ENTRE CAPAS - REFACTORIZACION PROGRESIVA
+    // Se incorporan al corregir las dependencias existentes.
+    // ============================================================
+
+    @Test
+    void modeloNoDebeDependerDeServicios() {
+        noClasses()
+                .that()
+                .resideInAPackage("..modelo..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("..service..")
+                .check(clases);
+    }
+
+    @Test
+    void persistenciaNoDebeDependerDeServicios() {
+        noClasses()
+                .that()
+                .resideInAPackage("..persistence..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("..service..")
+                .check(clases);
+    }
+
+    @Test
+    void controllersNoDebenDependerDeConfiguracion() {
         noClasses()
                 .that()
                 .resideInAPackage("..controller..")
                 .should()
                 .dependOnClassesThat()
-                .areAnnotatedWith(jakarta.persistence.Entity.class)
+                .resideInAPackage("..configuration..")
                 .check(clases);
     }
+
+    @Test
+    void configuracionNoDebeDependerDeControllers() {
+        noClasses()
+                .that()
+                .resideInAPackage("..configuration..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("..controller..")
+                .check(clases);
+    }
+
+
 }
