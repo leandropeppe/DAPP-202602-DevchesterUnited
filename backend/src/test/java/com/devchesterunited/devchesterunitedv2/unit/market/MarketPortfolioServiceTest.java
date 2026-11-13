@@ -7,7 +7,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.market.entity.PnLReal
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoId;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.VersionCotizacionMercadoMapper;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.PnLRealizadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TenenciaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;

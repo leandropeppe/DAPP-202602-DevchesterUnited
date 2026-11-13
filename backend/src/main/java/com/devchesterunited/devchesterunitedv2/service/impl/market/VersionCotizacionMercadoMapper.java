@@ -1,4 +1,4 @@
-package com.devchesterunited.devchesterunitedv2.persistence.market.mapper;
+package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;

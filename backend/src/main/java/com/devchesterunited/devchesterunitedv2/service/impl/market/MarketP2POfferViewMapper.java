@@ -1,4 +1,4 @@
-package com.devchesterunited.devchesterunitedv2.persistence.market.mapper;
+package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.OfertaVentaP2PEntity;
