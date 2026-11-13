@@ -3,7 +3,7 @@ package com.devchesterunited.devchesterunitedv2.controller.equipo;
 import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.estadisticas.dto.SincronizacionResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
-import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SincronizacionResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SincronizacionResultado;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.estadisticas.SincronizacionCatalogoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

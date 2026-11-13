@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.service.impl.estadisticas;
 
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.persistence.equipo.entity.IdentidadExternaEquipoEntity;
+import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SincronizacionResultado;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;

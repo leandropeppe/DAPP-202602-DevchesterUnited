@@ -5,7 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
-import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SincronizacionResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SincronizacionResultado;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.estadisticas.SincronizacionCatalogoService;
 import com.devchesterunited.devchesterunitedv2.support.PostgresTestSupport;
 import com.fasterxml.jackson.databind.JsonNode;
