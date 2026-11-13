@@ -63,7 +63,7 @@ class IdentidadJugadorResolverTest {
     }
 
     @Test
-    void identidadPersistidaDeOtroEquipoNoSaleDelEquipoRecibido() {
+    void identidadPersistidaDeOtroEquipoConservaElJugadorYDevuelveSuEquipoVigente() {
         var equipo = equipo(UUID.randomUUID(), "Equipo A");
         var otro = new JugadorEntity(UUID.randomUUID(), "Juan Perez", UUID.randomUUID(),
                 "Forward", 9, "Argentina", true);
@@ -74,8 +74,9 @@ class IdentidadJugadorResolverTest {
         var resolver = resolver();
         var hint = hint();
         var competicion = CompeticionEstadistica.PREMIER_LEAGUE;
-        assertThatThrownBy(() -> resolver.resolver(hint, equipo, competicion))
-                .isInstanceOf(IdentidadEstadisticaNoResueltaException.class);
+        var resultado = resolver.resolver(hint, equipo, competicion);
+        assertThat(resultado.jugadorId()).isEqualTo(otro.getId());
+        assertThat(resultado.equipoId()).isEqualTo(otro.getEquipoId());
         verify(jugadores, never()).findAllByEquipoIdAndActivoTrue(equipo.getId());
     }
 

@@ -7,6 +7,8 @@ import java.util.List;
 
 /** Valida la integridad y completitud de respuestas de statisticsfeed. */
 public final class WhoScoredStatisticsResponseValidator {
+    static final int MAX_TOTAL_PAGES = 1_000;
+
     public void validar(WhoScoredStatisticsFeedResponseDTO response,
             CompeticionEstadistica competicion, String familia, String url) {
         List<String> failures = new ArrayList<>();
@@ -19,6 +21,80 @@ public final class WhoScoredStatisticsResponseValidator {
                 response.resultsPerPage(), response.totalResults(),
                 response.players() == null ? null : response.players().size());
         agregarFallosMetadata(metadata, failures);
+        if (!failures.isEmpty()) {
+            throw errorDeCompletitud(new CompletitudContext(competicion, familia, metadata,
+                    url, failures));
+        }
+    }
+
+    /** Valida una pagina individual antes de incorporarla al snapshot. */
+    public void validarPagina(WhoScoredStatisticsFeedResponseDTO response,
+            CompeticionEstadistica competicion, String familia, String url, int paginaEsperada) {
+        List<String> failures = new ArrayList<>();
+        if (response == null) {
+            failures.add("response == null");
+            throw errorDeCompletitud(new CompletitudContext(competicion, familia,
+                    Metadata.vacia(), url, failures));
+        }
+        Metadata metadata = new Metadata(response.currentPage(), response.totalPages(),
+                response.resultsPerPage(), response.totalResults(),
+                response.players() == null ? null : response.players().size());
+        agregarFallosNulos(metadata, failures);
+        agregarFallosRangosPagina(metadata, failures);
+        if (metadata.currentPage() != null && metadata.currentPage() != paginaEsperada) {
+            failures.add("currentPage != paginaSolicitada");
+        }
+        if (metadata.totalPages() != null && metadata.totalPages() > MAX_TOTAL_PAGES) {
+            failures.add("totalPages > limite");
+        }
+        if (metadata.playersReceived() != null && metadata.resultsPerPage() != null
+                && metadata.playersReceived() > metadata.resultsPerPage()) {
+            failures.add("playersRecibidos > resultsPerPage");
+        }
+        if (metadata.totalResults() != null && metadata.totalPages() != null
+                && metadata.resultsPerPage() != null
+                && (long) metadata.totalPages() * metadata.resultsPerPage()
+                < metadata.totalResults()) {
+            failures.add("totalResults > totalPages * resultsPerPage");
+        }
+        if (metadata.totalPages() != null && metadata.totalPages() == 1
+                && metadata.totalResults() != null && metadata.resultsPerPage() != null
+                && metadata.totalResults() > metadata.resultsPerPage()) {
+            failures.add("totalResults > resultsPerPage");
+        }
+        if (!failures.isEmpty()) {
+            throw errorDeCompletitud(new CompletitudContext(competicion, familia, metadata,
+                    url, failures));
+        }
+    }
+
+    /** Valida el conjunto ya consolidado, cuyo total puede superar el limite por pagina. */
+    public void validarConsolidada(WhoScoredStatisticsFeedResponseDTO response,
+            int registrosRecibidos, CompeticionEstadistica competicion,
+            String familia, String url) {
+        List<String> failures = new ArrayList<>();
+        if (response == null) {
+            failures.add("response == null");
+            throw errorDeCompletitud(new CompletitudContext(competicion, familia,
+                    Metadata.vacia(), url, failures));
+        }
+        Metadata metadata = new Metadata(response.currentPage(), response.totalPages(),
+                response.resultsPerPage(), response.totalResults(),
+                response.players() == null ? null : response.players().size());
+        agregarFallosNulos(metadata, failures);
+        agregarFallosRangosPagina(metadata, failures);
+        agregarFalloSiDistintoDe(metadata.currentPage(), 1, "currentPage != 1", failures);
+        agregarFalloSiDistintoDe(metadata.totalPages(), 1, "totalPages != 1", failures);
+        if (registrosRecibidos < 0) {
+            failures.add("registrosRecibidos < 0");
+        }
+        if (metadata.totalResults() != null && registrosRecibidos != metadata.totalResults()) {
+            failures.add("registrosRecibidos != totalResults");
+        }
+        if (metadata.playersReceived() != null && metadata.totalResults() != null
+                && metadata.playersReceived() > metadata.totalResults()) {
+            failures.add("jugadoresUnicos > totalResults");
+        }
         if (!failures.isEmpty()) {
             throw errorDeCompletitud(new CompletitudContext(competicion, familia, metadata,
                     url, failures));
@@ -40,12 +116,16 @@ public final class WhoScoredStatisticsResponseValidator {
     }
 
     private void agregarFallosRangos(Metadata metadata, List<String> failures) {
+        agregarFallosRangosPagina(metadata, failures);
+        agregarFalloSiDistintoDe(metadata.currentPage(), 1, "currentPage != 1", failures);
+        agregarFalloSiDistintoDe(metadata.totalPages(), 1, "totalPages != 1", failures);
+    }
+
+    private void agregarFallosRangosPagina(Metadata metadata, List<String> failures) {
         agregarFalloSiMenorQue(metadata.currentPage(), 1, "currentPage < 1", failures);
         agregarFalloSiMenorQue(metadata.totalPages(), 1, "totalPages < 1", failures);
         agregarFalloSiMenorQue(metadata.totalResults(), 0, "totalResults < 0", failures);
         agregarFalloSiMenorQue(metadata.resultsPerPage(), 1, "resultsPerPage < 1", failures);
-        agregarFalloSiDistintoDe(metadata.currentPage(), 1, "currentPage != 1", failures);
-        agregarFalloSiDistintoDe(metadata.totalPages(), 1, "totalPages != 1", failures);
     }
 
     private void agregarFallosCantidades(Metadata metadata, List<String> failures) {

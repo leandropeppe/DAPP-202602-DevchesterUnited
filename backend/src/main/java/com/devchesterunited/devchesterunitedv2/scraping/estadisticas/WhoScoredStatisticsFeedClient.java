@@ -28,8 +28,16 @@ public final class WhoScoredStatisticsFeedClient {
 
     Resultado adquirir(CompeticionEstadistica competicion, String category,
             String subcategory, WebDriverSession session) {
+        return adquirir(competicion, category, subcategory, 1, session);
+    }
+
+    Resultado adquirir(CompeticionEstadistica competicion, String category,
+            String subcategory, int page, WebDriverSession session) {
+        if (page < 1) {
+            throw new IllegalArgumentException("La pagina de WhoScored debe ser positiva.");
+        }
         try {
-            String url = construirUrl(competicion, category, subcategory);
+            String url = construirUrl(competicion, category, subcategory, page);
             WebDriver driver = session.driver();
             driver.get(url);
             WebElement bodyElement = new WebDriverWait(driver, Duration.ofSeconds(30))
@@ -40,7 +48,7 @@ public final class WhoScoredStatisticsFeedClient {
             }
             WhoScoredStatisticsFeedResponseDTO response = objectMapper.readValue(
                     body, WhoScoredStatisticsFeedResponseDTO.class);
-            return new Resultado(response, url);
+            return new Resultado(response, url, body);
         } catch (WhoScoredStatisticsException exception) {
             throw exception;
         } catch (IOException | RuntimeException exception) {
@@ -49,7 +57,7 @@ public final class WhoScoredStatisticsFeedClient {
     }
 
     private String construirUrl(CompeticionEstadistica competicion, String category,
-            String subcategory) {
+            String subcategory, int page) {
         var pair = configuration.forCompetition(competicion);
         String endpoint = configuration.getEndpoint();
         if (!endpoint.startsWith("http://") && !endpoint.startsWith("https://")) {
@@ -69,6 +77,8 @@ public final class WhoScoredStatisticsFeedClient {
                 .queryParam("field", configuration.getField())
                 .queryParam("isMinApp", configuration.isMinApp())
                 .queryParam("numberOfPlayersToPick", configuration.getNumberOfPlayersToPick())
+                // WhoScored usa "page" en el XHR de StatisticsFeed/GetPlayerStatistics.
+                .queryParam("page", page)
                 .build().encode().toUriString();
     }
 
@@ -80,5 +90,5 @@ public final class WhoScoredStatisticsFeedClient {
         return end == value.length() ? value : value.substring(0, end);
     }
 
-    record Resultado(WhoScoredStatisticsFeedResponseDTO response, String url) { }
+    record Resultado(WhoScoredStatisticsFeedResponseDTO response, String url, String rawJson) { }
 }

@@ -34,8 +34,10 @@ public class IdentidadJugadorResolver {
         var persisted = identidades.findByProveedorAndExternalId(ProveedorIdentidadExterna.WHOSCORED, hint.playerId());
         if (persisted.isPresent()) {
             var jugador = persisted.get().getJugador();
-            if (equipo.getId().equals(jugador.getEquipoId())) {
-                return new Resultado(jugador.getId(), null, equipo.getId(), null);
+            if (jugador.isActivo()) {
+                // La identidad WhoScored es del jugador; el equipo de esta fila
+                // puede ser histórico cuando hubo un traspaso en la temporada.
+                return new Resultado(jugador.getId(), null, jugador.getEquipoId(), null);
             }
             throw noResuelto(hint, equipo, competicion, List.of(jugador),
                     IdentidadEstadisticaNoResueltaException.Motivo.EVIDENCIA_INCOMPATIBLE);
@@ -64,6 +66,23 @@ public class IdentidadJugadorResolver {
         throw noResuelto(hint, equipo, competicion, fuzzy.stream().limit(2).map(Scored::jugador).toList(),
                 fuzzy.isEmpty() ? IdentidadEstadisticaNoResueltaException.Motivo.SIN_CANDIDATOS
                         : IdentidadEstadisticaNoResueltaException.Motivo.EVIDENCIA_INSUFICIENTE);
+    }
+
+    /** Resuelve una fila consolidada de varios equipos usando solo una identidad WhoScored verificada. */
+    public Resultado resolverTransferido(IdentidadEstadisticaJugador hint,
+            CompeticionEstadistica competicion) {
+        var persisted = identidades.findByProveedorAndExternalId(
+                ProveedorIdentidadExterna.WHOSCORED, hint.playerId());
+        if (persisted.isPresent() && persisted.get().getJugador() != null
+                && persisted.get().getJugador().isActivo()
+                && persisted.get().getJugador().getEquipoId() != null) {
+            var jugador = persisted.get().getJugador();
+            return new Resultado(jugador.getId(), null, jugador.getEquipoId(), null);
+        }
+        throw new IdentidadEstadisticaNoResueltaException(new IdentidadEstadisticaNoResueltaException.Diagnostico(
+                IdentidadEstadisticaNoResueltaException.Tipo.JUGADOR, "WHOSCORED", hint.playerId(),
+                hint.nombre(), competicion.name(), null, null, null, null,
+                IdentidadEstadisticaNoResueltaException.Motivo.EVIDENCIA_INSUFICIENTE));
     }
 
     private Resultado aceptar(JugadorEntity jugador, IdentidadEstadisticaJugador hint, EquipoEntity equipo) {

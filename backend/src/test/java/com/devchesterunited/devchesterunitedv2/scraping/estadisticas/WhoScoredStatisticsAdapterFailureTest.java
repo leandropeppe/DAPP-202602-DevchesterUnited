@@ -37,7 +37,7 @@ class WhoScoredStatisticsAdapterFailureTest {
         assertThatThrownBy(() -> adapter.obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
                 .isInstanceOf(WhoScoredStatisticsException.class);
 
-        verify(driver).get(any(String.class));
+        verify(driver, times(2)).get(any(String.class));
         verify(driver).quit();
     }
 

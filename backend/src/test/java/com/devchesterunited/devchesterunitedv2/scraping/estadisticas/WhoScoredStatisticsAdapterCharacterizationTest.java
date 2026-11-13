@@ -83,7 +83,7 @@ class WhoScoredStatisticsAdapterCharacterizationTest {
     @Test
     void agrupaPorPlayerIdAunqueAparezcaIntercaladoYRepetidoEnUnaFamilia() {
         Fixture fixture = fixture(
-                response(player(102, "Jugador Dos", 202L, null),
+                responseConTotal(3, player(102, "Jugador Dos", 202L, null),
                         player(101, "Jugador Uno", 201L, null),
                         player(102, "Jugador Dos", 202L, null)),
                 response(player(103, "Jugador Tres", 203L, null),
@@ -141,8 +141,7 @@ class WhoScoredStatisticsAdapterCharacterizationTest {
     @Test
     void conservaElPrimerValorNoNuloIncluidoElCero() {
         Fixture fixture = fixture(
-                response(playerWithFields(101, "\"goal\":0,\"rating\":0.0"),
-                        playerWithFields(101, "\"goal\":5,\"rating\":9.0")),
+                responseConTotal(1, playerWithFields(101, "\"goal\":0,\"rating\":0.0")),
                 response(playerWithFields(101, "\"goal\":8,\"rating\":8.0")),
                 response(playerWithFields(101, "\"goal\":7,\"rating\":7.0")));
 
@@ -184,18 +183,15 @@ class WhoScoredStatisticsAdapterCharacterizationTest {
     }
 
     @Test
-    void normalizaNombreYEquipoYConservaElPrimerTeamIdNoNulo() {
+    void rechazaIdentidadIncompatibleEntreFilasDelMismoJugador() {
         Fixture fixture = fixture(
                 response(playerWithDetails(101, "  Ana   Perez  ", null, "   ")),
                 response(playerWithDetails(101, "Otro Nombre", 201L, "  Equipo   Unido  ")),
                 response(playerWithDetails(101, "Tercer Nombre", 202L, "Otro Equipo")));
 
-        var identidad = fixture.adapter().obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE)
-                .registros().get(0).identidad();
-
-        assertThat(identidad.nombre()).isEqualTo("Ana Perez");
-        assertThat(identidad.teamId()).isEqualTo(201L);
-        assertThat(identidad.nombreEquipo()).isEqualTo("Equipo Unido");
+        assertThatThrownBy(() -> fixture.adapter().obtenerSnapshot(CompeticionEstadistica.PREMIER_LEAGUE))
+                .isInstanceOf(WhoScoredStatisticsException.class)
+                .hasMessageContaining("identidades incompatibles");
     }
 
     @Test
@@ -353,8 +349,12 @@ class WhoScoredStatisticsAdapterCharacterizationTest {
     }
 
     private String response(String... players) {
+        return responseConTotal(players.length, players);
+    }
+
+    private String responseConTotal(int totalResults, String... players) {
         return "{\"paging\":{\"currentPage\":1,\"totalPages\":1,\"totalResults\":"
-                + players.length + ",\"resultsPerPage\":500},\"playerTableStats\":["
+                + totalResults + ",\"resultsPerPage\":500},\"playerTableStats\":["
                 + String.join(",", players) + "]}";
     }
 

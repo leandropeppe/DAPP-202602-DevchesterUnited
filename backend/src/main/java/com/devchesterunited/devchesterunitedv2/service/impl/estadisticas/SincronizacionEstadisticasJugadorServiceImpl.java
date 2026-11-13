@@ -162,10 +162,14 @@ public class SincronizacionEstadisticasJugadorServiceImpl
             IdentidadJugadorResolver.Resultado identidad;
             try {
                 EquipoEntity equipo = equiposPorWhoscoredTeamId.get(registro.identidad().teamId());
-                if (equipo == null) {
-                    throw new IllegalStateException("No hay equipo resuelto para el teamId del snapshot.");
+                if (equipo == null && registro.identidad().teamId() == null) {
+                    identidad = jugadores.resolverTransferido(registro.identidad(), snapshot.competicion());
+                } else {
+                    if (equipo == null) {
+                        throw new IllegalStateException("No hay equipo resuelto para el teamId del snapshot.");
+                    }
+                    identidad = jugadores.resolver(registro.identidad(), equipo, snapshot.competicion());
                 }
-                identidad = jugadores.resolver(registro.identidad(), equipo, snapshot.competicion());
             } catch (IdentidadEstadisticaNoResueltaException exception) {
                 omitidos.addAll(exception.diagnosticos());
                 continue;
@@ -186,10 +190,8 @@ public class SincronizacionEstadisticasJugadorServiceImpl
             for (var registro : snapshot.registros()) {
                 var hint = registro.identidad();
                 if (hint.teamId() == null) {
-                    errores.add(new IdentidadEstadisticaNoResueltaException.Diagnostico(
-                            IdentidadEstadisticaNoResueltaException.Tipo.EQUIPO, "WHOSCORED", null,
-                            hint.nombreEquipo(), snapshot.competicion().name(), hint.nombreEquipo(), null,
-                            null, null, IdentidadEstadisticaNoResueltaException.Motivo.EVIDENCIA_INSUFICIENTE));
+                    // Una fila con varios teamId ya fue consolidada por jugador.
+                    // Su equipo final se obtiene desde la identidad local verificada.
                 } else {
                     unicos.putIfAbsent(hint.teamId(), new EquipoHint(hint.nombreEquipo(), snapshot.competicion()));
                 }

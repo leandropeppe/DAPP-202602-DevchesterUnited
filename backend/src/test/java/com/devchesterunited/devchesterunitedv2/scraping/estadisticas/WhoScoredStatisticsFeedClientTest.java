@@ -33,7 +33,7 @@ class WhoScoredStatisticsFeedClientTest {
 
             assertThat(resultado.response()).isNotNull();
             assertThat(resultado.url()).startsWith("https://example.test/statisticsfeed?")
-                    .contains("category=summary", "subcategory=all", "stageId=25544");
+                    .contains("category=summary", "subcategory=all", "stageId=25544", "page=1");
             verify(driver).get(resultado.url());
         }
         verify(driver).quit();

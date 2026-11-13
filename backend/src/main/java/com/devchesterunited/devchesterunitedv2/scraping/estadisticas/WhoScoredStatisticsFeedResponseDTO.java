@@ -62,14 +62,17 @@ public record WhoScoredStatisticsFeedResponseDTO(
             @JsonProperty("passSuccess") BigDecimal passSuccess,
             @JsonProperty("accurateCrossesPerGame") BigDecimal accurateCrossesPerGame,
             @JsonProperty("accurateLongPassPerGame") BigDecimal accurateLongPassPerGame,
-            @JsonProperty("accurateThroughBallPerGame") BigDecimal accurateThroughBallPerGame) {
+             @JsonProperty("accurateThroughBallPerGame") BigDecimal accurateThroughBallPerGame,
+             @JsonProperty("seasonId") Long seasonId,
+             @JsonProperty("seasonName") String seasonName) {
         public PlayerDTO(Long playerId, String name, Long teamId, String teamName, Integer minsPlayed,
                 Integer goal, Integer assistTotal, BigDecimal shotsPerGame, BigDecimal keyPassPerGame,
                 BigDecimal dribbleWonPerGame, BigDecimal tacklePerGame, BigDecimal rating,
                 Integer yellowCard, Integer redCard) {
             this(playerId, name, teamId, teamName, minsPlayed, goal, assistTotal, shotsPerGame, keyPassPerGame,
                     dribbleWonPerGame, tacklePerGame, rating, yellowCard, redCard, null, null, null, null, null, null,
-                    null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                    null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                    null, null);
         }
     }
 }

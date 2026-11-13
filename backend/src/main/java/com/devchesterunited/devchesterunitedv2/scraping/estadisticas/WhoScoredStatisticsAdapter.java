@@ -6,9 +6,12 @@ import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.SnapshotEstad
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -16,6 +19,8 @@ import java.util.Objects;
 /** Adapter de WhoScored basado en Selenium y statisticsfeed. */
 @Component
 public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WhoScoredStatisticsAdapter.class);
+
     private final WebDriverFactory webDriverFactory;
     private final WhoScoredStatisticsConfiguration statisticsConfiguration;
     private final WhoScoredStatisticsFeedClient feedClient;
@@ -88,14 +93,141 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
     private WhoScoredStatisticsFeedResponseDTO adquirirFamilia(CompeticionEstadistica competicion,
             FamiliaFeed familia, WebDriverSession session) {
         try {
-            WhoScoredStatisticsFeedClient.Resultado resultado = feedClient.adquirir(
-                    competicion, familia.category(), familia.subcategory(), session);
-            responseValidator.validar(resultado.response(), competicion, familia.name(), resultado.url());
-            return resultado.response();
+            WhoScoredStatisticsFeedClient.Resultado primera = feedClient.adquirir(
+                    competicion, familia.category(), familia.subcategory(), 1, session);
+            responseValidator.validarPagina(primera.response(), competicion, familia.name(),
+                    primera.url(), 1);
+
+            int totalPages = primera.response().totalPages();
+            int registrosRecibidos = primera.response().players().size();
+            Map<RegistroEquipoKey, WhoScoredStatisticsFeedResponseDTO.PlayerDTO> jugadores =
+                    new LinkedHashMap<>();
+            incorporar(jugadores, primera.response().players(), competicion, familia, 1);
+            for (int page = 2; page <= totalPages; page++) {
+                WhoScoredStatisticsFeedClient.Resultado siguiente = feedClient.adquirir(
+                        competicion, familia.category(), familia.subcategory(), page, session);
+                responseValidator.validarPagina(siguiente.response(), competicion, familia.name(),
+                        siguiente.url(), page);
+                comprobarMetadata(primera.response(), siguiente.response(), competicion,
+                        familia, siguiente.url());
+                registrosRecibidos += siguiente.response().players().size();
+                incorporar(jugadores, siguiente.response().players(), competicion, familia, page);
+            }
+
+            WhoScoredStatisticsFeedResponseDTO consolidada = new WhoScoredStatisticsFeedResponseDTO(
+                    new WhoScoredStatisticsFeedResponseDTO.PagingDTO(1, 1,
+                            primera.response().resultsPerPage(), primera.response().totalResults()),
+                    new java.util.ArrayList<>(jugadores.values()));
+            responseValidator.validarConsolidada(consolidada, registrosRecibidos,
+                    competicion, familia.name(), primera.url());
+            return consolidada;
         } catch (WhoScoredStatisticsException exception) {
             throw exception;
         } catch (RuntimeException exception) {
             throw new WhoScoredStatisticsException("No se pudo leer el JSON de statisticsfeed.", exception);
+        }
+    }
+
+    private void incorporar(Map<RegistroEquipoKey, WhoScoredStatisticsFeedResponseDTO.PlayerDTO> jugadores,
+            List<WhoScoredStatisticsFeedResponseDTO.PlayerDTO> pagina,
+            CompeticionEstadistica competicion, FamiliaFeed familia, int page) {
+        if (pagina != null) {
+            pagina.forEach(player -> {
+                Long playerId = player == null ? null : player.playerId();
+                RegistroEquipoKey key = RegistroEquipoKey.of(player);
+                if (jugadores.containsKey(key)
+                        && !Objects.equals(jugadores.get(key), player)) {
+                    WhoScoredStatisticsFeedResponseDTO.PlayerDTO anterior = jugadores.get(key);
+                    String diferencias = diferencias(anterior, player);
+                    LOGGER.warn("Conflicto de registro duplicado WhoScored: competicion={}, familia={}, "
+                                    + "pagina={}, playerId={}, anteriorTeamId={}, anteriorTeamName={}, "
+                                    + "nuevoTeamId={}, nuevoTeamName={}, diferencias={}",
+                            competicion, familia.name(), page, playerId,
+                            anterior == null ? null : anterior.teamId(),
+                            anterior == null ? null : anterior.teamName(),
+                            player == null ? null : player.teamId(),
+                            player == null ? null : player.teamName(),
+                            diferencias);
+                    throw new WhoScoredStatisticsException(
+                            "WhoScored devolvio registros duplicados conflictivos para un mismo jugador: "
+                            + "playerId=" + playerId + ", teamId=" + key.teamId()
+                            + ", competicion=" + competicion
+                                    + ", familia=" + familia.name() + ", pagina=" + page
+                                    + ", diferencias=" + diferencias);
+                }
+                if (!jugadores.containsKey(key)) {
+                    jugadores.put(key, player);
+                }
+            });
+        }
+    }
+
+    private record RegistroEquipoKey(Long playerId, Long teamId, String teamName) {
+        private static RegistroEquipoKey of(WhoScoredStatisticsFeedResponseDTO.PlayerDTO player) {
+            Long teamId = player == null ? null : player.teamId();
+            return new RegistroEquipoKey(player == null ? null : player.playerId(), teamId,
+                    teamId == null && player != null ? player.teamName() : null);
+        }
+    }
+
+    private String diferencias(WhoScoredStatisticsFeedResponseDTO.PlayerDTO anterior,
+            WhoScoredStatisticsFeedResponseDTO.PlayerDTO nuevo) {
+        if (anterior == null || nuevo == null) {
+            return "registroAnterior=" + anterior + ", registroNuevo=" + nuevo;
+        }
+        StringBuilder diferencias = new StringBuilder();
+        agregarDiferencia(diferencias, "name", anterior.name(), nuevo.name());
+        agregarDiferencia(diferencias, "teamId", anterior.teamId(), nuevo.teamId());
+        agregarDiferencia(diferencias, "teamName", anterior.teamName(), nuevo.teamName());
+        agregarDiferencia(diferencias, "minsPlayed", anterior.minsPlayed(), nuevo.minsPlayed());
+        agregarDiferencia(diferencias, "goal", anterior.goal(), nuevo.goal());
+        agregarDiferencia(diferencias, "assistTotal", anterior.assistTotal(), nuevo.assistTotal());
+        agregarDiferencia(diferencias, "shotsPerGame", anterior.shotsPerGame(), nuevo.shotsPerGame());
+        agregarDiferencia(diferencias, "keyPassPerGame", anterior.keyPassPerGame(), nuevo.keyPassPerGame());
+        agregarDiferencia(diferencias, "dribbleWonPerGame", anterior.dribbleWonPerGame(), nuevo.dribbleWonPerGame());
+        agregarDiferencia(diferencias, "tacklePerGame", anterior.tacklePerGame(), nuevo.tacklePerGame());
+        agregarDiferencia(diferencias, "rating", anterior.rating(), nuevo.rating());
+        agregarDiferencia(diferencias, "yellowCard", anterior.yellowCard(), nuevo.yellowCard());
+        agregarDiferencia(diferencias, "redCard", anterior.redCard(), nuevo.redCard());
+        agregarDiferencia(diferencias, "apps", anterior.apps(), nuevo.apps());
+        agregarDiferencia(diferencias, "subOn", anterior.subOn(), nuevo.subOn());
+        agregarDiferencia(diferencias, "manOfTheMatch", anterior.manOfTheMatch(), nuevo.manOfTheMatch());
+        agregarDiferencia(diferencias, "aerialWonPerGame", anterior.aerialWonPerGame(), nuevo.aerialWonPerGame());
+        agregarDiferencia(diferencias, "foulGivenPerGame", anterior.foulGivenPerGame(), nuevo.foulGivenPerGame());
+        agregarDiferencia(diferencias, "offsideGivenPerGame", anterior.offsideGivenPerGame(), nuevo.offsideGivenPerGame());
+        agregarDiferencia(diferencias, "dispossessedPerGame", anterior.dispossessedPerGame(), nuevo.dispossessedPerGame());
+        agregarDiferencia(diferencias, "turnoverPerGame", anterior.turnoverPerGame(), nuevo.turnoverPerGame());
+        agregarDiferencia(diferencias, "interceptionPerGame", anterior.interceptionPerGame(), nuevo.interceptionPerGame());
+        agregarDiferencia(diferencias, "foulsPerGame", anterior.foulsPerGame(), nuevo.foulsPerGame());
+        agregarDiferencia(diferencias, "offsideWonPerGame", anterior.offsideWonPerGame(), nuevo.offsideWonPerGame());
+        agregarDiferencia(diferencias, "clearancePerGame", anterior.clearancePerGame(), nuevo.clearancePerGame());
+        agregarDiferencia(diferencias, "wasDribbledPerGame", anterior.wasDribbledPerGame(), nuevo.wasDribbledPerGame());
+        agregarDiferencia(diferencias, "outfielderBlockPerGame", anterior.outfielderBlockPerGame(), nuevo.outfielderBlockPerGame());
+        agregarDiferencia(diferencias, "goalOwn", anterior.goalOwn(), nuevo.goalOwn());
+        agregarDiferencia(diferencias, "totalPassesPerGame", anterior.totalPassesPerGame(), nuevo.totalPassesPerGame());
+        agregarDiferencia(diferencias, "passSuccess", anterior.passSuccess(), nuevo.passSuccess());
+        agregarDiferencia(diferencias, "accurateCrossesPerGame", anterior.accurateCrossesPerGame(), nuevo.accurateCrossesPerGame());
+        agregarDiferencia(diferencias, "accurateLongPassPerGame", anterior.accurateLongPassPerGame(), nuevo.accurateLongPassPerGame());
+        agregarDiferencia(diferencias, "accurateThroughBallPerGame", anterior.accurateThroughBallPerGame(), nuevo.accurateThroughBallPerGame());
+        return diferencias.length() == 0 ? "ninguna" : diferencias.toString();
+    }
+
+    private void agregarDiferencia(StringBuilder diferencias, String campo, Object anterior, Object nuevo) {
+        if (!Objects.equals(anterior, nuevo)) {
+            if (diferencias.length() > 0) diferencias.append("; ");
+            diferencias.append(campo).append("[").append(anterior).append(" -> ").append(nuevo).append("]");
+        }
+    }
+
+    private void comprobarMetadata(WhoScoredStatisticsFeedResponseDTO primera,
+            WhoScoredStatisticsFeedResponseDTO siguiente, CompeticionEstadistica competicion,
+            FamiliaFeed familia, String url) {
+        if (!java.util.Objects.equals(primera.totalPages(), siguiente.totalPages())
+                || !java.util.Objects.equals(primera.totalResults(), siguiente.totalResults())
+                || !java.util.Objects.equals(primera.resultsPerPage(), siguiente.resultsPerPage())) {
+            throw new WhoScoredStatisticsException("WhoScored devolvio metadata de paginacion inconsistente: "
+                    + "competicion=" + competicion + ", familia=" + familia.name()
+                    + ", adquisicion=" + url);
         }
     }
 
