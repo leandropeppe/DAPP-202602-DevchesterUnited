@@ -104,4 +104,72 @@ class ArchitectureTest {
                 .resideInAPackage("..service.impl..")
                 .check(clases);
     }
+
+    @Test
+    void entidadesJpaDebenEstarEnPersistencia() {
+        classes()
+                .that()
+                .areAnnotatedWith(jakarta.persistence.Entity.class)
+                .should()
+                .resideInAPackage("..persistence..")
+                .check(clases);
+    }
+
+    @Test
+    void repositoriesDebenEstarEnPersistencia() {
+        classes()
+                .that()
+                .areAssignableTo(
+                        org.springframework.data.repository.Repository.class)
+                .should()
+                .resideInAPackage("..persistence..")
+                .check(clases);
+    }
+
+    @Test
+    void persistenciaNoDebeDependerDeDtosHttp() {
+        noClasses()
+                .that()
+                .resideInAPackage("..persistence..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(
+                        "..controller.dto..",
+                        "..controller.*.dto.."
+                )
+                .check(clases);
+    }
+
+    @Test
+    void repositoriesNoDebenDependerDeServicios() {
+        noClasses()
+                .that()
+                .resideInAPackage("..persistence.*.repository..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("..service..")
+                .check(clases);
+    }
+
+    @Test
+    void entidadesJpaNoDebenDependerDeServicios() {
+        noClasses()
+                .that()
+                .areAnnotatedWith(jakarta.persistence.Entity.class)
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("..service..")
+                .check(clases);
+    }
+
+    @Test
+    void controllersNoDebenDependerDeEntidadesJpa() {
+        noClasses()
+                .that()
+                .resideInAPackage("..controller..")
+                .should()
+                .dependOnClassesThat()
+                .areAnnotatedWith(jakarta.persistence.Entity.class)
+                .check(clases);
+    }
 }
