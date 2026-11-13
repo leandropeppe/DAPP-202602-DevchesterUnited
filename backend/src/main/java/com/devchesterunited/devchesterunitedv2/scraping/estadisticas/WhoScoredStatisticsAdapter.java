@@ -128,38 +128,69 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         }
     }
 
-    private void incorporar(Map<RegistroEquipoKey, WhoScoredStatisticsFeedResponseDTO.PlayerDTO> jugadores,
+    private void incorporar(
+            Map<RegistroEquipoKey, WhoScoredStatisticsFeedResponseDTO.PlayerDTO> jugadores,
             List<WhoScoredStatisticsFeedResponseDTO.PlayerDTO> pagina,
-            CompeticionEstadistica competicion, FamiliaFeed familia, int page) {
-        if (pagina != null) {
-            pagina.forEach(player -> {
-                Long playerId = player == null ? null : player.playerId();
-                RegistroEquipoKey key = RegistroEquipoKey.of(player);
-                if (jugadores.containsKey(key)
-                        && !Objects.equals(jugadores.get(key), player)) {
-                    WhoScoredStatisticsFeedResponseDTO.PlayerDTO anterior = jugadores.get(key);
-                    String diferencias = diferencias(anterior, player);
-                    LOGGER.warn("Conflicto de registro duplicado WhoScored: competicion={}, familia={}, "
-                                    + "pagina={}, playerId={}, anteriorTeamId={}, anteriorTeamName={}, "
-                                    + "nuevoTeamId={}, nuevoTeamName={}, diferencias={}",
-                            competicion, familia.name(), page, playerId,
-                            anterior == null ? null : anterior.teamId(),
-                            anterior == null ? null : anterior.teamName(),
-                            player == null ? null : player.teamId(),
-                            player == null ? null : player.teamName(),
-                            diferencias);
-                    throw new WhoScoredStatisticsException(
-                            "WhoScored devolvio registros duplicados conflictivos para un mismo jugador: "
-                            + "playerId=" + playerId + ", teamId=" + key.teamId()
-                            + ", competicion=" + competicion
-                                    + ", familia=" + familia.name() + ", pagina=" + page
-                                    + ", diferencias=" + diferencias);
-                }
-                if (!jugadores.containsKey(key)) {
-                    jugadores.put(key, player);
-                }
-            });
+            CompeticionEstadistica competicion,
+            FamiliaFeed familia,
+            int page) {
+
+        if (pagina == null) {
+            return;
         }
+
+        pagina.forEach(player ->
+                incorporarJugador(jugadores, player, competicion, familia, page));
+    }
+
+    private void incorporarJugador(
+            Map<RegistroEquipoKey, WhoScoredStatisticsFeedResponseDTO.PlayerDTO> jugadores,
+            WhoScoredStatisticsFeedResponseDTO.PlayerDTO player,
+            CompeticionEstadistica competicion,
+            FamiliaFeed familia,
+            int page) {
+
+        RegistroEquipoKey key = RegistroEquipoKey.of(player);
+
+        if (jugadores.containsKey(key)
+                && !Objects.equals(jugadores.get(key), player)) {
+            registrarConflicto(jugadores.get(key), player, key, competicion, familia, page);
+        }
+
+        if (!jugadores.containsKey(key)) {
+            jugadores.put(key, player);
+        }
+    }
+
+    private void registrarConflicto(
+            WhoScoredStatisticsFeedResponseDTO.PlayerDTO anterior,
+            WhoScoredStatisticsFeedResponseDTO.PlayerDTO player,
+            RegistroEquipoKey key,
+            CompeticionEstadistica competicion,
+            FamiliaFeed familia,
+            int page) {
+
+        Long playerId = player == null ? null : player.playerId();
+        String diferencias = diferencias(anterior, player);
+
+        LOGGER.warn("Conflicto de registro duplicado WhoScored: competicion={}, familia={}, "
+                        + "pagina={}, playerId={}, anteriorTeamId={}, anteriorTeamName={}, "
+                        + "nuevoTeamId={}, nuevoTeamName={}, diferencias={}",
+                competicion, familia.name(), page, playerId,
+                anterior == null ? null : anterior.teamId(),
+                anterior == null ? null : anterior.teamName(),
+                player == null ? null : player.teamId(),
+                player == null ? null : player.teamName(),
+                diferencias);
+
+        throw new WhoScoredStatisticsException(
+                "WhoScored devolvio registros duplicados conflictivos para un mismo jugador: "
+                        + "playerId=" + playerId
+                        + ", teamId=" + key.teamId()
+                        + ", competicion=" + competicion
+                        + ", familia=" + familia.name()
+                        + ", pagina=" + page
+                        + ", diferencias=" + diferencias);
     }
 
     private record RegistroEquipoKey(Long playerId, Long teamId, String teamName) {
@@ -209,12 +240,12 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
         agregarDiferencia(diferencias, "accurateCrossesPerGame", anterior.accurateCrossesPerGame(), nuevo.accurateCrossesPerGame());
         agregarDiferencia(diferencias, "accurateLongPassPerGame", anterior.accurateLongPassPerGame(), nuevo.accurateLongPassPerGame());
         agregarDiferencia(diferencias, "accurateThroughBallPerGame", anterior.accurateThroughBallPerGame(), nuevo.accurateThroughBallPerGame());
-        return diferencias.length() == 0 ? "ninguna" : diferencias.toString();
+        return diferencias.isEmpty() ? "ninguna" : diferencias.toString();
     }
 
     private void agregarDiferencia(StringBuilder diferencias, String campo, Object anterior, Object nuevo) {
         if (!Objects.equals(anterior, nuevo)) {
-            if (diferencias.length() > 0) diferencias.append("; ");
+            if (!diferencias.isEmpty()) diferencias.append("; ");
             diferencias.append(campo).append("[").append(anterior).append(" -> ").append(nuevo).append("]");
         }
     }

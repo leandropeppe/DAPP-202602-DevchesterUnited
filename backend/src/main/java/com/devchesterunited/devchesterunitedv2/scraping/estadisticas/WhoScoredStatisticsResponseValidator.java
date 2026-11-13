@@ -8,12 +8,13 @@ import java.util.List;
 /** Valida la integridad y completitud de respuestas de statisticsfeed. */
 public final class WhoScoredStatisticsResponseValidator {
     static final int MAX_TOTAL_PAGES = 1_000;
+    private static final String RESPONSE_NULL = "response == null";
 
     public void validar(WhoScoredStatisticsFeedResponseDTO response,
             CompeticionEstadistica competicion, String familia, String url) {
         List<String> failures = new ArrayList<>();
         if (response == null) {
-            failures.add("response == null");
+            failures.add(RESPONSE_NULL);
             throw errorDeCompletitud(new CompletitudContext(competicion, familia,
                     Metadata.vacia(), url, failures));
         }
@@ -32,7 +33,7 @@ public final class WhoScoredStatisticsResponseValidator {
             CompeticionEstadistica competicion, String familia, String url, int paginaEsperada) {
         List<String> failures = new ArrayList<>();
         if (response == null) {
-            failures.add("response == null");
+            failures.add(RESPONSE_NULL);
             throw errorDeCompletitud(new CompletitudContext(competicion, familia,
                     Metadata.vacia(), url, failures));
         }
@@ -74,7 +75,7 @@ public final class WhoScoredStatisticsResponseValidator {
             String familia, String url) {
         List<String> failures = new ArrayList<>();
         if (response == null) {
-            failures.add("response == null");
+            failures.add(RESPONSE_NULL);
             throw errorDeCompletitud(new CompletitudContext(competicion, familia,
                     Metadata.vacia(), url, failures));
         }

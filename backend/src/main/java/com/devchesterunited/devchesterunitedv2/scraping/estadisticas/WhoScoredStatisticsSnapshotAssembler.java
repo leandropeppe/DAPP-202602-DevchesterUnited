@@ -115,7 +115,7 @@ final class WhoScoredStatisticsSnapshotAssembler {
                 case DEFENSIVA -> aplicarDefensiva(filas);
                 case PASES -> aplicarPases(filas);
             }
-            if (filas.size() > 1) {
+            if (filas.size() > 1 && LOGGER.isDebugEnabled()) {
                 LOGGER.debug("WhoScored consolidation playerId={}, teams={}, family={}, policy={}",
                         playerId, equiposVistos, familia, politica(familia));
             }
@@ -123,46 +123,85 @@ final class WhoScoredStatisticsSnapshotAssembler {
 
         private void validarIdentidad(List<WhoScoredStatisticsFeedResponseDTO.PlayerDTO> filas) {
             String nombre = normalizar(filas.get(0).name());
+
             if (filas.stream().anyMatch(fila -> !Objects.equals(nombre, normalizar(fila.name())))) {
                 throw new WhoScoredStatisticsException(
                         "WhoScored devolvio identidades incompatibles para playerId=" + playerId + ".");
             }
+
             String nombreOriginal = filas.get(0).name().trim();
+
             if (name != null && !Objects.equals(normalizar(name), normalizar(nombreOriginal))) {
                 throw new WhoScoredStatisticsException(
                         "WhoScored devolvio identidades incompatibles para playerId=" + playerId + ".");
             }
+
             name = name == null ? nombreOriginal : name;
-            Set<Long> equipos = filas.stream().map(WhoScoredStatisticsFeedResponseDTO.PlayerDTO::teamId)
-                    .filter(Objects::nonNull).collect(Collectors.toSet());
-            Set<String> nombresEquipos = filas.stream().map(WhoScoredStatisticsFeedResponseDTO.PlayerDTO::teamName)
-                    .filter(Objects::nonNull).map(JugadorAcumulado::normalizar).collect(Collectors.toSet());
+
+            Set<Long> equipos = filas.stream()
+                    .map(WhoScoredStatisticsFeedResponseDTO.PlayerDTO::teamId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            Set<String> nombresEquipos = filas.stream()
+                    .map(WhoScoredStatisticsFeedResponseDTO.PlayerDTO::teamName)
+                    .filter(Objects::nonNull)
+                    .map(JugadorAcumulado::normalizar)
+                    .collect(Collectors.toSet());
+
+            validarTemporadas(filas);
+
+            equiposVistos.addAll(equipos);
+            nombresEquiposVistos.addAll(nombresEquipos);
+
+            teamId = equiposVistos.size() == 1
+                    ? equiposVistos.iterator().next()
+                    : null;
+
+            teamName = nombresEquiposVistos.size() == 1
+                    ? filas.get(0).teamName()
+                    : null;
+        }
+
+        private void validarTemporadas(List<WhoScoredStatisticsFeedResponseDTO.PlayerDTO> filas) {
             Set<Long> temporadas = filas.stream()
                     .map(WhoScoredStatisticsFeedResponseDTO.PlayerDTO::seasonId)
-                    .filter(Objects::nonNull).collect(Collectors.toSet());
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
             Set<String> nombresTemporadas = filas.stream()
                     .map(WhoScoredStatisticsFeedResponseDTO.PlayerDTO::seasonName)
-                    .filter(Objects::nonNull).map(JugadorAcumulado::normalizar)
+                    .filter(Objects::nonNull)
+                    .map(JugadorAcumulado::normalizar)
                     .collect(Collectors.toSet());
+
             if (temporadas.size() > 1 || nombresTemporadas.size() > 1) {
                 throw new WhoScoredStatisticsException(
                         "WhoScored devolvio temporadas incompatibles para playerId=" + playerId + ".");
             }
-            Long nuevaTemporada = temporadas.isEmpty() ? null : temporadas.iterator().next();
+
+            Long nuevaTemporada = temporadas.isEmpty()
+                    ? null
+                    : temporadas.iterator().next();
+
             String nuevoNombreTemporada = nombresTemporadas.isEmpty()
-                    ? null : nombresTemporadas.iterator().next();
-            if (seasonId != null && nuevaTemporada != null && !seasonId.equals(nuevaTemporada)
-                    || seasonName != null && nuevoNombreTemporada != null
-                    && !seasonName.equals(nuevoNombreTemporada)) {
+                    ? null
+                    : nombresTemporadas.iterator().next();
+
+            if ((seasonId != null && nuevaTemporada != null && !seasonId.equals(nuevaTemporada))
+                    || (seasonName != null && nuevoNombreTemporada != null
+                    && !seasonName.equals(nuevoNombreTemporada))) {
                 throw new WhoScoredStatisticsException(
                         "WhoScored devolvio temporadas incompatibles para playerId=" + playerId + ".");
             }
-            if (seasonId == null) seasonId = nuevaTemporada;
-            if (seasonName == null) seasonName = nuevoNombreTemporada;
-            equiposVistos.addAll(equipos);
-            nombresEquiposVistos.addAll(nombresEquipos);
-            teamId = equiposVistos.size() == 1 ? equiposVistos.iterator().next() : null;
-            teamName = nombresEquiposVistos.size() == 1 ? filas.get(0).teamName() : null;
+
+            if (seasonId == null) {
+                seasonId = nuevaTemporada;
+            }
+
+            if (seasonName == null) {
+                seasonName = nuevoNombreTemporada;
+            }
         }
 
         private void aplicarGeneral(List<WhoScoredStatisticsFeedResponseDTO.PlayerDTO> filas) {
