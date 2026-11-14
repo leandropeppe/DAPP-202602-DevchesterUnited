@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
 
 
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionEjecucionConfig;
+import com.devchesterunited.devchesterunitedv2.service.impl.valorizacion.ValorizacionEjecucionConfig;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

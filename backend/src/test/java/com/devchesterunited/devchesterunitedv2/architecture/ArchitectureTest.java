@@ -296,4 +296,15 @@ class ArchitectureTest {
                 .check(clases);
     }
 
+    @Test
+    void serviciosNoDebenDependerDeConfiguracion() {
+        noClasses()
+                .that()
+                .resideInAPackage("com.devchesterunited.devchesterunitedv2.service..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.devchesterunited.devchesterunitedv2.configuration..")
+                .check(clases);
+    }
+
 }

@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.simulacion;
 
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionEjecucionConfig;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiasIniciales;
+import com.devchesterunited.devchesterunitedv2.service.impl.valorizacion.ValorizacionEjecucionConfig;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ConfiguracionElegibilidad;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.EstrategiaAusenteException;

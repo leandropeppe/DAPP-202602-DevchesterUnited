@@ -1,5 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.configuration.valorizacion;
 
+import com.devchesterunited.devchesterunitedv2.service.impl.valorizacion.ValorizacionEjecucionConfig;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.ValorizacionJugadorService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.ValorizacionEjecucionPort;
 import org.slf4j.Logger;
