@@ -2,6 +2,9 @@ package com.devchesterunited.devchesterunitedv2.unit.auth;
 import static org.assertj.core.api.Assertions.*;
 
 import com.devchesterunited.devchesterunitedv2.configuration.security.JwtConfig;
+import com.devchesterunited.devchesterunitedv2.configuration.security.JwtEmissionAdapter;
+import com.devchesterunited.devchesterunitedv2.configuration.security.JwtEmissionParametersFactory;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.auth.JwtEmissionPort;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -38,10 +41,11 @@ class JwtConfigTest {
     private final byte[] clave = clave(64);
     private final RelojControlable reloj = new RelojControlable(AHORA);
     private final JwtConfig config = configurar(clave, reloj);
+    private final JwtEmissionParametersFactory parametros = new JwtEmissionParametersFactory(reloj);
 
     @Test
     void generaFirmaHS256VerificableYClaimsContractuales() throws Exception {
-        var emitido = config.jwtEncoder().encode(config.parametrosPara(ID));
+        var emitido = config.jwtEncoder().encode(parametros.crear(ID));
         var firmado = SignedJWT.parse(emitido.getTokenValue());
         assertThat(firmado.getHeader().getAlgorithm()).isEqualTo(JWSAlgorithm.HS256);
         assertThat(firmado.verify(new MACVerifier(clave))).isTrue();
@@ -57,12 +61,18 @@ class JwtConfigTest {
     @Test
     void encoderYDecoderSonBeansNimbusConClockInyectado() {
         String secreto = Base64.getEncoder().encodeToString(clave);
-        new ApplicationContextRunner().withUserConfiguration(JwtConfig.class)
+        new ApplicationContextRunner().withUserConfiguration(JwtConfig.class, JwtEmissionParametersFactory.class,
+                        JwtEmissionAdapter.class)
                 .withBean(Clock.class, () -> reloj).withPropertyValues("jwt.secret=" + secreto)
                 .run(contexto -> {
-                    assertThat(contexto).hasNotFailed().hasSingleBean(NimbusJwtEncoder.class).hasSingleBean(NimbusJwtDecoder.class);
-                    var parametros = contexto.getBean(JwtConfig.class).parametrosPara(ID);
+                    assertThat(contexto).hasNotFailed().hasSingleBean(NimbusJwtEncoder.class).hasSingleBean(NimbusJwtDecoder.class)
+                            .hasSingleBean(JwtEmissionPort.class);
+                    var parametros = contexto.getBean(JwtEmissionParametersFactory.class).crear(ID);
                     String token = contexto.getBean(NimbusJwtEncoder.class).encode(parametros).getTokenValue();
+                    String tokenEmitido = contexto.getBean(JwtEmissionPort.class).emitir(ID);
+                    var jwtEmitido = contexto.getBean(NimbusJwtDecoder.class).decode(tokenEmitido);
+                    assertThat(jwtEmitido.getSubject()).isEqualTo("usr_" + ID);
+                    assertThat(jwtEmitido.getIssuedAt()).isEqualTo(AHORA);
                     assertThat(contexto.getBean(NimbusJwtDecoder.class).decode(token).getIssuedAt()).isEqualTo(AHORA);
                 });
     }
@@ -70,7 +80,7 @@ class JwtConfigTest {
     @Test
     void relojControlaEmisionYExpiracionExactaSinTolerancia() {
         var decoder = config.jwtDecoder();
-        String token = config.jwtEncoder().encode(config.parametrosPara(ID)).getTokenValue();
+        String token = config.jwtEncoder().encode(parametros.crear(ID)).getTokenValue();
         reloj.ahora = AHORA.minusNanos(1);
         assertThatThrownBy(() -> decoder.decode(token)).isInstanceOf(JwtException.class);
         reloj.ahora = AHORA;
@@ -81,17 +91,17 @@ class JwtConfigTest {
         assertThatThrownBy(() -> decoder.decode(token)).isInstanceOf(JwtException.class);
         reloj.ahora = AHORA.plusSeconds(3601);
         assertThatThrownBy(() -> decoder.decode(token)).isInstanceOf(JwtException.class);
-        var nuevo = config.jwtEncoder().encode(config.parametrosPara(ID));
+        var nuevo = config.jwtEncoder().encode(parametros.crear(ID));
         assertThat(decoder.decode(nuevo.getTokenValue()).getIssuedAt()).isEqualTo(reloj.instant());
     }
 
     @Test
     void emisionUsaSegundosEnterosSinAlterarDuracion() {
         reloj.ahora = AHORA.plusNanos(123456789);
-        var jwt = config.jwtDecoder().decode(config.jwtEncoder().encode(config.parametrosPara(ID)).getTokenValue());
+        var jwt = config.jwtDecoder().decode(config.jwtEncoder().encode(parametros.crear(ID)).getTokenValue());
         assertThat(jwt.getIssuedAt()).isEqualTo(AHORA);
         assertThat(jwt.getExpiresAt()).isEqualTo(AHORA.plusSeconds(3600));
-        assertThatThrownBy(() -> config.parametrosPara(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> parametros.crear(null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @ParameterizedTest
@@ -136,10 +146,10 @@ class JwtConfigTest {
         var cabecera = org.springframework.security.oauth2.jwt.JwsHeader
                 .with(org.springframework.security.oauth2.jose.jws.MacAlgorithm.from(algoritmo))
                 .build();
-        var parametros = org.springframework.security.oauth2.jwt.JwtEncoderParameters
-                .from(cabecera, config.parametrosPara(ID).getClaims());
+        var parametrosAlgoritmo = org.springframework.security.oauth2.jwt.JwtEncoderParameters
+                .from(cabecera, parametros.crear(ID).getClaims());
         var encoder = config.jwtEncoder();
-        assertThatThrownBy(() -> encoder.encode(parametros))
+        assertThatThrownBy(() -> encoder.encode(parametrosAlgoritmo))
                 .isInstanceOf(JwtException.class);
     }
 
@@ -194,8 +204,8 @@ class JwtConfigTest {
 
         var encoder = minimo.jwtEncoder();
         var decoder = minimo.jwtDecoder();
-        var parametros = minimo.parametrosPara(ID);
-        var token = encoder.encode(parametros).getTokenValue();
+        var parametrosMinimos = new JwtEmissionParametersFactory(reloj).crear(ID);
+        var token = encoder.encode(parametrosMinimos).getTokenValue();
 
         assertThatCode(() -> decoder.decode(token))
                 .doesNotThrowAnyException();
