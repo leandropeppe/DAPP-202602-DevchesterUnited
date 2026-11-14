@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.modelo.market;
 
-import com.devchesterunited.devchesterunitedv2.exception.CantidadTokenInvalidaException;
+import com.devchesterunited.devchesterunitedv2.modelo.exception.CantidadTokenInvalidaException;
 
 /** Cantidad entera positiva de tokens para una operación de mercado. */
 public record TokenQuantity(long value) {

@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.modelo.auth;
 
-import com.devchesterunited.devchesterunitedv2.exception.ApiKeyException;
+import com.devchesterunited.devchesterunitedv2.modelo.exception.ApiKeyException;
 
 import java.time.Instant;
 import java.util.UUID;

@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.devchesterunited.devchesterunitedv2.modelo.auth.Usuario;
 
-import com.devchesterunited.devchesterunitedv2.exception.UsuarioException;
+import com.devchesterunited.devchesterunitedv2.modelo.exception.UsuarioException;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.modelo.jugador;
 
-import com.devchesterunited.devchesterunitedv2.exception.JugadorException;
+import com.devchesterunited.devchesterunitedv2.modelo.exception.JugadorException;
 
 import java.time.Instant;
 import java.util.Objects;

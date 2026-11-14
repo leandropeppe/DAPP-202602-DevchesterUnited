@@ -263,4 +263,15 @@ class ArchitectureTest {
     }
 
 
+    @Test
+    void modeloNoDebeDependerDeExcepcionesDeAplicacion() {
+        noClasses()
+                .that()
+                .resideInAPackage("..modelo..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.devchesterunited.devchesterunitedv2.exception..")
+                .check(clases);
+    }
+
 }

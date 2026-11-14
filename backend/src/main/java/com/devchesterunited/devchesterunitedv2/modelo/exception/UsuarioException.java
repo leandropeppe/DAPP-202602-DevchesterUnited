@@ -1,4 +1,4 @@
-package com.devchesterunited.devchesterunitedv2.exception;
+package com.devchesterunited.devchesterunitedv2.modelo.exception;
 
 public class UsuarioException extends RuntimeException {
     public UsuarioException(String mensaje) {
