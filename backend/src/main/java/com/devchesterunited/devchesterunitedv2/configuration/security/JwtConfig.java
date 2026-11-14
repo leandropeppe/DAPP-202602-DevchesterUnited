@@ -1,5 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.configuration.security;
 
+import com.devchesterunited.devchesterunitedv2.service.interfaces.auth.JwtEmissionPort;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
@@ -23,7 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Configuration(proxyBeanMethods = false)
-public class JwtConfig {
+public class JwtConfig implements JwtEmissionPort {
     private static final String EMISOR = "devchester-united";
     private static final String AUDIENCIA = "devchester-api";
     private static final Duration DURACION = Duration.ofSeconds(3600);
@@ -80,6 +81,11 @@ public class JwtConfig {
         var claims = JwtClaimsSet.builder().issuer(EMISOR).audience(List.of(AUDIENCIA))
                 .subject("usr_" + usuarioId).issuedAt(ahora).expiresAt(ahora.plus(DURACION)).build();
         return JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims);
+    }
+
+    @Override
+    public String emitir(UUID usuarioId) {
+        return jwtEncoder().encode(parametrosPara(usuarioId)).getTokenValue();
     }
 
     private OAuth2TokenValidatorResult validar(Jwt jwt) {

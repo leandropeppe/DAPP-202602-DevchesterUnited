@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.auth;
 
-import com.devchesterunited.devchesterunitedv2.configuration.security.JwtConfig;
 import com.devchesterunited.devchesterunitedv2.modelo.auth.Usuario;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.APIKeyEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.auth.entity.UsuarioEntity;
@@ -11,6 +10,7 @@ import com.devchesterunited.devchesterunitedv2.service.dto.shared.LoginResultado
 import com.devchesterunited.devchesterunitedv2.service.dto.shared.UsuarioResultado;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.AsignacionCreditosInicialesService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.auth.AutenticacionService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.auth.JwtEmissionPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.ConcurrencyFailureException;
@@ -43,20 +43,20 @@ public class AutenticacionServiceImpl implements AutenticacionService {
     private final UsuarioRepository repositorio;
     private final ApiKeyRepository apiKeyRepository;
     private final PasswordEncoder codificador;
-    private final JwtConfig jwtConfig;
+    private final JwtEmissionPort jwtEmissionPort;
     private final Clock clock;
     private final AsignacionCreditosInicialesService asignacionesCreditos;
     private final SecureRandom secureRandom = new SecureRandom();
     private final TransactionTemplate transactionTemplate;
 
     public AutenticacionServiceImpl(UsuarioRepository repositorio, ApiKeyRepository apiKeyRepository,
-            PasswordEncoder codificador, JwtConfig jwtConfig, Clock clock,
+            PasswordEncoder codificador, JwtEmissionPort jwtEmissionPort, Clock clock,
             org.springframework.transaction.PlatformTransactionManager transactionManager,
             AsignacionCreditosInicialesService asignacionesCreditos) {
         this.repositorio = repositorio;
         this.apiKeyRepository = apiKeyRepository;
         this.codificador = codificador;
-        this.jwtConfig = jwtConfig;
+        this.jwtEmissionPort = jwtEmissionPort;
         this.clock = clock;
         this.asignacionesCreditos = asignacionesCreditos;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
@@ -108,7 +108,7 @@ public class AutenticacionServiceImpl implements AutenticacionService {
         if (entidad == null || contrasena == null || !codificador.matches(contrasena, entidad.getHashContrasena())) {
             throw new BadCredentialsException(MENSAJE_CREDENCIALES);
         }
-        String token = jwtConfig.jwtEncoder().encode(jwtConfig.parametrosPara(entidad.getId())).getTokenValue();
+        String token = jwtEmissionPort.emitir(entidad.getId());
         return new LoginResultado(token);
     }
 
