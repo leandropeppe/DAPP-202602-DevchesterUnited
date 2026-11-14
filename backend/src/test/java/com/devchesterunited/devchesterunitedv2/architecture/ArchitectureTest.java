@@ -274,4 +274,15 @@ class ArchitectureTest {
                 .check(clases);
     }
 
+    @Test
+    void excepcionesNoDebenDependerDeControllers() {
+        noClasses()
+                .that()
+                .resideInAPackage("com.devchesterunited.devchesterunitedv2.exception..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.devchesterunited.devchesterunitedv2.controller..")
+                .check(clases);
+    }
+
 }

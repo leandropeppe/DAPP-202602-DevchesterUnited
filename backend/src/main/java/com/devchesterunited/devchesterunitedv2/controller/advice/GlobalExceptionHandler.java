@@ -1,10 +1,16 @@
-package com.devchesterunited.devchesterunitedv2.exception;
+package com.devchesterunited.devchesterunitedv2.controller.advice;
 
 import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketP2PQuoteResponseDTO;
 import com.devchesterunited.devchesterunitedv2.controller.market.dto.MarketP2PErrorResponseDTO;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.FootballDataException;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ExcepcionSimulacion;
+import com.devchesterunited.devchesterunitedv2.exception.ConsultaValorizacionInvalidaException;
+import com.devchesterunited.devchesterunitedv2.exception.CotizacionNoEncontradaException;
+import com.devchesterunited.devchesterunitedv2.exception.JugadorNoEncontradoException;
+import com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException;
+import com.devchesterunited.devchesterunitedv2.exception.SincronizacionPersistenciaException;
+import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.ConcurrencyFailureException;
@@ -70,11 +76,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 genericMessage(status), publicCode(exception.reason()),
                 MarketP2PQuoteResponseDTO.fromDomain(exception.currentQuote())));
     }
+
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> invalidInput(ConstraintViolationException exception) {
         return response(HttpStatus.BAD_REQUEST);
     }
-
 
     @ExceptionHandler(ExcepcionSimulacion.class)
     public ResponseEntity<Object> simulationError(ExcepcionSimulacion exception) {

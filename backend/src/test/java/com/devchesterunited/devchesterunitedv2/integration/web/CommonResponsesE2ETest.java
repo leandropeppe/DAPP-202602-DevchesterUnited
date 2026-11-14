@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import com.devchesterunited.devchesterunitedv2.configuration.JacksonConfig;
 import com.devchesterunited.devchesterunitedv2.controller.dto.SuccessResponseDTO;
-import com.devchesterunited.devchesterunitedv2.exception.GlobalExceptionHandler;
+import com.devchesterunited.devchesterunitedv2.controller.advice.GlobalExceptionHandler;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.Test;

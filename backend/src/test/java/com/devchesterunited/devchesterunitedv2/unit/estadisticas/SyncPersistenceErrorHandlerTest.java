@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.exception.GlobalExceptionHandler;
+import com.devchesterunited.devchesterunitedv2.controller.advice.GlobalExceptionHandler;
 import com.devchesterunited.devchesterunitedv2.exception.SincronizacionPersistenciaException;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;

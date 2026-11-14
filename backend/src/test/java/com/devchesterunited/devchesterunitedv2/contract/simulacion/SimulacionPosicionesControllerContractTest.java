@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.contract.simulacion;
 
 import com.devchesterunited.devchesterunitedv2.controller.jugador.JugadorController;
-import com.devchesterunited.devchesterunitedv2.exception.GlobalExceptionHandler;
+import com.devchesterunited.devchesterunitedv2.controller.advice.GlobalExceptionHandler;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.EstadisticaSimulacionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.SimulacionConfiguracionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.TipoMetricaSimulacionDTO;

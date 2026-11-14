@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.contract.simulacion;
 
 import com.devchesterunited.devchesterunitedv2.controller.jugador.JugadorController;
-import com.devchesterunited.devchesterunitedv2.exception.GlobalExceptionHandler;
+import com.devchesterunited.devchesterunitedv2.controller.advice.GlobalExceptionHandler;
 import com.devchesterunited.devchesterunitedv2.exception.JugadorNoEncontradoException;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.CodigoErrorSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ExcepcionSimulacion;
