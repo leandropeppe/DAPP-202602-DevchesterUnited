@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.valorizacion;
 
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.EstrategiasIniciales;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiasIniciales;
 import com.devchesterunited.devchesterunitedv2.exception.ConsultaValorizacionInvalidaException;
 import com.devchesterunited.devchesterunitedv2.exception.CotizacionNoEncontradaException;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.CotizacionActualEstrategiaEntity;

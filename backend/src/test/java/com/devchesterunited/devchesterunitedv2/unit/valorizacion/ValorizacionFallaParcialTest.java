@@ -3,7 +3,7 @@ package com.devchesterunited.devchesterunitedv2.unit.valorizacion;
 
 import static org.mockito.Mockito.*;
 
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.EstrategiasIniciales;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiasIniciales;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.ConfiguracionElegibilidad;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaGeneralV1;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.CotizacionActualEstrategiaEntity;

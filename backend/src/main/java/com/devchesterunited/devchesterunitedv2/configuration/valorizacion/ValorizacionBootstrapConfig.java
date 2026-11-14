@@ -2,6 +2,7 @@ package com.devchesterunited.devchesterunitedv2.configuration.valorizacion;
 
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EstrategiaValorizacionRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.EstrategiaVisibleRepository;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiasIniciales;
 import com.devchesterunited.devchesterunitedv2.service.impl.valorizacion.EstrategiaValorizacionBootstrap;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
