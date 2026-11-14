@@ -1,7 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
 
-import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
-
 import java.util.List;
 
 public record EstrategiasIniciales(List<EstrategiaValorizacion> habilitadas,
