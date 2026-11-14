@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.configuration.valorizacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaGeneralV1;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaPosicionalV1;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaPosicionalV2;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiasIniciales;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

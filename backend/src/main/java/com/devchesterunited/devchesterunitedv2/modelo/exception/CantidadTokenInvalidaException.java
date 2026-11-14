@@ -1,4 +1,4 @@
-package com.devchesterunited.devchesterunitedv2.exception;
+package com.devchesterunited.devchesterunitedv2.modelo.exception;
 
 /** Indica que una cantidad de tokens no es un entero positivo. */
 public class CantidadTokenInvalidaException extends RuntimeException {

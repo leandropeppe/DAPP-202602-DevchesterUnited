@@ -14,7 +14,7 @@ import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.Catalog
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoJugadorActivationPublisher;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoJugadorWriter;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.CatalogoSyncCoordinator;
-import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SincronizacionResultado;
+import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SincronizacionResultado;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

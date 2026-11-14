@@ -40,7 +40,7 @@ class ApiKeyE2ETest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper mapper;
     @Autowired JwtEncoder jwtEncoder;
-    @MockitoBean com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionScheduler scheduler;
+    @MockitoBean com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.ValorizacionEjecucionPort scheduler;
     @Value("${spring.datasource.url}") String jdbcUrl;
     private final List<String> usuarios = new ArrayList<>();
 

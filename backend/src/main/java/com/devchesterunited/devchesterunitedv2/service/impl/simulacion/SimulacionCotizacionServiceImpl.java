@@ -7,7 +7,6 @@ import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ExcepcionSimula
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.EstadisticasProyectadas;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ProyectorEstadisticas;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ResultadoSimulacion;
-import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ConfiguradorMetricasSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.PosicionAmbiguaException;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.PosicionNoSoportadaException;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ResolutorPosicionSimulacion;

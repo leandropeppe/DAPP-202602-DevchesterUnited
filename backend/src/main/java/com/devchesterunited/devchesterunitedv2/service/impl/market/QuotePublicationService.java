@@ -6,10 +6,11 @@ import com.devchesterunited.devchesterunitedv2.persistence.market.entity.Cabecer
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VigenciaCotizacionMercado;
-import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.CabeceraCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.*;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

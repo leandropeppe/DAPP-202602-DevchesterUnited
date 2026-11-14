@@ -1,5 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.dto.market;
 
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
+
 import java.time.Instant;
 import java.util.UUID;
 

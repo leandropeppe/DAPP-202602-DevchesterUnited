@@ -1,5 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.service.dto.market;
 
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteValidityStatus;
+
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;

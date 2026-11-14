@@ -12,11 +12,11 @@ import com.devchesterunited.devchesterunitedv2.persistence.market.entity.EstadoM
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoId;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VigenciaCotizacionMercado;
-import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.VersionCotizacionMercadoMapper;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketQuoteValidationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

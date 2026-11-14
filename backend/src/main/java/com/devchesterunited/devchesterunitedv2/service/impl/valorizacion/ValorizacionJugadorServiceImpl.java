@@ -1,13 +1,13 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.valorizacion;
 
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.EstrategiasIniciales;
+import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiasIniciales;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.*;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.entity.*;
 import com.devchesterunited.devchesterunitedv2.persistence.valorizacion.repository.*;
 import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SnapshotEstadistico;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteValidityStatus;
 import com.devchesterunited.devchesterunitedv2.service.impl.estadisticas.SnapshotEstadisticoService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.EstrategiaVisibleService;

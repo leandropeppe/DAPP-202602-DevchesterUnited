@@ -154,12 +154,23 @@ public class WhoScoredStatisticsAdapter implements ProveedorEstadisticasJugador 
 
         if (jugadores.containsKey(key)
                 && !Objects.equals(jugadores.get(key), player)) {
-            registrarConflicto(jugadores.get(key), player, key, competicion, familia, page);
+            registrarConflicto(
+                    jugadores.get(key),
+                    player,
+                    key,
+                    competicion,
+                    familia,
+                    page
+            );
         }
 
-        if (!jugadores.containsKey(key)) {
-            jugadores.put(key, player);
+        if (player == null) {
+            throw new WhoScoredStatisticsException(
+                    "WhoScored no proporciono identidad suficiente del jugador."
+            );
         }
+
+        jugadores.computeIfAbsent(key, k -> player);
     }
 
     private void registrarConflicto(

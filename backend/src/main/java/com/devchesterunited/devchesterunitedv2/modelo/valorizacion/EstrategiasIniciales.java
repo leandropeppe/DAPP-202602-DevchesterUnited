@@ -1,4 +1,4 @@
-package com.devchesterunited.devchesterunitedv2.configuration.valorizacion;
+package com.devchesterunited.devchesterunitedv2.modelo.valorizacion;
 
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;
 

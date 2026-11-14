@@ -10,7 +10,7 @@ import com.devchesterunited.devchesterunitedv2.controller.market.MarketP2PCancel
 import com.devchesterunited.devchesterunitedv2.controller.market.MarketP2POfferController;
 import com.devchesterunited.devchesterunitedv2.controller.market.MarketP2POfferQueryController;
 import com.devchesterunited.devchesterunitedv2.controller.market.MarketP2PPurchaseController;
-import com.devchesterunited.devchesterunitedv2.exception.GlobalExceptionHandler;
+import com.devchesterunited.devchesterunitedv2.controller.advice.GlobalExceptionHandler;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.OfertaVentaP2PRepository;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketAvailabilityService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketBalanceService;

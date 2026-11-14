@@ -18,7 +18,7 @@ class CalculoSimulacionMotorEquivalenciaTest {
         var estrategia = SimulacionFixtures.estrategia();
         var configuracion = SimulacionFixtures.elegibilidad();
         var resolver = new EstrategiaSimulacionResolver(
-                new com.devchesterunited.devchesterunitedv2.configuration.valorizacion.EstrategiasIniciales(
+                new com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiasIniciales(
                         List.of(estrategia), estrategia.id(), estrategia.version()), configuracion);
         EstrategiaSimulacionResolver.Resolucion resolucion = resolver.resolverVisible();
         PoblacionElegibleSimulacionReader reader = new PoblacionElegibleSimulacionReader(

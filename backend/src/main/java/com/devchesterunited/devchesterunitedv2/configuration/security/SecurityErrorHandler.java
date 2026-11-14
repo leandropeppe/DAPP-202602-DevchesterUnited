@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.configuration.security;
 
-import com.devchesterunited.devchesterunitedv2.controller.dto.ErrorResponseDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -40,6 +40,9 @@ public class SecurityErrorHandler implements AuthenticationEntryPoint, AccessDen
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Cache-Control", "no-store");
-        mapper.writeValue(response.getOutputStream(), new ErrorResponseDTO(message));
+        ObjectNode body = mapper.createObjectNode();
+        body.put("message", message);
+        body.put("status", "error");
+        mapper.writeValue(response.getOutputStream(), body);
     }
 }

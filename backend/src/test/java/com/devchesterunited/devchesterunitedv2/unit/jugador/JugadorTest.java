@@ -2,7 +2,7 @@ package com.devchesterunited.devchesterunitedv2.unit.jugador;
 
 import static org.assertj.core.api.Assertions.*;
 
-import com.devchesterunited.devchesterunitedv2.exception.JugadorException;
+import com.devchesterunited.devchesterunitedv2.modelo.exception.JugadorException;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

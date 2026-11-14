@@ -2,7 +2,7 @@ package com.devchesterunited.devchesterunitedv2.exception;
 
 import java.io.Serial;
 
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 
 /** Error operacional tipado del mercado sin introducir una jerarquía extensa de excepciones. */
 public class TokenMarketException extends RuntimeException {

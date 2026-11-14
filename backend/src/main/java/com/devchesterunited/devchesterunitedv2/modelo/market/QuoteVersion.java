@@ -1,4 +1,4 @@
-package com.devchesterunited.devchesterunitedv2.service.dto.market;
+package com.devchesterunited.devchesterunitedv2.modelo.market;
 
 import java.io.Serial;
 import java.io.Serializable;

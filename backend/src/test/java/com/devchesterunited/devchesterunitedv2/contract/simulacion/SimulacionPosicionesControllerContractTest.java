@@ -1,14 +1,14 @@
 package com.devchesterunited.devchesterunitedv2.contract.simulacion;
 
-import com.devchesterunited.devchesterunitedv2.configuration.valorizacion.ValorizacionScheduler;
 import com.devchesterunited.devchesterunitedv2.controller.jugador.JugadorController;
-import com.devchesterunited.devchesterunitedv2.exception.GlobalExceptionHandler;
+import com.devchesterunited.devchesterunitedv2.controller.advice.GlobalExceptionHandler;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.EstadisticaSimulacionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.SimulacionConfiguracionDTO;
 import com.devchesterunited.devchesterunitedv2.service.dto.simulacion.TipoMetricaSimulacionDTO;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.jugador.JugadorService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.simulacion.SimulacionCotizacionService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.CotizacionConsultaService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.ValorizacionEjecucionPort;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -26,7 +26,7 @@ class SimulacionPosicionesControllerContractTest {
     void getExponePosicionAplicadaYEditabilidadSinListasEnFrontend() throws Exception {
         var service = mock(SimulacionCotizacionService.class);
         var controller = new JugadorController(mock(JugadorService.class), mock(CotizacionConsultaService.class),
-                mock(ValorizacionScheduler.class), service);
+                mock(ValorizacionEjecucionPort.class), service);
         when(service.obtenerConfiguracion("ply-1")).thenReturn(new SimulacionConfiguracionDTO(
                 "ply-1", List.of("FW"), "Forward", "POSITIONAL", 2, false, BigDecimal.TEN,
                 List.of(3, 5, 8, 10), 10, 900, List.of(

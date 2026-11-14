@@ -5,7 +5,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.market.repository.Ofe
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2POfferPageResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2POfferQuery;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2POfferView;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteValidityStatus;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketP2POfferQueryServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,13 +1,15 @@
 package com.devchesterunited.devchesterunitedv2.configuration.valorizacion;
 
+import com.devchesterunited.devchesterunitedv2.service.impl.valorizacion.ValorizacionEjecucionConfig;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.ValorizacionJugadorService;
+import com.devchesterunited.devchesterunitedv2.service.interfaces.valorizacion.ValorizacionEjecucionPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ValorizacionScheduler {
+public class ValorizacionScheduler implements ValorizacionEjecucionPort {
 
     private static final Logger LOGGER =
             LoggerFactory.getLogger(ValorizacionScheduler.class);

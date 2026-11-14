@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.service.impl.estadisticas;
 import com.devchesterunited.devchesterunitedv2.exception.SincronizacionPersistenciaException;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.CatalogoSincronizado;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.ProveedorCatalogo;
+import com.devchesterunited.devchesterunitedv2.service.dto.estadisticas.SincronizacionResultado;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.estadisticas.SincronizacionCatalogoService;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;

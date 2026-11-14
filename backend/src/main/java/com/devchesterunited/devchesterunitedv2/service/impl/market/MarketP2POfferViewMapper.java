@@ -1,11 +1,11 @@
-package com.devchesterunited.devchesterunitedv2.persistence.market.mapper;
+package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
 import com.devchesterunited.devchesterunitedv2.persistence.jugador.entity.JugadorEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.OfertaVentaP2PEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.projection.MarketP2POfferProjection;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2POfferView;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 
 import java.time.Instant;
 import java.util.UUID;

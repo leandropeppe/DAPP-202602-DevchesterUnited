@@ -1,6 +1,5 @@
 package com.devchesterunited.devchesterunitedv2.service.impl.market;
 
-import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.MarketP2POfferViewMapper;
 import com.devchesterunited.devchesterunitedv2.persistence.market.projection.MarketP2POfferProjection;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.OfertaVentaP2PRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2POfferPageResult;

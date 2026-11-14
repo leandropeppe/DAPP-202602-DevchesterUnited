@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.unit.estadisticas;
 
-import com.devchesterunited.devchesterunitedv2.exception.JugadorException;
+import com.devchesterunited.devchesterunitedv2.modelo.exception.JugadorException;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.EstadoJugador;
 import org.junit.jupiter.api.Test;
 

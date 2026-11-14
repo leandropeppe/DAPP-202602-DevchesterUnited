@@ -5,7 +5,6 @@ import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasDefen
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasGenerales;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasOfensivas;
 import com.devchesterunited.devchesterunitedv2.modelo.estadisticas.MetricasPases;
-import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ConfiguradorMetricasSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.EstadisticasProyectadas;
 import com.devchesterunited.devchesterunitedv2.modelo.simulacion.ResultadoSimulacion;
 import com.devchesterunited.devchesterunitedv2.modelo.valorizacion.EstrategiaValorizacion;

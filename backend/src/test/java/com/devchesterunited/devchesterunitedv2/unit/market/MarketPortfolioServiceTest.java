@@ -7,13 +7,13 @@ import com.devchesterunited.devchesterunitedv2.persistence.market.entity.PnLReal
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoEntity;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.TenenciaMercadoId;
 import com.devchesterunited.devchesterunitedv2.persistence.market.entity.VersionCotizacionMercadoEntity;
-import com.devchesterunited.devchesterunitedv2.persistence.market.mapper.VersionCotizacionMercadoMapper;
+import com.devchesterunited.devchesterunitedv2.service.impl.market.VersionCotizacionMercadoMapper;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.PnLRealizadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TenenciaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketQuoteAvailability;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.impl.market.MarketPortfolioServiceImpl;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
 import org.junit.jupiter.api.BeforeEach;
