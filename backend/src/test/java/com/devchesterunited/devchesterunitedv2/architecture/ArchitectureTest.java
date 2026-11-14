@@ -199,7 +199,7 @@ class ArchitectureTest {
     // ============================================================
 
 
-/*
+
     @Test
     void paquetesPrincipalesNoDebenTenerDependenciasCirculares() {
         SlicesRuleDefinition.slices()
@@ -208,7 +208,7 @@ class ArchitectureTest {
                 .beFreeOfCycles()
                 .check(clases);
     }
-*/
+
 
 
 
