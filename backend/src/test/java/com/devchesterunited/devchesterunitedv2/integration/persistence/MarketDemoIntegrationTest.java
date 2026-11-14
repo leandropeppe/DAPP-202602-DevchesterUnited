@@ -62,7 +62,7 @@ class MarketDemoIntegrationTest {
                 .create();
         assertFixtureShape(fixture.users().size(), fixture.players().size());
 
-        List<com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion> initialQuotes =
+        List<com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion> initialQuotes =
                 new ArrayList<>();
         for (var player : fixture.players()) {
             initialQuotes.add(quotes.publishInitialQuote(player.id(), new BigDecimal("1.00"), true));
@@ -74,7 +74,7 @@ class MarketDemoIntegrationTest {
         buy(purchases, fixture, 3, 3, 8, initialQuotes.get(3));
 
         Instant revisedAt = Instant.now().minusSeconds(1);
-        List<com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion> revisedQuotes =
+        List<com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion> revisedQuotes =
                 new ArrayList<>();
         for (int index = 0; index < fixture.players().size(); index++) {
             revisedQuotes.add(quotes.publish(new QuotePublicationRequest(
@@ -168,7 +168,7 @@ class MarketDemoIntegrationTest {
     private static void buy(MarketPurchaseService purchases,
             com.devchesterunited.devchesterunitedv2.support.fixtures.market.MarketDemoFixtureBuilder.DemoFixture fixture,
             int userIndex, int playerIndex, long quantity,
-            com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion quote) {
+            com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion quote) {
         var result = purchases.comprar(new MarketPurchaseRequest(
                 fixture.users().get(userIndex).id(), "t073-buy-u" + (userIndex + 1),
                 fixture.players().get(playerIndex).id(), quantity,

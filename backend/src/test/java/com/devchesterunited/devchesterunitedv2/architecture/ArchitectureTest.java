@@ -285,4 +285,15 @@ class ArchitectureTest {
                 .check(clases);
     }
 
+    @Test
+    void excepcionesNoDebenDependerDeServicios() {
+        noClasses()
+                .that()
+                .resideInAPackage("com.devchesterunited.devchesterunitedv2.exception..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage("com.devchesterunited.devchesterunitedv2.service..")
+                .check(clases);
+    }
+
 }

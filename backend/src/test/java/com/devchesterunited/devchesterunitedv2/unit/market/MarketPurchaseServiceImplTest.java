@@ -4,8 +4,8 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempote
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketIdempotencyStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 
 import com.devchesterunited.devchesterunitedv2.contract.market.MarketPurchaseServiceContractTest;
 import com.devchesterunited.devchesterunitedv2.exception.TokenMarketException;

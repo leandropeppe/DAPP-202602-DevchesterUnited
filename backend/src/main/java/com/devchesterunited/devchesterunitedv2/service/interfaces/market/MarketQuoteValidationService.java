@@ -1,6 +1,6 @@
 package com.devchesterunited.devchesterunitedv2.service.interfaces.market;
 
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 
 import java.util.UUID;
 

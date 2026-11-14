@@ -7,6 +7,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.market.repository.PnL
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.TenenciaMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.VersionCotizacionMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.*;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.MarketPortfolioService;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.QuotePublicationPort;
 import org.springframework.beans.factory.annotation.Autowired;

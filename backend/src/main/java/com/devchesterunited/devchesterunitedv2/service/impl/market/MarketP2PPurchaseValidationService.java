@@ -16,8 +16,8 @@ import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurch
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseSettlement;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PPurchaseTarget;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.MarketP2PQuoteIdentity;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteValidityStatus;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;

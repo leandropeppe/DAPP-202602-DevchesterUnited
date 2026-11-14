@@ -10,6 +10,7 @@ import com.devchesterunited.devchesterunitedv2.persistence.market.repository.Cab
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.ContraparteMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.persistence.market.repository.EstadoMercadoRepository;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.*;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 import com.devchesterunited.devchesterunitedv2.service.interfaces.market.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

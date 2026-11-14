@@ -1,7 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.controller.market.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 
 import java.math.BigDecimal;
 import java.time.Instant;

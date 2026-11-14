@@ -149,8 +149,8 @@ class QuotePublicationServiceIntegrationTest extends PostgresTestSupport {
                 "SELECT validity_status FROM market_quote_versions WHERE quote_id = ? AND version = ?",
                 String.class, initial.quoteId(), initial.version())).isEqualTo("VALID");
         assertThat(quotes.currentQuote(playerId)).get()
-                .extracting(com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion::validityStatus)
-                .isEqualTo(com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteValidityStatus.INVALIDATED);
+                .extracting(com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion::validityStatus)
+                .isEqualTo(com.devchesterunited.devchesterunitedv2.modelo.market.QuoteValidityStatus.INVALIDATED);
 
         var replacement = quotes.publish(new QuotePublicationRequest(
                 playerId, new BigDecimal("1.25"), NOW, NOW, null, "valuation-v2"));

@@ -3,7 +3,7 @@ package com.devchesterunited.devchesterunitedv2.service.interfaces.market;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationRequest;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteInvalidationResult;
 import com.devchesterunited.devchesterunitedv2.service.dto.market.QuotePublicationRequest;
-import com.devchesterunited.devchesterunitedv2.service.dto.market.QuoteVersion;
+import com.devchesterunited.devchesterunitedv2.modelo.market.QuoteVersion;
 
 import java.math.BigDecimal;
 import java.util.Optional;
