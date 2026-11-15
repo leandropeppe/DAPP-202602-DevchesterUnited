@@ -12,11 +12,11 @@
 
 **Purpose**: Preparar dependencias, rutas y artefactos de ejecución sin modificar los Compose existentes.
 
-- [ ] T001 Actualizar `backend/build.gradle` con `spring-boot-starter-actuator` y `micrometer-registry-prometheus` usando las versiones gestionadas por Spring Boot 3.5.16.
-- [ ] T002 [P] Definir en `backend/src/main/resources/application.properties` las propiedades configurables de exposición mínima, puerto de administración y dirección de escucha sin fijar IP ni CIDR arbitrarios.
-- [ ] T003 [P] Crear `backend/Dockerfile` para empaquetar y ejecutar el backend Java 21 con separación verificable entre puerto de negocio y puerto de administración.
-- [ ] T004 [P] Crear `backend/.dockerignore` para excluir `.git`, `.gradle`, `build`, secretos y artefactos no necesarios cuando `backend/` sea el contexto Docker.
-- [ ] T005 Crear `backend/docker/observability-compose.yml` con servicios `backend`, `postgres`, `collector-probe` y `unauthorized-probe`, sin modificar `frontend/e2e/compose.yml` ni `performance/compose.yml`.
+- [X] T001 Actualizar `backend/build.gradle` con `spring-boot-starter-actuator` y `micrometer-registry-prometheus` usando las versiones gestionadas por Spring Boot 3.5.16.
+- [X] T002 [P] Definir en `backend/src/main/resources/application.properties` las propiedades configurables de exposición mínima, puerto de administración y dirección de escucha sin fijar IP ni CIDR arbitrarios.
+- [X] T003 [P] Crear `backend/Dockerfile` para empaquetar y ejecutar el backend Java 21 con separación verificable entre puerto de negocio y puerto de administración.
+- [X] T004 [P] Crear `backend/.dockerignore` para excluir `.git`, `.gradle`, `build`, secretos y artefactos no necesarios cuando `backend/` sea el contexto Docker.
+- [X] T005 Crear `backend/docker/observability-compose.yml` con servicios `backend`, `postgres`, `collector-probe` y `unauthorized-probe`, sin modificar `frontend/e2e/compose.yml` ni `performance/compose.yml`.
 
 ---
 

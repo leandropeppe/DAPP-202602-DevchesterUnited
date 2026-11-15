@@ -1,0 +1,14 @@
+.git/
+.gradle/
+.gradle-codex/
+.idea/
+.vscode/
+build/
+target/
+coverage/
+*.log*
+.env*
+Dockerfile*
+.dockerignore
+src/test/
+src/manualTest/
