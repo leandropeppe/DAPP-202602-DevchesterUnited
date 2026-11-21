@@ -51,10 +51,14 @@ Las siguientes familias no forman parte del contrato y deben permanecer inaccesi
 
 ## Seguridad Spring Boot 3.5.x
 
-- Con un puerto de administración distinto, la implementación debe verificar el contexto de administración separado y su cadena de seguridad específica.
-- Debido a la `SecurityFilterChain` personalizada existente, no debe asumirse la auto-configuración de seguridad de Actuator. Debe existir una regla explícita para permitir únicamente los endpoints aprobados y denegar el resto.
-- La cadena de negocio debe conservar JWT, API keys, autorización, filtros actuales y `anyRequest().denyAll()` donde corresponda.
-- Las pruebas deben demostrar que un request a Actuator no puede acceder a `/api/**` y que las credenciales de negocio no convierten el listener de administración en un bypass.
+**ADR-007-01 — Cadena de seguridad efectiva única para el contexto administrativo**: aprobada el 21/11/2026 y documentada en `../research.md`. Esta decisión sustituye la hipótesis histórica de una `SecurityFilterChain` independiente por contexto.
+
+- Con un puerto de administración distinto, Spring Boot crea un contexto hijo, pero su configuración servlet de management reutiliza el `springSecurityFilterChain` y el registro servlet del contexto principal.
+- La implementación debe reutilizar esa cadena efectiva. No debe crear un `FilterChainProxy` administrativo manual, sustituir internamente el registro servlet ni usar reflexión sobre clases internas de Spring Boot.
+- La autorización de health/Prometheus debe requerir simultáneamente una ruta administrativa aprobada y el listener/puerto administrativo efectivo. Autorizar sólo por `/actuator/health` o `/actuator/prometheus` no es suficiente.
+- Una solicitud a los mismos paths desde el puerto de negocio debe ser rechazada o no tener mapping, pero nunca debe recibir una respuesta autorizada de Actuator. Las rutas administrativas desconocidas deben ser rechazadas por la política de seguridad por defecto, sin usar un `404` como única evidencia.
+- La cadena principal debe conservar JWT, API keys, autorización, filtros actuales y `anyRequest().denyAll()` donde corresponda.
+- Las pruebas deben demostrar que un request a Actuator no puede acceder a `/api/**`, que las credenciales de negocio no convierten el listener de administración en un bypass y que la clasificación por puerto/listener funciona en ambos puertos.
 
 ## Matriz de configuraciones incompletas o inseguras
 

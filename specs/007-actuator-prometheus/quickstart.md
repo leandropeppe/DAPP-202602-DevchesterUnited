@@ -63,6 +63,8 @@ GET /actuator/prometheus
 - no aparecen Authorization, API keys, cookies, payloads, query strings, URLs sensibles ni datos personales.
 - el backend mantiene conectividad con PostgreSQL por el nombre de servicio interno, sin publicar el puerto de PostgreSQL.
 
+La autorización de health y Prometheus debe depender conjuntamente del listener o puerto administrativo efectivo y de la ruta aprobada. No es suficiente comprobar sólo que el path existe: la misma ruta debe ser rechazada o no estar mapeada cuando se consulta por el puerto de negocio.
+
 ## 4. Probar el origen no autorizado
 
 Ejecutar `unauthorized-probe` en una red Docker diferente y aislada. Ese contenedor debe comprobar únicamente que no puede resolver ni acceder al puerto de administración del backend, porque el backend tampoco pertenece a la red de `unauthorized-probe`.
@@ -135,9 +137,11 @@ Repetir según esta matriz mínima:
 | PostgreSQL no resoluble | Fallo de arranque o health no saludable |
 | Etiqueta HTTP con query string/secret/cardinalidad alta | Fallo de validación de métricas |
 
+También debe probarse desde el host el puerto de negocio publicado contra las mismas rutas administrativas. El resultado esperado es rechazo de seguridad o ausencia de mapping (`401`, `403` o `404` según el punto de bloqueo), pero nunca una respuesta `200` de health/metrics. Las rutas administrativas desconocidas consultadas en el puerto de administración deben producir un rechazo de Spring Security (`401` o `403`), no aceptarse únicamente porque devuelvan `404`.
+
 ## 6. Diferenciar MockMvc de HTTP real
 
-Las pruebas MockMvc/context deben validar rutas, contenido, cadenas Spring Security y no bypass sin abrir sockets ni crear redes Docker. Deben comprobar explícitamente la cadena de Actuator y la cadena de negocio por separado.
+Las pruebas MockMvc/context deben validar rutas, contenido, clasificación conjunta por listener/puerto y path, y no bypass sin abrir sockets ni crear redes Docker. Deben comprobar la cadena principal reutilizada por el contexto administrativo y la conservación separada de JWT/API keys del negocio; no deben afirmar que existe una cadena administrativa independiente.
 
 Las pruebas HTTP reales anteriores son obligatorias para validar el puerto de administración separado, la interfaz de escucha, el acceso del collector, el rechazo desde otra red, el acceso potencial del host y la conectividad con PostgreSQL. Un resultado positivo de MockMvc no sustituye estas pruebas.
 

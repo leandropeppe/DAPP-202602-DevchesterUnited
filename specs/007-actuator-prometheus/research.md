@@ -26,13 +26,51 @@ El backend, PostgreSQL y el probe recolector autorizado compartirán una única 
 
 **Alternatives considered**: Multi-homing del backend en red pública y privada fue rechazado por el camino de acceso anterior. Fijar una IP de administración o una regla de firewall por CIDR fue rechazado por no ser portable y contradecir la especificación. Un sidecar/proxy que publique sólo negocio conserva aislamiento, pero agrega componentes y complejidad no necesarios para el alcance mínimo. Si el host puede acceder al listener interno, la configuración no se aprobará sólo por carecer de `ports`: deberá aplicarse una política de host/red del entorno y repetirse la prueba.
 
-## Decision: Seguridad de administración mínima y separada
+## ADR-007-01 — Cadena de seguridad efectiva única para el contexto administrativo
 
-Permitir sólo los endpoints de salud y métricas definidos en el contrato, denegar el resto y no reutilizar credenciales JWT/API key de negocio para el recolector interno. Cuando el puerto de administración sea distinto, definir una cadena Spring Security específica para el contexto de Actuator y conservar otra para negocio. La red privada Docker es el límite de confianza mínimo elegido, no autenticación individual ni defensa frente a un contenedor comprometido.
+**Estado**: Aprobada por el usuario el 21/11/2026. **Contrato relacionado**: `contracts/observability.md`.
 
-**Rationale**: Evita distribuir secretos de negocio al recolector y mantiene separados los dominios de confianza. En Spring Boot 3.5.x, una `SecurityFilterChain` personalizada hace que la auto-configuración de seguridad de Actuator retroceda; por eso deben probarse explícitamente una cadena de administración limitada por endpoints y una cadena de negocio sin cambios. La red no sustituye la denegación de paths ni la política de exposición mínima.
+La hipótesis original contemplaba dos cadenas independientes: una de administración en el contexto hijo y otra de negocio en el contexto principal. Cuando el puerto de administración es distinto, Spring Boot 3.5.16 crea el contexto hijo, pero registra allí un filtro que obtiene el `springSecurityFilterChain` y el registro servlet del contexto padre. Por tanto, la implementación usará la cadena principal como única cadena efectiva y no creará un `FilterChainProxy` administrativo manual ni usará reflexión sobre clases internas.
 
-**Alternatives considered**: Hacer públicos los endpoints con autenticación JWT/API key fue rechazado porque expone una superficie operativa innecesaria y acopla el monitoreo a credenciales de negocio. Permitir todos los endpoints Actuator fue rechazado por exposición excesiva. Confiar sólo en la auto-configuración de Actuator fue rechazado porque la `SecurityFilterChain` personalizada existente puede desactivarla.
+La autorización administrativa requerirá dos condiciones verificables: la ruta debe ser exactamente uno de los endpoints aprobados y la solicitud debe llegar al listener/puerto administrativo efectivo. La misma ruta recibida por el puerto de negocio no debe recibir autorización administrativa. Cualquier otra ruta, incluyendo rutas administrativas desconocidas, quedará denegada por la regla por defecto de la cadena principal.
+
+**Rationale**: Esta decisión coincide con el funcionamiento real de Boot y evita intentar sustituir un registro servlet interno. Conserva JWT, API keys y `anyRequest().denyAll()` del negocio, mientras que la separación de puerto/listener y ruta evita que una autorización basada sólo en `/actuator/health` o `/actuator/prometheus` relaje el puerto de negocio. La red privada Docker continúa siendo el límite de confianza mínimo, no autenticación individual ni defensa frente a un contenedor comprometido.
+
+**Alternatives considered**: Una segunda `SecurityFilterChain` o un `FilterChainProxy` local en el contexto hijo fueron descartados porque Boot registra el filtro administrativo delegando al bean del padre. Reemplazar el registro servlet de Boot requeriría infraestructura interna o personalizada y desviaría el plan aprobado. Hacer públicos los endpoints con autenticación JWT/API key fue rechazado porque expone una superficie operativa innecesaria. Permitir todos los endpoints Actuator fue rechazado por exposición excesiva.
+
+### Evidencia de Spring Boot 3.5.16
+
+- `ManagementContextAutoConfiguration.DifferentManagementContextConfiguration.childManagementContextInitializer(...)` crea el inicializador del contexto administrativo cuando el puerto es diferente.
+- `ChildManagementContextInitializer.start()` crea el contexto hijo, registra sus beans y lo refresca.
+- `ManagementContextFactory.createManagementContext(ApplicationContext)` crea el contexto web hijo y establece el contexto principal como padre.
+- `ServletManagementChildContextConfiguration.ServletManagementContextSecurityConfiguration.springSecurityFilterChain(HierarchicalBeanFactory)` obtiene `BeanIds.SPRING_SECURITY_FILTER_CHAIN` del `getParentBeanFactory()`.
+- `securityFilterChainRegistration(HierarchicalBeanFactory)` reutiliza desde el padre el `securityFilterChainRegistration` para el registro servlet.
+
+Por lo tanto, una cadena o un `FilterChainProxy` declarado sólo en el child no es suficiente para controlar las solicitudes. La única cadena efectiva debe distinguir administración mediante listener/puerto y ruta, usando APIs públicas de Spring Security. La evidencia de código se conserva en la versión [3.5.16 de `ServletManagementChildContextConfiguration`](https://github.com/spring-projects/spring-boot/blob/v3.5.16/spring-boot-project/spring-boot-actuator-autoconfigure/src/main/java/org/springframework/boot/actuate/autoconfigure/web/servlet/ServletManagementChildContextConfiguration.java).
+
+### Estrategia fundada para el puerto administrativo efectivo
+
+La estrategia propuesta para el matcher es conservar el puerto efectivo en un componente de estado mínimo del contexto principal, actualizado por un listener público de `WebServerInitializedEvent`. El listener debe:
+
+1. observar el evento del servidor administrativo que se propaga desde el contexto hijo al padre;
+2. identificarlo mediante la relación pública `event.getApplicationContext().getParent()` con el contexto principal, sin inspeccionar clases internas ni depender de cabeceras;
+3. guardar `event.getWebServer().getPort()`, que representa el puerto local realmente asignado y también funciona cuando `management.server.port=0`;
+4. dejar el valor sin establecer hasta recibir ese evento: `matchesKnownPort()` debe devolver `false` y no puede autorizar health ni Prometheus, mientras `matches()` sigue identificando el contexto hijo para que la regla posterior `denyAll()` lo rechace;
+5. comparar en cada solicitud ese valor con `HttpServletRequest.getLocalPort()` y exigir además la ruta administrativa aprobada.
+
+Esta estrategia utiliza sólo APIs públicas: `WebServerInitializedEvent.getApplicationContext()` y `getWebServer()`, `WebServer.getPort()`, `ApplicationContext.getParent()` y `HttpServletRequest.getLocalPort()`. El evento se publica cuando el servidor está listo y el contexto hijo propaga sus eventos al padre; por ello el listener no necesita obtener ni inicializar directamente el contexto hijo. La solicitud se clasifica por el puerto local del socket, no por `Host`, `X-Forwarded-Port` u otra cabecera controlable por el cliente.
+
+`local.management.port` no se considera una solución para este caso: en `ManagementContextAutoConfiguration.SameManagementContextConfiguration` el alias se agrega sólo para el contexto compartido y mapea `local.management.port` a `local.server.port`. Además, `ManagementServerProperties.getPort()` representa la configuración solicitada, no el puerto asignado cuando el valor es `0`. El evento de servidor es, por tanto, la fuente pública adecuada para el puerto efectivo en el contexto separado.
+
+La implementación deberá mantener el listener y el holder independientes de `ChildManagementContextInitializer` y de cualquier bean del contexto hijo, para evitar referencias circulares. Antes de conocer el puerto efectivo, `matchesKnownPort()` no puede clasificar como autorizable ninguna solicitud, incluidas health y Prometheus; sin embargo, `matches()` debe seguir reconociendo el contexto administrativo hijo para que `denyAll()` rechace sus solicitudes. Las solicitudes del contexto de negocio conservan su clasificación y política habituales. La autorización final seguirá siendo la conjunción de puerto local administrativo y ruta exacta health/Prometheus; el resto continuará sujeto a la denegación por defecto y a las reglas JWT/API key existentes.
+
+**Evidencia pública de código**: [`ManagementContextAutoConfiguration.java` de Spring Boot 3.5.16](https://github.com/spring-projects/spring-boot/blob/v3.5.16/spring-boot-project/spring-boot-actuator-autoconfigure/src/main/java/org/springframework/boot/actuate/autoconfigure/web/server/ManagementContextAutoConfiguration.java) documenta el alias limitado al contexto compartido; [`WebServerInitializedEvent`](https://github.com/spring-projects/spring-boot/blob/v3.5.16/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/web/context/WebServerInitializedEvent.java) expone el contexto y el servidor; [`WebServer`](https://github.com/spring-projects/spring-boot/blob/v3.5.16/spring-boot-project/spring-boot/src/main/java/org/springframework/boot/web/server/WebServer.java) expone `getPort()`; y [`AbstractApplicationContext.publishEvent`](https://github.com/spring-projects/spring-framework/blob/v6.2.14/spring-context/src/main/java/org/springframework/context/support/AbstractApplicationContext.java) propaga eventos al padre.
+
+## Decision: Instrumentación HTTP predeterminada de baja cardinalidad
+
+Para T023 se conserva la instrumentación HTTP predeterminada de Spring Boot/Micrometer, sin `MeterFilter`, `MeterRegistryCustomizer`, convenciones HTTP personalizadas ni etiquetas adicionales. `http.server.requests` usa dimensiones HTTP normalizadas y la URI se basa en la plantilla de ruta cuando está disponible; no añade por defecto query strings, cabeceras, cookies ni payloads. El registro Prometheus la exporta como `http_server_requests_seconds`.
+
+`PrometheusSensitiveTagsTest` valida que las etiquetas HTTP expuestas estén dentro del conjunto esperado y que los valores de query string, cabeceras sensibles, payloads y rutas variables no aparezcan en las métricas. Esta interpretación satisface el objetivo de T023 sin crear componentes bajo `configuration/management/`; la validación de la tarea continúa pendiente hasta ejecutar dichas pruebas.
 
 ## Decision: Pruebas black-box en contenedores más pruebas de aplicación
 
@@ -51,3 +89,4 @@ Combinar pruebas MockMvc/context para comportamiento HTTP y seguridad con HTTP r
 - PostgreSQL comparte la única red privada de validación para evitar una segunda red que haga multi-homed al backend; su puerto no se publica.
 - No se requiere un dashboard ni cambios frontend.
 - Los nombres definitivos de variables de entorno, el puerto numérico de administración y los detalles exactos de Compose se decidirán en implementación siguiendo este diseño.
+- El puerto administrativo efectivo se obtendrá mediante `WebServerInitializedEvent.getWebServer().getPort()` en el listener público del contexto principal. Hasta recibir el evento, `matchesKnownPort()` debe devolver `false` y `matches()` debe conservar la clasificación del contexto administrativo para su denegación por defecto. No se usará `local.management.port` como fuente para el contexto separado ni se confiará en cabeceras HTTP. La prueba debe demostrar que el mismo path no se autoriza en el puerto de negocio y que el mecanismo funciona con `management.server.port=0`.

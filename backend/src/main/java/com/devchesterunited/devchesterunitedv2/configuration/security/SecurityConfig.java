@@ -3,6 +3,7 @@ package com.devchesterunited.devchesterunitedv2.configuration.security;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpMethod;
@@ -13,13 +14,17 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.NullSecurityContextRepository;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfig {
     @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityErrorHandler errors,
             Environment environment, ObjectProvider<ApiKeyAuthenticationFilter> apiKeyFilters,
-            ObjectProvider<JwtDecoder> decoders) throws Exception {
+            ObjectProvider<JwtDecoder> decoders, ManagementPortRequestMatcher managementPortMatcher) throws Exception {
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .securityContext(context -> context.securityContextRepository(new NullSecurityContextRepository()))
                 .requestCache(AbstractHttpConfigurer::disable)
@@ -30,6 +35,12 @@ public class SecurityConfig {
                 .rememberMe(AbstractHttpConfigurer::disable)
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(errors).accessDeniedHandler(errors))
                 .authorizeHttpRequests(access -> {
+                    access.requestMatchers(new AndRequestMatcher(managementPortMatcher::matchesKnownPort,
+                            new OrRequestMatcher(
+                                    PathPatternRequestMatcher.withDefaults().matcher("/actuator/health"),
+                                    PathPatternRequestMatcher.withDefaults().matcher("/actuator/prometheus"))))
+                            .permitAll();
+                    access.requestMatchers(managementPortMatcher).denyAll();
                     access.requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll();
                     access.requestMatchers(HttpMethod.POST, "/api/v1/auth/apikey").authenticated();
                     access.requestMatchers(HttpMethod.GET, "/api/v1/market/balance", "/api/v1/market/players",

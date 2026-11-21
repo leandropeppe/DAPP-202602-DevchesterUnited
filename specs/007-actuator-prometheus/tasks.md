@@ -26,14 +26,14 @@
 
 **⚠️ CRITICAL**: Ninguna historia de usuario puede considerarse implementable hasta completar esta fase.
 
-- [ ] T006 [P] Definir la red privada interna y las membresías de `backend`, `postgres` y `collector-probe` en `backend/docker/observability-compose.yml`, manteniendo `unauthorized-probe` fuera de esa red y sin publicar el puerto de administración.
-- [ ] T007 [P] Configurar en `backend/docker/observability-compose.yml` la conectividad backend→PostgreSQL por nombre de servicio, sin publicar el puerto de PostgreSQL ni agregar una segunda red de aplicación.
-- [ ] T008 [P] Crear la prueba fundacional de contexto para ambas cadenas en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/ManagementSecurityFoundationTest.java`, verificando el contexto de administración, el contexto de negocio, la no superposición insegura y el rechazo de paths no aprobados.
-- [ ] T009 Implementar en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/management/ManagementSecurityConfig.java` la cadena Spring Security específica del contexto de administración, limitada a health/metrics y con denegación de paths restantes, hasta satisfacer T008.
-- [ ] T010 Implementar en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/security/SecurityConfig.java` la preservación de la cadena de negocio existente, JWT, API keys, autorización y `anyRequest().denyAll()`, evitando solapamiento inseguro con la cadena de Actuator y satisfaciendo T008.
-- [ ] T011 Verificar que cualquier método o constructor nuevo respete Clean Code, SOLID y un máximo de seis parámetros, dejando responsabilidades de configuración separadas y cohesivas en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/`.
+- [X] T006 [P] Definir la red privada interna y las membresías de `backend`, `postgres` y `collector-probe` en `backend/docker/observability-compose.yml`, manteniendo `unauthorized-probe` fuera de esa red y sin publicar el puerto de administración.
+- [X] T007 [P] Configurar en `backend/docker/observability-compose.yml` la conectividad backend→PostgreSQL por nombre de servicio, sin publicar el puerto de PostgreSQL ni agregar una segunda red de aplicación.
+- [X] T008 [P] Crear la prueba fundacional en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/ManagementSecurityFoundationTest.java`, verificando que el contexto administrativo hijo reutiliza el filtro efectivo del contexto principal, que la autorización exige conjuntamente listener/puerto administrativo y ruta aprobada, que las mismas rutas no se autorizan por el puerto de negocio y que las rutas administrativas desconocidas son rechazadas por Spring Security, no sólo por `404`.
+- [X] T009 Implementar en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/security/SecurityConfig.java` la clasificación explícita de solicitudes administrativas mediante APIs públicas de Spring Security: permitir sólo health/Prometheus cuando la solicitud llega al listener/puerto administrativo efectivo y denegar el resto por defecto. No crear `ManagementSecurityConfig`, `FilterChainProxy` manual, reflexión ni una cadena independiente del contexto hijo; retirar, si ya no son necesarios tras la migración, `backend/src/main/java/com/devchesterunited/observability/management/ManagementSecurityConfig.java` y su registro en `backend/src/main/resources/META-INF/spring/org.springframework.boot.actuate.autoconfigure.web.ManagementContextConfiguration.imports`.
+- [X] T010 Verificar y conservar en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/security/SecurityConfig.java` JWT, API keys, filtros, autorizaciones existentes y `anyRequest().denyAll()`, demostrando con T008 que la clasificación administrativa no relaja rutas de negocio ni permite bypass desde ninguno de los dos puertos.
+- [X] T011 Verificar que cualquier método o constructor nuevo respete Clean Code, SOLID y un máximo de seis parámetros, dejando responsabilidades de configuración separadas y cohesivas en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/`.
 
-**Checkpoint**: La prueba fundacional T008 pasa después de T009–T010; los dos contextos de seguridad están configurados y verificados antes de implementar endpoints o pruebas de historia.
+**Checkpoint**: La prueba fundacional T008 pasa después de T009–T010; el contexto administrativo hijo y el de negocio utilizan el filtro efectivo principal, la separación por listener/puerto y ruta está verificada, y ninguna ruta administrativa no aprobada queda autorizada antes de implementar endpoints o pruebas de historia.
 
 ---
 
@@ -47,15 +47,15 @@
 
 > Escribir las pruebas antes de la implementación y comprobar que fallan por la ausencia de la funcionalidad.
 
-- [ ] T012 [P] [US1] Crear prueba MockMvc/context para `GET /actuator/health`, paths administrativos no permitidos y ocultamiento de detalles en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/HealthEndpointSecurityTest.java`.
-- [ ] T013 [P] [US1] Crear prueba de degradación o dependencia no saludable y verificar estado seguro sin credenciales, URLs internas ni cadenas de conexión en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/HealthEndpointStatusTest.java`.
-- [ ] T014 [P] [US1] Crear el ejecutor reproducible de HTTP real para health desde `scripts/observability/validate-health-docker.ps1`, separado de Gradle, con escenarios para `collector-probe`, `unauthorized-probe` y host.
+- [x] T012 [P] [US1] Crear prueba MockMvc/context para `GET /actuator/health`, paths administrativos no permitidos y ocultamiento de detalles en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/HealthEndpointSecurityTest.java`.
+- [x] T013 [P] [US1] Crear prueba de degradación o dependencia no saludable y verificar estado seguro sin credenciales, URLs internas ni cadenas de conexión en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/HealthEndpointStatusTest.java`.
+- [x] T014 [P] [US1] Crear el ejecutor reproducible de HTTP real para health desde `scripts/observability/validate-health-docker.ps1`, separado de Gradle, con escenarios para `collector-probe`, `unauthorized-probe` y host.
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Configurar la exposición mínima de health y el ocultamiento de detalles en `backend/src/main/resources/application.properties`, sin habilitar endpoints Actuator adicionales.
-- [ ] T016 [US1] Configurar el listener de administración y su dirección efectiva en `backend/src/main/resources/application.properties`, asegurando que `collector-probe` pueda acceder sin fijar una IP Docker arbitraria.
-- [ ] T017 [US1] Ejecutar `scripts/observability/validate-health-docker.ps1` contra `backend/docker/observability-compose.yml`, incluyendo acceso autorizado, rechazo desde otra red y el intento negativo desde el host contra la IP dinámica del backend.
+- [x] T015 [US1] Configurar la exposición mínima de health y el ocultamiento de detalles en `backend/src/main/resources/application.properties`, sin habilitar endpoints Actuator adicionales.
+- [x] T016 [US1] Configurar el listener de administración y su dirección efectiva en `backend/src/main/resources/application.properties`, asegurando que `collector-probe` pueda acceder sin fijar una IP Docker arbitraria.
+- [x] T017 [US1] Ejecutar `scripts/observability/validate-health-docker.ps1` contra `backend/docker/observability-compose.yml`, incluyendo acceso autorizado, rechazo desde otra red y el intento negativo desde el host contra la IP dinámica del backend.
 
 **Checkpoint**: Health funciona desde el collector autorizado, queda aislado de otros orígenes y no expone detalles sensibles.
 
@@ -69,19 +69,23 @@
 
 ### Tests for User Story 2
 
-- [ ] T018 [P] [US2] Crear prueba de contrato para formato y familias JVM/memoria/HTTP de `GET /actuator/prometheus` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/PrometheusMetricsContractTest.java`.
-- [ ] T019 [P] [US2] Crear prueba de etiquetas HTTP que ejercite query strings, headers sensibles, tokens, payloads y rutas variables en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/PrometheusSensitiveTagsTest.java`.
-- [ ] T020 [P] [US2] Crear el ejecutor reproducible de HTTP real para metrics desde `scripts/observability/validate-metrics-docker.ps1`, separado de Gradle, con tráfico controlado desde `collector-probe` y comprobaciones de métricas sensibles.
-- [ ] T021 [US2] Incorporar en `scripts/observability/validate-metrics-docker.ps1` los escenarios negativos desde `unauthorized-probe` y host, verificando que no reciben métricas ni detalles operativos.
+- [x] T018 [P] [US2] Crear prueba de contrato para formato y familias JVM/memoria/HTTP de `GET /actuator/prometheus` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/PrometheusMetricsContractTest.java`.
+- [x] T019 [P] [US2] Crear prueba de etiquetas HTTP que ejercite query strings, headers sensibles, tokens, payloads y rutas variables en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/PrometheusSensitiveTagsTest.java`.
+- [x] T020 [P] [US2] Crear el ejecutor reproducible de HTTP real para metrics desde `scripts/observability/validate-metrics-docker.ps1`, separado de Gradle, con tráfico controlado desde `collector-probe` y comprobaciones de métricas sensibles.
+- [x] T021 [US2] Incorporar en `scripts/observability/validate-metrics-docker.ps1` los escenarios negativos desde `unauthorized-probe` y host, verificando que no reciben métricas ni detalles operativos.
 
 ### Implementation for User Story 2
 
-- [ ] T022 [US2] Configurar `micrometer-registry-prometheus` y la exposición exclusiva de `/actuator/prometheus` en `backend/src/main/resources/application.properties`.
-- [ ] T023 [US2] Configurar métricas HTTP con nombres y etiquetas de baja cardinalidad en `backend/src/main/resources/application.properties` y componentes de configuración bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/management/`.
-- [ ] T024 [US2] Verificar la implementación contra el contrato aprobado en `specs/007-actuator-prometheus/contracts/observability.md` y registrar cualquier incompatibilidad sin modificar el documento SDD.
-- [ ] T025 [US2] Validar en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/PrometheusSensitiveTagsTest.java` que la respuesta de metrics no contiene Authorization, API keys, cookies, payloads, query strings, URLs sensibles, datos personales ni etiquetas de cardinalidad alta.
+- [x] T022 [US2] Configurar `micrometer-registry-prometheus` y la exposición exclusiva de `/actuator/prometheus` en `backend/src/main/resources/application.properties`.
+- [x] T023 [US2] Configurar métricas HTTP con nombres y etiquetas de baja cardinalidad en `backend/src/main/resources/application.properties` y componentes de configuración bajo `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/management/`.
+- [x] T024 [US2] Verificar la implementación contra el contrato aprobado en `specs/007-actuator-prometheus/contracts/observability.md` y registrar cualquier incompatibilidad sin modificar el documento SDD.
+- [x] T025 [US2] Validar en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/PrometheusSensitiveTagsTest.java` que la respuesta de metrics no contiene Authorization, API keys, cookies, payloads, query strings, URLs sensibles, datos personales ni etiquetas de cardinalidad alta.
+
+> **Trazabilidad ADR-007-01**: la decisión aprobada de una cadena efectiva única y la interpretación de T023 basada en instrumentación HTTP predeterminada están documentadas en `research.md`.
 
 **Checkpoint**: El collector autorizado recibe métricas útiles y seguras; ningún origen no autorizado obtiene información operativa.
+
+> **Cierre US2**: `ManagementSecurityFoundationTest`, `PrometheusMetricsContractTest`, `PrometheusSensitiveTagsTest` y `ManagementPortRequestMatcherTest` finalizaron con `BUILD SUCCESSFUL`. `validate-metrics-docker.ps1` completó 13 controles `PASS`. T023 conserva la instrumentación predeterminada de Spring Boot/Micrometer, sin configuración personalizada, conforme a la interpretación aprobada. T024 aplica la excepción autorizada para actualizar el contrato SDD, documentada mediante ADR-007-01.
 
 ---
 
@@ -89,7 +93,7 @@
 
 **Goal**: Demostrar que la observabilidad no es pública ni permite eludir JWT, API keys o autorización.
 
-**Independent Test**: Probar cada camino desde collector autorizado, `unauthorized-probe`, host y clientes de negocio; verificar listeners, redes, puertos efectivos y reglas de ambas cadenas.
+**Independent Test**: Probar cada camino desde collector autorizado, `unauthorized-probe`, host y clientes de negocio; verificar listeners, redes, puertos efectivos y la clasificación por listener/puerto más ruta dentro del filtro principal reutilizado.
 
 ### Tests for User Story 3
 
@@ -101,7 +105,7 @@
 
 ### Implementation for User Story 3
 
-- [ ] T031 [US3] Ampliar la validación de aislamiento y no bypass en `scripts/observability/validate-network-isolation.ps1` y `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/ManagementSecurityChainTest.java`, sin repetir la implementación de cadenas completada en T009–T010.
+- [ ] T031 [US3] Ampliar la validación de aislamiento y no bypass en `scripts/observability/validate-network-isolation.ps1` y `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/ManagementSecurityChainTest.java`, verificando desde ambos puertos la clasificación por listener/puerto más ruta y sin repetir la configuración de seguridad completada en T009–T010.
 - [ ] T032 [US3] Configurar en `backend/docker/observability-compose.yml` la red privada interna, ausencia de publicación del puerto de administración, exclusión de `unauthorized-probe` y publicación sólo del puerto de negocio.
 - [ ] T033 [US3] Crear escenarios deliberadamente inseguros aislados bajo `backend/docker/observability-scenarios/` para probar listener inválido, puerto publicado, segunda red, collector fuera de red, host alcanzable y cadena amplia, manteniendo `backend/docker/observability-compose.yml` seguro y sin variantes vulnerables en el despliegue normal.
 - [ ] T034 [US3] Verificar que la pertenencia a la red privada se documenta y aplica como límite de confianza, sin introducir autenticación individual ni reutilizar secretos JWT/API key en `backend/docker/observability-compose.yml` y `backend/src/main/resources/application.properties`.
@@ -173,7 +177,7 @@
 ### Parallel Opportunities
 
 - T002–T004 pueden ejecutarse en paralelo después de confirmar la estructura del backend.
-- T006 y T007 pueden prepararse en paralelo. T008 debe crear primero la prueba fundacional; después T009 y T010 pueden implementarse en paralelo sobre sus archivos separados y deben pasar T008 antes de las historias.
+- T006 y T007 pueden prepararse en paralelo. T008 debe crear primero la prueba fundacional; T009 y T010 dependen de ella y se aplican sobre `SecurityConfig.java`, sin una configuración administrativa independiente. T008 debe pasar antes de las historias.
 - T012–T014 son pruebas independientes de US1.
 - T018–T020 son pruebas independientes de US2; T021 depende de T020 porque amplía el mismo runner Docker.
 - T026–T030 son pruebas independientes de US3 cuando exista el fixture Docker común; T031 depende de la validación previa y amplía aislamiento/no bypass sin repetir implementación.
