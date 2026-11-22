@@ -11,6 +11,7 @@ jobs:
   backend:
     name: Backend
     runs-on: ubuntu-latest
+    timeout-minutes: 50
     env:
       FOOTBALL_DATA_API_KEY: ''
 
@@ -30,11 +31,14 @@ jobs:
             backend/gradle/wrapper/gradle-wrapper.properties
             backend/build.gradle
 
-      - name: Build and test backend
-        working-directory: backend
+      - name: Build and test backend with watchdog
+        shell: bash
+        env:
+          CI_WATCHDOG_TIMEOUT_SECONDS: 2520
         run: |
-          chmod +x gradlew
-          ./gradlew clean build --no-daemon --console=plain
+          chmod +x backend/gradlew
+          bash scripts/ci/run-gradle-with-watchdog.sh \
+            backend/gradlew -p backend clean build --no-daemon --console=plain
 
       - name: Upload backend test reports
         if: always()
@@ -44,7 +48,17 @@ jobs:
           path: |
             backend/build/test-results/test
             backend/build/reports/tests/test
+            backend/build/diagnostics/
           if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload backend JaCoCo XML
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jacoco-xml
+          path: backend/build/reports/jacoco/test/jacocoTestReport.xml
+          if-no-files-found: error
           retention-days: 7
 
   frontend:
@@ -84,6 +98,7 @@ jobs:
       - backend
       - frontend
     runs-on: ubuntu-latest
+    timeout-minutes: 50
 
     steps:
       - name: Checkout
@@ -108,10 +123,15 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Generate backend JaCoCo XML
+      - name: Download backend JaCoCo XML
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-jacoco-xml
+          path: backend/build/reports/jacoco/test
+
+      - name: Verify backend JaCoCo XML
+        shell: bash
         run: |
-          chmod +x backend/gradlew
-          backend/gradlew -p backend clean test jacocoTestReport --no-daemon --console=plain
           test -f backend/build/reports/jacoco/test/jacocoTestReport.xml || {
             echo 'Backend JaCoCo XML was not generated at backend/build/reports/jacoco/test/jacocoTestReport.xml' >&2
             exit 1
@@ -127,20 +147,33 @@ jobs:
             exit 1
           }
 
-      - name: Run SonarQube analysis
+      - name: Run SonarQube analysis with watchdog
+        shell: bash
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: >
-          backend/gradlew -p backend sonar
-          --no-daemon
-          --console=plain
-          -Dsonar.projectBaseDir="${{ github.workspace }}"
-          -Dsonar.sources=backend/src/main/java,frontend/src
-          -Dsonar.tests=backend/src/test/java,frontend/tests,frontend/src
-          -Dsonar.exclusions=frontend/src/**/*.test.js,frontend/src/**/*.test.jsx
-          -Dsonar.test.inclusions=frontend/tests/**,frontend/src/**/*.test.js,frontend/src/**/*.test.jsx
-          -Dsonar.coverage.jacoco.xmlReportPaths=backend/build/reports/jacoco/test/jacocoTestReport.xml
-          -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
+          CI_WATCHDOG_TIMEOUT_SECONDS: 2520
+        run: |
+          chmod +x backend/gradlew
+          bash scripts/ci/run-gradle-with-watchdog.sh \
+            backend/gradlew -p backend sonar \
+            --no-daemon \
+            --console=plain \
+            -Dsonar.projectBaseDir="${{ github.workspace }}" \
+            -Dsonar.sources=backend/src/main/java,frontend/src \
+            -Dsonar.tests=backend/src/test/java,frontend/tests,frontend/src \
+            -Dsonar.exclusions=frontend/src/**/*.test.js,frontend/src/**/*.test.jsx \
+            -Dsonar.test.inclusions=frontend/tests/**,frontend/src/**/*.test.js,frontend/src/**/*.test.jsx \
+            -Dsonar.coverage.jacoco.xmlReportPaths=backend/build/reports/jacoco/test/jacocoTestReport.xml \
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
+
+      - name: Upload SonarCloud backend diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-backend-diagnostics
+          path: backend/build/diagnostics/
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Verify SonarCloud Quality Gate and issue limits
         if: github.ref == 'refs/heads/main'

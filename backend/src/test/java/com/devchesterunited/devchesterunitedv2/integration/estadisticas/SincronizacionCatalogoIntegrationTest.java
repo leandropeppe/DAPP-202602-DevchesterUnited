@@ -124,14 +124,21 @@ class SincronizacionCatalogoIntegrationTest extends PostgresTestSupport {
             assertThat(continuar.await(10, TimeUnit.SECONDS)).isTrue();
             return snapshot(730000L, 830000L);
         });
-        try (var pool = Executors.newFixedThreadPool(2)) {
+        var pool = Executors.newFixedThreadPool(2, Thread.ofPlatform()
+                .daemon()
+                .name("catalog-sync-test-", 0)
+                .factory());
+        try {
             var primero = pool.submit(servicio::sincronizar);
             assertThat(iniciado.await(10, TimeUnit.SECONDS)).isTrue();
             var segundo = pool.submit(servicio::sincronizar);
-            assertThatThrownBy(segundo::get).hasCauseInstanceOf(
+            assertThatThrownBy(() -> segundo.get(20, TimeUnit.SECONDS)).hasCauseInstanceOf(
                     com.devchesterunited.devchesterunitedv2.exception.SincronizacionEnCursoException.class);
             continuar.countDown();
             assertThat(primero.get(20, TimeUnit.SECONDS).equiposProcesados()).isEqualTo(96);
+        } finally {
+            continuar.countDown();
+            pool.shutdownNow();
         }
     }
 

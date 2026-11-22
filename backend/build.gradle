@@ -60,6 +60,104 @@ tasks.named('test') {
 	useJUnitPlatform()
 	// Evita depender de alias de zona horaria del equipo al conectar con PostgreSQL.
 	systemProperty 'user.timezone', 'UTC'
+	testLogging {
+		events 'started', 'passed', 'failed', 'skipped'
+		exceptionFormat 'short'
+	}
+
+	def diagnosticsDirectory = layout.buildDirectory.dir('diagnostics')
+	def activeTests = new TreeMap<String, Integer>()
+	def diagnosticsLock = new Object()
+	def ensureDiagnosticsDirectory = {
+		File directory = diagnosticsDirectory.get().asFile
+		if (!directory.mkdirs() && !directory.isDirectory()) {
+			throw new GradleException("No se pudo crear el directorio de diagnostico ${directory}")
+		}
+		directory
+	}
+	def testIdentifier = { descriptor ->
+		"${descriptor.className ?: '<unknown-class>'}#${descriptor.name ?: '<unknown-method>'}"
+	}
+	def writeActiveTests = { File directory ->
+		File activeFile = new File(directory, 'active-test.txt')
+		File temporaryFile = new File(directory, 'active-test.txt.tmp')
+		StringBuilder content = new StringBuilder("UPDATED ${java.time.Instant.now()}\n")
+		if (activeTests.isEmpty()) {
+			content.append('NO_ACTIVE_TESTS\n')
+		} else {
+			activeTests.each { identifier, count ->
+				content.append("ACTIVE count=${count} ${identifier}\n")
+			}
+		}
+		java.nio.file.Files.writeString(temporaryFile.toPath(), content.toString(),
+				java.nio.charset.StandardCharsets.UTF_8)
+		try {
+			java.nio.file.Files.move(temporaryFile.toPath(), activeFile.toPath(),
+					java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+					java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+		} catch (java.nio.file.AtomicMoveNotSupportedException ignored) {
+			java.nio.file.Files.move(temporaryFile.toPath(), activeFile.toPath(),
+					java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+		}
+	}
+	def appendTestEvent = { File directory, String event, String identifier ->
+		java.nio.file.Files.writeString(new File(directory, 'test-events.log').toPath(),
+				"${java.time.Instant.now()} ${event} ${identifier}\n",
+				java.nio.charset.StandardCharsets.UTF_8,
+				java.nio.file.StandardOpenOption.CREATE,
+				java.nio.file.StandardOpenOption.APPEND)
+	}
+
+	doFirst {
+		File directory = ensureDiagnosticsDirectory()
+		synchronized (diagnosticsLock) {
+			activeTests.clear()
+			java.nio.file.Files.writeString(new File(directory, 'test-events.log').toPath(), '',
+					java.nio.charset.StandardCharsets.UTF_8)
+			writeActiveTests(directory)
+		}
+	}
+
+	addTestListener(new org.gradle.api.tasks.testing.TestListener() {
+		@Override
+		void beforeSuite(org.gradle.api.tasks.testing.TestDescriptor suite) {
+		}
+
+		@Override
+		void afterSuite(org.gradle.api.tasks.testing.TestDescriptor suite,
+				org.gradle.api.tasks.testing.TestResult result) {
+		}
+
+		@Override
+		void beforeTest(org.gradle.api.tasks.testing.TestDescriptor descriptor) {
+			String identifier = testIdentifier(descriptor)
+			synchronized (diagnosticsLock) {
+				File directory = ensureDiagnosticsDirectory()
+				activeTests.put(identifier, (activeTests[identifier] ?: 0) + 1)
+				appendTestEvent(directory, 'STARTED', identifier)
+				writeActiveTests(directory)
+			}
+		}
+
+		@Override
+		void afterTest(org.gradle.api.tasks.testing.TestDescriptor descriptor,
+				org.gradle.api.tasks.testing.TestResult result) {
+			String identifier = testIdentifier(descriptor)
+			synchronized (diagnosticsLock) {
+				File directory = ensureDiagnosticsDirectory()
+				Integer count = activeTests[identifier]
+				if (count != null) {
+					if (count == 1) {
+						activeTests.remove(identifier)
+					} else {
+						activeTests.put(identifier, count - 1)
+					}
+				}
+				appendTestEvent(directory, "FINISHED ${result.resultType}", identifier)
+				writeActiveTests(directory)
+			}
+		}
+	})
 	finalizedBy tasks.named('jacocoTestReport')
 }
 
