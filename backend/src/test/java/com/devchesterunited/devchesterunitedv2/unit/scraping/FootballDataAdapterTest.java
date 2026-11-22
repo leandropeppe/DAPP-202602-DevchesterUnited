@@ -237,6 +237,7 @@ class FootballDataAdapterTest {
                     .isInstanceOf(FootballDataException.class);
         } finally {
             liberarRespuesta.countDown();
+            clienteHttp.close();
         }
     }
 

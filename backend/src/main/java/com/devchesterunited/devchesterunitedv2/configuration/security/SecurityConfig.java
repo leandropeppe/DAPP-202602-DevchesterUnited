@@ -1,6 +1,7 @@
 package com.devchesterunited.devchesterunitedv2.configuration.security;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -20,6 +21,11 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfig {
+    @Bean
+    public ManagementPortRequestMatcher managementPortRequestMatcher(ApplicationContext mainContext) {
+        return new ManagementPortRequestMatcher(mainContext);
+    }
+
     @Bean
     @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityErrorHandler errors,

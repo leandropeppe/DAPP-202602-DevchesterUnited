@@ -8,6 +8,7 @@ import com.devchesterunited.devchesterunitedv2.modelo.jugador.Jugador;
 import com.devchesterunited.devchesterunitedv2.modelo.jugador.ProveedorIdentidadExterna;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.devchesterunited.devchesterunitedv2.scraping.catalogo.dto.FootballTeamDetailsDTO;
+import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -19,10 +20,12 @@ import org.springframework.web.client.RestClientException;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.http.HttpClient;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Adapter aislado para Football-Data.org; nunca expone sus DTOs al dominio. */
 @Component
@@ -40,20 +43,33 @@ public class FootballDataAdapter implements ProveedorCatalogo {
     private final ObjectMapper mapper;
     private final Clock clock;
     private final Sleeper sleeper;
+    private final HttpClient ownedHttpClient;
+    private final AtomicBoolean ownedHttpClientClosed = new AtomicBoolean();
 
     @Autowired
     public FootballDataAdapter(RestClient.Builder builder,
             @Value("${football-data.api-key:}") String apiKey, ObjectMapper mapper, Clock clock) {
-        this(crearCliente(builder), apiKey, mapper, clock, duration -> Thread.sleep(duration.toMillis()));
+        this(crearRecursos(builder), apiKey, mapper, clock, duration -> Thread.sleep(duration.toMillis()));
+    }
+
+    private FootballDataAdapter(ClientResources resources, String apiKey, ObjectMapper mapper,
+            Clock clock, Sleeper sleeper) {
+        this(resources.cliente(), apiKey, mapper, clock, sleeper, resources.httpClient());
     }
 
     public FootballDataAdapter(RestClient cliente, String apiKey, ObjectMapper mapper,
             Clock clock, Sleeper sleeper) {
+        this(cliente, apiKey, mapper, clock, sleeper, null);
+    }
+
+    FootballDataAdapter(RestClient cliente, String apiKey, ObjectMapper mapper,
+            Clock clock, Sleeper sleeper, HttpClient ownedHttpClient) {
         this.cliente = cliente;
         this.apiKey = apiKey == null ? "" : apiKey;
         this.mapper = mapper;
         this.clock = clock;
         this.sleeper = sleeper;
+        this.ownedHttpClient = ownedHttpClient;
     }
 
     private void validarRespuesta(FootballTeamsResponseDTO respuesta, Liga liga) {
@@ -184,13 +200,21 @@ public class FootballDataAdapter implements ProveedorCatalogo {
         }
     }
 
-    private static RestClient crearCliente(RestClient.Builder builder) {
-        var http = java.net.http.HttpClient.newBuilder()
+    private static ClientResources crearRecursos(RestClient.Builder builder) {
+        var http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
-                .followRedirects(java.net.http.HttpClient.Redirect.NEVER).build();
+                .followRedirects(HttpClient.Redirect.NEVER).build();
         var factory = new JdkClientHttpRequestFactory(http);
         factory.setReadTimeout(Duration.ofSeconds(15));
-        return builder.baseUrl(BASE_PRODUCTIVA.toString()).requestFactory(factory).build();
+        var cliente = builder.baseUrl(BASE_PRODUCTIVA.toString()).requestFactory(factory).build();
+        return new ClientResources(cliente, http);
+    }
+
+    @PreDestroy
+    void cerrarClientePropio() {
+        if (ownedHttpClient != null && ownedHttpClientClosed.compareAndSet(false, true)) {
+            ownedHttpClient.close();
+        }
     }
 
     @Override
@@ -337,6 +361,7 @@ public class FootballDataAdapter implements ProveedorCatalogo {
         if (disponible != null) { try { if (Long.parseLong(disponible) <= 0) throw new FootballDataException("La cuota del proveedor no esta disponible."); } catch (NumberFormatException e) { throw new FootballDataException("La cuota del proveedor es invalida."); } }
     }
     @FunctionalInterface public interface Sleeper { void sleep(Duration duration) throws InterruptedException; }
+    private record ClientResources(RestClient cliente, HttpClient httpClient) { }
     private record ConversionContext(
             List<Equipo> equipos,
             List<Jugador> jugadores,

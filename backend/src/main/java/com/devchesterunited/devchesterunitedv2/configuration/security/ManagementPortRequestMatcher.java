@@ -8,7 +8,6 @@ import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
@@ -16,7 +15,6 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
  * Matches requests only after the child management context has published its
  * effective port.
  */
-@Component
 public final class ManagementPortRequestMatcher
         implements RequestMatcher, ApplicationListener<WebServerInitializedEvent> {
 
