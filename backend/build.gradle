@@ -58,6 +58,7 @@ configurations {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	maxHeapSize = '1536m'
 	// Evita depender de alias de zona horaria del equipo al conectar con PostgreSQL.
 	systemProperty 'user.timezone', 'UTC'
 	testLogging {
