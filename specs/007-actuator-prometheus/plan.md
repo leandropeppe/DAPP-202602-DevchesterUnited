@@ -4,7 +4,7 @@
 
 ## Summary
 
-Incorporar salud operativa y métricas JVM, memoria y HTTP en formato compatible con Prometheus, manteniendo intactas las APIs de negocio y sus mecanismos JWT/API key. La solución usará un contexto de administración separado del puerto de negocio y una topología Docker mínima en la que el backend, PostgreSQL y un contenedor recolector autorizado comparten una red privada interna. Sólo el puerto de negocio se publica mediante el host; el puerto de administración no tendrá publicación Docker. La validación tratará por separado los accesos desde el host a la IP del contenedor, porque una red privada o la ausencia de `ports` no garantizan por sí solas aislamiento absoluto.
+Incorporar salud operativa y métricas JVM, memoria y HTTP en formato compatible con Prometheus, manteniendo intactas las APIs de negocio y sus mecanismos JWT/API key. La solución usará un contexto de administración separado del puerto de negocio y una topología Docker mínima en la que el backend, PostgreSQL y un contenedor recolector autorizado comparten una red privada interna. Un `business-gateway` HTTP será el único punto de ingreso desde el host: publicará `18080` hacia su puerto `8080` y reenviará exclusivamente a `backend:8080`. El backend no tendrá publicación Docker y su puerto de administración no tendrá publicación ni reenvío mediante el gateway. La validación tratará por separado los accesos desde el host a la IP del contenedor, porque una red privada o la ausencia de `ports` no garantizan por sí solas aislamiento absoluto.
 
 La primera implementación debe ser mínima: Actuator, el registro Micrometer para Prometheus, dos endpoints de observabilidad y una configuración Docker de validación. No se instalará Prometheus, no se crearán dashboards y no se modificarán frontend, lógica de negocio ni los Compose existentes de E2E/performance.
 
@@ -26,7 +26,7 @@ La primera implementación debe ser mínima: Actuator, el registro Micrometer pa
 
 **Constraints**: Exposición mínima; sin publicación Docker del puerto de administración; listener de administración limitado a la interfaz/red interna elegida y verificado contra accesos desde host y otras redes; rechazo por defecto ante red o configuración incompleta; sin secretos, payloads ni etiquetas HTTP sensibles; sin bypass de JWT, API keys o autorización; no modificar Compose E2E/performance.
 
-**Scale/Scope**: Una aplicación backend, un contenedor recolector de prueba y un contenedor de origen no autorizado. Sólo salud, métricas JVM/memoria/HTTP, Docker mínimo y pruebas asociadas.
+**Scale/Scope**: Una aplicación backend, un gateway HTTP de negocio, un contenedor recolector de prueba y un contenedor de origen no autorizado. Sólo salud, métricas JVM/memoria/HTTP, Docker mínimo y pruebas asociadas.
 
 ## Constitution Check
 
@@ -36,7 +36,7 @@ La primera implementación debe ser mínima: Actuator, el registro Micrometer pa
 - **Seguridad y secretos**: PASS condicionado a una única cadena efectiva reutilizada por el contexto principal y el contexto administrativo hijo. Las solicitudes administrativas se distinguirán por el listener/puerto administrativo efectivo y por una ruta aprobada; las demás solicitudes quedarán sujetas a la política de negocio y `anyRequest().denyAll()`. Las respuestas de observabilidad se limitan a información agregada y no contienen secretos.
 - **OpenAPI**: PASS / N/A. Los endpoints de administración no son APIs de negocio; el contrato operativo se documenta en `contracts/observability.md`, sin ampliar Swagger público.
 - **Testing**: PASS. Se contemplan pruebas MockMvc, integración de contexto y validación black-box en contenedores, incluyendo casos felices, negativos y de configuración incompleta.
-- **Docker y aislamiento**: PASS condicionado a validar listener, redes efectivas, publicación de puertos y acceso desde host. La red privada es un límite de confianza de esta implementación mínima, no autenticación individual del contenedor. No se modifican los Compose existentes.
+- **Docker y aislamiento**: PASS condicionado a validar listener, redes efectivas, publicación de puertos y acceso desde host. El gateway publica exclusivamente el puerto de negocio y tiene como único upstream `backend:8080`; no publica ni reenvía `backend:8081`. La red privada es un límite de confianza de esta implementación mínima, no autenticación individual del contenedor. No se modifican los Compose existentes.
 - **No regresión**: PASS. Se mantiene el comportamiento de negocio y se ejecutan compilación, pruebas existentes y verificaciones de seguridad.
 - **Complejidad**: PASS. La separación de administración se usa para reducir exposición; no se justifican violaciones constitucionales.
 
@@ -61,30 +61,34 @@ La primera implementación debe ser mínima: Actuator, el registro Micrometer pa
 
 ### Topología Docker propuesta
 
-La configuración mínima nueva se ubicará bajo `backend/docker/observability-compose.yml` y construirá el backend desde `backend/`. PostgreSQL se incluirá como servicio de validación en la misma red privada, sin publicar su puerto. Esto permite que el backend mantenga su conectividad de base de datos sin agregar una segunda red de aplicación que exponga también el puerto de administración.
+La configuración mínima nueva se ubicará bajo `backend/docker/observability-compose.yml` y construirá el backend desde `backend/`. PostgreSQL se incluirá como servicio de validación en la misma red privada, sin publicar su puerto. Un `business-gateway` HTTP publicará `18080:8080` desde el host, pertenecerá a la red interna autorizada y a una red `business-ingress` no interna, y reenviará exclusivamente a `backend:8080`. Esto permite publicar negocio sin conectar el backend a una segunda red de aplicación que exponga también el puerto de administración.
 
 ```text
-cliente externo ──(sólo puerto de negocio publicado)──> backend
-                                                        │
-                         red privada Docker             │
-                 collector-probe autorizado ───────────┘
+host:18080 ──> business-gateway:8080 ──> backend:8080
+                     │                         │
+                     │                         └── backend:8081 sólo en observability
+                     ├── observability (internal)
+                     └── business-ingress
 
-unauthorized-probe ──(red distinta, sin acceso al backend)──X
+backend, PostgreSQL y collector-probe ── observability (internal)
+unauthorized-probe ── unauthorized (internal, sin acceso al backend)
 ```
 
-- El backend, PostgreSQL y el probe autorizado estarán en una única red Docker privada marcada como interna para el escenario de validación. La pertenencia a esta red es el límite de confianza, no una autenticación por identidad.
-- El puerto de negocio podrá publicarse para validar regresión, pero el puerto de administración no aparecerá en `ports`, `expose` hacia otra red ni en ningún mecanismo equivalente de publicación al host.
+- El backend estará conectado exclusivamente a `observability`, marcada como interna. PostgreSQL y `collector-probe` también estarán exclusivamente en esa red; la pertenencia a ella es el límite de confianza, no una autenticación por identidad.
+- `business-gateway` estará conectado exactamente a `observability` y a `business-ingress`. Será el único servicio que publique `18080:8080`; el backend no publicará puertos.
+- El gateway tendrá como único upstream HTTP `backend:8080`. No podrá publicar, escuchar, exponer ni reenviar `backend:8081`, directa o indirectamente.
+- `unauthorized-probe` estará conectado exclusivamente a `unauthorized`, también interna, sin acceso al backend.
 - La escucha de administración se comprobará desde dentro del contenedor: dirección enlazada, socket/listener y puerto efectivo. La implementación no puede concluir que está aislada sólo porque el Compose no tenga un mapeo.
 - El probe autorizado consultará por el nombre de servicio interno y no será un servidor Prometheus; será una herramienta de validación efímera.
 - El probe no autorizado se ejecutará en una red distinta y probará resolución/conectividad y una conexión real al puerto de administración sin depender de un CIDR fijo.
-- El host Docker intentará conectarse a la IP de contenedor obtenida dinámicamente. Si el host logra acceder al puerto de administración, la configuración falla la validación; la ausencia de publicación no se considerará suficiente.
+- El host Docker intentará conectarse a la IP de contenedor obtenida dinámicamente. Si el host logra acceder al puerto de administración, la configuración falla la validación; la ausencia de publicación no se considerará suficiente. El acceso por `18080` sólo alcanzará el listener de negocio a través del gateway.
 - No se conectará el backend a una segunda red de aplicación sólo para facilitar la prueba: hacerlo permitiría que un contenedor de esa red alcance cualquier puerto que escuche el backend. Si el entorno requiere otra conectividad, deberá resolverse sin ampliar el límite de confianza y quedar cubierta por una prueba efectiva.
 
 ### Caminos de acceso considerados
 
 | Camino | Tratamiento | Resultado esperado |
 |---|---|---|
-| Cliente externo al puerto de negocio publicado | Permitido sólo según la política existente de negocio | El comportamiento JWT/API key no cambia |
+| Cliente externo al puerto de negocio publicado por `business-gateway` | Permitido sólo según la política existente de negocio | El gateway sólo reenvía a `backend:8080`; JWT/API key no cambian |
 | Recolector en la red privada | Permitido para health/metrics mínimos | Respuesta compatible con el contrato |
 | Contenedor en otra red Docker | No enrutable al backend de administración | Rechazo o ausencia de conectividad |
 | Host intentando el puerto de administración por IP Docker | No es un camino autorizado | Fallo de validación si conecta; se requiere política adicional del entorno |
@@ -96,7 +100,8 @@ unauthorized-probe ──(red distinta, sin acceso al backend)──X
 - MockMvc/context: comprobar la única cadena efectiva, la clasificación conjunta por puerto/listener y ruta, contenido mínimo, ausencia de información sensible, denegación de paths no permitidos y conservación de JWT/API key en endpoints de negocio. Estas pruebas no demuestran aislamiento Docker ni sustituyen las pruebas HTTP reales entre puertos.
 - HTTP real autorizado: levantar el Compose nuevo y ejecutar `curl`/`wget` desde el contenedor probe conectado a la red privada contra el listener de administración; generar tráfico de negocio controlado y verificar métricas HTTP.
 - HTTP real no autorizado: ejecutar un probe en otra red, comprobar resolución y conexión reales al listener de administración, y esperar fallo de conexión o rechazo sin cuerpo operativo.
-- Host Docker: inspeccionar `docker compose port`, `docker port`, `docker inspect` de redes/listeners y probar la IP de contenedor obtenida dinámicamente desde el host; cualquier acceso exitoso al puerto de administración falla la validación.
+- Host Docker: inspeccionar `docker compose port`, `docker port`, `docker inspect` de redes/listeners y probar la IP de contenedor obtenida dinámicamente desde el host; cualquier acceso exitoso al puerto de administración falla la validación. Verificar que `18080` se publica sólo en `business-gateway`, que éste sólo reenvía a `backend:8080` y que las rutas Actuator no se autorizan desde el puerto de negocio.
+- T028/T029/T031/T032: comprobar redes declaradas y efectivas, exclusividad del backend/collector/PostgreSQL en `observability`, exclusividad de `unauthorized-probe` en `unauthorized`, doble pertenencia controlada del gateway, ausencia de publicación o reenvío de `backend:8081`, listener administrativo, IP dinámica y accesos reales desde collector, probe no autorizado y host. Comprobar además que la ruta publicada conserva los rechazos y autorizaciones de negocio existentes.
 - PostgreSQL: comprobar que backend y PostgreSQL se resuelven y conectan dentro de la única red privada prevista, sin publicar el puerto de PostgreSQL ni crear una red adicional accesible por el probe no autorizado.
 - Prueba de configuración incompleta: ejecutar cada caso de la matriz definida en `contracts/observability.md` y comprobar fallo de arranque, rechazo o fallo de validación según corresponda.
 - Regresión: ejecutar `backend/gradlew test`, compilación/packaging y el conjunto existente de seguridad/negocio; no modificar tests existentes.
@@ -104,7 +109,7 @@ unauthorized-probe ──(red distinta, sin acceso al backend)──X
 
 ## Phase 0: Research Output
 
-Las decisiones y alternativas se documentan en [research.md](./research.md). No quedan decisiones de producto bloqueantes; las decisiones de nombres exactos de variables, puerto concreto y detalles Compose quedan como trabajo técnico posterior, no como aclaraciones de alcance.
+Las decisiones y alternativas se documentan en [research.md](./research.md). No quedan decisiones de producto bloqueantes; la topología aprobada fija `business-gateway` como ingreso `18080:8080` con upstream exclusivo `backend:8080`. Los nombres exactos de variables y la configuración mínima del gateway quedan como trabajo técnico posterior, sin alterar ese límite de seguridad.
 
 ## Phase 1: Design Artifacts
 
@@ -150,7 +155,7 @@ backend/
 ## Riesgos y cuestiones pendientes
 
 - **Contexto Docker y `.dockerignore`**: el `.dockerignore` raíz contiene `Dockerfile*`; si el build usa la raíz como contexto podría excluir el Dockerfile. La implementación debe usar contexto `backend/` o un `.dockerignore` específico, y comprobar que no se envían secretos ni artefactos de build.
-- **Aislamiento por redes**: conectar el backend a una segunda red para simplificar el acceso del negocio podría volver alcanzable el puerto de administración. La prueba debe inspeccionar las redes y puertos efectivos, no sólo el archivo Compose.
+- **Aislamiento por redes**: conectar el backend a una segunda red para simplificar el acceso del negocio podría volver alcanzable el puerto de administración. El gateway evita esa conexión, pero se incorpora al límite de confianza porque comparte `observability`; se mitiga con una configuración HTTP mínima, sin listeners ni publicaciones administrativas y con un único upstream `backend:8080`. La prueba debe inspeccionar redes, puertos y upstream efectivos, no sólo el archivo Compose.
 - **Acceso del host al bridge**: Docker puede permitir al host alcanzar una IP interna aunque no exista publicación `ports`, según el motor y la plataforma. El plan lo trata como camino independiente; si el host conecta, la validación falla y debe aplicarse una política de red/host compatible con el entorno antes de aprobar la ejecución.
 - **Confianza del contenedor**: cualquier contenedor dentro de la red privada puede intentar consultar observabilidad. Esto es una limitación aceptada de la implementación mínima y no debe describirse como autenticación individual.
 - **Delegación de seguridad del child context**: Spring Boot 3.5.16 registra para el contexto administrativo hijo un filtro que reutiliza el `springSecurityFilterChain` y el registro servlet del contexto padre. Una configuración local del child o un `FilterChainProxy` manual no se considerarán solución. La implementación debe usar APIs públicas de Spring Security para distinguir listener/puerto y ruta, y demostrar con pruebas que los matchers no autorizan Actuator desde el puerto de negocio.

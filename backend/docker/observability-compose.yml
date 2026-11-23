@@ -36,10 +36,20 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "${BUSINESS_PUBLISHED_PORT:-18080}:${SERVER_PORT:-8080}"
     networks:
       - observability
+
+  business-gateway:
+    image: nginx:1.30.7-alpine3.24
+    depends_on:
+      - backend
+    ports:
+      - "${BUSINESS_PUBLISHED_PORT:-18080}:8080"
+    volumes:
+      - ./business-gateway.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - observability
+      - business-ingress
 
   collector-probe:
     image: curlimages/curl:8.11.1
@@ -60,3 +70,5 @@ networks:
     internal: true
   unauthorized:
     internal: true
+  business-ingress:
+    internal: false

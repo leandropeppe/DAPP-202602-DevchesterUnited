@@ -98,6 +98,16 @@ class ManagementSecurityChainTest extends PostgresTestSupport {
         }
     }
 
+    @Test
+    void validJwtKeepsBusinessRoutesOnTheBusinessListener() throws Exception {
+        BusinessCredentials credentials = registerLoginAndIssueApiKey();
+
+        assertThat(getWithHeader(businessPort, "/api/v1/market/transactions", "Authorization",
+                "Bearer " + credentials.jwt()).getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertRejected(getWithHeader(managementPort, "/api/v1/market/transactions", "Authorization",
+                "Bearer " + credentials.jwt()));
+    }
+
     private ResponseEntity<String> get(int port, String path) {
         return restTemplate.getForEntity(url(port, path), String.class);
     }
