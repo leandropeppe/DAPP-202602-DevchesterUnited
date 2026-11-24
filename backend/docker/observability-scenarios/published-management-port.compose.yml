@@ -1,0 +1,9 @@
+# Fixture negativo T033. Nunca se incorpora al Compose normal: publicar 8081
+# debe ser detectado como una violacion antes de aprobar la topologia.
+services:
+  backend:
+    ports:
+      - "${UNSAFE_MANAGEMENT_PUBLISHED_PORT:-18081}:8081"
+    networks:
+      - observability
+      - business-ingress

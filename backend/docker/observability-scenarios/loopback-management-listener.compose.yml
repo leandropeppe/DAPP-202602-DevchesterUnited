@@ -1,0 +1,6 @@
+# Fixture negativo T033. El collector externo al contenedor no puede alcanzar
+# un listener administrativo limitado a loopback.
+services:
+  backend:
+    environment:
+      MANAGEMENT_SERVER_ADDRESS: 127.0.0.1

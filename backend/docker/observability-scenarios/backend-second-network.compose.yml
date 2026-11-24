@@ -1,0 +1,7 @@
+# Fixture negativo T033. El backend multi-homed hace alcanzable cualquier
+# listener por la segunda red de aplicacion.
+services:
+  backend:
+    networks:
+      - observability
+      - business-ingress

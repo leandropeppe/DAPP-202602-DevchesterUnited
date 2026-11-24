@@ -66,6 +66,10 @@ services:
       - unauthorized
 
 networks:
+  # Esta red interna es el limite de confianza de observabilidad, no una
+  # autenticacion individual por contenedor. Ningun JWT ni API key de negocio
+  # se reutiliza para health o Prometheus; un miembro comprometido de esta red
+  # podria intentar leerlos y debe tratarse como parte del mismo limite.
   observability:
     internal: true
   unauthorized:

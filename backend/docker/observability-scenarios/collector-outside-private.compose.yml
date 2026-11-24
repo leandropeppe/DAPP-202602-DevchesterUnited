@@ -1,0 +1,6 @@
+# Fixture negativo T033. !override evita que la lista heredada conserve
+# observability: el collector queda solo en la red no autorizada.
+services:
+  collector-probe:
+    networks: !override
+      - unauthorized

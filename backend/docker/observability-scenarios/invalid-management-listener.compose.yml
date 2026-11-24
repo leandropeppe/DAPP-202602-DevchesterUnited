@@ -1,0 +1,6 @@
+# Fixture negativo T033. Se usa solo junto al Compose normal y el runner de
+# escenarios; su direccion invalida debe impedir que el backend inicie.
+services:
+  backend:
+    environment:
+      MANAGEMENT_SERVER_ADDRESS: invalid-management-listener

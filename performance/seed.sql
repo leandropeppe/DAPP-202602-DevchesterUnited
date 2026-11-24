@@ -1,33 +1,26 @@
--- Fixture determinista de performance para el esquema Flyway V1..V8.
--- Debe ejecutarse exclusivamente contra la base devchester_performance,
--- después de que Flyway haya aplicado las migraciones del backend.
---
--- Credencial sintética de los usuarios: password
--- Hash BCrypt real, coste 12, compartido por todos los usuarios del fixture.
--- Esta credencial existe únicamente para pruebas locales de performance.
+-- Fixture determinista para el esquema Flyway V1..V23.
+-- Debe ejecutarse exclusivamente contra la base temporal verificada por el runner.
+-- No modifica flyway_schema_history ni el esquema.
 
 BEGIN;
 
 SET LOCAL TIME ZONE 'UTC';
 
--- La base de performance es descartable. No se toca flyway_schema_history.
-TRUNCATE TABLE api_keys, jugadores, equipos, usuarios RESTART IDENTITY;
+-- El runner verifica proyecto, contenedor, puerto y base antes de ejecutar este
+-- TRUNCATE. CASCADE solo puede afectar tablas de esta base temporal descartable.
+TRUNCATE TABLE api_keys, jugadores, equipos, usuarios RESTART IDENTITY CASCADE;
 
--- 20 ligas x 20 equipos = 400 equipos.
-WITH ligas AS (
-    SELECT liga
-    FROM generate_series(1, 20) AS serie(liga)
-), equipos_por_liga AS (
-    SELECT l.liga, serie.equipo
-    FROM ligas l
-    CROSS JOIN generate_series(1, 20) AS serie(equipo)
+-- 400 equipos sintéticos con el modelo normalizado vigente.
+WITH equipos_sinteticos AS (
+    SELECT serie.equipo
+    FROM generate_series(1, 400) AS serie(equipo)
 )
 INSERT INTO equipos (
     id,
     name,
+    league,
     short_name,
     tla,
-    league,
     crest_url,
     is_active,
     provider_season_id,
@@ -37,19 +30,22 @@ INSERT INTO equipos (
     updated_at
 )
 SELECT
-    md5('performance-team-' || liga || '-' || equipo)::uuid,
+    md5('performance-team-' || equipo)::uuid,
     CASE
-        WHEN liga = 1 AND equipo = 1 THEN 'Real Madrid'
-        WHEN liga = 1 AND equipo = 2 THEN U&'Atl\00E9tico de Madrid'
-        ELSE format('Performance Team %s-%s', lpad(liga::text, 2, '0'), lpad(equipo::text, 2, '0'))
+        WHEN equipo = 1 THEN 'Real Madrid'
+        WHEN equipo = 2 THEN 'Atletico de Madrid'
+        ELSE format('Performance Team %s', lpad(equipo::text, 3, '0'))
     END,
     CASE
-        WHEN liga = 1 AND equipo = 1 THEN 'Real Madrid'
-        WHEN liga = 1 AND equipo = 2 THEN U&'Atl\00E9tico'
-        ELSE format('Perf Team %s-%s', lpad(liga::text, 2, '0'), lpad(equipo::text, 2, '0'))
+        WHEN equipo IN (1, 2) THEN 'LaLiga'
+        ELSE 'Performance League'
     END,
-    format('P%s', lpad(((liga - 1) * 20 + equipo)::text, 3, '0')),
-    CASE WHEN liga = 1 THEN 'LaLiga' ELSE format('Performance League %s', lpad(liga::text, 2, '0')) END,
+    CASE
+        WHEN equipo = 1 THEN 'Real Madrid'
+        WHEN equipo = 2 THEN 'Atletico'
+        ELSE format('Perf Team %s', lpad(equipo::text, 3, '0'))
+    END,
+    format('P%s', lpad(equipo::text, 3, '0')),
     NULL,
     TRUE,
     NULL,
@@ -57,52 +53,39 @@ SELECT
     NULL,
     TIMESTAMPTZ '2026-01-01T00:00:00Z',
     TIMESTAMPTZ '2026-01-01T00:00:00Z'
-FROM equipos_por_liga;
+FROM equipos_sinteticos;
 
--- 25 jugadores por equipo = 10.000 jugadores.
-WITH equipos_por_liga AS (
-    SELECT l.liga, e.equipo
-    FROM generate_series(1, 20) AS l(liga)
-    CROSS JOIN generate_series(1, 20) AS e(equipo)
-), jugadores_por_equipo AS (
-    SELECT l.liga, l.equipo, p.jugador
-    FROM equipos_por_liga l
-    CROSS JOIN generate_series(1, 25) AS p(jugador)
+-- 25 jugadores por equipo = 10.000 jugadores, relacionados solo por team_id.
+WITH jugadores_sinteticos AS (
+    SELECT equipo, jugador,
+        ((equipo - 1) * 25 + jugador) AS ordinal
+    FROM generate_series(1, 400) AS equipos(equipo)
+    CROSS JOIN generate_series(1, 25) AS jugadores(jugador)
 )
 INSERT INTO jugadores (
     id,
     name,
-    league,
-    team,
     position,
     jersey_number,
     nationality,
-    external_id,
     team_id,
     is_active,
     created_at,
     updated_at
 )
 SELECT
-    md5('performance-player-' || ((liga - 1) * 500 + (equipo - 1) * 25 + jugador))::uuid,
-    format('Synthetic Player %s', lpad(((liga - 1) * 500 + (equipo - 1) * 25 + jugador)::text, 5, '0')),
-    CASE WHEN liga = 1 THEN 'LaLiga' ELSE format('Performance League %s', lpad(liga::text, 2, '0')) END,
-    CASE
-        WHEN liga = 1 AND equipo = 1 THEN 'Real Madrid'
-        WHEN liga = 1 AND equipo = 2 THEN U&'Atl\00E9tico de Madrid'
-        ELSE format('Performance Team %s-%s', lpad(liga::text, 2, '0'), lpad(equipo::text, 2, '0'))
-    END,
+    md5('performance-player-' || ordinal)::uuid,
+    format('Synthetic Player %s', lpad(ordinal::text, 5, '0')),
     (ARRAY['Goalkeeper', 'Defender', 'Midfielder', 'Forward'])[((jugador - 1) % 4) + 1],
     jugador,
     'Syntheticland',
-    NULL,
-    md5('performance-team-' || liga || '-' || equipo)::uuid,
+    md5('performance-team-' || equipo)::uuid,
     TRUE,
     TIMESTAMPTZ '2026-01-01T00:00:00Z',
     TIMESTAMPTZ '2026-01-01T00:00:00Z'
-FROM jugadores_por_equipo;
+FROM jugadores_sinteticos;
 
--- 1.000 usuarios con username strict-compatible y correo example.test.
+-- 1.000 usuarios sintéticos. El hash cumple el constraint sin documentar una clave.
 INSERT INTO usuarios (id, username, email, password_hash, created_at, updated_at)
 SELECT
     md5('performance-user-' || usuario)::uuid,
@@ -113,12 +96,10 @@ SELECT
     TIMESTAMPTZ '2026-01-01T00:00:00Z'
 FROM generate_series(1, 1000) AS serie(usuario);
 
--- Refresh statistics after restoring the bulk fixture.
 ANALYZE equipos;
 ANALYZE jugadores;
 ANALYZE usuarios;
 
--- Validaciones internas: un seed incompleto debe abortar la transacción.
 DO $$
 BEGIN
     IF (SELECT count(*) FROM equipos) <> 400

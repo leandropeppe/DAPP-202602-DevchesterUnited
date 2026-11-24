@@ -1,0 +1,9 @@
+# Fixture negativo T033. Solo el Dockerfile de este fixture reemplaza la
+# cadena segura para demostrar que una autorizacion Actuator amplia se detecta.
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/observability-scenarios/unsafe-broad-chain/Dockerfile
+    environment:
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "*"

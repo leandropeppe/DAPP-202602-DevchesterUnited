@@ -1,0 +1,9 @@
+# Fixture negativo T033. El puerto host distinto evita colisionar con negocio;
+# una respuesta HTTP correcta confirma que el host alcanzo administracion.
+services:
+  backend:
+    ports:
+      - "${UNSAFE_HOST_REACHABLE_PORT:-18082}:8081"
+    networks:
+      - observability
+      - business-ingress

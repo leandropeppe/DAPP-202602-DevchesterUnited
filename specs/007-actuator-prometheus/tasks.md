@@ -107,8 +107,10 @@
 
 - [ ] T031 [US3] Ampliar la validación de aislamiento y no bypass en `scripts/observability/validate-network-isolation.ps1` y `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/observability/ManagementSecurityChainTest.java`, verificando desde ambos puertos la clasificación por listener/puerto más ruta y sin repetir la configuración de seguridad completada en T009–T010.
 - [ ] T032 [US3] Configurar en `backend/docker/observability-compose.yml` la red privada interna, ausencia de publicación del puerto de administración, exclusión de `unauthorized-probe` y publicación sólo del puerto de negocio.
-- [ ] T033 [US3] Crear escenarios deliberadamente inseguros aislados bajo `backend/docker/observability-scenarios/` para probar listener inválido, puerto publicado, segunda red, collector fuera de red, host alcanzable y cadena amplia, manteniendo `backend/docker/observability-compose.yml` seguro y sin variantes vulnerables en el despliegue normal.
-- [ ] T034 [US3] Verificar que la pertenencia a la red privada se documenta y aplica como límite de confianza, sin introducir autenticación individual ni reutilizar secretos JWT/API key en `backend/docker/observability-compose.yml` y `backend/src/main/resources/application.properties`.
+- [x] T033 [US3] Crear escenarios deliberadamente inseguros aislados bajo `backend/docker/observability-scenarios/` para probar listener inválido, puerto publicado, segunda red, collector fuera de red, host alcanzable y cadena amplia, manteniendo `backend/docker/observability-compose.yml` seguro y sin variantes vulnerables en el despliegue normal.
+- [x] T034 [US3] Verificar que la pertenencia a la red privada se documenta y aplica como límite de confianza, sin introducir autenticación individual ni reutilizar secretos JWT/API key en `backend/docker/observability-compose.yml` y `backend/src/main/resources/application.properties`.
+
+> **Cierre US3-A (T033–T034, 2026-11-23)**: `validate-insecure-scenarios.ps1 -Scenario all` finalizó con 8 PASS: `invalid-listener`, `invalid-port`, `loopback-listener`, `published-management-port`, `backend-second-network`, `collector-outside-private`, `host-reachable` y `broad-chain`; el runner informó que no tocó el Compose normal. El límite de confianza está documentado en los comentarios de `backend/docker/observability-compose.yml` y `backend/src/main/resources/application.properties`: es topología de red Docker, no autenticación individual entre contenedores, y no reutiliza JWT ni API keys de negocio.
 
 **Checkpoint**: La seguridad de negocio conserva su comportamiento; la observabilidad sólo es accesible por el límite de confianza previsto y las pruebas detectan cualquier bypass o exposición.
 
@@ -122,13 +124,19 @@
 
 ### Tests for User Story 4
 
-- [ ] T035 [P] [US4] Crear prueba de conectividad backend→PostgreSQL en la topología privada de `backend/docker/observability-compose.yml` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/e2e/observability/PostgresDockerConnectivityTest.java`.
-- [ ] T036 [P] [US4] Crear prueba de regresión de endpoints y contratos de negocio en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/web/ObservabilityBusinessRegressionTest.java` sin modificar pruebas existentes.
-- [ ] T037 [P] [US4] Crear verificación de no regresión de E2E y rendimiento en `scripts/observability/validate-existing-suites.ps1`, invocando los Compose existentes sin editarlos.
+- [x] T035 [P] [US4] Crear prueba de conectividad backend→PostgreSQL en la topología privada de `backend/docker/observability-compose.yml` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/e2e/observability/PostgresDockerConnectivityTest.java`.
+- [x] T036 [P] [US4] Crear prueba de regresión de endpoints y contratos de negocio en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/web/ObservabilityBusinessRegressionTest.java` sin modificar pruebas existentes.
+- [x] T037 [P] [US4] Crear verificación de no regresión de E2E y rendimiento en `scripts/observability/validate-existing-suites.ps1`, invocando los Compose existentes sin editarlos.
+
+> **Cierre T037 (2026-11-24)**: PASS de las suites Playwright existentes; validación real en PowerShell 5.1 del árbol de procesos con terminación confirmada de raíz e hijo antes del `finally`, y finalización natural con exit code 0. PASS de sonda JDBC (`SELECT 1`, base y usuario esperados), Flyway directo V1–V23, aplicación de `performance/seed.sql` y conteos de 400 equipos, 10.000 jugadores, 1.000 usuarios y 0 API keys. El smoke de performance finalizó sin recursos Docker ajenos; las consultas posteriores de contenedores `obs-us4` y procesos Java del Flyway temporal no devolvieron resultados. Esta validación de performance es un smoke de infraestructura, no un benchmark de latencia ni throughput. T038 permanece pendiente de validación runtime.
 
 ### Implementation for User Story 4
 
-- [ ] T038 [US4] Ajustar el `Dockerfile` y el Compose específico para que el backend arranque con PostgreSQL por nombre de servicio y mantenga sólo la conectividad de red aprobada en `backend/Dockerfile` y `backend/docker/observability-compose.yml`.
+- [x] T038 [US4] Ajustar el `Dockerfile` y el Compose específico para que el backend arranque con PostgreSQL por nombre de servicio y mantenga sólo la conectividad de red aprobada en `backend/Dockerfile` y `backend/docker/observability-compose.yml`.
+
+> **Cierre T035–T038 (2026-11-24)**: T035 PASS con Testcontainers, `SELECT 1` y migraciones Flyway; T036 PASS con contrato público de jugadores y transacciones autenticadas (3 tests conjuntos, BUILD SUCCESSFUL). La ruta `GET /api/v1/players` consulta PostgreSQL mediante `JugadorServiceImpl` y las consultas nativas `contar`/`buscar` de `JugadorRepository`; la respuesta vacía observada no es estática. T038 PASS en runtime: cinco contenedores, PostgreSQL healthy, `validate-network-isolation.ps1` con 14 PASS, 1 SKIP opcional y 0 FAIL; backend sin puertos publicados, gateway sólo de negocio, listener administrativo 8081 accesible sólo al collector autorizado, y endpoint público de jugadores HTTP 200 con envoltorio y paginación válidos. La comprobación JWT positiva runtime quedó opcionalmente omitida por ausencia de `OBSERVABILITY_BUSINESS_AUTHORIZATION`.
+
+> **Estado US4**: el bloque T035–T038 está completado. T039 y T040 permanecen pendientes, por lo que US4 no se declara formalmente cerrada todavía.
 - [ ] T039 [US4] Ejecutar la documentación operativa aprobada en `specs/007-actuator-prometheus/quickstart.md` y verificar que los comandos y resultados esperados coinciden, sin modificar documentos SDD.
 - [ ] T040 [US4] Ejecutar la regresión del backend con `backend/gradlew test`, `backend/gradlew bootJar` y las suites E2E existentes, registrando que JWT, API keys y negocio conservan sus resultados.
 
