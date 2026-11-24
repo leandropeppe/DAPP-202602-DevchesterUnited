@@ -322,6 +322,24 @@ function Stop-Scenario {
     if ($result.ExitCode -ne 0) {
         Stop-WithError "La limpieza del proyecto temporal fallo [category=compose-cleanup; exitCode=$($result.ExitCode)]."
     }
+
+    Assert-ScenarioContainersRemoved $ProjectName $ScenarioFile
+}
+
+function Assert-ScenarioContainersRemoved {
+    param(
+        [string]$ProjectName,
+        [string]$ScenarioFile
+    )
+
+    $result = Invoke-ScenarioCompose $ProjectName $ScenarioFile @("ps", "--all", "--quiet")
+    if ($result.ExitCode -ne 0) {
+        Stop-WithError "No se pudo confirmar la limpieza del proyecto temporal $ProjectName [category=compose-cleanup-verification; exitCode=$($result.ExitCode)]."
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($result.Output)) {
+        Stop-WithError "La limpieza del proyecto temporal dejo contenedores residuales [$ProjectName] [category=compose-cleanup-residual-containers]."
+    }
 }
 
 function Get-ContainerNetworkNames {

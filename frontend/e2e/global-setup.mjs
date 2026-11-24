@@ -70,6 +70,7 @@ export default async function globalSetup () {
 
       SPRING_PROFILES_ACTIVE: 'local',
       SERVER_PORT: '18080',
+      MANAGEMENT_SERVER_PORT: '18081',
       FOOTBALL_DATA_API_KEY: '',
       TZ: 'UTC',
 

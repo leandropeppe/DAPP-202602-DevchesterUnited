@@ -1,162 +1,139 @@
 # Quickstart de validación: Actuator + Prometheus
 
-Guía de validación prevista para después de la implementación. No instala Prometheus ni modifica los Compose existentes de E2E/performance.
+Guía operativa para validar la topología de observabilidad aprobada. No instala Prometheus ni modifica los Compose de E2E o performance.
+
+## Topología y puertos
+
+- `backend` no publica puertos al host. Atiende negocio en el puerto interno `8080` y Actuator en el listener administrativo interno `8081`.
+- `business-gateway` es la única superficie publicada: expone su `8080` en `18080` por defecto (`BUSINESS_PUBLISHED_PORT` permite cambiar sólo el puerto de host).
+- El gateway reenvía exclusivamente tráfico de negocio a `backend:8080`; no publica ni enruta el listener administrativo.
+- `collector-probe` comparte la red privada `observability` con backend; `unauthorized-probe` está en una red interna separada.
+
+El endpoint `/actuator/prometheus` expone métricas en formato compatible con Prometheus, pero no instala ni ejecuta un servidor recolector Prometheus.
 
 ## Prerrequisitos
 
 - Docker y Docker Compose disponibles.
-- Java 21 y el wrapper Gradle del backend disponibles para la validación local.
-- Variables existentes del backend configuradas sin incluir secretos en archivos versionados.
-- Archivos propuestos por el plan: `backend/Dockerfile` y `backend/docker/observability-compose.yml`.
+- PowerShell 5.1 o posterior para los runners `.ps1`.
+- Java 21 y el wrapper Gradle del backend para la validación local de regresión.
+- Variables de entorno requeridas por `backend/docker/observability-compose.yml`, definidas en la sesión o en un mecanismo local no versionado: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `JWT_SECRET`, `VALORIZACION_GENERAL_VALOR_BASE`, `VALORIZACION_GENERAL_FACTOR_ESCALA`, `VALORIZACION_POSITIONAL_VALOR_BASE`, `VALORIZACION_POSITIONAL_FACTOR_ESCALA` y `VALORIZACION_ELEGIBILIDAD_CONFIGURADA`.
+
+No se incluyen secretos reales en este documento. Son opcionales `BUSINESS_PUBLISHED_PORT` (por defecto `18080`), `SERVER_PORT` (por defecto `8080`), `MANAGEMENT_SERVER_PORT` (por defecto `8081`), `MANAGEMENT_SERVER_ADDRESS` (por defecto `0.0.0.0`) y los mínimos de elegibilidad.
 
 ## 1. Compilar y ejecutar pruebas del backend
 
 Desde `backend/`:
 
-```text
-./gradlew test
-./gradlew bootJar
+```powershell
+.\gradlew.bat test --no-daemon --console=plain
+.\gradlew.bat bootJar --no-daemon --console=plain
 ```
 
-**Resultado esperado**: compilación correcta y pruebas existentes en estado PASSED; no se modifican tests existentes.
+**Resultado esperado**: compilación correcta y pruebas existentes aprobadas, sin modificar sus contratos.
 
 ## 2. Levantar la topología mínima
 
-Desde la raíz del repositorio, usando el Compose específico de la feature:
+Desde la raíz del repositorio:
 
-```text
+```powershell
 docker compose -f backend/docker/observability-compose.yml up --build -d
 docker compose -f backend/docker/observability-compose.yml ps
-```
-
-**Resultado esperado**: backend, red privada y probe autorizado levantan; el estado de puertos publicados muestra sólo el puerto de negocio. El puerto de administración no aparece publicado al host.
-
-Comprobar la configuración efectiva, no sólo el YAML:
-
-```text
 docker compose -f backend/docker/observability-compose.yml config
-docker compose -f backend/docker/observability-compose.yml port backend ${BUSINESS_CONTAINER_PORT}
-docker compose -f backend/docker/observability-compose.yml port backend ${MANAGEMENT_CONTAINER_PORT}
-docker compose -f backend/docker/observability-compose.yml ps
-docker inspect $(docker compose -f backend/docker/observability-compose.yml ps -q backend)
-docker network ls
-docker network inspect <observability-network-name>
 ```
 
-**Resultado esperado**: existe publicación sólo para `${BUSINESS_CONTAINER_PORT}`; `${MANAGEMENT_CONTAINER_PORT}` no tiene publicación al host. El backend, PostgreSQL y `collector-probe` pertenecen a la red privada interna; `unauthorized-probe` no pertenece a ella. Las variables son referencias al puerto definido por la configuración futura, no direcciones IP o CIDR fijos.
+**Resultado esperado**: PostgreSQL queda saludable; backend, gateway y probes están disponibles. Sólo `business-gateway` publica negocio en `18080` por defecto; backend no tiene publicaciones de host y el administrativo `8081` permanece interno.
 
-La inspección debe incluir el listener real dentro del contenedor, por ejemplo mediante el comando de diagnóstico disponible en la imagen (`ss -lnt`, `netstat -lnt` o equivalente). Debe comprobarse que el listener no queda limitado a loopback si el collector necesita acceso y que no existe una interfaz/red de aplicación adicional no prevista.
-
-## 3. Probar desde el contenedor autorizado
-
-Ejecutar el probe autorizado definido por el Compose para consultar:
-
-```text
-GET /actuator/health
-GET /actuator/prometheus
-```
-
-**Resultado esperado**:
-
-- health devuelve estado interpretable sin detalles sensibles.
-- prometheus devuelve formato compatible y contiene familias de JVM, memoria y HTTP.
-- no aparecen Authorization, API keys, cookies, payloads, query strings, URLs sensibles ni datos personales.
-- el backend mantiene conectividad con PostgreSQL por el nombre de servicio interno, sin publicar el puerto de PostgreSQL.
-
-La autorización de health y Prometheus debe depender conjuntamente del listener o puerto administrativo efectivo y de la ruta aprobada. No es suficiente comprobar sólo que el path existe: la misma ruta debe ser rechazada o no estar mapeada cuando se consulta por el puerto de negocio.
-
-## 4. Probar el origen no autorizado
-
-Ejecutar `unauthorized-probe` en una red Docker diferente y aislada. Ese contenedor debe comprobar únicamente que no puede resolver ni acceder al puerto de administración del backend, porque el backend tampoco pertenece a la red de `unauthorized-probe`.
-
-**Resultado esperado**:
-
-- no existe conectividad hacia el puerto de administración;
-- no se obtiene health ni metrics;
-- el resultado no depende de una IP o CIDR fijo;
-- el puerto de administración no está publicado en el host.
-
-El intento debe ser real, no sólo una comprobación de DNS. Desde `unauthorized-probe`, ejecutar el cliente HTTP disponible (por ejemplo `wget` o `curl`) contra el nombre de servicio y el puerto de administración, y registrar timeout, rechazo o ausencia de ruta. No se debe exigir conectividad desde este contenedor al puerto de negocio, ya que el backend tampoco pertenece a su red.
-
-La prueba positiva del puerto de negocio publicado debe ejecutarse desde el host Docker, usando el puerto publicado por Compose y respetando las reglas JWT/API key existentes:
-
-**Git Bash (Windows/macOS/Linux)**:
-
-```bash
-curl --fail http://127.0.0.1:${BUSINESS_PUBLISHED_PORT}/api/endpoint-de-negocio \
-  -H "Authorization: Bearer ${JWT_TOKEN}" \
-  -H "X-API-KEY: ${API_KEY}"
-```
-
-**PowerShell (Windows)**:
+Compruebe las publicaciones con los servicios y puertos reales:
 
 ```powershell
-$headers = @{ Authorization = "Bearer $env:JWT_TOKEN"; 'X-API-KEY' = $env:API_KEY }
-Invoke-WebRequest -Uri "http://127.0.0.1:$env:BUSINESS_PUBLISHED_PORT/api/endpoint-de-negocio" -Headers $headers
+$businessPort = docker compose -f backend/docker/observability-compose.yml port business-gateway 8080
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($businessPort)) { throw 'business-gateway no publicó el puerto de negocio.' }
+$businessPort
+
+$managementPort = docker compose -f backend/docker/observability-compose.yml port backend 8081 2>$null
+if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($managementPort)) { throw 'El puerto administrativo fue publicado indebidamente.' }
+'PASS: backend:8081 no está publicado al host.'
 ```
 
-El endpoint concreto y las credenciales deben corresponder a un caso ya soportado por las pruebas de negocio; no se deben introducir credenciales reales ni relajar JWT/API keys para esta validación.
+Los placeholders `BUSINESS_CONTAINER_PORT` y `MANAGEMENT_CONTAINER_PORT` no forman parte de la implementación y no deben utilizarse. El puerto de negocio interno es `8080`; el administrativo interno es `8081`.
 
-Las pruebas negativas desde el host hacia el puerto de administración deben mantenerse. Obtener dinámicamente la IP del contenedor y realizar un intento HTTP sin introducir la IP en archivos ni comandos permanentes.
+## 3. Ejecutar los runners aprobados
 
-**Git Bash (Windows/macOS/Linux)**:
-
-```bash
-docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" $(docker compose -f backend/docker/observability-compose.yml ps -q backend)
-curl --connect-timeout 3 --max-time 5 http://<IP_OBTENIDA>:${MANAGEMENT_CONTAINER_PORT}/actuator/health
-```
-
-**PowerShell (Windows)**:
+Desde la raíz del repositorio y con el Compose anterior en ejecución:
 
 ```powershell
-$backendId = docker compose -f backend/docker/observability-compose.yml ps -q backend
-$backendIp = docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $backendId
-curl.exe --connect-timeout 3 --max-time 5 "http://${backendIp}:$env:MANAGEMENT_CONTAINER_PORT/actuator/health"
+.\scripts\observability\validate-health-docker.ps1
+.\scripts\observability\validate-metrics-docker.ps1
+.\scripts\observability\validate-network-isolation.ps1
+.\scripts\observability\validate-insecure-scenarios.ps1 -Scenario all
 ```
 
-**Resultado esperado**: el host no obtiene una respuesta de health/metrics. Si la conexión tiene éxito, aunque no exista `ports`, la configuración falla la validación y no se considera aislada; se requiere una política de red/host compatible con el entorno antes de aprobarla.
+Resultados esperados:
 
-La red privada y la ausencia de publicación no se interpretan como autenticación individual del collector: cualquier contenedor que pertenezca a ella comparte el límite de confianza.
+- `validate-health-docker.ps1`: `collector-probe` recibe `GET http://backend:8081/actuator/health` con HTTP 200, JSON interpretable y sin detalles sensibles; host y `unauthorized-probe` no alcanzan el puerto administrativo.
+- `validate-metrics-docker.ps1`: `collector-probe` recibe `GET http://backend:8081/actuator/prometheus` con HTTP 200, formato Prometheus y familias JVM, memoria y HTTP, sin valores sensibles; host y `unauthorized-probe` no lo alcanzan.
+- `validate-network-isolation.ps1`: valida las tres redes, que backend no publica puertos, que gateway publica únicamente negocio, el listener administrativo interno, health y Prometheus desde el collector, el rechazo desde host y probe no autorizado, y la protección de negocio y Actuator a través del gateway. Sin `OBSERVABILITY_BUSINESS_AUTHORIZATION` muestra un `SKIP` sólo para su comprobación positiva JWT opcional.
+- `validate-insecure-scenarios.ps1 -Scenario all`: debe detectar los ocho escenarios negativos (`invalid-listener`, `invalid-port`, `loopback-listener`, `published-management-port`, `backend-second-network`, `collector-outside-private`, `host-reachable` y `broad-chain`) mediante proyectos temporales separados, sin alterar el Compose normal.
 
-## 5. Probar configuración incompleta y superficie mínima
+## 4. Verificar superficie de negocio y seguridad
 
-Repetir la validación con la conexión de red privada o la autorización del probe omitida. Intentar también rutas administrativas no incluidas en el contrato.
+El endpoint protegido real es `GET /api/v1/market/transactions`; exige JWT. No se requiere ni se documenta una API key para esta comprobación. Sin autorización debe conservar `401` o `403` a través de `business-gateway`:
 
-**Resultado esperado**: acceso denegado por defecto y rechazo de endpoints no aprobados; no se expone información operativa adicional.
+```powershell
+curl.exe --silent --show-error --output NUL --write-out '%{http_code}' http://127.0.0.1:18080/api/v1/market/transactions
+```
 
-Repetir según esta matriz mínima:
+Con un JWT de prueba válido suministrado sólo en la sesión actual, la misma ruta debe devolver HTTP 200:
 
-| Alteración controlada | Resultado esperado |
-|---|---|
-| Listener con dirección/puerto inválidos | Fallo de arranque |
-| Collector fuera de la red privada | Rechazo o fallo de conectividad |
-| Puerto de administración publicado | Fallo de validación |
-| Backend unido a segunda red de aplicación | Fallo de validación por posible alcance |
-| Cadena Actuator ausente o path administrativo adicional | Fallo de prueba de seguridad |
-| JWT/API key de negocio alterados | Fallo de regresión |
-| PostgreSQL no resoluble | Fallo de arranque o health no saludable |
-| Etiqueta HTTP con query string/secret/cardinalidad alta | Fallo de validación de métricas |
+```powershell
+$env:OBSERVABILITY_BUSINESS_AUTHORIZATION = 'Bearer <JWT_DE_PRUEBA_VALIDO_NO_VERSIONADO>'
+.\scripts\observability\validate-network-isolation.ps1
+Remove-Item Env:OBSERVABILITY_BUSINESS_AUTHORIZATION
+```
 
-También debe probarse desde el host el puerto de negocio publicado contra las mismas rutas administrativas. El resultado esperado es rechazo de seguridad o ausencia de mapping (`401`, `403` o `404` según el punto de bloqueo), pero nunca una respuesta `200` de health/metrics. Las rutas administrativas desconocidas consultadas en el puerto de administración deben producir un rechazo de Spring Security (`401` o `403`), no aceptarse únicamente porque devuelvan `404`.
+No pegue tokens reales en archivos ni en el historial compartido. El runner reutiliza esa variable sólo para la comprobación positiva opcional y valida asimismo que `/actuator/health` y `/actuator/prometheus` no se aceptan a través del puerto de negocio.
 
-## 6. Diferenciar MockMvc de HTTP real
+## 5. No regresión y coexistencia con Playwright
 
-Las pruebas MockMvc/context deben validar rutas, contenido, clasificación conjunta por listener/puerto y path, y no bypass sin abrir sockets ni crear redes Docker. Deben comprobar la cadena principal reutilizada por el contexto administrativo y la conservación separada de JWT/API keys del negocio; no deben afirmar que existe una cadena administrativa independiente.
+El Compose de observabilidad debe estar detenido durante Playwright: `business-gateway` publica `18080`, que Playwright reserva para el backend E2E. El backend local de IntelliJ puede permanecer activo porque usa sus puertos habituales `8080` (negocio) y `8081` (administración), distintos de los puertos E2E.
 
-Las pruebas HTTP reales anteriores son obligatorias para validar el puerto de administración separado, la interfaz de escucha, el acceso del collector, el rechazo desde otra red, el acceso potencial del host y la conectividad con PostgreSQL. Un resultado positivo de MockMvc no sustituye estas pruebas.
+| Componente | Negocio | Administración | Otro puerto |
+|---|---:|---:|---:|
+| Backend local de IntelliJ | `8080` | `8081` | — |
+| Backend E2E de Playwright | `18080` | `18081` | PostgreSQL E2E: `15432` |
+| Frontend E2E | — | — | `4173` |
 
-## 7. Probar no regresión
+Antes de iniciar Playwright, compruebe únicamente los puertos que E2E necesita libres; `8080` y `8081` pueden pertenecer al backend local:
 
-- Invocar endpoints de negocio públicos y protegidos con los mismos casos de JWT y API key ya existentes.
-- Confirmar que un endpoint de observabilidad no permite invocar, enumerar ni leer recursos de negocio.
-- Ejecutar las suites E2E/performance existentes sin modificar sus Compose.
+```powershell
+$e2eListeners = @(Get-NetTCPConnection -State Listen -LocalPort 18080,18081,15432,4173 -ErrorAction SilentlyContinue)
+if ($e2eListeners.Count -gt 0) { $e2eListeners | Format-Table LocalAddress,LocalPort,OwningProcess,State -AutoSize; throw 'Hay puertos E2E ocupados.' }
+```
 
-**Resultado esperado**: resultados equivalentes a la línea base y sin cambios en contratos de negocio.
+Durante E2E no se capturó directamente la dirección de escucha del listener administrativo `18081`; su separación queda acreditada funcionalmente por la coexistencia del backend local activo y la ejecución correcta del backend E2E.
+
+Desde `frontend/`, una vez detenido el Compose de observabilidad:
+
+```powershell
+npm run verify:frontend
+npm run build
+npm run test:e2e
+```
+
+**Resultado esperado**: se preservan los contratos de negocio, JWT y API keys existentes; no se introduce acceso a negocio por endpoints administrativos. La ejecución validada completó Playwright con 6/6 PASS en 2,1 minutos, conservó el PID del backend local, obtuvo health local HTTP 200 con estado `UP` y Prometheus local HTTP 200, y eliminó los contenedores E2E liberando sus puertos.
 
 ## Limpieza
 
-```text
-docker compose -f backend/docker/observability-compose.yml down --volumes --remove-orphans
+Para detener la topología sin borrar sus recursos persistentes ni afectar otros proyectos Docker:
+
+```powershell
+docker compose -f backend/docker/observability-compose.yml stop
 ```
 
-No debe quedar ningún servidor Prometheus ni dashboard instalado como parte de esta validación.
+Para retirar los contenedores y redes de este Compose cuando se decida explícitamente finalizar ese entorno:
+
+```powershell
+docker compose -f backend/docker/observability-compose.yml down
+```
+
+No use `down --volumes` ni `--remove-orphans` como limpieza rutinaria de un entorno existente. Cualquier eliminación de volúmenes requiere una decisión explícita y comprobación previa de su alcance.
