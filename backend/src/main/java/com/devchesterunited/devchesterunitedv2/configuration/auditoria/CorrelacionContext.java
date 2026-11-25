@@ -6,7 +6,7 @@ import java.util.UUID;
 /** Request-scoped, non-persistent correlation state held only for the current thread. */
 public final class CorrelacionContext {
     private static final ThreadLocal<CorrelacionContext> CURRENT = new ThreadLocal<>();
-    private static final String EXTERNAL_PATTERN = "[A-Za-z0-9._-]{1,128}";
+    private static final int MAX_EXTERNAL_LENGTH = 128;
 
     private final AuditoriaEvento.ContextType contextType;
     private final String requestCorrelationId;
@@ -41,6 +41,20 @@ public final class CorrelacionContext {
     public String requestCorrelationId() { return requestCorrelationId; }
     public String executionCorrelationId() { return executionCorrelationId; }
     public String externalCorrelationId() { return externalCorrelationId; }
-    public static boolean isValidExternalCorrelationId(String value) { return value != null && value.matches(EXTERNAL_PATTERN); }
+    public static boolean isValidExternalCorrelationId(String value) {
+        if (value == null || value.isEmpty() || value.length() > MAX_EXTERNAL_LENGTH) {
+            return false;
+        }
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            boolean alphanumeric = character >= 'A' && character <= 'Z'
+                    || character >= 'a' && character <= 'z'
+                    || character >= '0' && character <= '9';
+            if (!alphanumeric && character != '.' && character != '_' && character != '-') {
+                return false;
+            }
+        }
+        return true;
+    }
     public static String normalizeExternalCorrelationId(String value) { return isValidExternalCorrelationId(value) ? value : null; }
 }

@@ -76,17 +76,17 @@ description: "Task list for transversal audit and secure logging"
 
 ### Tests for User Story 2
 
-- [ ] T022 [P] [US2] Crear `CorrelacionHttpFilterTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/auditoria/CorrelacionHttpFilterTest.java` para generación UUID, valores válidos de 1–128 caracteres, caracteres inválidos y header de respuesta.
-- [ ] T023 [P] [US2] Crear `CorrelationMdcIntegrationTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/CorrelationMdcIntegrationTest.java` para comprobar MDC durante la solicitud y limpieza en éxito, error y excepción del chain.
-- [ ] T024 [P] [US2] Crear `CorrelationConcurrencyTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/CorrelationConcurrencyTest.java` para solicitudes paralelas con el mismo `X-Correlation-ID` externo, verificando IDs internos distintos y ausencia de mezcla.
+- [X] T022 [P] [US2] Crear `CorrelacionHttpFilterTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/auditoria/CorrelacionHttpFilterTest.java` para generación UUID, valores válidos de 1–128 caracteres, caracteres inválidos y header de respuesta.
+- [X] T023 [P] [US2] Crear `CorrelationMdcIntegrationTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/CorrelationMdcIntegrationTest.java` para comprobar MDC durante la solicitud y limpieza en éxito, error y excepción del chain.
+- [X] T024 [P] [US2] Crear `CorrelationConcurrencyTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/CorrelationConcurrencyTest.java` para solicitudes paralelas con el mismo `X-Correlation-ID` externo, verificando IDs internos distintos y ausencia de mezcla.
 
 ### Implementation for User Story 2
 
-- [ ] T025 [US2] Implementar la política de validación en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/auditoria/CorrelacionContext.java` o clase auxiliar del mismo paquete: 1–128 caracteres ASCII permitidos, ignorar inválidos y nunca usar el valor externo como identidad interna.
-- [ ] T026 [US2] Implementar `CorrelacionHttpFilter` en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/auditoria/CorrelacionHttpFilter.java` como `OncePerRequestFilter`, ordenado antes de seguridad y sin leer `Authorization` ni `X-API-KEY`.
-- [ ] T027 [US2] Establecer `requestCorrelationId`, `externalCorrelationId` y `contextType=HTTP` en MDC antes del chain, devolver el ID interno en `X-Correlation-ID` y eliminar MDC/contexto en `finally` en `CorrelacionHttpFilter.java`.
-- [ ] T028 [US2] Integrar `CorrelacionContext` con `AuditoriaAspect` y la versión segura de `AuditoriaEventWriter` producida por T010/Foundational para que los eventos HTTP usen `requestCorrelationId`, los eventos BACKGROUND usen `executionCorrelationId` y nunca se invente un ID HTTP.
-- [ ] T029 [US2] Completar `CorrelationMdcIntegrationTest` con endpoints protegidos por JWT/API key y endpoints de health/prometheus, comprobando que la correlación no modifica autenticación, autorización ni exposición.
+- [X] T025 [US2] Implementar la política de validación en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/auditoria/CorrelacionContext.java` o clase auxiliar del mismo paquete: 1–128 caracteres ASCII permitidos, ignorar inválidos y nunca usar el valor externo como identidad interna.
+- [X] T026 [US2] Implementar `CorrelacionHttpFilter` en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/auditoria/CorrelacionHttpFilter.java` como `OncePerRequestFilter`, ordenado antes de seguridad y sin leer `Authorization` ni `X-API-KEY`.
+- [X] T027 [US2] Establecer `requestCorrelationId`, `externalCorrelationId` y `contextType=HTTP` en MDC antes del chain, devolver el ID interno en `X-Correlation-ID` y eliminar MDC/contexto en `finally` en `CorrelacionHttpFilter.java`.
+- [X] T028 [US2] Integrar `CorrelacionContext` con `AuditoriaAspect` y la versión segura de `AuditoriaEventWriter` producida por T010/Foundational para que los eventos HTTP usen `requestCorrelationId`, los eventos BACKGROUND usen `executionCorrelationId` y nunca se invente un ID HTTP.
+- [X] T029 [US2] Completar `CorrelationMdcIntegrationTest` con endpoints protegidos por JWT/API key y endpoints de health/prometheus, comprobando que la correlación no modifica autenticación, autorización ni exposición.
 
 **Checkpoint**: US2 es demostrable independientemente; cada respuesta HTTP tiene el ID interno y el contexto no contamina otra solicitud.
 
