@@ -15,10 +15,10 @@ description: "Task list for transversal audit and secure logging"
 
 **Purpose**: Preparar la dependencia y el espacio de pruebas sin alterar el comportamiento actual.
 
-- [ ] T001 Incorporar `org.springframework.boot:spring-boot-starter-aop` en `backend/build.gradle` usando la gestión de versiones de Spring Boot 3.5.16, sin fijar una versión manual.
-- [ ] T002 [P] Crear los directorios nuevos `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/auditoria/` y `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/auditoria/` sin mover paquetes existentes.
-- [ ] T003 [P] Crear los directorios de pruebas `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/`, `backend/src/test/java/com/devchesterunited/devchesterunitedv2/e2e/auditoria/` y `backend/src/test/java/com/devchesterunited/devchesterunitedv2/performance/auditoria/`.
-- [ ] T004 Verificar en `backend/build.gradle` que la dependencia AOP queda dentro de las dependencias gestionadas, conserva Java 21 y no introduce dependencias de base de datos ni observabilidad adicional.
+- [X] T001 Incorporar `org.springframework.boot:spring-boot-starter-aop` en `backend/build.gradle` usando la gestión de versiones de Spring Boot 3.5.16, sin fijar una versión manual.
+- [X] T002 [P] Crear los directorios nuevos `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/auditoria/` y `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/auditoria/` sin mover paquetes existentes.
+- [X] T003 [P] Crear los directorios de pruebas `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/`, `backend/src/test/java/com/devchesterunited/devchesterunitedv2/e2e/auditoria/` y `backend/src/test/java/com/devchesterunited/devchesterunitedv2/performance/auditoria/`.
+- [X] T004 Verificar en `backend/build.gradle` que la dependencia AOP queda dentro de las dependencias gestionadas, conserva Java 21 y no introduce dependencias de base de datos ni observabilidad adicional.
 
 **Checkpoint**: El proyecto reconoce Spring AOP mediante la dependencia gestionada y no se ha modificado código de negocio, seguridad ni observabilidad.
 
