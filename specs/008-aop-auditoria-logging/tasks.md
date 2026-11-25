@@ -100,17 +100,17 @@ description: "Task list for transversal audit and secure logging"
 
 ### Tests for User Story 3
 
-- [ ] T030 [P] [US3] Crear `AuditoriaEventWriterSecurityTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/auditoria/AuditoriaEventWriterSecurityTest.java` con argumentos, retornos, contraseñas, JWT, API keys, headers, datos personales, mensajes y stack traces sintéticos.
-- [ ] T031 [P] [US3] Crear `AuditoriaErrorCodeResolverSecurityTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/auditoria/AuditoriaErrorCodeResolverSecurityTest.java` para probar que el código depende del tipo/categoría y nunca del mensaje o cause chain.
-- [ ] T032 [P] [US3] Crear `AuditoriaBestEffortTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/auditoria/AuditoriaBestEffortTest.java` con un writer controladamente fallido, verificando que se conserva el retorno y la misma instancia de excepción del negocio.
-- [ ] T033 [P] [US3] Crear `AuditSecurityIntegrationTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/AuditSecurityIntegrationTest.java` para JWT/API key sintéticos y revisión de eventos completos.
+- [X] T030 [P] [US3] Crear `AuditoriaEventWriterSecurityTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/auditoria/AuditoriaEventWriterSecurityTest.java` con argumentos, retornos, contraseñas, JWT, API keys, headers, datos personales, mensajes y stack traces sintéticos.
+- [X] T031 [P] [US3] Crear `AuditoriaErrorCodeResolverSecurityTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/auditoria/AuditoriaErrorCodeResolverSecurityTest.java` para probar que el código depende del tipo/categoría y nunca del mensaje o cause chain.
+- [X] T032 [P] [US3] Crear `AuditoriaBestEffortTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/unit/auditoria/AuditoriaBestEffortTest.java` con un writer controladamente fallido, verificando que se conserva el retorno y la misma instancia de excepción del negocio.
+- [X] T033 [P] [US3] Crear `AuditSecurityIntegrationTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/AuditSecurityIntegrationTest.java` para JWT/API key sintéticos y revisión de eventos completos.
 
 ### Implementation for User Story 3
 
-- [ ] T034 [US3] Agregar pruebas adicionales, endurecimiento defensivo y validación de seguridad de `AuditoriaEventWriter` en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/auditoria/AuditoriaEventWriter.java`, inspeccionando el evento/sink capturado y los pares MDC sin asumir renderizado JSON. Confirmar que las garantías mínimas de allowlist completa, exclusión de datos sensibles, códigos controlados y best effort ya provienen de T010 y que T034 no es requisito previo para T028.
-- [ ] T035 [US3] Implementar el manejo best effort en `AuditoriaEventWriter.java` y `AuditoriaAspect.java`, capturando solo fallos de runtime del mecanismo, sin capturar `Error`, sin reintentos ilimitados y sin modificar la excepción original.
-- [ ] T036 [US3] Verificar que el writer no recibe argumentos, retornos, headers ni `Throwable` completo desde `AuditoriaAspect.java`, y que los eventos de error contienen únicamente el `errorCode` controlado.
-- [ ] T037 [US3] Completar los casos BACKGROUND de `AuditoriaEventWriter` y `AuditoriaAspect` para `EstadisticasScheduler.ejecutarSemanal()`, `ValorizacionScheduler.ejecutarSemanal()` y `MarketInitializationApplicationReadyListener`, generando `executionCorrelationId` por ejecución y omitiendo `requestCorrelationId` y `externalCorrelationId`.
+- [X] T034 [US3] Agregar pruebas adicionales, endurecimiento defensivo y validación de seguridad de `AuditoriaEventWriter` en `backend/src/main/java/com/devchesterunited/devchesterunitedv2/configuration/auditoria/AuditoriaEventWriter.java`, inspeccionando el evento/sink capturado y los pares MDC sin asumir renderizado JSON. Confirmar que las garantías mínimas de allowlist completa, exclusión de datos sensibles, códigos controlados y best effort ya provienen de T010 y que T034 no es requisito previo para T028.
+- [X] T035 [US3] Implementar el manejo best effort en `AuditoriaEventWriter.java` y `AuditoriaAspect.java`, capturando solo fallos de runtime del mecanismo, sin capturar `Error`, sin reintentos ilimitados y sin modificar la excepción original.
+- [X] T036 [US3] Verificar que el writer no recibe argumentos, retornos, headers ni `Throwable` completo desde `AuditoriaAspect.java`, y que los eventos de error contienen únicamente el `errorCode` controlado.
+- [X] T037 [US3] Completar los casos BACKGROUND de `AuditoriaEventWriter` y `AuditoriaAspect` para `EstadisticasScheduler.ejecutarSemanal()`, `ValorizacionScheduler.ejecutarSemanal()` y `MarketInitializationApplicationReadyListener`, generando `executionCorrelationId` por ejecución y omitiendo `requestCorrelationId` y `externalCorrelationId`.
 
 **Checkpoint**: US3 es demostrable independientemente; ningún dato prohibido aparece en eventos y la auditoría no puede romper el negocio.
 

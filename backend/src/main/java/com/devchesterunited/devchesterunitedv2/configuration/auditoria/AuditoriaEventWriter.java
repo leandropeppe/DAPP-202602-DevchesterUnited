@@ -16,21 +16,30 @@ public class AuditoriaEventWriter {
 
     public void write(AuditoriaEvento event) {
         if (event == null) return;
-        Map<String, String> values = fields(event);
-        Map<String, String> previous = new LinkedHashMap<>();
+        Map<String, String> previous = null;
         try {
+            Map<String, String> values = fields(event);
+            previous = MDC.getCopyOfContextMap();
+            // A log event must contain only the audit allowlist, never arbitrary MDC
+            // values installed by HTTP/security/business code.
+            MDC.clear();
             values.forEach((key, value) -> {
-                previous.put(key, MDC.get(key));
-                if (value == null) MDC.remove(key); else MDC.put(key, value);
+                if (value != null) MDC.put(key, value);
             });
             LOGGER.info(MESSAGE);
         } catch (RuntimeException ignored) {
             // Audit is deliberately best effort; never propagate a logging failure.
         } finally {
-            values.keySet().forEach(key -> {
-                String old = previous.get(key);
-                if (old == null) MDC.remove(key); else MDC.put(key, old);
-            });
+            restore(previous);
+        }
+    }
+
+    private static void restore(Map<String, String> previous) {
+        try {
+            MDC.clear();
+            if (previous != null) MDC.setContextMap(previous);
+        } catch (RuntimeException ignored) {
+            // MDC restoration is part of the audit mechanism and is also best effort.
         }
     }
 
