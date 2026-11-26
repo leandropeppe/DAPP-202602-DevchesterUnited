@@ -11,7 +11,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/** Installs request correlation before security and removes it after every HTTP request. */
+/** Instala la correlación de la solicitud antes de seguridad y la elimina después de cada solicitud HTTP. */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class CorrelacionHttpFilter extends OncePerRequestFilter {

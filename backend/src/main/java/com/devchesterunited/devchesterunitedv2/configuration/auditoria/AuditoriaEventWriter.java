@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
-/** SLF4J sink with an explicit event allowlist and failure isolation. */
+/** Destino SLF4J con una allowlist explícita de eventos y aislamiento de fallos. */
 @Component
 public class AuditoriaEventWriter {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuditoriaEventWriter.class);
@@ -20,15 +20,17 @@ public class AuditoriaEventWriter {
         try {
             Map<String, String> values = fields(event);
             previous = MDC.getCopyOfContextMap();
-            // A log event must contain only the audit allowlist, never arbitrary MDC
-            // values installed by HTTP/security/business code.
+            // Un evento de log sólo debe contener la allowlist de auditoría, nunca valores
+            // arbitrarios del MDC instalados por código HTTP, de seguridad o de negocio.
             MDC.clear();
             values.forEach((key, value) -> {
                 if (value != null) MDC.put(key, value);
             });
-            LOGGER.info(render(values));
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(render(values));
+            }
         } catch (RuntimeException ignored) {
-            // Audit is deliberately best effort; never propagate a logging failure.
+            // La auditoría es deliberadamente de mejor esfuerzo; nunca propaga un fallo de logging.
         } finally {
             restore(previous);
         }
@@ -39,7 +41,7 @@ public class AuditoriaEventWriter {
             MDC.clear();
             if (previous != null) MDC.setContextMap(previous);
         } catch (RuntimeException ignored) {
-            // MDC restoration is part of the audit mechanism and is also best effort.
+            // La restauración del MDC forma parte del mecanismo de auditoría y también es de mejor esfuerzo.
         }
     }
 
