@@ -145,11 +145,19 @@ description: "Task list for transversal audit and secure logging"
 
 **Purpose**: Cerrar la validación completa y dejar evidencia reproducible para la entrega.
 
-- [ ] T047 Ejecutar la batería completa del backend desde `backend/` con `./gradlew.bat test --no-daemon --console=plain` y registrar cualquier fallo sin modificar tests existentes.
-- [ ] T048 Ejecutar la validación de `quickstart.md`, incluyendo ArchUnit, pruebas de auditoría, seguridad, correlación, background, concurrencia y regresión de Actuator/Prometheus.
-- [ ] T049 Revisar `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md` y `tasks.md` para confirmar correspondencia entre las 10 operaciones, los campos del evento y los criterios de aceptación.
-- [ ] T050 Ejecutar la revisión final de SonarCloud/quality gate definida por la Constitution y documentar issues nuevas de seguridad, duplicación, complejidad o dependencias sin modificar el alcance funcional.
-- [ ] T051 Ejecutar el smoke test obligatorio en `backend/`: compilar, levantar el backend con la configuración local válida existente, verificar el arranque y consultar endpoints básicos representativos (incluyendo health y un endpoint funcional no destructivo), comprobando `X-Correlation-ID` sin exponer secretos ni modificar Actuator, Prometheus, seguridad o puertos; documentar el resultado en `specs/008-aop-auditoria-logging/quickstart.md`.
+- [X] T047 Ejecutar la batería completa del backend desde `backend/` con `./gradlew.bat test --no-daemon --console=plain` y registrar cualquier fallo sin modificar tests existentes.
+- [X] T048 Ejecutar la validación de `quickstart.md`, incluyendo ArchUnit, pruebas de auditoría, seguridad, correlación, background, concurrencia y regresión de Actuator/Prometheus.
+- [X] T049 Revisar `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md` y `tasks.md` para confirmar correspondencia entre las 10 operaciones, los campos del evento y los criterios de aceptación.
+- [X] T050 Ejecutar la revisión final de SonarCloud/quality gate definida por la Constitution y documentar issues nuevas de seguridad, duplicación, complejidad o dependencias sin modificar el alcance funcional.
+- [X] T051 Ejecutar el smoke test obligatorio en `backend/`: compilar, levantar el backend con la configuración local válida existente, verificar el arranque y consultar endpoints básicos representativos (incluyendo health y un endpoint funcional no destructivo), comprobando `X-Correlation-ID` sin exponer secretos ni modificar Actuator, Prometheus, seguridad o puertos; documentar el resultado en `specs/008-aop-auditoria-logging/quickstart.md`.
+
+### Evidencia de cierre (2026-11-25/26)
+
+- T047: `./gradlew.bat test --no-daemon --console=plain` finalizó `BUILD SUCCESSFUL` en 6m03s; 1.203 tests, 0 fallos, 0 errores y 0 omitidos. No se modificaron tests existentes.
+- T048: ArchUnit ejecutó 21/21 reglas con resultado PASSED. La validación focal de auditoría, correlación, seguridad, background, concurrencia y Actuator/Prometheus finalizó `BUILD SUCCESSFUL`; los eventos verificados respetaron las 10 operaciones, allowlist, correlación y exclusión de datos sensibles. SC-008 conservó su evidencia previa de 30 pares dentro de los límites.
+- T049: se revisaron los documentos de diseño, contratos y tareas. La correspondencia verificada cubre las 10 operaciones, campos START/END, contexto HTTP/BACKGROUND, `errorCode`, correlación interna/externa y los 26 FR y 9 SC.
+- T050: `gradlew.bat sonar --no-daemon --console=plain` finalizó `BUILD SUCCESSFUL` (2m39s). El verificador SonarCloud devolvió Quality Gate `OK`, 0 issues abiertas, 0 vulnerabilidades y 0 code smells críticos.
+- T051: completada. `compileJava` pasó y Spring Boot arrancó realmente en 8080, con management en 8081, PostgreSQL 16.15 y Flyway 23/23 vigentes. Se usó `JWT_SECRET` aleatorio efímero, `-Duser.timezone=UTC` y los valores documentados de valorización `1.00/99.00`, únicamente en el proceso. Health y Prometheus devolvieron 200; `/api/v1/players?page=1&limit=1` devolvió 200; `/actuator/health` en puerto de negocio y `/api/v1/market/portfolio` sin credenciales devolvieron 401. Las respuestas de negocio devolvieron UUID interno `X-Correlation-ID` distinto del externo; los logs no expusieron secretos, argumentos, retornos ni headers sensibles. El proceso fue detenido y no quedaron listeners en 8080/8081.
 
 **Final checkpoint**: La feature queda lista para cierre solo con batería backend aprobada, 21 reglas ArchUnit aprobadas, SC-008 documentado, sin métricas duplicadas y sin cambios no autorizados.
 

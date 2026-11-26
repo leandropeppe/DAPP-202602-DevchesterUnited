@@ -105,3 +105,29 @@ La suite completa debe pasar sin migraciones nuevas, sin cambios de contrato
 funcional y sin duplicar métricas de Actuator/Prometheus. SonarCloud y la
 revisión de seguridad se ejecutan en el cierre de la feature según la
 Constitution.
+
+## Evidencia de ejecución T047–T051 (2026-11-25/26)
+
+- Suite completa: `BUILD SUCCESSFUL`; 1.203 tests, 0 fallos, 0 errores y 0 omitidos.
+- ArchUnit: 21 reglas aprobadas. Auditoría, correlación, seguridad, background,
+  concurrencia y regresiones de Actuator/Prometheus aprobadas.
+- Eventos reales inspeccionados por las pruebas: allowlist de campos, 10
+  operaciones cerradas, correlación HTTP/BACKGROUND, exclusión de argumentos,
+  retornos, headers, credenciales, mensajes y causas completas.
+- SC-008: evidencia previa de 30 pares conservada; dentro de los límites del
+  criterio.
+- SonarCloud: Quality Gate `OK`; 0 issues abiertas, 0 vulnerabilidades y 0
+  code smells críticos.
+- Smoke real T051: completado. `compileJava` pasó y Spring Boot arrancó en 8080,
+  con management en 8081, PostgreSQL 16.15 y Flyway 23/23 vigentes. Se usó un
+  `JWT_SECRET` aleatorio efímero, `-Duser.timezone=UTC` y los valores
+  documentados de valorización `1.00/99.00`, solo en el proceso y sin guardar ni
+  imprimir secretos. Consultas reales: management `/actuator/health` 200,
+  management `/actuator/prometheus` 200, `/api/v1/players?page=1&limit=1` 200,
+  `/actuator/health` en puerto de negocio 401 y
+  `/api/v1/market/portfolio` sin credenciales 401. Las respuestas de negocio
+  devolvieron un UUID interno en `X-Correlation-ID`, distinto de
+  `smoke-external-001`; el header externo no sustituyó la identidad interna.
+  No se observaron secretos, argumentos, retornos ni headers sensibles en los
+  logs de auditoría. El proceso iniciado para la prueba fue detenido y no
+  quedaron listeners en 8080/8081.
