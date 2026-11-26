@@ -11,7 +11,7 @@ import com.devchesterunited.devchesterunitedv2.scraping.estadisticas.WhoScoredSt
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessException;
 
-/** Maps exception types to a small, stable and message-independent audit vocabulary. */
+/** Mapea tipos de excepción a un vocabulario de auditoría reducido, estable e independiente del mensaje. */
 public final class AuditoriaErrorCodeResolver {
     public static final String VALIDATION_ERROR = "VALIDATION_ERROR";
     public static final String AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR";
@@ -23,7 +23,9 @@ public final class AuditoriaErrorCodeResolver {
     public static final String PERSISTENCE_ERROR = "PERSISTENCE_ERROR";
     public static final String UNEXPECTED_ERROR = "UNEXPECTED_ERROR";
 
-    public AuditoriaErrorCodeResolver() { }
+    private AuditoriaErrorCodeResolver() {
+        // Clase utilitaria: todas las operaciones de resolución son estáticas y sin estado.
+    }
 
     public static String resolve(Throwable error) {
         if (error == null) return UNEXPECTED_ERROR;

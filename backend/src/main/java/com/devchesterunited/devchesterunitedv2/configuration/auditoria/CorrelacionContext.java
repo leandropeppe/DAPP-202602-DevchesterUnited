@@ -3,7 +3,7 @@ package com.devchesterunited.devchesterunitedv2.configuration.auditoria;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Request-scoped, non-persistent correlation state held only for the current thread. */
+/** Estado de correlación asociado a la solicitud, no persistente y retenido sólo en el hilo actual. */
 public final class CorrelacionContext {
     private static final ThreadLocal<CorrelacionContext> CURRENT = new ThreadLocal<>();
     private static final int MAX_EXTERNAL_LENGTH = 128;

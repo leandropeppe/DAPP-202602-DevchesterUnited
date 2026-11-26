@@ -8,7 +8,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/** Proxy-boundary audit for the explicitly selected application operations. */
+/** Auditoría en los límites de proxy para las operaciones de aplicación seleccionadas explícitamente. */
 @Aspect
 @Component
 public class AuditoriaAspect {
@@ -106,6 +106,6 @@ public class AuditoriaAspect {
     }
 
     private static void write(Runnable action) {
-        try { action.run(); } catch (RuntimeException ignored) { /* best effort */ }
+        try { action.run(); } catch (RuntimeException ignored) { /* mejor esfuerzo */ }
     }
 }

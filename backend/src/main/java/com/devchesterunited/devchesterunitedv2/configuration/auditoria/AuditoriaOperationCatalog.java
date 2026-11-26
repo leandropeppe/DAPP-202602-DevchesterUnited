@@ -2,7 +2,7 @@ package com.devchesterunited.devchesterunitedv2.configuration.auditoria;
 
 import java.util.Set;
 
-/** Closed allowlist. No implicit or fallback operation is permitted. */
+/** Allowlist cerrada. No se permite ninguna operación implícita ni alternativa. */
 public final class AuditoriaOperationCatalog {
     public static final String CATALOG_SYNC = "catalog.sync";
     public static final String STATISTICS_SYNC = "statistics.sync";
