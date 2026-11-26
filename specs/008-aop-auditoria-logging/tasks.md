@@ -124,18 +124,18 @@ description: "Task list for transversal audit and secure logging"
 
 ### Tests and validation for User Story 4
 
-- [ ] T038 [P] [US4] Crear `BackgroundAuditIntegrationTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/BackgroundAuditIntegrationTest.java` para schedulers, startup, `contextType=BACKGROUND`, ausencia de IDs HTTP y propagación original de errores.
-- [ ] T039 [P] [US4] Crear `ProxyBoundaryRegressionTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/ProxyBoundaryRegressionTest.java` para self-invocation, métodos no públicos, métodos no seleccionados y overload P2P interno.
-- [ ] T040 [US4] Ejecutar las 21 reglas de `backend/src/test/java/com/devchesterunited/devchesterunitedv2/architecture/ArchitectureTest.java` y registrar el resultado de cada regla; esta tarea es la ejecución del gate, no la revisión manual de dependencias nuevas.
-- [ ] T041 [P] [US4] Crear `ObservabilitySecurityRegressionTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/ObservabilitySecurityRegressionTest.java` para health, Prometheus, management port, JWT, API key y rutas existentes, sin cambiar configuraciones.
-- [ ] T042 [P] [US4] Preparar el escenario reproducible de SC-008 en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/performance/auditoria/AuditoriaPerformanceScenario.java` con la misma compilación, configuración, operación, dataset sintético y entorno, warm-up controlado, baseline sin aspecto, tratamiento con AOP y writer habilitados, y exclusión del tiempo externo del destino de logs.
-- [ ] T043 [US4] Ejecutar 30 pares alternados baseline/tratamiento por escenario, calcular mediana y p95, guardar muestras, método y entorno en `backend/build/diagnostics/auditoria-performance/`, y ejecutar una serie diagnóstica adicional con writer controlado sin emisión para estimar solo el costo del writer, sin afirmar que desaparece el costo total de AOP ni agregar métricas.
-- [ ] T044 [US4] Verificar que los tests nuevos no modifican ni eliminan tests existentes y que las pruebas de negocio continúan usando fixtures sintéticos, Testcontainers y sin proveedores reales.
+- [X] T038 [P] [US4] Crear `BackgroundAuditIntegrationTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/BackgroundAuditIntegrationTest.java` para schedulers, startup, `contextType=BACKGROUND`, ausencia de IDs HTTP y propagación original de errores.
+- [X] T039 [P] [US4] Crear `ProxyBoundaryRegressionTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/ProxyBoundaryRegressionTest.java` para self-invocation, métodos no públicos, métodos no seleccionados y overload P2P interno.
+- [X] T040 [US4] Ejecutar las 21 reglas de `backend/src/test/java/com/devchesterunited/devchesterunitedv2/architecture/ArchitectureTest.java` y registrar el resultado de cada regla; esta tarea es la ejecución del gate, no la revisión manual de dependencias nuevas.
+- [X] T041 [P] [US4] Crear `ObservabilitySecurityRegressionTest` en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/integration/auditoria/ObservabilitySecurityRegressionTest.java` para health, Prometheus, management port, JWT, API key y rutas existentes, sin cambiar configuraciones.
+- [X] T042 [P] [US4] Preparar el escenario reproducible de SC-008 en `backend/src/test/java/com/devchesterunited/devchesterunitedv2/performance/auditoria/AuditoriaPerformanceScenario.java` con la misma compilación, configuración, operación, dataset sintético y entorno, warm-up controlado, baseline sin aspecto, tratamiento con AOP y writer habilitados, y exclusión del tiempo externo del destino de logs.
+- [X] T043 [US4] Ejecutar 30 pares alternados baseline/tratamiento por escenario, calcular mediana y p95, guardar muestras, método y entorno en `backend/build/diagnostics/auditoria-performance/`, y ejecutar una serie diagnóstica adicional con writer controlado sin emisión para estimar solo el costo del writer, sin afirmar que desaparece el costo total de AOP ni agregar métricas.
+- [X] T044 [US4] Verificar que los tests nuevos no modifican ni eliminan tests existentes y que las pruebas de negocio continúan usando fixtures sintéticos, Testcontainers y sin proveedores reales.
 
 ### Compatibility implementation checks
 
-- [ ] T045 [US4] Revisar `backend/build.gradle` y los cambios de configuración para confirmar que no se modificaron Actuator, Micrometer Prometheus, `SecurityConfig`, `ApiKeyAuthenticationFilter`, Flyway ni propiedades de exposición.
-- [ ] T046 [US4] Revisar el grafo de dependencias de las clases nuevas de `configuration.auditoria` y comprobar que no existan ciclos ni dependencias nuevas prohibidas; esta revisión final es distinta de la ejecución de las 21 reglas realizada en T040.
+- [X] T045 [US4] Revisar `backend/build.gradle` y los cambios de configuración para confirmar que no se modificaron Actuator, Micrometer Prometheus, `SecurityConfig`, `ApiKeyAuthenticationFilter`, Flyway ni propiedades de exposición.
+- [X] T046 [US4] Revisar el grafo de dependencias de las clases nuevas de `configuration.auditoria` y comprobar que no existan ciclos ni dependencias nuevas prohibidas; esta revisión final es distinta de la ejecución de las 21 reglas realizada en T040.
 
 **Checkpoint**: US4 está completa cuando ArchUnit, seguridad, observabilidad, rendimiento y regresión funcional pasan sin cambios de lógica ni contratos existentes.
 
