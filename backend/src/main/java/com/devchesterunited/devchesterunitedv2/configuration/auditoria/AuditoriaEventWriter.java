@@ -26,7 +26,7 @@ public class AuditoriaEventWriter {
             values.forEach((key, value) -> {
                 if (value != null) MDC.put(key, value);
             });
-            LOGGER.info(MESSAGE);
+            LOGGER.info(render(values));
         } catch (RuntimeException ignored) {
             // Audit is deliberately best effort; never propagate a logging failure.
         } finally {
@@ -57,5 +57,15 @@ public class AuditoriaEventWriter {
         fields.put(PREFIX + "externalCorrelationId", event.externalCorrelationId());
         fields.put(PREFIX + "errorCode", event.errorCode());
         return fields;
+    }
+
+    private static String render(Map<String, String> fields) {
+        StringBuilder message = new StringBuilder(MESSAGE);
+        fields.forEach((key, value) -> {
+            if (value != null) {
+                message.append(' ').append(key.substring(PREFIX.length())).append('=').append(value);
+            }
+        });
+        return message.toString();
     }
 }

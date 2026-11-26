@@ -45,7 +45,10 @@ class AuditoriaEventWriterSecurityTest {
 
         assertThat(appender.list).hasSize(1);
         ILoggingEvent event = appender.list.get(0);
-        assertThat(event.getMessage()).isEqualTo("audit_event");
+        assertThat(event.getFormattedMessage()).isEqualTo(
+                "audit_event eventName=AUDIT_OPERATION operation=market.purchase stage=END result=ERROR "
+                        + "durationMs=7 timestamp=2026-01-01T00:00:00Z contextType=HTTP requestCorrelationId=request-1 "
+                        + "externalCorrelationId=client-1 errorCode=UNEXPECTED_ERROR");
         assertThat(event.getMDCPropertyMap()).containsOnlyKeys(
                 "audit.eventName", "audit.operation", "audit.stage", "audit.result",
                 "audit.durationMs", "audit.timestamp", "audit.contextType",
